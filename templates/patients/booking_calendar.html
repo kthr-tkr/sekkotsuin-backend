@@ -1,0 +1,111 @@
+{% extends "patients/patient_base.html" %}
+{% block title %}予約日を選択{% endblock %}
+
+{% block content %}
+<div class="p-page">
+  <div class="p-head">
+    <div>
+      <h1 class="p-title">予約日を選択</h1>
+      <div class="p-sub">{{ clinic.name }} / {{ patient.last_name }} {{ patient.first_name }} 様</div>
+    </div>
+    <a class="p-btn p-btn-ghost" href="{% url 'patients:logout' %}">ログアウト</a>
+  </div>
+
+  <div class="p-monthbar">
+    <a class="p-iconbtn" href="?ym={{ prev_ym }}" aria-label="前月">‹</a>
+    <div class="p-month">{{ first_day|date:"Y年n月" }}</div>
+    <a class="p-iconbtn" href="?ym={{ next_ym }}" aria-label="翌月">›</a>
+  </div>
+
+  <div class="p-card">
+    <div class="p-weekdays">
+      <div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div>
+    </div>
+
+    <div class="p-grid">
+      {% for week in cal_weeks %}
+        {% for cell in week %}
+          {% if cell.day == 0 %}
+            <div class="p-cell p-cell-empty"></div>
+          {% else %}
+            {% with stat=cell.stat %}
+              {% if stat and not stat.disabled %}
+                <a class="p-cell p-cell-active" href="{% url 'patients:booking_day' cell.ds %}{% if treatment_plan_id %}?treatment_plan_id={{ treatment_plan_id }}{% endif %}">
+                  <div class="p-day">{{ cell.day }}</div>
+                  <div class="p-meta">残り {{ stat.free }}</div>
+                </a>
+              {% else %}
+                <div class="p-cell p-cell-disabled">
+                  <div class="p-day">{{ cell.day }}</div>
+                  <div class="p-meta">×</div>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="p-footerbar">
+    <a class="p-btn p-btn-ghost" href="{% url 'patients:my_appointments' %}">予約一覧</a>
+  </div>
+</div>
+
+<style>
+  .page{max-width:1100px;margin:0 auto;padding:24px 18px;}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;}
+  .head h1{font-size:26px;font-weight:900;margin:0;}
+  .sub{opacity:.7;margin-top:6px;}
+  .monthbar{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:10px;}
+  .month{font-weight:900;font-size:18px;min-width:140px;text-align:center;}
+
+  .cal{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:10px;
+    background:rgba(255,255,255,.65);
+    border:1px solid rgba(0,0,0,.08);
+    border-radius:18px;
+    padding:14px;
+  }
+  .dow{
+    font-weight:800;
+    text-align:center;
+    padding:10px 0;
+    opacity:.75;
+  }
+  .cell{
+    border-radius:14px;
+    padding:12px;
+    min-height:74px;
+    background:#fff;
+    border:1px solid rgba(0,0,0,.06);
+    text-decoration:none;
+    color:inherit;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .cell.day:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.08);}
+  .cell.blank{background:transparent;border:none;}
+  .cell.disabled{opacity:.45;cursor:not-allowed;}
+  .num{font-weight:900;font-size:18px;}
+  .num.today{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    background:#0d6efd;
+    color:#fff;
+    width:max-content;
+  }
+  .meta{opacity:.7;font-size:13px;}
+  .foot{margin-top:14px;}
+
+  /* 既存 btn が無い場合の保険 */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;text-decoration:none;color:inherit;font-weight:700;}
+  .btn.ghost{background:transparent;}
+</style>
+
+{% endblock %}

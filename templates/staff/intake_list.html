@@ -1,0 +1,277 @@
+{% extends "staff/_layout.html" %}
+{% block content %}
+<style>
+  /* ===== Intake list base ===== */
+  .intake-box{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+  }
+  .intake-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .intake-row:last-child{ border-bottom:none; }
+  .intake-name{ font-weight:900; }
+  .intake-meta{ color:var(--muted); font-size:12px; margin-top:4px; line-height:1.5; }
+
+  .intake-filters{ display:flex; gap:10px; align-items:center; margin:12px 0 16px; flex-wrap:wrap; }
+  .intake-filters input{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    min-width:260px;
+  }
+
+  /* _layout の .btn と喧嘩しない “一覧専用ボタン” */
+  .list-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:40px;
+    padding:0 14px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:#fff;
+    font-weight:800;
+    text-decoration:none;
+    color:#0f172a;
+    font-size:13px;
+    user-select:none;
+  }
+
+  /* ===== Empty State (Intake only) ===== */
+  .intake-empty{ margin:18px 0; }
+  .intake-empty-card{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 10px 26px rgba(0,0,0,.06);
+    position:relative;
+    overflow:hidden;
+  }
+  .intake-empty-card::before{
+    content:"";
+    position:absolute;
+    inset:-40px -80px auto auto;
+    width:220px;height:220px;
+    background: radial-gradient(circle at 30% 30%, rgba(120,94,240,.22), rgba(120,94,240,0) 60%);
+    pointer-events:none;
+  }
+
+  .intake-empty-head{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    position:relative;
+  }
+  .intake-empty-badge{
+    width:48px;height:48px;
+    border-radius:16px;
+    display:grid;
+    place-items:center;
+    border:1px solid rgba(120,94,240,.22);
+    background: linear-gradient(135deg, rgba(120,94,240,.18), rgba(255,255,255,0));
+    flex:0 0 auto;
+    font-size:20px;
+  }
+  .intake-empty-title{
+    margin:0;
+    font-size:18px;
+    font-weight:900;
+    letter-spacing:.01em;
+  }
+  .intake-empty-sub{
+    margin:6px 0 0;
+    color:var(--muted);
+    line-height:1.7;
+    font-size:13px;
+  }
+  .intake-empty-sub strong{
+    color: var(--text, #111);
+    font-weight:900;
+  }
+
+  .intake-empty-actions{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  /* ここは _layout の .btn をそのまま使う前提 */
+  .intake-empty-actions .btn-arrow{ opacity:.9; font-weight:900; }
+
+  .intake-empty-grid{
+    display:grid;
+    gap:10px;
+    margin-top:14px;
+  }
+  .intake-panel{
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px;
+    background:#fff;
+  }
+  .intake-panel.subtle{
+    background: rgba(120,94,240,.04);
+    border-color: rgba(120,94,240,.14);
+  }
+  .intake-panel.subtle2{ background: rgba(0,0,0,.02); }
+
+  .intake-panel-top{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .intake-panel-icon{
+    width:26px;height:26px;
+    border-radius:10px;
+    display:grid;
+    place-items:center;
+    border:1px solid var(--line);
+    background:#fff;
+    font-size:14px;
+  }
+  .intake-panel-title{
+    margin:0;
+    font-size:13px;
+    font-weight:900;
+  }
+  .intake-panel-list{
+    margin:0;
+    padding-left:18px;
+    color: var(--muted);
+    line-height:1.7;
+    font-size:13px;
+  }
+
+  /* ここが今回の “崩れ対策の本丸” */
+  .intake-empty-foot{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .intake-pill{
+    display:inline-flex;
+    align-items:center;
+    padding:6px 10px;          /* height固定をやめる */
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#fff;
+    font-size:12px;
+    font-weight:900;
+    line-height:1;             /* ★ これで縦ズレが消える */
+    white-space:nowrap;
+  }
+  .intake-pill.muted{ color: var(--muted); }
+  .intake-sep{ margin:0 8px; opacity:.6; font-weight:900; }
+</style>
+
+
+<div style="margin-bottom:12px;">
+  <div style="font-size:24px; font-weight:900;">問診</div>
+  <div style="color:var(--muted); margin-top:6px;">提出された問診を確認できます</div>
+</div>
+
+<form method="get" class="intake-filters">
+  <input type="text" name="q" placeholder="患者名・電話・主訴で検索" value="{{ filter_q }}">
+  <button class="list-btn" type="submit">検索</button>
+</form>
+
+<div class="intake-box">
+  {% for i in intakes %}
+    <div class="intake-row">
+      <div>
+        <div class="intake-name">{{ i.patient.last_name }} {{ i.patient.first_name }}</div>
+        <div class="intake-meta">
+          {{ i.submitted_at|date:"Y/m/d H:i" }} /
+          主訴：{{ i.chief_complaint|default:"-" }} /
+          {{ i.get_symptom_type_display }}
+          {% if i.appointment %}/ 予約：{{ i.appointment.start_at|date:"H:i" }}{% endif %}
+        </div>
+      </div>
+      <a class="list-btn" href="{% url 'staff:intake_detail' i.id %}">詳細</a>
+    </div>
+
+  {% empty %}
+    <section class="intake-empty" aria-labelledby="emptyTitle">
+      <div class="intake-empty-card">
+
+        <header class="intake-empty-head">
+          <div class="intake-empty-badge" aria-hidden="true">📝</div>
+          <div>
+            <h2 id="emptyTitle" class="intake-empty-title">問診がまだありません</h2>
+            <p class="intake-empty-sub">
+              問診は <strong>予約</strong> から作成されます。まずは本日の予約を開いて、対象患者の「問診へ」へ進んでください。
+            </p>
+          </div>
+        </header>
+
+        <div class="intake-empty-actions">
+          <a class="btn primary" href="{% url 'staff:appointments' %}">
+            予約管理へ <span class="btn-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="btn ghost" href="{% url 'staff:dashboard' %}">
+            ダッシュボード
+          </a>
+        </div>
+
+        <div class="intake-empty-grid">
+          <div class="intake-panel">
+            <div class="intake-panel-top">
+              <div class="intake-panel-icon" aria-hidden="true">✅</div>
+              <h3 class="intake-panel-title">最短ルート</h3>
+            </div>
+            <ol class="intake-panel-list">
+              <li>予約管理で本日の予約を開く</li>
+              <li>患者を選択 → 「問診へ」</li>
+              <li>問診作成後、この一覧に表示されます</li>
+            </ol>
+          </div>
+
+          <div class="intake-panel subtle">
+            <div class="intake-panel-top">
+              <div class="intake-panel-icon" aria-hidden="true">💡</div>
+              <h3 class="intake-panel-title">運用ルール（おすすめ）</h3>
+            </div>
+            <ul class="intake-panel-list">
+              <li>問診がある予約だけ「診察へ」を出す</li>
+              <li>受付→問診→診察 の順に固定すると迷いゼロ</li>
+            </ul>
+          </div>
+
+          <div class="intake-panel subtle2">
+            <div class="intake-panel-top">
+              <div class="intake-panel-icon" aria-hidden="true">❓</div>
+              <h3 class="intake-panel-title">よくある疑問</h3>
+            </div>
+            <ul class="intake-panel-list">
+              <li>「問診が出ない」→ 予約側で未作成の可能性</li>
+              <li>「診察へが出ない」→ 問診未作成の可能性</li>
+            </ul>
+          </div>
+        </div>
+
+        <footer class="intake-empty-foot">
+          <span class="intake-pill">予約<span class="intake-sep" aria-hidden="true">→</span>問診<span class="intake-sep" aria-hidden="true">→</span>診察（Visit）</span>
+          <span class="intake-pill muted">この導線が“黄金ルート”</span>
+        </footer>
+
+      </div>
+    </section>
+  {% endfor %}
+
+
+</div>
+
+
+{% endblock %}

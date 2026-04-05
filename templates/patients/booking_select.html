@@ -1,0 +1,42 @@
+{% extends "patients/patient_base.html" %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;padding:28px 18px;">
+  <h1 style="font-size:26px;font-weight:900;margin:0;">予約枠の選択</h1>
+  <p style="color:var(--muted);margin-top:6px;">
+    {{ clinic.name }} / {{ patient.last_name }} {{ patient.first_name }} 様
+  </p>
+
+  <form method="get" style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <input type="date" name="date" value="{{ selected_day|date:'Y-m-d' }}"
+           style="border:1px solid var(--line);border-radius:12px;padding:10px 12px;">
+    <button class="btn" type="submit">表示</button>
+  </form>
+
+  <div style="margin-top:14px;border:1px solid var(--line);border-radius:18px;background:#fff;padding:16px;">
+    <div style="font-weight:900;">空き枠（{{ slot_min }}分刻み / 所要{{ duration_min }}分）</div>
+
+    {% if available_slots %}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px;">
+        {% for s in available_slots %}
+          <form method="post" action="{% url 'patients:booking_confirm' %}">
+            {% csrf_token %}
+            <input type="hidden" name="start_at" value="{{ s.start|date:'Y-m-d\\TH:i' }}">
+            <input type="hidden" name="menu" value="初診">
+            <button type="submit" class="btn" style="width:100%;justify-content:space-between;">
+              <span>{{ s.start|date:"H:i" }} - {{ s.end|date:"H:i" }}</span>
+              <span style="opacity:.7;">→</span>
+            </button>
+          </form>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="margin-top:14px;color:var(--muted);">この日は空き枠がありません。</div>
+    {% endif %}
+  </div>
+
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+    <a class="btn ghost" href="{% url 'patients:my_appointments' %}">予約一覧</a>
+    <a class="btn" href="{% url 'patients:logout' %}">ログアウト</a>
+  </div>
+</div>
+{% endblock %}

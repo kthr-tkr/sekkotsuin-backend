@@ -1,0 +1,102 @@
+/* static/staff/css/staff_login.css */
+:root{
+  --bg:#0b1220;
+  --panel:#ffffff;
+  --text:#0f172a;
+  --muted:#6b7280;
+  --shadow:0 20px 60px rgba(15,23,42,.12);
+}
+
+*{ box-sizing:border-box; }
+body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Meiryo",sans-serif; background:#f5f7fb; }
+
+.back{
+  position:fixed; left:18px; top:14px;
+  background:rgba(255,255,255,.85);
+  border:1px solid rgba(0,0,0,.06);
+  padding:8px 12px; border-radius:999px;
+  text-decoration:none; color:var(--text); font-size:12px;
+}
+
+.wrap{ min-height:100vh; display:flex; }
+.left{
+  flex:1;
+  background: radial-gradient(1200px 600px at 20% 20%, rgba(255,255,255,.08), transparent),
+              linear-gradient(135deg, #0b1220, #0a1020);
+  position:relative;
+}
+.brand{
+  position:absolute; left:40px; bottom:40px;
+  color:#fff;
+}
+.brand-title{ font-size:34px; font-weight:700; letter-spacing:.5px; }
+.brand-sub{ margin-top:10px; font-size:12px; opacity:.85; }
+
+.dots{ position:absolute; right:40px; bottom:40px; display:flex; gap:8px; }
+.dot{ width:8px; height:8px; border-radius:999px; background:rgba(255,255,255,.35); }
+.dot:nth-child(1){ background:rgba(255,255,255,.8); }
+
+.right{
+  width:520px;
+  display:flex; align-items:center; justify-content:center;
+  padding:24px;
+  background:#f5f7fb;
+}
+.card{
+  width:100%;
+  max-width:420px;
+  background:var(--panel);
+  border-radius:18px;
+  padding:28px;
+  box-shadow:var(--shadow);
+}
+.card-title{ text-align:center; font-weight:700; font-size:18px; }
+.card-sub{ text-align:center; color:var(--muted); font-size:11px; margin-top:6px; letter-spacing:.12em; }
+.line{ height:1px; background:#eef2f7; margin:18px 0; }
+
+.messages{ margin-bottom:12px; }
+.msg{
+  background:#fff7ed;
+  border:1px solid #fed7aa;
+  color:#9a3412;
+  padding:10px 12px;
+  border-radius:12px;
+  font-size:12px;
+}
+
+.label{ display:block; font-size:11px; color:var(--muted); margin:14px 0 8px; letter-spacing:.08em; }
+.input{
+  width:100%;
+  height:44px;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:0 12px;
+  outline:none;
+  font-size:14px;
+  background:#fff;
+}
+.input:focus{
+  border-color:#94a3b8;
+  box-shadow:0 0 0 4px rgba(148,163,184,.25);
+}
+
+.btn{
+  width:100%;
+  height:46px;
+  margin-top:16px;
+  border:none;
+  border-radius:12px;
+  background:#0b1220;
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
+.btn:hover{ opacity:.92; }
+
+.hint{ margin:14px 0 0; color:var(--muted); font-size:11px; text-align:center; }
+.foot{ display:flex; justify-content:space-between; margin-top:18px; color:var(--muted); font-size:11px; }
+
+@media (max-width: 900px){
+  .left{ display:none; }
+  .right{ width:100%; }
+}

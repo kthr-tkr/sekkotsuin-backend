@@ -1,0 +1,1123 @@
+{% extends "patients/patient_base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+  .intake-shell{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+
+  .intake-top{
+    margin-bottom: 18px;
+  }
+
+  .intake-eyebrow{
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: #3b82f6;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .intake-title{
+    font-size: 34px;
+    font-weight: 900;
+    margin: 0;
+    line-height: 1.25;
+    color: #0f172a;
+  }
+
+  .intake-sub{
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 16px;
+  }
+
+  .wizard{
+    margin-top: 22px;
+  }
+
+  .wizard__top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:#64748b;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+
+  .wizard__bar{
+    height:8px;
+    background:#e5e7eb;
+    border-radius:999px;
+    overflow:hidden;
+  }
+
+  .wizard__barfill{
+    height:100%;
+    background:linear-gradient(90deg, #163b7a, #2563eb);
+    border-radius:999px;
+  }
+
+  .wizard__card{
+    margin-top:20px;
+    padding:32px 28px;
+    border:1px solid #e5e7eb;
+    border-radius:24px;
+    background:#fff;
+    box-shadow:0 12px 30px rgba(15,23,42,.06);
+  }
+
+  .wizard__title{
+    font-size:30px;
+    font-weight:900;
+    margin:0 0 8px;
+    color:#0f172a;
+  }
+
+  .wizard__lead{
+    color:#64748b;
+    margin:0 0 24px;
+    font-size:15px;
+  }
+
+  .profile-card{
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    border-radius:20px;
+    padding:18px 20px;
+    margin-bottom:24px;
+  }
+
+  .profile-grid{
+    display:grid;
+    gap:0;
+  }
+
+  .profile-row{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    padding:12px 0;
+    border-bottom:1px solid #e5eef8;
+  }
+
+  .profile-row:last-child{
+    border-bottom:none;
+    padding-bottom:0;
+  }
+
+  .profile-label{
+    color:#64748b;
+    font-weight:700;
+  }
+
+  .profile-value{
+    font-weight:800;
+    color:#0f172a;
+    text-align:right;
+  }
+
+  .field{
+    margin:20px 0;
+  }
+
+  .field__label{
+    display:block;
+    margin-bottom:8px;
+    color:#334155;
+    font-weight:800;
+    font-size:15px;
+  }
+
+  .req{
+    color:#ef4444;
+    margin-left:6px;
+  }
+
+  .field__help{
+    margin-top:-2px;
+    margin-bottom:10px;
+    color:#94a3b8;
+    font-size:13px;
+  }
+
+  .field__control input[type="text"],
+  .field__control input[type="number"],
+  .field__control textarea,
+  .field__control select{
+    width:100%;
+    border:1px solid #d1d5db;
+    border-radius:16px;
+    padding:14px 16px;
+    font-size:16px;
+    background:#fff;
+    color:#0f172a;
+  }
+
+  .field__control textarea{
+    min-height:120px;
+    resize:vertical;
+  }
+
+  .field__control input:focus,
+  .field__control textarea:focus,
+  .field__control select:focus{
+    outline:none;
+    border-color:#60a5fa;
+    box-shadow:0 0 0 4px rgba(96,165,250,.15);
+  }
+
+  .choice-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:12px;
+  }
+
+  .choice-grid--2{
+    grid-template-columns:repeat(2, minmax(0,1fr));
+  }
+
+  .choice-card{
+    position:relative;
+  }
+
+  .choice-card input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+  }
+
+  .choice-card label{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:56px;
+    border:1px solid #d1d5db;
+    border-radius:16px;
+    background:#fff;
+    font-weight:800;
+    color:#0f172a;
+    cursor:pointer;
+    transition:.18s ease;
+    text-align:center;
+    padding:10px 12px;
+  }
+
+  .choice-card input:checked + label{
+    border-color:#2563eb;
+    background:#eff6ff;
+    color:#1d4ed8;
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+  }
+
+  .check-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:12px;
+  }
+
+  .check-chip{
+    position:relative;
+  }
+
+  .check-chip input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+  }
+
+  .check-chip label{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:52px;
+    border:1px solid #d1d5db;
+    border-radius:999px;
+    background:#fff;
+    font-weight:700;
+    cursor:pointer;
+    transition:.18s ease;
+    padding:10px 14px;
+    text-align:center;
+  }
+
+  .check-chip input:checked + label{
+    border-color:#16a34a;
+    background:#f0fdf4;
+    color:#15803d;
+    box-shadow:0 0 0 4px rgba(34,197,94,.10);
+  }
+
+  .severity-wrap{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+
+  .severity-wrap input[type="range"]{
+    flex:1;
+  }
+
+  .severity-value{
+    min-width:64px;
+    height:48px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1px solid #d1d5db;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    font-size:18px;
+    color:#0f172a;
+  }
+
+  .consent-box{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    padding:16px 18px;
+  }
+
+  .inline-check{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+  }
+
+  .inline-check input{
+    margin-top:4px;
+  }
+
+  .field__error{
+    color:#dc2626;
+    margin-top:8px;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .form-errors{
+    background:#fef2f2;
+    border:1px solid #fecaca;
+    color:#b91c1c;
+    border-radius:16px;
+    padding:14px 16px;
+    margin-bottom:18px;
+    font-weight:700;
+  }
+
+  .wizard__actions{
+    display:flex;
+    gap:14px;
+    margin-top:28px;
+    flex-wrap:wrap;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:52px;
+    padding:0 20px;
+    border-radius:14px;
+    border:1px solid #d1d5db;
+    background:#fff;
+    text-decoration:none;
+    font-weight:800;
+    color:#0f172a;
+    cursor:pointer;
+  }
+
+  .btn--ghost{
+    background:#fff;
+  }
+
+  .btn--primary{
+    flex:1;
+    background:linear-gradient(180deg,#163b7a,#1d4ed8);
+    color:#fff;
+    border-color:transparent;
+  }
+
+  @media (max-width: 768px){
+    .intake-title{
+      font-size:28px;
+    }
+
+    .wizard__card{
+      padding:24px 18px;
+    }
+
+    .wizard__title{
+      font-size:24px;
+    }
+
+    .choice-grid,
+    .choice-grid--2,
+    .check-grid{
+      grid-template-columns:1fr;
+    }
+
+    .profile-row{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+
+    .profile-value{
+      text-align:left;
+    }
+
+    .wizard__actions{
+      flex-direction:column;
+    }
+  }
+
+  .bodymap-wrap{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-top:10px;
+  }
+
+  .bodymap-card{
+    border:1px solid #dbeafe;
+    background:#f8fbff;
+    border-radius:20px;
+    padding:18px 16px;
+  }
+
+  .bodymap-title{
+    font-size:15px;
+    font-weight:900;
+    color:#1e3a8a;
+    margin-bottom:12px;
+  }
+
+  .bodymap-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:10px;
+  }
+
+  .bodymap-grid--single{
+    grid-template-columns:1fr;
+  }
+
+  .bodymap-note{
+    margin-top:10px;
+    color:#64748b;
+    font-size:13px;
+    line-height:1.6;
+  }
+
+  .check-grid--qualities{
+    grid-template-columns:repeat(3, minmax(0,1fr));
+  }
+
+  .severity-note{
+    margin-top:10px;
+    padding:12px 14px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    color:#475569;
+    font-size:13px;
+    line-height:1.7;
+  }
+
+  .severity-scale{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:8px;
+    font-size:12px;
+    font-weight:700;
+    color:#64748b;
+  }
+
+  @media (max-width: 768px){
+    .bodymap-wrap{
+      grid-template-columns:1fr;
+    }
+
+    .check-grid--qualities{
+      grid-template-columns:1fr;
+    }
+  }
+
+.body-image-wrap{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+  margin-top:12px;
+}
+
+.body-image-card{
+  border:1px solid #dbeafe;
+  background:#f8fbff;
+  border-radius:20px;
+  padding:16px;
+}
+
+.body-image-title{
+  font-size:15px;
+  font-weight:900;
+  color:#1e3a8a;
+  margin-bottom:10px;
+}
+
+.body-image-stage{
+  position:relative;
+  width:100%;
+  max-width:340px;
+  margin:0 auto;
+  aspect-ratio: 3 / 5;
+}
+
+.body-image{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+
+.body-hotspot{
+  position:absolute;
+  border:none;
+  background:rgba(37,99,235,.06);
+  border:2px solid transparent;
+  border-radius:999px;
+  cursor:pointer;
+  transition:.15s ease;
+}
+
+.body-hotspot:hover{
+  background:rgba(37,99,235,.12);
+}
+
+.body-hotspot.is-active{
+  background:rgba(34,197,94,.22);
+  border-color:#22c55e;
+  box-shadow:0 0 0 3px rgba(34,197,94,.10);
+}
+
+.selected-areas-box{
+  margin-top:14px;
+  border:1px solid #e5e7eb;
+  background:#fff;
+  border-radius:16px;
+  padding:14px 16px;
+}
+
+.selected-areas-label{
+  font-size:13px;
+  font-weight:800;
+  color:#64748b;
+  margin-bottom:8px;
+}
+
+.selected-areas-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.selected-area-chip{
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:0 10px;
+  border-radius:999px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  font-size:13px;
+  font-weight:800;
+}
+
+/* 前面ホットスポット 最終微調整版 */
+.hs-head{ top:3%; left:58%; width:10%; height:10%; }
+.hs-neck{ top:13.5%; left:58.5%; width:9%; height:4.5%; }
+
+.hs-shoulder-r{ top:17.5%; left:44.5%; width:12%; height:6.5%; }
+.hs-shoulder-l{ top:17.5%; left:70%; width:12%; height:6.5%; }
+
+.hs-arm-r{ top:25.5%; left:42%; width:8.5%; height:13%; }
+.hs-arm-l{ top:25.5%; left:76.5%; width:8.5%; height:13%; }
+
+.hs-hand-r{ top:45%; left:37%; width:7.5%; height:7.5%; }
+.hs-hand-l{ top:45%; left:82%; width:7.5%; height:7.5%; }
+
+.hs-chest{ top:22%; left:54%; width:18%; height:10%; }
+.hs-waist{ top:35.5%; left:51%; width:25%; height:7.5%; }
+
+.hs-thigh-r{ top:44%; left:52%; width:8.5%; height:15%; }
+.hs-thigh-l{ top:44%; left:67%; width:8.5%; height:15%; }
+
+.hs-knee-r{ top:59.5%; left:52%; width:7.5%; height:6.5%; }
+.hs-knee-l{ top:59.5%; left:67%; width:7.5%; height:6.5%; }
+
+.hs-ankle-r{ top:80.5%; left:51%; width:6.5%; height:5.5%; }
+.hs-ankle-l{ top:80.5%; left:66%; width:6.5%; height:5.5%; }
+
+/* 背面ホットスポット 最終微調整版 */
+.hs-back{ top:20%; left:31%; width:18%; height:20%; }
+.hs-hip-r{ top:40.5%; left:27.5%; width:10.5%; height:8.5%; }
+.hs-hip-l{ top:40.5%; left:41.5%; width:10.5%; height:8.5%; }
+
+@media (max-width: 768px){
+  .body-image-wrap{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+
+<div class="intake-shell">
+  <div class="intake-top">
+    <div class="intake-eyebrow">Web Intake</div>
+    <h1 class="intake-title">{{ step_title }}</h1>
+    <div class="intake-sub">来院前にご入力いただくことで、受付やご案内がスムーズになります。</div>
+  </div>
+
+  <div class="wizard">
+    <div class="wizard__top">
+      <div>Step {{ step }} / 全 {{ last_step }} ステップ</div>
+      <div>{{ progress }}%</div>
+    </div>
+
+    <div class="wizard__bar">
+      <div class="wizard__barfill" style="width: {{ progress }}%;"></div>
+    </div>
+
+    <div class="wizard__card">
+      <h2 class="wizard__title">{{ step_title }}</h2>
+
+      {% if step == 1 %}
+        <p class="wizard__lead">登録情報をご確認ください。誤りがある場合は受付でお知らせください。</p>
+
+        <div class="profile-card">
+          <div class="profile-grid">
+            <div class="profile-row">
+              <div class="profile-label">氏名</div>
+              <div class="profile-value">{{ patient.last_name }} {{ patient.first_name }}</div>
+            </div>
+            <div class="profile-row">
+              <div class="profile-label">カナ</div>
+              <div class="profile-value">{{ patient.last_name_kana }} {{ patient.first_name_kana }}</div>
+            </div>
+            <div class="profile-row">
+              <div class="profile-label">生年月日</div>
+              <div class="profile-value">{{ patient.birth_date|date:"Y年n月j日" }}</div>
+            </div>
+            <div class="profile-row">
+              <div class="profile-label">連絡先</div>
+              <div class="profile-value">{{ patient.phone }}</div>
+            </div>
+            <div class="profile-row">
+              <div class="profile-label">住所</div>
+              <div class="profile-value">{{ patient.address|default:"（未登録）" }}</div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {% if step == 1 %}
+          <div class="field">
+            <label class="field__label">
+              {{ form.confirm_profile.label }}<span class="req">*</span>
+            </label>
+            <div class="consent-box">
+              <label class="inline-check">
+                {{ form.confirm_profile }}
+                <span>登録情報に間違いありません</span>
+              </label>
+            </div>
+            {% if form.confirm_profile.errors %}
+              <div class="field__error">{{ form.confirm_profile.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.source.label }}</label>
+            <div class="field__control">{{ form.source }}</div>
+            {% if form.source.errors %}
+              <div class="field__error">{{ form.source.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.job.label }}</label>
+            <div class="field__control">{{ form.job }}</div>
+            {% if form.job.errors %}
+              <div class="field__error">{{ form.job.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.note.label }}</label>
+            <div class="field__control">{{ form.note }}</div>
+            {% if form.note.errors %}
+              <div class="field__error">{{ form.note.errors|striptags }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if visit_type == "new_issue" %}
+          <div class="previous-box" style="margin-bottom:16px;">
+            <div class="previous-label">今回の種別</div>
+            <div class="previous-text">新しい症状のため、通常の問診をご案内しています。</div>
+          </div>
+        {% elif visit_type == "unknown" %}
+          <div class="previous-box" style="margin-bottom:16px;">
+            <div class="previous-label">今回の種別</div>
+            <div class="previous-text">症状が前回と同じか不明のため、通常の問診をご案内しています。</div>
+          </div>
+        {% endif %}
+
+        {% if step == 2 %}
+          <p class="wizard__lead">現在の症状について教えてください。</p>
+
+          <div class="field">
+            <label class="field__label">{{ form.chief_complaint.label }}<span class="req">*</span></label>
+            <div class="field__help">例：朝起きたときに腰が痛い、肩を上げると痛む など</div>
+            <div class="field__control">{{ form.chief_complaint }}</div>
+            {% if form.chief_complaint.errors %}
+              <div class="field__error">{{ form.chief_complaint.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.symptom_type.label }}<span class="req">*</span></label>
+            <div class="choice-grid">
+              {% for radio in form.symptom_type %}
+                <div class="choice-card">
+                  {{ radio.tag }}
+                  <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            {% if form.symptom_type.errors %}
+              <div class="field__error">{{ form.symptom_type.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.since.label }}<span class="req">*</span></label>
+            <div class="choice-grid">
+              {% for radio in form.since %}
+                <div class="choice-card">
+                  {{ radio.tag }}
+                  <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            {% if form.since.errors %}
+              <div class="field__error">{{ form.since.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.trigger.label }}<span class="req">*</span></label>
+            <div class="field__help">症状が出たきっかけや思い当たることがあればご記入ください。</div>
+            <div class="field__control">{{ form.trigger }}</div>
+            {% if form.trigger.errors %}
+              <div class="field__error">{{ form.trigger.errors|striptags }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if step == 3 %}
+          <p class="wizard__lead">痛みや違和感のある場所、強さ、症状の感じを教えてください。</p>
+
+          <div class="field">
+            <label class="field__label">{{ form.areas.label }}<span class="req">*</span></label>
+            <div class="field__help">痛みや違和感のある場所を、人体図から選択してください。</div>
+
+            <div class="body-image-wrap">
+              <div class="body-image-card">
+                <div class="body-image-title">前面</div>
+                <div class="body-image-stage body-image-stage--front">
+                  <img src="{% static 'patients/img/body_front.png' %}" alt="人体図 前面" class="body-image">
+
+                  <button type="button" class="body-hotspot hs-head" data-area="head" aria-label="頭"></button>
+                  <button type="button" class="body-hotspot hs-neck" data-area="neck" aria-label="首"></button>
+                  <button type="button" class="body-hotspot hs-shoulder-r" data-area="shoulder_r" aria-label="右肩"></button>
+                  <button type="button" class="body-hotspot hs-shoulder-l" data-area="shoulder_l" aria-label="左肩"></button>
+                  <button type="button" class="body-hotspot hs-arm-r" data-area="arm_r" aria-label="右腕"></button>
+                  <button type="button" class="body-hotspot hs-arm-l" data-area="arm_l" aria-label="左腕"></button>
+                  <button type="button" class="body-hotspot hs-hand-r" data-area="hand_r" aria-label="右手"></button>
+                  <button type="button" class="body-hotspot hs-hand-l" data-area="hand_l" aria-label="左手"></button>
+                  <button type="button" class="body-hotspot hs-chest" data-area="chest" aria-label="胸"></button>
+                  <button type="button" class="body-hotspot hs-waist" data-area="waist" aria-label="腰"></button>
+                  <button type="button" class="body-hotspot hs-thigh-r" data-area="thigh_r" aria-label="右太もも"></button>
+                  <button type="button" class="body-hotspot hs-thigh-l" data-area="thigh_l" aria-label="左太もも"></button>
+                  <button type="button" class="body-hotspot hs-knee-r" data-area="knee_r" aria-label="右膝"></button>
+                  <button type="button" class="body-hotspot hs-knee-l" data-area="knee_l" aria-label="左膝"></button>
+                  <button type="button" class="body-hotspot hs-ankle-r" data-area="ankle_r" aria-label="右足首"></button>
+                  <button type="button" class="body-hotspot hs-ankle-l" data-area="ankle_l" aria-label="左足首"></button>
+                </div>
+              </div>
+
+              <div class="body-image-card">
+                <div class="body-image-title">背面</div>
+                <div class="body-image-stage body-image-stage--back">
+                  <img src="{% static 'patients/img/body_back.png' %}" alt="人体図 背面" class="body-image">
+
+                  <button type="button" class="body-hotspot hs-back" data-area="back" aria-label="背中"></button>
+                  <button type="button" class="body-hotspot hs-hip-r" data-area="hip_r" aria-label="右臀部"></button>
+                  <button type="button" class="body-hotspot hs-hip-l" data-area="hip_l" aria-label="左臀部"></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="selected-areas-box">
+              <div class="selected-areas-label">選択中の部位</div>
+              <div id="selected-areas-list" class="selected-areas-list"></div>
+            </div>
+
+            <div style="display:none;">
+              {{ form.areas }}
+            </div>
+
+            {% if form.areas.errors %}
+              <div class="field__error">{{ form.areas.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field" style="margin-top:14px;">
+            <label class="field__label">上の人体図にない場所</label>
+            <div class="check-grid">
+              {% for checkbox in form.areas %}
+                {% if checkbox.data.value == "other" %}
+                  <div class="check-chip">
+                    {{ checkbox.tag }}
+                    <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="field" id="other-area-wrap" style="display:none;">
+            <label class="field__label">{{ form.other_area_text.label }}</label>
+            <div class="field__control">{{ form.other_area_text }}</div>
+            {% if form.other_area_text.errors %}
+              <div class="field__error">{{ form.other_area_text.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.severity.label }}<span class="req">*</span></label>
+            <div class="severity-wrap">
+              {{ form.severity }}
+              <div class="severity-value"><span id="severity-value">{{ form.severity.value|default:5 }}</span>/10</div>
+            </div>
+
+            <div class="severity-note">
+              0は痛みがない状態、10はこれまでで最も強い痛みを目安に選んでください。
+              <div class="severity-scale">
+                <span>0 = 無痛</span>
+                <span>10 = 最大の痛み</span>
+              </div>
+            </div>
+
+            {% if form.severity.errors %}
+              <div class="field__error">{{ form.severity.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.qualities.label }}</label>
+            <div class="check-grid check-grid--qualities">
+              {% for checkbox in form.qualities %}
+                <div class="check-chip">
+                  {{ checkbox.tag }}
+                  <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            {% if form.qualities.errors %}
+              <div class="field__error">{{ form.qualities.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field" id="other-quality-wrap" style="display:none;">
+            <label class="field__label">{{ form.other_quality_text.label }}</label>
+            <div class="field__control">{{ form.other_quality_text }}</div>
+            {% if form.other_quality_text.errors %}
+              <div class="field__error">{{ form.other_quality_text.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.free_text.label }}</label>
+            <div class="field__control">{{ form.free_text }}</div>
+            {% if form.free_text.errors %}
+              <div class="field__error">{{ form.free_text.errors|striptags }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if step == 4 %}
+          <p class="wizard__lead">確認事項をご入力ください。</p>
+
+          <div class="field">
+            <label class="field__label">{{ form.other_clinic.label }}<span class="req">*</span></label>
+            <div class="choice-grid choice-grid--2">
+              {% for radio in form.other_clinic %}
+                <div class="choice-card">
+                  {{ radio.tag }}
+                  <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            {% if form.other_clinic.errors %}
+              <div class="field__error">{{ form.other_clinic.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field" id="other-clinic-note-wrap" style="display:none;">
+            <label class="field__label">{{ form.other_clinic_note.label }}</label>
+            <div class="field__control">{{ form.other_clinic_note }}</div>
+            {% if form.other_clinic_note.errors %}
+              <div class="field__error">{{ form.other_clinic_note.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.taking_meds.label }}<span class="req">*</span></label>
+            <div class="choice-grid choice-grid--2">
+              {% for radio in form.taking_meds %}
+                <div class="choice-card">
+                  {{ radio.tag }}
+                  <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            {% if form.taking_meds.errors %}
+              <div class="field__error">{{ form.taking_meds.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field" id="meds-note-wrap" style="display:none;">
+            <label class="field__label">{{ form.meds_note.label }}</label>
+            <div class="field__control">{{ form.meds_note }}</div>
+            {% if form.meds_note.errors %}
+              <div class="field__error">{{ form.meds_note.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.past_history.label }}<span class="req">*</span></label>
+            <div class="choice-grid choice-grid--2">
+              {% for radio in form.past_history %}
+                <div class="choice-card">
+                  {{ radio.tag }}
+                  <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            {% if form.past_history.errors %}
+              <div class="field__error">{{ form.past_history.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field" id="history-note-wrap" style="display:none;">
+            <label class="field__label">{{ form.history_note.label }}</label>
+            <div class="field__control">{{ form.history_note }}</div>
+            {% if form.history_note.errors %}
+              <div class="field__error">{{ form.history_note.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.final_note.label }}</label>
+            <div class="field__control">{{ form.final_note }}</div>
+            {% if form.final_note.errors %}
+              <div class="field__error">{{ form.final_note.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.consent_agreed.label }}<span class="req">*</span></label>
+            <div class="consent-box">
+              <label class="inline-check">
+                {{ form.consent_agreed }}
+                <span>個人情報の取り扱いに同意します</span>
+              </label>
+            </div>
+            {% if form.consent_agreed.errors %}
+              <div class="field__error">{{ form.consent_agreed.errors|striptags }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <div class="wizard__actions">
+          {% if step > 1 %}
+            <a class="btn btn--ghost" href="?step={{ step|add:"-1" }}">← 戻る</a>
+          {% else %}
+            <a class="btn btn--ghost" href="{% url 'intakes:intake_start' appointment.id %}">← 戻る</a>
+          {% endif %}
+
+          <button class="btn btn--primary" type="submit">
+            {% if step == last_step %}送信する{% else %}次へ →{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const severityInput = document.querySelector('input[name="severity"]');
+  const severityValue = document.getElementById("severity-value");
+
+  if (severityInput && severityValue) {
+    severityValue.textContent = severityInput.value || 5;
+    severityInput.addEventListener("input", function () {
+      severityValue.textContent = this.value;
+    });
+  }
+
+  const otherAreaCheckbox = document.querySelector('input[name="areas"][value="other"]');
+  const otherAreaWrap = document.getElementById("other-area-wrap");
+
+  function toggleOtherArea() {
+    if (otherAreaCheckbox && otherAreaWrap) {
+      otherAreaWrap.style.display = otherAreaCheckbox.checked ? "block" : "none";
+    }
+  }
+  if (otherAreaCheckbox) {
+    toggleOtherArea();
+    otherAreaCheckbox.addEventListener("change", toggleOtherArea);
+  }
+
+  function bindYesNoToggle(fieldName, wrapId) {
+    const yesRadio = document.querySelector(`input[name="${fieldName}"][value="yes"]`);
+    const wrap = document.getElementById(wrapId);
+    if (!yesRadio || !wrap) return;
+
+    function toggle() {
+      wrap.style.display = yesRadio.checked ? "block" : "none";
+    }
+
+    document.querySelectorAll(`input[name="${fieldName}"]`).forEach(el => {
+      el.addEventListener("change", toggle);
+    });
+
+    toggle();
+  }
+
+  bindYesNoToggle("other_clinic", "other-clinic-note-wrap");
+  bindYesNoToggle("taking_meds", "meds-note-wrap");
+  bindYesNoToggle("past_history", "history-note-wrap");
+});
+
+  const otherQualityCheckbox = document.querySelector('input[name="qualities"][value="other"]');
+  const otherQualityWrap = document.getElementById("other-quality-wrap");
+
+  function toggleOtherQuality() {
+    if (otherQualityCheckbox && otherQualityWrap) {
+      otherQualityWrap.style.display = otherQualityCheckbox.checked ? "block" : "none";
+    }
+  }
+
+  if (otherQualityCheckbox) {
+    toggleOtherQuality();
+    otherQualityCheckbox.addEventListener("change", toggleOtherQuality);
+  }
+
+  const areaLabelMap = {
+    head: "頭",
+    neck: "首",
+    shoulder_r: "右肩",
+    shoulder_l: "左肩",
+    arm_r: "右腕",
+    arm_l: "左腕",
+    hand_r: "右手",
+    hand_l: "左手",
+    back: "背中",
+    chest: "胸",
+    waist: "腰",
+    hip_r: "右臀部",
+    hip_l: "左臀部",
+    thigh_r: "右太もも",
+    thigh_l: "左太もも",
+    knee_r: "右膝",
+    knee_l: "左膝",
+    ankle_r: "右足首",
+    ankle_l: "左足首"
+  };
+
+  const areaCheckboxes = document.querySelectorAll('input[name="areas"]');
+  const hotspots = document.querySelectorAll('.body-hotspot');
+  const selectedAreasList = document.getElementById('selected-areas-list');
+
+  function findAreaCheckbox(value) {
+    return document.querySelector(`input[name="areas"][value="${value}"]`);
+  }
+
+  function renderSelectedAreas() {
+    if (!selectedAreasList) return;
+    selectedAreasList.innerHTML = "";
+
+    const selected = [];
+    areaCheckboxes.forEach(cb => {
+      if (cb.checked && areaLabelMap[cb.value]) {
+        selected.push({ value: cb.value, label: areaLabelMap[cb.value] });
+      }
+    });
+
+    if (selected.length === 0) {
+      selectedAreasList.innerHTML = '<span class="field__help">まだ選択されていません</span>';
+      return;
+    }
+
+    selected.forEach(item => {
+      const chip = document.createElement("span");
+      chip.className = "selected-area-chip";
+      chip.textContent = item.label;
+      selectedAreasList.appendChild(chip);
+    });
+  }
+
+  function syncHotspots() {
+    hotspots.forEach(hs => {
+      const value = hs.dataset.area;
+      const cb = findAreaCheckbox(value);
+      if (!cb) return;
+      hs.classList.toggle("is-active", cb.checked);
+    });
+    renderSelectedAreas();
+  }
+
+  hotspots.forEach(hs => {
+    hs.addEventListener("click", function () {
+      const value = this.dataset.area;
+      const cb = findAreaCheckbox(value);
+      if (!cb) return;
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event("change", { bubbles: true }));
+      syncHotspots();
+    });
+  });
+
+  areaCheckboxes.forEach(cb => {
+    cb.addEventListener("change", syncHotspots);
+  });
+
+  syncHotspots();
+</script>
+
+{% endblock %}

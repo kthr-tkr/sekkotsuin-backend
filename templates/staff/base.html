@@ -1,0 +1,45 @@
+{# templates/staff/base.html #}
+{% load static %}
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Medical AI | Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'staff/css/staff.css' %}">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-title">Medical AI</div>
+        <div class="brand-sub">DIAGNOSIS SUPPORT</div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+           href="{% url 'staff:dashboard' %}">
+          <span class="dot"></span> ホーム
+        </a>
+        <a class="nav-item" href="#"><span class="dot"></span> 問診</a>
+        <a class="nav-item" href="#"><span class="dot"></span> 予約管理</a>
+        <a class="nav-item" href="#"><span class="dot"></span> 患者検索</a>
+        <a class="nav-item" href="#"><span class="dot"></span> 担当者一覧</a>
+        <a class="nav-item" href="#"><span class="dot"></span> 操作マニュアル</a>
+        <a class="nav-item" href="#"><span class="dot"></span> 設定</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a class="logout" href="{% url 'staff:logout' %}">ログアウト</a>
+        <a class="back" href="{% url 'home' %}">選択画面に戻る</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

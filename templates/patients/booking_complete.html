@@ -1,0 +1,19 @@
+{% extends "patients/patient_base.html" %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;padding:28px 18px;">
+  <h1 style="font-size:26px;font-weight:900;margin:0;">予約完了</h1>
+  <p style="color:var(--muted);margin-top:6px;">ご予約を受け付けました。</p>
+
+  <div style="margin-top:14px;border:1px solid var(--line);border-radius:18px;background:#fff;padding:16px;">
+    <div><strong>日時：</strong>{{ appointment.start_at|date:"Y/m/d H:i" }} - {{ appointment.end_at|date:"H:i" }}</div>
+    <div><strong>メニュー：</strong>{{ appointment.menu }}</div>
+    <div><strong>施術者：</strong>{{ appointment.assigned_staff.get_full_name|default:appointment.assigned_staff.username }}</div>
+    <div><strong>状態：</strong>{{ appointment.get_status_display }}</div>
+  </div>
+
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+    <a class="btn primary" href="{% url 'patients:my_appointments' %}">予約一覧へ</a>
+    <a class="btn ghost" href="{% url 'patients:booking_calendar' %}">別日で予約する</a>
+  </div>
+</div>
+{% endblock %}

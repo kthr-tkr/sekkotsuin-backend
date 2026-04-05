@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>予約情報の確認</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e5e7eb;
+      --primary:#0b1a33;
+      --primary2:#112a52;
+      --radius:14px;
+    }
+
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:32px 16px;
+    }
+
+    .card{
+      width:min(520px, 100%);
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow: 0 10px 30px rgba(2,6,23,.06);
+      padding:28px 28px 20px;
+    }
+
+    .title{
+      font-size:22px;
+      font-weight:700;
+      margin:0 0 6px;
+      letter-spacing:.02em;
+    }
+    .subtitle{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+    }
+    .divider{
+      height:1px;
+      background:var(--line);
+      margin:18px 0 18px;
+    }
+
+    .field{
+      margin-bottom:16px;
+    }
+    label{
+      display:block;
+      font-size:12px;
+      font-weight:600;
+      color:#334155;
+      margin-bottom:8px;
+    }
+    input{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:14px 14px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+    }
+    input::placeholder{color:#b6c0cf;}
+    input:focus{
+      border-color:#8aa4d6;
+      box-shadow:0 0 0 4px rgba(138,164,214,.25);
+    }
+    .hint{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .actions{
+      display:flex;
+      gap:12px;
+      margin-top:18px;
+    }
+
+    .btn{
+      flex:1;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      border-radius:14px;
+      padding:13px 14px;
+      font-weight:700;
+      font-size:14px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:#0f172a;
+      cursor:pointer;
+      text-decoration:none;
+      user-select:none;
+    }
+    .btn:hover{filter:brightness(.98);}
+    .btn:active{transform:translateY(1px);}
+
+    .btn-primary{
+      background:linear-gradient(180deg, var(--primary2), var(--primary));
+      color:#fff;
+      border-color:transparent;
+      box-shadow: 0 10px 18px rgba(11,26,51,.18);
+    }
+    .btn-primary:focus{
+      outline:none;
+      box-shadow: 0 0 0 4px rgba(17,42,82,.25), 0 10px 18px rgba(11,26,51,.18);
+    }
+
+    .footer-note{
+      margin-top:14px;
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .links{
+      margin-top:14px;
+      display:flex;
+      justify-content:center;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+    .link{
+      color:#1d4ed8;
+      text-decoration:none;
+      font-size:13px;
+      font-weight:600;
+    }
+    .link:hover{text-decoration:underline;}
+
+    .page-note{
+      margin-top:14px;
+      text-align:center;
+      font-size:12px;
+      color:#94a3b8;
+    }
+
+    /* 小画面微調整 */
+    @media (max-width:420px){
+      .card{padding:22px 18px 18px;}
+      .actions{flex-direction:column;}
+      .btn{width:100%;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="card">
+      <h1 class="title">予約情報の確認</h1>
+      <p class="subtitle">ご予約には診察券番号の確認が必要です</p>
+
+      <div class="divider"></div>
+
+      <form method="post" action="{% url 'patients:login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+
+        <div class="field">
+          <label for="login_id">ログインID（ユーザー名 または 診察券番号）</label>
+          <input id="login_id" name="login_id" type="text" placeholder="例: taro / P000123" required>
+          <div class="hint">ユーザー名か診察券番号のどちらでもログインできます</div>
+        </div>
+
+        <div class="field">
+          <label for="password">パスワード</label>
+          <input id="password" name="password" type="password" placeholder="パスワード" required>
+        </div>
+
+        <div class="actions">
+          <a class="btn" href="/">← 戻る</a>
+          <button class="btn btn-primary" type="submit">次へ →</button>
+        </div>
+
+        <div class="links">
+          <a class="link" href="{% url 'patients:register' %}">はじめての方はこちら（新規登録）</a>
+        </div>
+      </form>
+
+    </div>
+
+    <div class="page-note">個人情報は厳重に管理されます</div>
+  </div>
+</body>
+</html>

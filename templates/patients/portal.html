@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;padding:28px 18px;">
+  <h1 style="font-size:26px;font-weight:900;margin:0;">患者ポータル</h1>
+  <p style="color:var(--muted);margin-top:6px;">予約の作成・確認ができます</p>
+
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+    <a class="btn primary" href="{% url 'patients:booking_select' %}">予約を取る</a>
+    <a class="btn ghost" href="{% url 'patients:my_appointments' %}">予約一覧</a>
+    <a class="btn" href="{% url 'patients:logout' %}">ログアウト</a>
+  </div>
+</div>
+{% endblock %}

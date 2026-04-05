@@ -1,0 +1,42 @@
+{% extends "patients/patient_base.html" %}
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;padding:24px 18px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+    <div>
+      <h1 style="font-size:26px;font-weight:900;margin:0;">{{ day|date:"n月j日" }} の空き枠</h1>
+      <div style="color:var(--muted);margin-top:6px;">施術者と時間を選択してください</div>
+    </div>
+    <a class="btn ghost" href="{% url 'patients:staff_booking_calendar' patient.pk %}{% if treatment_plan_id %}?treatment_plan_id={{ treatment_plan_id }}{% endif %}">← 日付へ戻る</a>
+  </div>
+
+  <div style="margin-top:16px;display:grid;gap:14px;">
+    {% for item in staff_slots %}
+      <div style="border:1px solid var(--line);border-radius:18px;background:#fff;padding:16px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div style="font-weight:900;">{{ item.staff.get_full_name|default:item.staff.username }}</div>
+          <div style="color:var(--muted);font-size:12px;">空き：{{ item.slots|length }}枠</div>
+        </div>
+
+        {% if item.slots %}
+          <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">
+            {% for s in item.slots %}
+              <form method="post" action="{% url 'patients:staff_booking_confirm' patient.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="staff_id" value="{{ item.staff.id }}">
+                <input type="hidden" name="start_at" value="{{ s.start|date:'Y-m-d\\TH:i' }}">
+                <input type="hidden" name="menu" value="再診">
+                {% if treatment_plan_id %}
+                  <input type="hidden" name="treatment_plan_id" value="{{ treatment_plan_id }}">
+                {% endif %}
+                <button class="btn" type="submit" style="width:100%;">{{ s.start|date:"H:i" }}</button>
+              </form>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="margin-top:10px;color:var(--muted);">空き枠がありません</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

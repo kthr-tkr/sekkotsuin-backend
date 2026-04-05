@@ -1,0 +1,937 @@
+{# templates/staff/dashboard.html #}
+{% extends "staff/_layout.html" %}
+{% block title %}Medical AI | Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+  :root{
+    --bg:#f3f5f9;
+    --panel:#ffffff;
+    --panel-2:rgba(255,255,255,.7);
+    --line:#e8edf5;
+    --text:#0b1220;
+    --muted:#6b7280;
+
+    --navy:#0a1020;
+    --navy-2:#131c34;
+    --blue:#3b82f6;
+    --blue-2:#5b8cff;
+    --violet:#7c3aed;
+
+    --success:#10b981;
+    --warn:#f59e0b;
+    --danger:#ef4444;
+
+    --shadow-xs:0 6px 18px rgba(15,23,42,.05);
+    --shadow-sm:0 16px 36px rgba(15,23,42,.06);
+    --shadow-md:0 24px 60px rgba(15,23,42,.08);
+    --shadow-lg:0 30px 80px rgba(37,99,235,.18);
+
+    --radius-sm:16px;
+    --radius-md:22px;
+    --radius-lg:30px;
+  }
+
+  .dashboard{
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:24px;
+  }
+
+  .page-head{
+    min-width:0;
+    padding-top:4px;
+  }
+
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(124,58,237,.08);
+    color:#5b38c5;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.02em;
+    margin-bottom:14px;
+    backdrop-filter:blur(10px);
+  }
+
+  .eyebrow::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+    box-shadow:0 0 0 4px rgba(124,58,237,.08);
+  }
+
+  .page-title{
+    margin:0;
+    font-size:56px;
+    line-height:1.02;
+    letter-spacing:-0.05em;
+    font-weight:900;
+    color:var(--text);
+  }
+
+  .page-meta{
+    margin-top:12px;
+    color:#64748b;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:.01em;
+  }
+
+  .lux-clock{
+    min-width:250px;
+    border-radius:28px;
+    padding:22px 24px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(91,140,255,.32), transparent 28%),
+      linear-gradient(145deg, #09101f 0%, #18213c 50%, #2847b8 100%);
+    box-shadow:
+      0 20px 50px rgba(15,23,42,.22),
+      inset 0 1px 0 rgba(255,255,255,.08);
+    position:relative;
+    overflow:hidden;
+  }
+
+  .lux-clock::after{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:27px;
+    border:1px solid rgba(255,255,255,.08);
+    pointer-events:none;
+  }
+
+  .clock{
+    font-size:52px;
+    line-height:1;
+    font-weight:300;
+    letter-spacing:.02em;
+    text-align:right;
+  }
+
+  .clock-sub{
+    margin-top:8px;
+    text-align:right;
+    color:rgba(255,255,255,.62);
+    font-size:12px;
+    letter-spacing:.14em;
+  }
+
+  .clock-stats{
+    margin-top:18px;
+    display:grid;
+    gap:8px;
+    font-size:14px;
+    color:rgba(255,255,255,.9);
+  }
+
+  .clock-dot{
+    display:inline-block;
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:#22c55e;
+    margin-right:8px;
+    box-shadow:0 0 0 4px rgba(34,197,94,.15);
+    vertical-align:middle;
+  }
+
+  .divider{
+    height:1px;
+    background:linear-gradient(90deg, rgba(148,163,184,.0) 0%, rgba(148,163,184,.35) 18%, rgba(148,163,184,.35) 82%, rgba(148,163,184,.0) 100%);
+  }
+
+  .action-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+
+  .btn{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    padding:0 18px;
+    border-radius:16px;
+    border:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.78);
+    color:#111827;
+    font-size:14px;
+    font-weight:800;
+    letter-spacing:.01em;
+    box-shadow:var(--shadow-xs);
+    backdrop-filter:blur(10px);
+    transition:.2s ease;
+  }
+
+  .btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(15,23,42,.08);
+  }
+
+  .btn-primary{
+    color:#fff;
+    border-color:transparent;
+    background:
+      linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+    box-shadow:
+      0 16px 36px rgba(29,78,216,.20),
+      inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  .btn-primary::after{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:15px;
+    border:1px solid rgba(255,255,255,.08);
+    pointer-events:none;
+  }
+
+  .btn-ghost{
+    background:rgba(255,255,255,.88);
+  }
+
+  .btn:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+    transform:none;
+    box-shadow:none;
+  }
+
+  .hero{
+    position:relative;
+    overflow:hidden;
+    border-radius:34px;
+    padding:34px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 88% 16%, rgba(96,165,250,.26), transparent 26%),
+      radial-gradient(circle at 10% 90%, rgba(124,58,237,.18), transparent 24%),
+      linear-gradient(135deg, #060c19 0%, #111b36 38%, #1a2f73 68%, #4f86ff 100%);
+    box-shadow:
+      0 28px 80px rgba(15,23,42,.18),
+      inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .hero::before{
+    content:"";
+    position:absolute;
+    top:-120px;
+    right:-80px;
+    width:340px;
+    height:340px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 68%);
+    pointer-events:none;
+  }
+
+  .hero::after{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:33px;
+    border:1px solid rgba(255,255,255,.08);
+    pointer-events:none;
+  }
+
+  .hero-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.45fr .9fr;
+    gap:24px;
+    align-items:stretch;
+  }
+
+  .hero-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:16px;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.18em;
+    color:rgba(255,255,255,.62);
+    text-transform:uppercase;
+  }
+
+  .hero-kicker::before{
+    content:"";
+    width:22px;
+    height:1px;
+    background:rgba(255,255,255,.35);
+  }
+
+  .hero-title{
+    margin:0 0 12px;
+    font-size:34px;
+    line-height:1.22;
+    letter-spacing:-0.04em;
+    font-weight:900;
+    max-width:780px;
+  }
+
+  .hero-sub{
+    margin:0;
+    max-width:760px;
+    font-size:14px;
+    line-height:1.85;
+    color:rgba(255,255,255,.78);
+  }
+
+  .hero-tags{
+    margin-top:22px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  .hero-tag{
+    display:inline-flex;
+    align-items:center;
+    padding:8px 13px;
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.12);
+    color:#fff;
+    font-size:12px;
+    font-weight:800;
+    backdrop-filter:blur(10px);
+  }
+
+  .hero-side{
+    display:flex;
+    align-items:stretch;
+  }
+
+  .next-card{
+    position:relative;
+    width:100%;
+    border-radius:26px;
+    padding:22px 22px 20px;
+    background:linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.08) 100%);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter:blur(12px);
+    overflow:hidden;
+  }
+
+  .next-card::before{
+    content:"";
+    position:absolute;
+    right:-30px;
+    top:-30px;
+    width:160px;
+    height:160px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.12) 0%, rgba(255,255,255,0) 68%);
+  }
+
+  .next-label{
+    position:relative;
+    z-index:1;
+    color:rgba(255,255,255,.62);
+    font-size:12px;
+    letter-spacing:.14em;
+    font-weight:800;
+    margin-bottom:16px;
+    text-transform:uppercase;
+  }
+
+  .next-time{
+    position:relative;
+    z-index:1;
+    font-size:54px;
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-weight:300;
+    margin-bottom:12px;
+  }
+
+  .next-name{
+    position:relative;
+    z-index:1;
+    font-size:24px;
+    font-weight:900;
+    line-height:1.3;
+    margin-bottom:8px;
+  }
+
+  .next-sub{
+    position:relative;
+    z-index:1;
+    font-size:14px;
+    color:rgba(255,255,255,.76);
+    line-height:1.7;
+  }
+
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+  }
+
+  .stat-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:24px;
+    padding:22px 22px 20px;
+    background:rgba(255,255,255,.76);
+    border:1px solid rgba(255,255,255,.75);
+    box-shadow:var(--shadow-sm);
+    backdrop-filter:blur(14px);
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .stat-top{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:14px;
+  }
+
+  .stat-label{
+    color:#64748b;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.01em;
+  }
+
+  .stat-accent{
+    width:38px;
+    height:38px;
+    border-radius:14px;
+    background:linear-gradient(135deg, rgba(59,130,246,.14) 0%, rgba(124,58,237,.12) 100%);
+    border:1px solid rgba(59,130,246,.10);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+  }
+
+  .stat-value{
+    position:relative;
+    z-index:1;
+    font-size:42px;
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-weight:900;
+    color:#09111f;
+    margin-bottom:10px;
+  }
+
+  .stat-sub{
+    position:relative;
+    z-index:1;
+    color:#94a3b8;
+    font-size:12px;
+    line-height:1.7;
+    font-weight:600;
+  }
+
+  .section-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:var(--shadow-sm);
+    backdrop-filter:blur(16px);
+  }
+
+  .section-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .section-head{
+    position:relative;
+    z-index:1;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:16px;
+  }
+
+  .section-title{
+    margin:0;
+    font-size:18px;
+    font-weight:900;
+    letter-spacing:-0.02em;
+    color:#0b1220;
+  }
+
+  .section-sub{
+    margin-top:5px;
+    color:#7b8798;
+    font-size:13px;
+    font-weight:600;
+  }
+
+  .section-link{
+    color:#4f46e5;
+    font-size:13px;
+    font-weight:800;
+    white-space:nowrap;
+  }
+
+  .plan-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+  }
+
+  .plan-box{
+    position:relative;
+    overflow:hidden;
+    border-radius:20px;
+    padding:18px;
+    border:1px solid #edf2f8;
+    background:linear-gradient(180deg, rgba(251,253,255,.92) 0%, rgba(245,248,252,.96) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+  }
+
+  .plan-box::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:3px;
+    opacity:.95;
+  }
+
+  .plan-box.primary::before{
+    background:linear-gradient(90deg, #3b82f6 0%, #7c3aed 100%);
+  }
+
+  .plan-box.info::before{
+    background:linear-gradient(90deg, #4f86ff 0%, #60a5fa 100%);
+  }
+
+  .plan-box.warn::before{
+    background:linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+  }
+
+  .plan-box.success::before{
+    background:linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  }
+
+  .plan-value{
+    font-size:40px;
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-weight:900;
+    color:#09111f;
+  }
+
+  .plan-label{
+    margin-top:10px;
+    font-size:13px;
+    color:#64748b;
+    font-weight:800;
+  }
+
+  .plan-sub{
+    margin-top:6px;
+    font-size:12px;
+    color:#94a3b8;
+    font-weight:600;
+    line-height:1.6;
+  }
+
+  .schedule-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:var(--shadow-sm);
+    backdrop-filter:blur(16px);
+  }
+
+  .schedule-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .appt-list{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .appt-item{
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    border-radius:22px;
+    padding:16px 18px;
+    background:linear-gradient(180deg, rgba(255,255,255,.88) 0%, rgba(249,251,255,.96) 100%);
+    border:1px solid #edf2f8;
+    box-shadow:0 10px 22px rgba(15,23,42,.04);
+    transition:.2s ease;
+  }
+
+  .appt-item:hover{
+    transform:translateY(-2px);
+    box-shadow:0 18px 34px rgba(15,23,42,.08);
+  }
+
+  .appt-left{ min-width:0; }
+
+  .appt-time{
+    color:#3b82f6;
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:.04em;
+    margin-bottom:5px;
+  }
+
+  .appt-name{
+    color:#0b1220;
+    font-size:18px;
+    font-weight:900;
+    letter-spacing:-0.02em;
+    margin-bottom:5px;
+  }
+
+  .appt-sub{
+    color:#6b7280;
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:720px;
+  }
+
+  .appt-right{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+  }
+
+  .status{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:78px;
+    padding:7px 11px;
+    border-radius:999px;
+    background:linear-gradient(135deg, rgba(59,130,246,.10) 0%, rgba(124,58,237,.08) 100%);
+    color:#3658c9;
+    border:1px solid rgba(59,130,246,.10);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .chev{
+    color:#9aa6b8;
+    font-size:20px;
+    font-weight:900;
+  }
+
+  .empty{
+    position:relative;
+    z-index:1;
+    border:1px dashed #d6dfeb;
+    border-radius:20px;
+    padding:28px;
+    text-align:center;
+    color:#94a3b8;
+    background:rgba(250,252,255,.8);
+    font-size:14px;
+    font-weight:700;
+  }
+
+  @media (max-width: 1180px){
+    .hero-grid,
+    .stats-grid,
+    .plan-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media (max-width: 880px){
+    .topbar{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .lux-clock{
+      min-width:auto;
+    }
+
+    .page-title{
+      font-size:42px;
+    }
+  }
+
+  @media (max-width: 640px){
+    .page-title{
+      font-size:34px;
+    }
+
+    .hero{
+      padding:24px;
+      border-radius:24px;
+    }
+
+    .hero-title{
+      font-size:26px;
+    }
+
+    .next-time{
+      font-size:40px;
+    }
+
+    .next-name{
+      font-size:20px;
+    }
+
+    .stat-value,
+    .plan-value{
+      font-size:32px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+
+  <header class="topbar">
+    <div class="page-head">
+      <div class="eyebrow">Staff Workspace</div>
+      <h1 class="page-title">ダッシュボード</h1>
+      <div class="page-meta">
+        山田 太郎 | 担当：整骨 | {{ today|date:"Y年n月j日(D)" }}
+      </div>
+    </div>
+
+    <div class="lux-clock">
+      <div class="clock" id="clock">--:--</div>
+      <div class="clock-sub">JST / CLINIC TIME</div>
+      <div class="clock-stats">
+        <div><span class="clock-dot"></span>AI稼働中</div>
+        <div>施術待ち：{{ waiting_count|default:2 }}件</div>
+        <div>完了：{{ done_count|default:1 }}件</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-kicker">Medical AI Platform</div>
+        <h2 class="hero-title">AI問診から施術計画まで、現場判断をひとつ上の体験へ。</h2>
+        <p class="hero-sub">
+          問診、SOAP、施術計画、経過記録を一気通貫で接続し、
+          日々の診療オペレーションを上質かつスマートに進められるスタッフ向けワークスペースです。
+        </p>
+
+        <div class="hero-tags">
+          <span class="hero-tag">SOAP Intelligence</span>
+          <span class="hero-tag">Treatment Planning</span>
+          <span class="hero-tag">Progress Visibility</span>
+        </div>
+      </div>
+
+      <div class="hero-side">
+        <div class="next-card">
+          <div class="next-label">Next Patient</div>
+
+          {% if next_appt %}
+            <div class="next-time">{{ next_appt.start_at|date:"H:i" }}</div>
+            <div class="next-name">
+              {% if next_appt.patient %}
+                {{ next_appt.patient.last_name }} {{ next_appt.patient.first_name }}
+              {% else %}
+                （患者未確定）
+              {% endif %}
+            </div>
+            <div class="next-sub">
+              {{ next_appt.menu }}{% if next_appt.notes %} / {{ next_appt.notes }}{% endif %}
+            </div>
+          {% else %}
+            <div class="next-time">--:--</div>
+            <div class="next-name">次の予約はありません</div>
+            <div class="next-sub">本日の予定は落ち着いています。</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">本日の予約</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value">{{ appointments|length|default:0 }}</div>
+      <div class="stat-sub">受付・診療予定の合計件数</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">施術待ち</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value">{{ waiting_count|default:2 }}</div>
+      <div class="stat-sub">対応待ちの患者数</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">対応完了</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value">{{ done_count|default:1 }}</div>
+      <div class="stat-sub">本日完了した件数</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">進行中プラン</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value">{{ active_plan_count|default:4 }}</div>
+      <div class="stat-sub">現在進行中の施術計画</div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <div class="section-head">
+      <div>
+        <h3 class="section-title">施術計画サマリー</h3>
+        <div class="section-sub">継続施術の進行状況をまとめて確認できます</div>
+      </div>
+    </div>
+
+    <div class="plan-grid">
+      <div class="plan-box primary">
+        <div class="plan-value">{{ active_plan_count|default:4 }}</div>
+        <div class="plan-label">進行中プラン</div>
+        <div class="plan-sub">現在稼働している施術計画</div>
+      </div>
+
+      <div class="plan-box info">
+        <div class="plan-value">{{ paused_plan_count|default:1 }}</div>
+        <div class="plan-label">一時停止</div>
+        <div class="plan-sub">経過観察中・保留中の計画</div>
+      </div>
+
+      <div class="plan-box success">
+        <div class="plan-value">{{ completed_plan_count|default:3 }}</div>
+        <div class="plan-label">完了</div>
+        <div class="plan-sub">施術完了となった計画</div>
+      </div>
+
+      <div class="plan-box warn">
+        <div class="plan-value">{{ today_progress_count|default:2 }}</div>
+        <div class="plan-label">本日の経過記録</div>
+        <div class="plan-sub">今日追加された経過記録数</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="schedule-card">
+    <div class="section-head">
+      <div>
+        <h3 class="section-title">今日の予約一覧</h3>
+        <div class="section-sub">本日の予約を時刻順に確認できます</div>
+      </div>
+      <a class="section-link" href="{% url 'staff:appointments' %}">予約管理へ →</a>
+    </div>
+
+    <div class="appt-list">
+      {% for a in appointments %}
+        <a class="appt-item" href="{% url 'staff:appointments' %}">
+          <div class="appt-left">
+            <div class="appt-time">{{ a.start_at|date:"H:i" }}</div>
+            <div class="appt-name">
+              {% if a.patient %}
+                {{ a.patient.last_name }} {{ a.patient.first_name }}
+              {% else %}
+                （患者未確定）
+              {% endif %}
+            </div>
+            <div class="appt-sub">
+              {{ a.menu }}{% if a.notes %} / {{ a.notes }}{% endif %}
+            </div>
+          </div>
+
+          <div class="appt-right">
+            <span class="status">{{ a.get_status_display }}</span>
+            <span class="chev">›</span>
+          </div>
+        </a>
+      {% empty %}
+        <div class="empty">本日の予約はありません</div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function pad(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function tick() {
+    const now = new Date();
+    const el = document.getElementById("clock");
+    if (!el) return;
+    el.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+
+  tick();
+  setInterval(tick, 1000 * 10);
+</script>
+{% endblock %}

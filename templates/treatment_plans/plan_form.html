@@ -1,0 +1,171 @@
+{% extends "staff/_layout.html" %}
+{% block content %}
+
+<style>
+  .page-wrap{max-width:1100px; margin:0 auto;}
+  .page-title{font-size:28px; font-weight:900; margin-bottom:8px;}
+  .lead{color:var(--muted); margin-bottom:20px;}
+  .card{background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px; margin-bottom:18px;}
+  .grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px;}
+  .field{display:flex; flex-direction:column; gap:8px;}
+  .field.wide{grid-column:1 / -1;}
+  .field label{font-size:13px; font-weight:800; color:#64748b;}
+  .form-control, .form-select{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    background:#fff;
+  }
+  textarea.form-control{min-height:96px;}
+  .check-row{display:flex; gap:24px; flex-wrap:wrap;}
+  .check-item{display:flex; align-items:center; gap:8px;}
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
+  .btn{
+    padding:10px 14px; border-radius:12px; border:1px solid var(--line);
+    background:#fff; font-weight:800; color:#0f172a; text-decoration:none;
+    display:inline-flex; align-items:center;
+  }
+  .btn.primary{background:var(--primary); border-color:var(--primary); color:#fff;}
+  .mini{font-size:13px; color:#64748b;}
+  .value{font-size:18px; font-weight:800; color:#0f172a;}
+  @media (max-width: 768px){ .grid{grid-template-columns:1fr;} }
+</style>
+
+<div class="page-wrap">
+    <div class="page-title">{{ page_title }}</div>
+    <div class="lead">
+    {% if plan %}
+        施術計画の内容を編集します
+    {% else %}
+        患者の状態に応じた施術計画を作成します
+    {% endif %}
+    </div>
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <div class="mini">患者名</div>
+        <div class="value">
+          {% if patient %}{{ patient.last_name }} {{ patient.first_name }}{% else %}-{% endif %}
+        </div>
+      </div>
+      <div>
+        <div class="mini">関連予約</div>
+        <div class="value">
+          {% if appointment %}#{{ appointment.id }}{% else %}-{% endif %}
+        </div>
+      </div>
+      <div class="wide">
+        <div class="mini">参考主訴</div>
+        <div class="value">
+          {% if intake and intake.chief_complaint %}
+            {{ intake.chief_complaint }}
+          {% else %}
+            -
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="card">
+    {% csrf_token %}
+
+    <div class="grid">
+      <div class="field">
+        <label>{{ form.title.label }}</label>
+        {{ form.title }}
+      </div>
+
+      <div class="field">
+        <label>{{ form.chief_complaint.label }}</label>
+        {{ form.chief_complaint }}
+      </div>
+
+      <div class="field">
+        <label>{{ form.status.label }}</label>
+        {{ form.status }}
+      </div>
+
+      <div class="field">
+        <label>{{ form.next_visit_date.label }}</label>
+        {{ form.next_visit_date }}
+      </div>
+
+      <div class="field">
+        <label>{{ form.visit_guide_type.label }}</label>
+        {{ form.visit_guide_type }}
+      </div>
+
+      <div class="field">
+        <label>{{ form.visit_guide_count.label }}</label>
+        {{ form.visit_guide_count }}
+      </div>
+
+      <div class="field">
+        <label>{{ form.visit_guide_unit_note.label }}</label>
+        {{ form.visit_guide_unit_note }}
+      </div>
+
+      <div class="field">
+        <label>{{ form.expected_recovery_weeks_min.label }}</label>
+        {{ form.expected_recovery_weeks_min }}
+      </div>
+
+      <div class="field">
+        <label>{{ form.expected_recovery_weeks_max.label }}</label>
+        {{ form.expected_recovery_weeks_max }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.bath_instruction.label }}</label>
+        {{ form.bath_instruction }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.walking_instruction.label }}</label>
+        {{ form.walking_instruction }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.exercise_instruction.label }}</label>
+        {{ form.exercise_instruction }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.work_instruction.label }}</label>
+        {{ form.work_instruction }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.lifestyle_other_instruction.label }}</label>
+        {{ form.lifestyle_other_instruction }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.caution_notes.label }}</label>
+        {{ form.caution_notes }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.rebound_reaction_note.label }}</label>
+        {{ form.rebound_reaction_note }}
+      </div>
+
+      <div class="field wide">
+        <div class="check-row">
+          <label class="check-item">{{ form.explained_to_patient }} {{ form.explained_to_patient.label }}</label>
+          <label class="check-item">{{ form.is_active }} {{ form.is_active.label }}</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <a href="javascript:history.back()" class="btn">戻る</a>
+      <button type="submit" class="btn primary">保存する</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

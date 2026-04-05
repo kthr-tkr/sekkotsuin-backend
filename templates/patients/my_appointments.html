@@ -1,0 +1,1017 @@
+{% extends "patients/patient_base.html" %}
+{% block content %}
+
+<style>
+  .page{
+    max-width: 960px;
+    margin: auto;
+    padding: 30px 16px 60px;
+  }
+
+  .page-title{
+    font-size: 34px;
+    font-weight: 900;
+    margin: 0;
+    color: #0f172a;
+  }
+
+  .page-sub{
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .section{
+    margin-top: 42px;
+  }
+
+  .section-title{
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 16px;
+    color: #0f172a;
+  }
+
+  .card{
+    background: #fff;
+    border-radius: 22px;
+    padding: 22px 20px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.05);
+    margin-bottom: 16px;
+  }
+
+  .card-main{
+    font-size: 24px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.35;
+  }
+
+  .card-time{
+    color: #64748b;
+    margin-top: 8px;
+    font-size: 16px;
+  }
+
+  .badges{
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .badge{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .badge-status{
+    background: #eef2ff;
+    color: #3730a3;
+  }
+
+  .badge-intake{
+    background: #ecfdf5;
+    color: #15803d;
+  }
+
+  .grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #edf2f7;
+  }
+
+  .label{
+    color: #64748b;
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .value{
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 16px;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .empty{
+    color: #94a3b8;
+    padding: 18px 0;
+    font-size: 15px;
+  }
+
+  .appt-card-actions{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+
+  .appt-card-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 800;
+    transition: .2s ease;
+    cursor: pointer;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #0f172a;
+  }
+
+  .appt-card-btn:hover{
+    transform: translateY(-1px);
+  }
+
+  .appt-card-btn-primary{
+    background: linear-gradient(180deg, #163b7a, #1d4ed8);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .appt-intake-detail{
+    display: none;
+    margin-top: 16px;
+    padding: 18px;
+    border-radius: 18px;
+    background: #f8fbff;
+    border: 1px solid #dbeafe;
+  }
+
+  .appt-intake-detail.is-open{
+    display: block;
+  }
+
+  .appt-intake-grid{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 14px 18px;
+  }
+
+  .appt-intake-item-label{
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .appt-intake-item-value{
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+
+  .appt-intake-item-full{
+    grid-column: 1 / -1;
+  }
+
+  .page-actions{
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+  }
+
+  .page-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 800;
+    transition: .2s ease;
+  }
+
+  .page-btn:hover{
+    transform: translateY(-1px);
+  }
+
+  .page-btn-primary{
+    background: linear-gradient(180deg, #163b7a, #1d4ed8);
+    color: #fff;
+  }
+
+  .page-btn-secondary{
+    background: #fff;
+    color: #0f172a;
+    border: 1px solid #d1d5db;
+  }
+
+  @media (max-width: 768px){
+    .page-title{
+      font-size: 30px;
+    }
+
+    .section-title{
+      font-size: 24px;
+    }
+
+    .card-main{
+      font-size: 22px;
+    }
+
+    .grid,
+    .appt-intake-grid{
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px){
+    .appt-card-actions,
+    .page-actions{
+      flex-direction: column;
+    }
+
+    .appt-card-btn,
+    .page-btn{
+      width: 100%;
+    }
+  }
+
+  .badge-waiting{
+    background: #fff7ed;
+    color: #c2410c;
+  }
+
+  .appt-card-btn-warning{
+    background: #f59e0b;
+    color: #fff;
+    border-color: #f59e0b;
+  }
+
+.appt-card-btn-danger{
+  background:#fff1f2;
+  color:#be123c;
+  border-color:#fecdd3;
+}
+
+.rebook-banner{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px;
+  margin-bottom:16px;
+  border-radius:12px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+}
+
+.rebook-text{
+  font-size:14px;
+  color:#475569;
+}
+
+.rebook-btn{
+  padding:8px 16px;
+  background:#2563eb;
+  color:#fff;
+  border-radius:8px;
+  text-decoration:none;
+  font-weight:600;
+}
+</style>
+
+<div class="page">
+
+  <h1 class="page-title">予約一覧 / 履歴</h1>
+  <div class="page-sub">
+    ご予約内容と、これまでに入力いただいたWeb問診を確認できます。
+  </div>
+
+  <!-- 次回予約 -->
+  <div class="section">
+    <div class="section-title">次回予約</div>
+
+    {% if next_appointment %}
+      <div class="card">
+
+        <div class="card-main">
+          {{ next_appointment.start_at|date:"Y年m月d日 (D)" }}
+        </div>
+
+        <div class="card-time">
+          {{ next_appointment.start_at|date:"H:i" }} - {{ next_appointment.end_at|date:"H:i" }}
+        </div>
+
+        <div class="badges">
+          <span class="badge badge-status">
+            {{ next_appointment.get_status_display }}
+          </span>
+
+          {% if next_appointment.intake_completed %}
+            <span class="badge badge-intake">Web問診入力済み</span>
+          {% endif %}
+        </div>
+
+        <div class="grid">
+          <div>
+            <div class="label">院名</div>
+            <div class="value">{{ next_appointment.clinic.name }}</div>
+          </div>
+
+          <div>
+            <div class="label">メニュー</div>
+            <div class="value">{{ next_appointment.menu }}</div>
+          </div>
+
+          <div>
+            <div class="label">施術者</div>
+            <div class="value">
+              {% if next_appointment.assigned_staff %}
+                {{ next_appointment.assigned_staff.username }}
+              {% else %}
+                未定
+              {% endif %}
+            </div>
+          </div>
+
+          <div>
+            <div class="label">予約作成日時</div>
+            <div class="value">{{ next_appointment.created_at|date:"Y年m月d日 H:i" }}</div>
+          </div>
+        </div>
+
+        <div class="appt-card-actions">
+          {% if next_appointment.show_resume_intake %}
+            <a href="{% url 'intakes:intake_start' next_appointment.id %}"
+               class="appt-card-btn appt-card-btn-warning">
+              Web問診を続ける
+            </a>
+          {% endif %}
+
+          {% if next_appointment.intake_completed %}
+            <button type="button"
+                    class="appt-card-btn"
+                    onclick="toggleIntakeDetail('intake-{{ next_appointment.id }}')">
+              Web問診を見る
+            </button>
+          {% endif %}
+
+          <a href="{% url 'patients:booking_calendar' %}" class="appt-card-btn appt-card-btn-primary">
+            予約を取る / 変更する
+          </a>
+        </div>
+
+        {% if next_appointment.status == "pending" or next_appointment.status == "booked" %}
+          <form method="post"
+                action="{% url 'patients:appointment_cancel' next_appointment.id %}"
+                onsubmit="return confirm('この予約をキャンセルしますか？');"
+                style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="appt-card-btn appt-card-btn-danger">
+              予約をキャンセル
+            </button>
+          </form>
+        {% endif %}
+
+        {% if next_appointment.intake_completed %}
+          <div id="intake-{{ next_appointment.id }}" class="appt-intake-detail">
+            <div class="appt-intake-grid">
+
+              <div>
+                <div class="appt-intake-item-label">問診入力日時</div>
+                <div class="appt-intake-item-value">
+                  {{ next_appointment.intake.submitted_at|date:"Y年m月d日 H:i" }}
+                </div>
+              </div>
+
+              <div>
+                <div class="appt-intake-item-label">症状タイプ</div>
+                <div class="appt-intake-item-value">
+                  {{ next_appointment.intake_display.symptom_type|default:"-" }}
+                </div>
+              </div>
+
+              <div class="appt-intake-item-full">
+                <div class="appt-intake-item-label">主な症状</div>
+                <div class="appt-intake-item-value">
+                  {{ next_appointment.intake_display.chief_complaint|default:"-" }}
+                </div>
+              </div>
+
+              <div>
+                <div class="appt-intake-item-label">いつから</div>
+                <div class="appt-intake-item-value">
+                  {{ next_appointment.intake_display.onset|default:"-" }}
+                </div>
+              </div>
+
+              <div>
+                <div class="appt-intake-item-label">痛みの強さ</div>
+                <div class="appt-intake-item-value">
+                  {% if next_appointment.intake_display.severity or next_appointment.intake_display.severity == 0 %}
+                    {{ next_appointment.intake_display.severity }}/10
+                  {% else %}
+                    -
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="appt-intake-item-full">
+                <div class="appt-intake-item-label">症状のきっかけ</div>
+                <div class="appt-intake-item-value">
+                  {{ next_appointment.intake_display.trigger|default:"-" }}
+                </div>
+              </div>
+
+              <div class="appt-intake-item-full">
+                <div class="appt-intake-item-label">痛みや違和感のある部位</div>
+                <div class="appt-intake-item-value">
+                  {% if next_appointment.intake_display.areas %}
+                    {{ next_appointment.intake_display.areas|join:"、" }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="appt-intake-item-full">
+                <div class="appt-intake-item-label">症状の感じ</div>
+                <div class="appt-intake-item-value">
+                  {% if next_appointment.intake_display.qualities %}
+                    {{ next_appointment.intake_display.qualities|join:"、" }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="appt-intake-item-full">
+                <div class="appt-intake-item-label">自由記入</div>
+                <div class="appt-intake-item-value">
+                  {{ next_appointment.intake_display.free_text|default:"-" }}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        {% endif %}
+
+      </div>
+    {% else %}
+      <div class="empty">次回予約はありません</div>
+    {% endif %}
+  </div>
+
+  <!-- 今後の予約 -->
+  <div class="section">
+    <div class="section-title">今後の予約</div>
+
+    {% if upcoming %}
+      <div class="rebook-banner">
+        <div class="rebook-text">
+          キャンセル後も、前回と同じ内容でかんたんに予約し直せます。
+        </div>
+        <a href="{% url 'patients:booking_calendar' %}" class="rebook-btn">
+          新しく予約する
+        </a>
+      </div>
+
+      {% for a in upcoming %}
+        <div class="card">
+
+          <div class="card-main">
+            {{ a.start_at|date:"Y年m月d日 (D)" }}
+          </div>
+
+          <div class="card-time">
+            {{ a.start_at|date:"H:i" }} - {{ a.end_at|date:"H:i" }}
+          </div>
+
+          <div class="badges">
+            <span class="badge badge-status">
+              {{ a.get_status_display }}
+            </span>
+
+            {% if a.show_resume_intake %}
+              <span class="badge badge-waiting">問診待ち</span>
+            {% elif a.intake_completed %}
+              <span class="badge badge-intake">Web問診入力済み</span>
+            {% endif %}
+          </div>
+
+          <div class="grid">
+            <div>
+              <div class="label">院名</div>
+              <div class="value">{{ a.clinic.name }}</div>
+            </div>
+
+            <div>
+              <div class="label">メニュー</div>
+              <div class="value">{{ a.menu }}</div>
+            </div>
+
+            <div>
+              <div class="label">施術者</div>
+              <div class="value">
+                {% if a.assigned_staff %}
+                  {{ a.assigned_staff.username }}
+                {% else %}
+                  未定
+                {% endif %}
+              </div>
+            </div>
+
+            <div>
+              <div class="label">予約作成日時</div>
+              <div class="value">{{ a.created_at|date:"Y年m月d日 H:i" }}</div>
+            </div>
+          </div>
+
+          <div class="appt-card-actions">
+            {% if a.show_resume_intake %}
+              <a href="{% url 'intakes:intake_start' a.id %}"
+                 class="appt-card-btn appt-card-btn-warning">
+                Web問診を続ける
+              </a>
+            {% endif %}
+
+            {% if a.intake_completed %}
+              <button type="button"
+                      class="appt-card-btn"
+                      onclick="toggleIntakeDetail('intake-{{ a.id }}')">
+                Web問診を見る
+              </button>
+            {% endif %}
+
+            <a href="{% url 'patients:booking_calendar' %}" class="appt-card-btn appt-card-btn-primary">
+              予約を取る / 変更する
+            </a>
+
+            {% if a.status == "pending" or a.status == "booked" %}
+              <form method="post"
+                    action="{% url 'patients:appointment_cancel' a.id %}"
+                    onsubmit="return confirm('この予約をキャンセルしますか？');"
+                    style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="appt-card-btn appt-card-btn-danger">
+                  予約をキャンセル
+                </button>
+              </form>
+            {% endif %}
+
+            {% if a.status == "cancelled" %}
+              <a href="{% url 'patients:booking_calendar' %}?rebook_from={{ a.id }}"
+                class="appt-card-btn appt-card-btn-primary">
+                同じ内容で予約し直す
+              </a>
+            {% endif %}
+
+          </div>
+
+          {% if a.intake_completed %}
+            <div id="intake-{{ a.id }}" class="appt-intake-detail">
+              <div class="appt-intake-grid">
+
+                <div>
+                  <div class="appt-intake-item-label">問診入力日時</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake.submitted_at|date:"Y年m月d日 H:i" }}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="appt-intake-item-label">症状タイプ</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.symptom_type|default:"-" }}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">主な症状</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.chief_complaint|default:"-" }}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="appt-intake-item-label">いつから</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.onset|default:"-" }}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="appt-intake-item-label">痛みの強さ</div>
+                  <div class="appt-intake-item-value">
+                    {% if a.intake_display.severity or a.intake_display.severity == 0 %}
+                      {{ a.intake_display.severity }}/10
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">症状のきっかけ</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.trigger|default:"-" }}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">痛みや違和感のある部位</div>
+                  <div class="appt-intake-item-value">
+                    {% if a.intake_display.areas %}
+                      {{ a.intake_display.areas|join:"、" }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">症状の感じ</div>
+                  <div class="appt-intake-item-value">
+                    {% if a.intake_display.qualities %}
+                      {{ a.intake_display.qualities|join:"、" }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">自由記入</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.free_text|default:"-" }}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          {% endif %}
+
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">今後の予約はありません</div>
+    {% endif %}
+  </div>
+
+  <!-- 来院履歴 -->
+  <div class="section">
+    <div class="section-title">来院履歴</div>
+
+    {% if past_preview %}
+
+      {% for a in past_preview reversed %}
+        <div class="card">
+
+          <div class="card-main">
+            {{ a.start_at|date:"Y年m月d日 (D)" }}
+          </div>
+
+          <div class="card-time">
+            {{ a.start_at|date:"H:i" }} - {{ a.end_at|date:"H:i" }}
+          </div>
+
+          <div class="badges">
+            <span class="badge badge-status">
+              {{ a.get_status_display }}
+            </span>
+
+            {% if a.intake_completed %}
+              <span class="badge badge-intake">Web問診入力済み</span>
+            {% endif %}
+          </div>
+
+          <div class="grid">
+            <div>
+              <div class="label">院名</div>
+              <div class="value">{{ a.clinic.name }}</div>
+            </div>
+
+            <div>
+              <div class="label">メニュー</div>
+              <div class="value">{{ a.menu }}</div>
+            </div>
+
+            <div>
+              <div class="label">施術者</div>
+              <div class="value">
+                {% if a.assigned_staff %}
+                  {{ a.assigned_staff.username }}
+                {% else %}
+                  未定
+                {% endif %}
+              </div>
+            </div>
+
+            <div>
+              <div class="label">予約作成日時</div>
+              <div class="value">{{ a.created_at|date:"Y年m月d日 H:i" }}</div>
+            </div>
+          </div>
+
+          <div class="appt-card-actions">
+            {% if a.intake_completed %}
+              <button type="button"
+                      class="appt-card-btn"
+                      onclick="toggleIntakeDetail('intake-{{ a.id }}')">
+                Web問診を見る
+              </button>
+            {% endif %}
+
+            <a href="{% url 'patients:booking_calendar' %}?rebook_from={{ a.id }}"
+              class="appt-card-btn appt-card-btn-primary">
+              前回と同じ内容で予約する
+            </a>
+          </div>
+
+          {% if a.intake_completed %}
+            <div id="intake-{{ a.id }}" class="appt-intake-detail">
+              <div class="appt-intake-grid">
+
+                <div>
+                  <div class="appt-intake-item-label">問診入力日時</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake.submitted_at|date:"Y年m月d日 H:i" }}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="appt-intake-item-label">症状タイプ</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.symptom_type|default:"-" }}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">主な症状</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.chief_complaint|default:"-" }}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="appt-intake-item-label">いつから</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.onset|default:"-" }}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="appt-intake-item-label">痛みの強さ</div>
+                  <div class="appt-intake-item-value">
+                    {% if a.intake_display.severity or a.intake_display.severity == 0 %}
+                      {{ a.intake_display.severity }}/10
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">症状のきっかけ</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.trigger|default:"-" }}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">痛みや違和感のある部位</div>
+                  <div class="appt-intake-item-value">
+                    {% if a.intake_display.areas %}
+                      {{ a.intake_display.areas|join:"、" }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">症状の感じ</div>
+                  <div class="appt-intake-item-value">
+                    {% if a.intake_display.qualities %}
+                      {{ a.intake_display.qualities|join:"、" }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="appt-intake-item-full">
+                  <div class="appt-intake-item-label">自由記入</div>
+                  <div class="appt-intake-item-value">
+                    {{ a.intake_display.free_text|default:"-" }}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          {% endif %}
+
+        </div>
+      {% endfor %}
+
+      {% if past_more %}
+        <div id="past-more" style="display:none;">
+
+          {% for a in past_more reversed %}
+            <div class="card">
+
+              <div class="card-main">
+                {{ a.start_at|date:"Y年m月d日 (D)" }}
+              </div>
+
+              <div class="card-time">
+                {{ a.start_at|date:"H:i" }} - {{ a.end_at|date:"H:i" }}
+              </div>
+
+              <div class="badges">
+                <span class="badge badge-status">
+                  {{ a.get_status_display }}
+                </span>
+
+                {% if a.intake_completed %}
+                  <span class="badge badge-intake">Web問診入力済み</span>
+                {% endif %}
+              </div>
+
+              <div class="grid">
+                <div>
+                  <div class="label">院名</div>
+                  <div class="value">{{ a.clinic.name }}</div>
+                </div>
+
+                <div>
+                  <div class="label">メニュー</div>
+                  <div class="value">{{ a.menu }}</div>
+                </div>
+
+                <div>
+                  <div class="label">施術者</div>
+                  <div class="value">
+                    {% if a.assigned_staff %}
+                      {{ a.assigned_staff.username }}
+                    {% else %}
+                      未定
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="label">予約作成日時</div>
+                  <div class="value">{{ a.created_at|date:"Y年m月d日 H:i" }}</div>
+                </div>
+              </div>
+
+              <div class="appt-card-actions">
+                {% if a.intake_completed %}
+                  <button type="button"
+                          class="appt-card-btn"
+                          onclick="toggleIntakeDetail('intake-{{ a.id }}')">
+                    Web問診を見る
+                  </button>
+                {% endif %}
+              </div>
+
+              {% if a.intake_completed %}
+                <div id="intake-{{ a.id }}" class="appt-intake-detail">
+                  <div class="appt-intake-grid">
+
+                    <div>
+                      <div class="appt-intake-item-label">問診入力日時</div>
+                      <div class="appt-intake-item-value">
+                        {{ a.intake.submitted_at|date:"Y年m月d日 H:i" }}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="appt-intake-item-label">症状タイプ</div>
+                      <div class="appt-intake-item-value">
+                        {{ a.intake_display.symptom_type|default:"-" }}
+                      </div>
+                    </div>
+
+                    <div class="appt-intake-item-full">
+                      <div class="appt-intake-item-label">主な症状</div>
+                      <div class="appt-intake-item-value">
+                        {{ a.intake_display.chief_complaint|default:"-" }}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="appt-intake-item-label">いつから</div>
+                      <div class="appt-intake-item-value">
+                        {{ a.intake_display.onset|default:"-" }}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="appt-intake-item-label">痛みの強さ</div>
+                      <div class="appt-intake-item-value">
+                        {% if a.intake_display.severity or a.intake_display.severity == 0 %}
+                          {{ a.intake_display.severity }}/10
+                        {% else %}
+                          -
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div class="appt-intake-item-full">
+                      <div class="appt-intake-item-label">症状のきっかけ</div>
+                      <div class="appt-intake-item-value">
+                        {{ a.intake_display.trigger|default:"-" }}
+                      </div>
+                    </div>
+
+                    <div class="appt-intake-item-full">
+                      <div class="appt-intake-item-label">痛みや違和感のある部位</div>
+                      <div class="appt-intake-item-value">
+                        {% if a.intake_display.areas %}
+                          {{ a.intake_display.areas|join:"、" }}
+                        {% else %}
+                          -
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div class="appt-intake-item-full">
+                      <div class="appt-intake-item-label">症状の感じ</div>
+                      <div class="appt-intake-item-value">
+                        {% if a.intake_display.qualities %}
+                          {{ a.intake_display.qualities|join:"、" }}
+                        {% else %}
+                          -
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div class="appt-intake-item-full">
+                      <div class="appt-intake-item-label">自由記入</div>
+                      <div class="appt-intake-item-value">
+                        {{ a.intake_display.free_text|default:"-" }}
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              {% endif %}
+
+            </div>
+          {% endfor %}
+
+        </div>
+
+        <div style="margin-top:12px">
+          <button class="appt-card-btn" type="button" onclick="togglePastHistory()">
+            もっと見る
+          </button>
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div class="empty">履歴はありません</div>
+    {% endif %}
+  </div>
+
+  <div class="page-actions">
+    <a class="page-btn page-btn-primary" href="{% url 'patients:booking_calendar' %}">
+      予約を取る
+    </a>
+    <a class="page-btn page-btn-secondary" href="{% url 'patients:dashboard' %}">
+      マイページへ戻る
+    </a>
+  </div>
+
+</div>
+
+<script>
+  function toggleIntakeDetail(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle("is-open");
+  }
+
+  function togglePastHistory() {
+    const el = document.getElementById("past-more");
+    if (!el) return;
+    el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+  }
+</script>
+
+{% endblock %}

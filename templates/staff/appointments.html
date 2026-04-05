@@ -1,0 +1,987 @@
+{% extends "staff/_layout.html" %}
+{% block title %}Medical AI | Appointments{% endblock %}
+
+{% block extra_head %}
+<style>
+  .appt-page{
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:24px;
+  }
+
+  .page-head{
+    min-width:0;
+    padding-top:4px;
+  }
+
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(124,58,237,.08);
+    color:#5b38c5;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.02em;
+    margin-bottom:14px;
+    backdrop-filter:blur(10px);
+  }
+
+  .eyebrow::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+    box-shadow:0 0 0 4px rgba(124,58,237,.08);
+  }
+
+  .page-title{
+    margin:0;
+    font-size:52px;
+    line-height:1.02;
+    letter-spacing:-0.05em;
+    font-weight:900;
+    color:#0b1220;
+  }
+
+  .page-meta{
+    margin-top:12px;
+    color:#64748b;
+    font-size:14px;
+    font-weight:600;
+  }
+
+  .range-note{
+    margin-top:6px;
+    color:#94a3b8;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .page-tools{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .tool-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.82);
+    color:#111827;
+    font-size:14px;
+    font-weight:800;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    backdrop-filter:blur(10px);
+    transition:.2s ease;
+    text-decoration:none;
+  }
+
+  .tool-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(15,23,42,.08);
+  }
+
+  .hero{
+    position:relative;
+    overflow:hidden;
+    border-radius:32px;
+    padding:30px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 88% 16%, rgba(96,165,250,.26), transparent 26%),
+      radial-gradient(circle at 10% 90%, rgba(124,58,237,.18), transparent 24%),
+      linear-gradient(135deg, #060c19 0%, #111b36 38%, #1a2f73 68%, #4f86ff 100%);
+    box-shadow:
+      0 28px 80px rgba(15,23,42,.18),
+      inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .hero::after{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:31px;
+    border:1px solid rgba(255,255,255,.08);
+    pointer-events:none;
+  }
+
+  .hero-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.35fr .85fr;
+    gap:22px;
+    align-items:stretch;
+  }
+
+  .hero-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:14px;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.18em;
+    color:rgba(255,255,255,.62);
+    text-transform:uppercase;
+  }
+
+  .hero-kicker::before{
+    content:"";
+    width:22px;
+    height:1px;
+    background:rgba(255,255,255,.35);
+  }
+
+  .hero-title{
+    margin:0 0 12px;
+    font-size:30px;
+    line-height:1.22;
+    letter-spacing:-0.04em;
+    font-weight:900;
+  }
+
+  .hero-sub{
+    margin:0;
+    max-width:720px;
+    font-size:14px;
+    line-height:1.85;
+    color:rgba(255,255,255,.78);
+  }
+
+  .hero-side{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+
+  .mini-stat{
+    border-radius:22px;
+    padding:18px;
+    background:linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.08) 100%);
+    border:1px solid rgba(255,255,255,.12);
+    backdrop-filter:blur(12px);
+  }
+
+  .mini-stat-label{
+    color:rgba(255,255,255,.62);
+    font-size:12px;
+    letter-spacing:.08em;
+    font-weight:800;
+    margin-bottom:10px;
+  }
+
+  .mini-stat-value{
+    font-size:34px;
+    line-height:1;
+    font-weight:900;
+    letter-spacing:-0.04em;
+  }
+
+  .mini-stat-sub{
+    margin-top:8px;
+    font-size:12px;
+    color:rgba(255,255,255,.72);
+    line-height:1.6;
+  }
+
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+  }
+
+  .stat-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:24px;
+    padding:22px 22px 20px;
+    background:rgba(255,255,255,.76);
+    border:1px solid rgba(255,255,255,.75);
+    box-shadow:0 16px 36px rgba(15,23,42,.06);
+    backdrop-filter:blur(14px);
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .stat-top{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:14px;
+  }
+
+  .stat-label{
+    color:#64748b;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.01em;
+  }
+
+  .stat-accent{
+    width:38px;
+    height:38px;
+    border-radius:14px;
+    background:linear-gradient(135deg, rgba(59,130,246,.14) 0%, rgba(124,58,237,.12) 100%);
+    border:1px solid rgba(59,130,246,.10);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+  }
+
+  .stat-value{
+    position:relative;
+    z-index:1;
+    font-size:42px;
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-weight:900;
+    color:#09111f;
+    margin-bottom:10px;
+  }
+
+  .stat-sub{
+    position:relative;
+    z-index:1;
+    color:#94a3b8;
+    font-size:12px;
+    line-height:1.7;
+    font-weight:600;
+  }
+
+  .period-switch{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .period-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:42px;
+    padding:0 16px;
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.82);
+    color:#111827;
+    font-weight:900;
+    text-decoration:none;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    backdrop-filter:blur(10px);
+    transition:.18s ease;
+  }
+
+  .period-link:hover{
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(15,23,42,.08);
+  }
+
+  .period-link.active{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+    box-shadow:0 16px 36px rgba(29,78,216,.20), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  .filters-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:0 16px 36px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+  }
+
+  .filters-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .filters-head{
+    position:relative;
+    z-index:1;
+    margin-bottom:16px;
+  }
+
+  .filters-title{
+    margin:0;
+    font-size:20px;
+    font-weight:900;
+    color:#0b1220;
+    letter-spacing:-0.02em;
+  }
+
+  .filters-sub{
+    margin-top:6px;
+    color:#7b8798;
+    font-size:13px;
+    font-weight:600;
+  }
+
+  .filters{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.2fr 1fr 1fr 1.2fr auto;
+    gap:12px;
+    align-items:end;
+  }
+
+  .field{
+    border-radius:18px;
+    padding:12px 14px;
+    border:1px solid #dbe5f0;
+    background:rgba(255,255,255,.92);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  }
+
+  .field label{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    font-weight:800;
+    margin-bottom:8px;
+  }
+
+  .field input,
+  .field select{
+    width:100%;
+    border:none;
+    outline:none;
+    background:transparent;
+    color:#0f172a;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.82);
+    color:#111827;
+    font-size:14px;
+    font-weight:800;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    transition:.18s ease;
+    text-decoration:none;
+    cursor:pointer;
+  }
+
+  .btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(15,23,42,.08);
+  }
+
+  .btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+    box-shadow:0 16px 36px rgba(29,78,216,.20), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  .list{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .row{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:0 16px 36px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:20px;
+  }
+
+  .row::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .left{
+    position:relative;
+    z-index:1;
+    display:flex;
+    gap:18px;
+    align-items:flex-start;
+    flex:1;
+    min-width:0;
+  }
+
+  .time{
+    width:96px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:900;
+    color:#0f172a;
+    font-size:28px;
+    letter-spacing:-0.03em;
+  }
+
+  .time-icon{
+    font-size:18px;
+    opacity:.75;
+  }
+
+  .content{
+    flex:1;
+    min-width:0;
+  }
+
+  .name{
+    font-weight:900;
+    font-size:28px;
+    line-height:1.2;
+    letter-spacing:-0.03em;
+    color:#0b1220;
+  }
+
+  .meta2{
+    color:#64748b;
+    font-size:13px;
+    margin-top:6px;
+    font-weight:700;
+  }
+
+  .one-line{
+    margin-top:10px;
+    font-size:14px;
+    color:#334155;
+    font-weight:800;
+  }
+
+  .chief{
+    color:#0f172a;
+    margin-top:12px;
+    font-weight:900;
+    font-size:20px;
+    line-height:1.4;
+    letter-spacing:-0.02em;
+  }
+
+  .intake-box{
+    margin-top:16px;
+    padding:14px;
+    border:1px solid #e8edf5;
+    border-radius:22px;
+    background:linear-gradient(180deg, rgba(250,252,255,.92) 0%, rgba(246,249,253,.98) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95);
+  }
+
+  .intake-top{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+
+  .intake-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:12px;
+  }
+
+  .intake-item{
+    background:#fff;
+    border:1px solid #edf2f8;
+    border-radius:18px;
+    padding:12px 14px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+  }
+
+  .intake-item.wide{
+    grid-column:span 3;
+  }
+
+  .intake-label{
+    font-size:11px;
+    color:#64748b;
+    font-weight:800;
+    margin-bottom:6px;
+    letter-spacing:.02em;
+  }
+
+  .intake-value{
+    font-size:14px;
+    color:#0f172a;
+    font-weight:800;
+    line-height:1.6;
+  }
+
+  .actions{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    align-items:flex-end;
+    min-width:220px;
+  }
+
+  .status-form{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .status-select{
+    min-height:46px;
+    padding:0 12px;
+    border-radius:16px;
+    border:1px solid #dbe5f0;
+    background:rgba(255,255,255,.92);
+    color:#0f172a;
+    font-size:14px;
+    font-weight:800;
+    outline:none;
+    min-width:140px;
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:34px;
+    padding:0 12px;
+    border-radius:999px;
+    font-weight:900;
+    font-size:12px;
+    border:1px solid var(--line);
+  }
+
+  .badge.st-booked{background:#fff7ed; border-color:#fed7aa; color:#9a3412;}
+  .badge.st-arrived{background:#ecfeff; border-color:#a5f3fc; color:#155e75;}
+  .badge.st-completed{background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8;}
+  .badge.st-cancelled{background:#fff1f2; border-color:#fecdd3; color:#9f1239;}
+  .badge.st-no_show{background:#f3f4f6; border-color:#e5e7eb; color:#374151;}
+
+  .badge.intake-done{background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8;}
+  .badge.intake-none{background:#fff1f2; border-color:#fecdd3; color:#9f1239;}
+  .badge.intake-progress{background:#fff7ed; border-color:#fed7aa; color:#9a3412;}
+  .badge.intake-kind{background:#f5f3ff; border-color:#ddd6fe; color:#6d28d9;}
+  .badge.visit-type{background:#ecfdf5; border-color:#bbf7d0; color:#166534;}
+
+  .empty-row{
+    justify-content:center;
+    text-align:center;
+  }
+
+  .empty-note{
+    color:#94a3b8;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  @media (max-width: 1280px){
+    .stats-grid{
+      grid-template-columns:repeat(2, 1fr);
+    }
+
+    .filters{
+      grid-template-columns:1fr 1fr;
+    }
+  }
+
+  @media (max-width: 980px){
+    .topbar{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .hero-grid{
+      grid-template-columns:1fr;
+    }
+
+    .hero-side{
+      grid-template-columns:1fr 1fr;
+    }
+
+    .page-title{
+      font-size:40px;
+    }
+
+    .row{
+      flex-direction:column;
+    }
+
+    .actions{
+      align-items:flex-start;
+      min-width:0;
+      width:100%;
+    }
+
+    .status-form{
+      justify-content:flex-start;
+    }
+  }
+
+  @media (max-width: 768px){
+    .left{
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .time{
+      width:auto;
+      font-size:24px;
+    }
+
+    .name{
+      font-size:24px;
+    }
+
+    .chief{
+      font-size:18px;
+    }
+
+    .intake-grid{
+      grid-template-columns:1fr;
+    }
+
+    .intake-item.wide{
+      grid-column:auto;
+    }
+  }
+
+  @media (max-width: 640px){
+    .page-title{
+      font-size:32px;
+    }
+
+    .hero{
+      padding:22px;
+      border-radius:24px;
+    }
+
+    .hero-title{
+      font-size:24px;
+    }
+
+    .hero-side,
+    .stats-grid,
+    .filters{
+      grid-template-columns:1fr;
+    }
+
+    .filters-card,
+    .row{
+      padding:18px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="appt-page">
+
+  <header class="topbar">
+    <div class="page-head">
+      <div class="eyebrow">Premium Appointment List</div>
+      <h1 class="page-title">予約管理</h1>
+      <div class="page-meta">予約状況と問診内容を確認できます</div>
+      <div class="range-note">表示期間：{{ range_label }}</div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-kicker">Appointment List View</div>
+        <h2 class="hero-title">予約・問診・主訴情報を、縦に読みやすく一覧管理。</h2>
+        <p class="hero-sub">
+          日別・週別・月別・年別の表示に対応しながら、各予約の患者情報、問診状態、主訴、
+          来院種別まで一目で確認できる一覧型の予約マネジメントビューです。
+        </p>
+      </div>
+
+      <div class="hero-side">
+        <div class="mini-stat">
+          <div class="mini-stat-label">PERIOD</div>
+          <div class="mini-stat-value">
+            {% if period == 'day' %}DAY
+            {% elif period == 'week' %}WEEK
+            {% elif period == 'month' %}MONTH
+            {% elif period == 'year' %}YEAR
+            {% else %}VIEW{% endif %}
+          </div>
+          <div class="mini-stat-sub">現在の表示粒度</div>
+        </div>
+
+        <div class="mini-stat">
+          <div class="mini-stat-label">RESULTS</div>
+          <div class="mini-stat-value">{{ appointments|length }}</div>
+          <div class="mini-stat-sub">現在表示中の予約件数</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">期間内予約</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-sub">現在の表示期間に含まれる予約件数</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label" style="color:#9a3412;">問診未完了</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value" style="color:#9a3412;">{{ stats.not_done }}</div>
+      <div class="stat-sub">まだ問診が完了していない予約</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label" style="color:#1d4ed8;">問診完了</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value" style="color:#1d4ed8;">{{ stats.done }}</div>
+      <div class="stat-sub">問診確認まで進んでいる予約</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">来院済み</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value">{{ stats.arrived }}</div>
+      <div class="stat-sub">来院ステータスが更新済みの件数</div>
+    </div>
+  </section>
+
+  <div class="period-switch">
+    <a class="period-link {% if period == 'day' %}active{% endif %}"
+       href="?period=day&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      日
+    </a>
+    <a class="period-link {% if period == 'week' %}active{% endif %}"
+       href="?period=week&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      週
+    </a>
+    <a class="period-link {% if period == 'month' %}active{% endif %}"
+       href="?period=month&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      月
+    </a>
+    <a class="period-link {% if period == 'year' %}active{% endif %}"
+       href="?period=year&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      年
+    </a>
+  </div>
+
+  <section class="filters-card">
+    <div class="filters-head">
+      <h3 class="filters-title">検索・絞り込み</h3>
+      <div class="filters-sub">日付、施術者、ステータス、患者情報から予約を絞り込めます</div>
+    </div>
+
+    <form method="get" class="filters">
+      <input type="hidden" name="period" value="{{ period }}">
+
+      <div class="field">
+        <label>日付</label>
+        <input type="date" name="day" value="{{ day|date:'Y-m-d' }}">
+      </div>
+
+      <div class="field">
+        <label>施術者</label>
+        <select name="staff">
+          <option value="">全員</option>
+          {% for u in staff_users %}
+            <option value="{{ u.id }}" {% if filter_staff|add:'' == u.id|add:'' %}selected{% endif %}>
+              {{ u.username }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>ステータス</label>
+        <select name="status">
+          <option value="">すべて</option>
+          {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if filter_status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>検索</label>
+        <input type="text" name="q" placeholder="患者名・電話・メニュー" value="{{ filter_q }}">
+      </div>
+
+      <button class="btn primary" type="submit">検索</button>
+    </form>
+  </section>
+
+  <div class="list">
+    {% for a in appointments %}
+      <div class="row">
+        <div class="left">
+          <div class="time">
+            <span class="time-icon">🕒</span>
+            <span>{{ a.start_at|date:"H:i" }}</span>
+          </div>
+
+          <div class="content">
+            <div class="name">
+              {% if a.patient %}
+                {{ a.patient.last_name }} {{ a.patient.first_name }}
+              {% else %}
+                （患者未確定）
+              {% endif %}
+            </div>
+
+            <div class="meta2">メニュー：{{ a.menu }}</div>
+            <div class="one-line">要点：{{ a.intake_one_line }}</div>
+            <div class="meta2">施術者：{% if a.assigned_staff %}{{ a.assigned_staff.username }}{% else %}未割当{% endif %}</div>
+
+            <div class="chief">
+              主訴：{{ a.chief_label|default:"-" }}
+            </div>
+
+            <div class="intake-box">
+              <div class="intake-top">
+                <span class="badge
+                  {% if a.status == 'booked' %}st-booked
+                  {% elif a.status == 'arrived' %}st-arrived
+                  {% elif a.status == 'completed' %}st-completed
+                  {% elif a.status == 'cancelled' %}st-cancelled
+                  {% elif a.status == 'no_show' %}st-no_show
+                  {% endif %}
+                ">
+                  {{ a.get_status_display }}
+                </span>
+
+                {% if a.has_intake %}
+                  {% if a.intake_completed %}
+                    <span class="badge intake-done">問診完了</span>
+                  {% else %}
+                    <span class="badge intake-progress">問診入力中</span>
+                  {% endif %}
+                {% else %}
+                  <span class="badge intake-none">問診未着手</span>
+                {% endif %}
+
+                {% if a.intake_kind_label %}
+                  <span class="badge intake-kind">{{ a.intake_kind_label }}</span>
+                {% endif %}
+
+                {% if a.visit_type_label %}
+                  <span class="badge visit-type">{{ a.visit_type_label }}</span>
+                {% endif %}
+              </div>
+
+              <div class="intake-grid">
+                <div class="intake-item">
+                  <div class="intake-label">主訴</div>
+                  <div class="intake-value">{{ a.chief_label|default:"-" }}</div>
+                </div>
+
+                <div class="intake-item">
+                  <div class="intake-label">痛み強さ</div>
+                  <div class="intake-value">{{ a.pain_level_display|default:"-" }}</div>
+                </div>
+
+                <div class="intake-item">
+                  <div class="intake-label">来院種別</div>
+                  <div class="intake-value">{{ a.visit_type_label|default:"-" }}</div>
+                </div>
+
+                <div class="intake-item wide">
+                  <div class="intake-label">痛み部位</div>
+                  <div class="intake-value">
+                    {% if a.areas_display %}
+                      {{ a.areas_display|join:"、" }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          {% if a.has_intake %}
+            <a class="btn" href="{% url 'staff:intake_detail' a.intake.id %}">問診を確認</a>
+          {% else %}
+            <a class="btn" href="{% url 'staff:intake' %}?q={% if a.patient %}{{ a.patient.phone }}{% endif %}">問診一覧へ</a>
+          {% endif %}
+
+          <a class="btn primary" href="{% url 'intakes:recording_new' a.id %}">診察へ</a>
+
+          <form method="post" action="{% url 'staff:appointment_status' a.id %}" class="status-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <select name="status" class="status-select">
+              {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if a.status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn primary" type="submit">更新</button>
+          </form>
+        </div>
+      </div>
+    {% empty %}
+      <div class="row empty-row">
+        <div class="empty-note">該当する予約がありません</div>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

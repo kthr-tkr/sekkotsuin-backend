@@ -1,0 +1,103 @@
+{% extends "staff/_layout.html" %}
+{% block content %}
+<style>
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+  .h1{font-size:34px;font-weight:900;margin:0;}
+  .meta{color:var(--muted);margin-top:6px;font-size:13px;}
+  .box{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+  .card2{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff;}
+  .k{color:var(--muted);font-size:12px;font-weight:800;}
+  .v{margin-top:6px;font-weight:800;}
+  textarea{width:100%;min-height:140px;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;}
+  .btn{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:800;text-decoration:none;color:#0f172a;}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+  .row{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:10px;}
+  .soap h3{margin:10px 0 6px;font-size:14px;}
+  .soap pre{background:#0b1020;color:#e5e7eb;border-radius:12px;padding:12px;white-space:pre-wrap;}
+</style>
+
+<div class="topbar">
+  <div>
+    <h1 class="h1">AI Interview</h1>
+    <div class="meta">
+      予約：{{ appointment.start_at|date:"Y/m/d H:i" }} - {{ appointment.end_at|date:"H:i" }}
+      / メニュー：{{ appointment.menu }}
+      / 施術者：{% if appointment.assigned_staff %}{{ appointment.assigned_staff.username }}{% else %}未割当{% endif %}
+    </div>
+  </div>
+  <a class="btn" href="{% url 'staff:appointments' %}">← 予約管理へ</a>
+</div>
+
+<div class="grid">
+  <div class="card2">
+    <div class="k">患者</div>
+    <div class="v">
+      {% if appointment.patient %}{{ appointment.patient.last_name }} {{ appointment.patient.first_name }}{% else %}（患者未確定）{% endif %}
+    </div>
+  </div>
+  <div class="card2">
+    <div class="k">問診（主訴）</div>
+    <div class="v">{{ intake.chief_complaint|default:"-" }}</div>
+  </div>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="mode" value="save_visit">
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+    <div>
+      <div style="font-weight:800;font-size:12px;color:var(--muted);margin-bottom:6px;">施術前PS（0-10）</div>
+      <input name="ps_before" type="number" min="0" max="10" value="{{ visit.pain_scale_before|default_if_none:'' }}"
+             style="width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;">
+    </div>
+    <div>
+      <div style="font-weight:800;font-size:12px;color:var(--muted);margin-bottom:6px;">施術後PS（0-10）</div>
+      <input name="ps_after" type="number" min="0" max="10" value="{{ visit.pain_scale_after|default_if_none:'' }}"
+             style="width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;">
+    </div>
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <div style="font-weight:800;font-size:12px;color:var(--muted);margin-bottom:6px;">次回来院の目安</div>
+    <input name="next_visit" type="text" value="{{ visit.next_visit_suggestion }}"
+           placeholder="例：2〜3日後"
+           style="width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;">
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <div style="font-weight:800;font-size:12px;color:var(--muted);margin-bottom:6px;">メモ</div>
+    <textarea name="memo" style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:12px;padding:10px;">{{ visit.memo }}</textarea>
+  </div>
+
+  <button class="btn" type="submit">Visit保存</button>
+</form>
+
+<div class="box">
+  <div style="font-weight:900;margin-bottom:6px;">診察メモ（施術者メモ）</div>
+  <div style="color:var(--muted);font-size:12px;margin-bottom:10px;">
+    ここに診察中に聞いた内容・所見・検査結果などを入力 → AIがSOAPを下書きします
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <textarea name="exam_text" placeholder="例：腰部痛。前屈で増悪。SLR陰性。圧痛L4-5付近。可動域制限あり。"></textarea>
+    <div class="row">
+      <button class="btn primary" type="submit">SOAP生成</button>
+    </div>
+  </form>
+</div>
+
+{% if note %}
+  <div style="height:16px;"></div>
+  <div class="box soap">
+    <div style="font-weight:900;">SOAP（AI下書き）</div>
+    <h3>S（主観）</h3><pre>{{ note.subjective_text|default:"" }}</pre>
+    <h3>O（客観）</h3><pre>{{ note.objective_text|default:"" }}</pre>
+    <h3>A（評価）</h3><pre>{{ note.assessment_text|default:"" }}</pre>
+    <h3>P（計画）</h3><pre>{{ note.plan_text|default:"" }}</pre>
+  </div>
+{% endif %}
+
+{% endblock %}

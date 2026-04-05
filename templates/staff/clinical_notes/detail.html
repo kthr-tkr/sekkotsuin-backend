@@ -1,0 +1,580 @@
+{% extends "staff/_layout.html" %}
+{% block content %}
+
+<style>
+  .cn-wrap{
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .cn-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+
+  .cn-title{
+    font-size:42px;
+    font-weight:900;
+    line-height:1.1;
+    margin:0;
+    color:#0f172a;
+  }
+
+  .cn-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:14px;
+  }
+
+  .cn-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    color:#475569;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .cn-back{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:12px 16px;
+    border-radius:14px;
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    color:#0f172a;
+    text-decoration:none;
+    font-weight:800;
+    box-shadow:0 6px 20px rgba(15,23,42,.04);
+  }
+
+  .cn-back:hover{
+    color:#0f172a;
+    transform:translateY(-1px);
+  }
+
+  .cn-panel{
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:22px;
+    padding:22px;
+    box-shadow:0 10px 28px rgba(15,23,42,.05);
+  }
+
+  .cn-section{
+    margin-top:26px;
+  }
+
+  .cn-section-title{
+    font-size:18px;
+    font-weight:900;
+    margin:0 0 14px;
+    color:#0f172a;
+  }
+
+  .cn-soap-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:14px;
+  }
+
+  .cn-soap-card{
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 8px 22px rgba(15,23,42,.04);
+  }
+
+  .cn-soap-head{
+    padding:14px 18px;
+    font-size:20px;
+    font-weight:900;
+    color:#ffffff;
+  }
+
+  .cn-soap-head.s{ background:linear-gradient(135deg, #3b82f6, #2563eb); }
+  .cn-soap-head.o{ background:linear-gradient(135deg, #10b981, #059669); }
+  .cn-soap-head.a{ background:linear-gradient(135deg, #f59e0b, #d97706); }
+  .cn-soap-head.p{ background:linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+  .cn-soap-body{
+    padding:18px 18px 16px;
+    min-height:150px;
+  }
+
+  .cn-list{
+    margin:0;
+    padding-left:20px;
+  }
+
+  .cn-list li{
+    margin:0 0 8px;
+    line-height:1.7;
+    color:#0f172a;
+  }
+
+  .cn-empty{
+    color:#94a3b8;
+    font-weight:700;
+  }
+
+  .cn-info-box{
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:20px;
+    padding:20px 22px;
+    box-shadow:0 8px 22px rgba(15,23,42,.04);
+  }
+
+  .cn-kv{
+    display:grid;
+    grid-template-columns:180px 1fr;
+    gap:10px 18px;
+    align-items:start;
+  }
+
+  .cn-k{
+    color:#475569;
+    font-weight:900;
+  }
+
+  .cn-v{
+    color:#0f172a;
+    font-weight:700;
+    line-height:1.7;
+    word-break:break-word;
+  }
+
+  .cn-note-footer{
+    margin-top:28px;
+    display:flex;
+    justify-content:flex-start;
+  }
+
+  .cn-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-weight:800;
+    font-size:13px;
+  }
+
+  @media (max-width: 900px){
+    .cn-soap-grid{
+      grid-template-columns:1fr;
+    }
+
+    .cn-title{
+      font-size:32px;
+    }
+
+    .cn-kv{
+      grid-template-columns:1fr;
+      gap:4px 0;
+    }
+  }
+
+.cn-fold{
+  margin-top:10px;
+}
+
+.cn-fold-summary{
+  list-style:none;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:12px;
+  background:#ffffff;
+  border:1px solid #e5e7eb;
+  color:#0f172a;
+  font-weight:800;
+  box-shadow:0 6px 20px rgba(15,23,42,.04);
+}
+
+.cn-fold-summary::-webkit-details-marker{
+  display:none;
+}
+
+.cn-json{
+  margin:0;
+  padding:16px;
+  border-radius:16px;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  color:#334155;
+  font-size:13px;
+  line-height:1.6;
+  white-space:pre-wrap;
+  word-break:break-word;
+  overflow:auto;
+}
+
+</style>
+
+<div class="cn-wrap">
+
+  <div class="cn-head">
+    <div>
+      <h1 class="cn-title">Clinical Note #{{ note.id }}</h1>
+
+      <div class="cn-meta">
+        <span class="cn-chip">患者：{{ note.patient.last_name }} {{ note.patient.first_name }}</span>
+        <span class="cn-chip">予約ID：{{ note.appointment_id }}</span>
+        <span class="cn-chip">作成：{{ note.created_at|date:"Y-m-d H:i" }}</span>
+
+        {% if note.registered_by %}
+          <span class="cn-chip">作成者：{{ note.registered_by }}</span>
+        {% endif %}
+
+        <span class="cn-chip">最終更新：{{ note.updated_at|date:"Y-m-d H:i" }}</span>
+
+        {% if note.updated_by %}
+          <span class="cn-chip">更新者：{{ note.updated_by }}</span>
+        {% endif %}
+
+        {% if note.recording_id %}
+          <span class="cn-chip">録音ID：{{ note.recording_id }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+
+      {% if note.appointment_id %}
+        <a href="{% url 'treatment_plans:plan_create_for_appointment' note.appointment_id %}" class="cn-back" style="background:#0f172a; color:#fff; border-color:#0f172a;">
+          ＋ 施術計画を作成
+        </a>
+      {% elif note.patient_id %}
+        <a href="{% url 'treatment_plans:plan_create_for_patient' note.patient_id %}" class="cn-back" style="background:#0f172a; color:#fff; border-color:#0f172a;">
+          ＋ 施術計画を作成
+        </a>
+      {% endif %}
+
+      <a href="{% url 'staff:clinical_note_edit' note.id %}" class="cn-back">
+        ✏️ 編集
+      </a>
+
+      <a href="{% url 'staff:patient_detail' note.patient_id %}" class="cn-back">
+        ← 患者詳細へ戻る
+      </a>
+
+    </div>
+  </div>
+
+  <div class="cn-section">
+    <h2 class="cn-section-title">SOAP</h2>
+
+    <div class="cn-soap-grid">
+      <div class="cn-soap-card">
+        <div class="cn-soap-head s">S</div>
+        <div class="cn-soap-body">
+          <ul class="cn-list">
+            {% for x in soap_view.S %}
+              <li>{{ x }}</li>
+            {% empty %}
+              <li class="cn-empty">記録なし</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="cn-soap-card">
+        <div class="cn-soap-head o">O</div>
+        <div class="cn-soap-body">
+          <ul class="cn-list">
+            {% for x in soap_view.O %}
+              <li>{{ x }}</li>
+            {% empty %}
+              <li class="cn-empty">記録なし</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="cn-soap-card">
+        <div class="cn-soap-head a">A</div>
+        <div class="cn-soap-body">
+          <ul class="cn-list">
+            {% for x in soap_view.A %}
+              <li>{{ x }}</li>
+            {% empty %}
+              <li class="cn-empty">記録なし</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="cn-soap-card">
+        <div class="cn-soap-head p">P</div>
+        <div class="cn-soap-body">
+          <ul class="cn-list">
+            {% for x in soap_view.P %}
+              <li>{{ x }}</li>
+            {% empty %}
+              <li class="cn-empty">記録なし</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cn-section">
+    <h2 class="cn-section-title">抽出内容</h2>
+
+    <div class="cn-info-box">
+      <div class="cn-kv">
+        <div class="cn-k">主訴</div>
+        <div class="cn-v">{{ extract.chief_complaint|default:"-" }}</div>
+
+        <div class="cn-k">発症</div>
+        <div class="cn-v">{{ extract.onset|default:"-" }}</div>
+
+        <div class="cn-k">きっかけ</div>
+        <div class="cn-v">{{ extract.trigger|default:"-" }}</div>
+
+        <div class="cn-k">痛み(0-10)</div>
+        <div class="cn-v">{{ extract.severity_0_10|default:"-" }}</div>
+
+        <div class="cn-k">部位</div>
+        <div class="cn-v">
+          {% if extract.locations %}
+            {{ extract.locations|join:" / " }}
+          {% else %}
+            -
+          {% endif %}
+        </div>
+
+        <div class="cn-k">性状</div>
+        <div class="cn-v">
+          {% if extract.qualities %}
+            {{ extract.qualities|join:" / " }}
+          {% else %}
+            -
+          {% endif %}
+        </div>
+
+        <div class="cn-k">急性/慢性</div>
+        <div class="cn-v">{{ extract.symptom_type|default:"-" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cn-section">
+    <h2 class="cn-section-title">追加質問（Followups）</h2>
+
+    <div class="cn-info-box">
+      {% if followups %}
+        <ul class="cn-list">
+          {% for q in followups %}
+            <li>{{ q }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="cn-empty">質問はありません。</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cn-note-footer">
+    <span class="cn-tag">確定カルテ</span>
+
+    {% if note.updated_by %}
+      <span class="cn-tag" style="background:#ecfeff; color:#155e75;">
+        編集済み
+      </span>
+    {% endif %}
+  </div>
+
+  <div class="cn-section">
+    <h2 class="cn-section-title">Web問診 snapshot</h2>
+
+    <details class="cn-fold">
+      <summary class="cn-fold-summary">元のWeb問診データを表示</summary>
+
+      <div class="cn-info-box" style="margin-top:12px;">
+        {% if note.web_intake_snapshot %}
+          <div class="cn-kv">
+            <div class="cn-k">主訴</div>
+            <div class="cn-v">{{ note.web_intake_snapshot.chief_complaint|default:"-" }}</div>
+
+            <div class="cn-k">発症</div>
+            <div class="cn-v">{{ note.web_intake_snapshot.onset|default:"-" }}</div>
+
+            <div class="cn-k">急性/慢性</div>
+            <div class="cn-v">
+              {% if note.web_intake_snapshot.symptom_type == "acute" %}
+                急性
+              {% elif note.web_intake_snapshot.symptom_type == "chronic" %}
+                慢性
+              {% elif note.web_intake_snapshot.symptom_type == "unknown" %}
+                不明
+              {% else %}
+                {{ note.web_intake_snapshot.symptom_type|default:"-" }}
+              {% endif %}
+            </div>
+
+            <div class="cn-k">送信日時</div>
+            <div class="cn-v">{{ note.web_intake_snapshot.submitted_at|default:"-" }}</div>
+          </div>
+
+          {% if note.web_intake_snapshot.payload %}
+            {% with payload=note.web_intake_snapshot.payload %}
+              <div style="margin-top:18px; display:grid; gap:14px;">
+
+                {% if payload.ai_summary %}
+                  <div class="cn-info-box">
+                    <div class="cn-section-title" style="margin-bottom:12px;">AI要約</div>
+
+                    {% with ai=payload.ai_summary %}
+                      <div class="cn-kv">
+                        <div class="cn-k">主訴</div>
+                        <div class="cn-v">{{ ai.extract.chief_complaint|default:"-" }}</div>
+
+                        <div class="cn-k">発症</div>
+                        <div class="cn-v">{{ ai.extract.onset|default:"-" }}</div>
+
+                        <div class="cn-k">きっかけ</div>
+                        <div class="cn-v">{{ ai.extract.trigger|default:"-" }}</div>
+
+                        <div class="cn-k">部位</div>
+                        <div class="cn-v">
+                          {% if ai.extract.locations %}
+                            {{ ai.extract.locations|join:" / " }}
+                          {% else %}
+                            -
+                          {% endif %}
+                        </div>
+
+                        <div class="cn-k">性状</div>
+                        <div class="cn-v">
+                          {% if ai.extract.qualities %}
+                            {{ ai.extract.qualities|join:" / " }}
+                          {% else %}
+                            -
+                          {% endif %}
+                        </div>
+
+                        <div class="cn-k">症状タイプ</div>
+                        <div class="cn-v">
+                          {% if ai.extract.symptom_type == "acute" %}
+                            急性
+                          {% elif ai.extract.symptom_type == "chronic" %}
+                            慢性
+                          {% elif ai.extract.symptom_type == "unknown" %}
+                            不明
+                          {% else %}
+                            {{ ai.extract.symptom_type|default:"-" }}
+                          {% endif %}
+                        </div>
+
+                        <div class="cn-k">痛み(0-10)</div>
+                        <div class="cn-v">{{ ai.extract.severity_0_10|default:"-" }}</div>
+                      </div>
+
+                      {% if ai.followups %}
+                        <div style="margin-top:16px;">
+                          <div style="font-weight:900; margin-bottom:8px; color:#475569;">追加質問候補</div>
+                          <ul class="cn-list">
+                            {% for q in ai.followups %}
+                              <li>{{ q }}</li>
+                            {% endfor %}
+                          </ul>
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                  </div>
+                {% endif %}
+
+                {% if payload.history %}
+                  <div class="cn-info-box">
+                    <div class="cn-section-title" style="margin-bottom:12px;">既往歴・履歴</div>
+
+                    <div class="cn-kv">
+                      <div class="cn-k">final_note</div>
+                      <div class="cn-v">{{ payload.history.final_note|default:"-" }}</div>
+
+                      <div class="cn-k">history_note</div>
+                      <div class="cn-v">{{ payload.history.history_note|default:"-" }}</div>
+
+                      <div class="cn-k">meds_note</div>
+                      <div class="cn-v">{{ payload.history.meds_note|default:"-" }}</div>
+
+                      <div class="cn-k">other_clinic</div>
+                      <div class="cn-v">{{ payload.history.other_clinic|default:"-" }}</div>
+                    </div>
+                  </div>
+                {% endif %}
+
+                {% if payload.consent %}
+                  <div class="cn-info-box">
+                    <div class="cn-section-title" style="margin-bottom:12px;">同意情報</div>
+
+                    <div class="cn-kv">
+                      <div class="cn-k">同意</div>
+                      <div class="cn-v">
+                        {% if payload.consent.agreed %}
+                          済
+                        {% else %}
+                          未
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+
+                <details class="cn-fold">
+                  <summary class="cn-fold-summary">raw JSON を表示</summary>
+                  <div style="margin-top:12px;">
+                    <pre class="cn-json">{{ payload|pprint }}</pre>
+                  </div>
+                </details>
+
+              </div>
+            {% endwith %}
+          {% endif %}
+        {% else %}
+          <div class="cn-empty">Web問診 snapshot はありません。</div>
+        {% endif %}
+      </div>
+    </details>
+  </div>
+
+  {% if histories %}
+    <div class="cn-section">
+      <h2 class="cn-section-title">編集履歴</h2>
+
+      <div class="cn-info-box">
+        <ul class="cn-list">
+          {% for h in histories %}
+            <li>
+              {{ h.created_at|date:"Y-m-d H:i" }}
+              {% if h.edited_by %} / {{ h.edited_by }}{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}

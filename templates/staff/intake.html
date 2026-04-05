@@ -1,0 +1,93 @@
+{# templates/staff/intake.html #}
+{% extends "staff/_layout.html" %}
+{% block content %}
+
+<style>
+  .tabs{display:flex; gap:8px; margin:14px 0 16px;}
+  .tab{padding:10px 14px;border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--muted); font-weight:600;}
+  .tab.active{background:var(--primary); color:#fff; border-color:var(--primary);}
+  .panel{padding:26px;}
+  .sub{color:var(--muted); margin-top:6px;}
+  .box{border:1px solid var(--line); border-radius:14px; padding:16px; background:#fff;}
+  textarea{width:100%; min-height:140px; border:1px solid var(--line); border-radius:12px; padding:12px; font-size:14px;}
+  .micWrap{display:flex; flex-direction:column; align-items:center; justify-content:center; padding:34px 0;}
+  .mic{
+    width:120px;height:120px;border-radius:60px;border:2px solid #cbd5e1;
+    display:grid; place-items:center; box-shadow:0 16px 34px rgba(15,23,42,.10);
+    background:#fff;
+  }
+  .mic small{display:block; margin-top:12px; color:var(--muted); font-weight:700; letter-spacing:.06em;}
+  .btnRow{display:flex; justify-content:flex-end; gap:10px; margin-top:14px;}
+  .btn{padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#fff; font-weight:700;}
+  .btn.primary{background:var(--primary); color:#fff; border-color:var(--primary);}
+</style>
+
+<div class="card panel">
+  <div style="font-size:28px; font-weight:800;">AI Interview</div>
+  <div class="sub">症状を記録してAIが解析します</div>
+
+  <div class="tabs">
+    <button class="tab active" type="button" data-tab="rec">音声録音</button>
+    <button class="tab" type="button" data-tab="text">手入力</button>
+    <button class="tab" type="button" data-tab="paste">貼り付け</button>
+  </div>
+
+  <div class="box" id="panel-rec">
+    <div style="font-weight:800; margin-bottom:6px;">問診入力</div>
+    <div class="sub" style="margin-bottom:14px;">施術者の診察を補助する参考情報を記録します</div>
+
+    <div class="box" style="background:#f8fafc;">
+      マイクボタンをクリックして問診を録音します。AI音声認識により自動的にテキスト化し、施術者の判断を支援します。
+    </div>
+
+    <div class="micWrap">
+      <div class="mic" aria-label="record button">
+        🎤
+      </div>
+      <small>CLICK TO START RECORDING</small>
+    </div>
+
+    <div class="btnRow">
+      <button class="btn" type="button">戻る</button>
+      <button class="btn primary" type="button">解析へ進む</button>
+    </div>
+  </div>
+
+  <div class="box" id="panel-text" style="display:none;">
+    <div style="font-weight:800; margin-bottom:10px;">手入力</div>
+    <textarea placeholder="例：3日前から首の後ろが痛い。寝返りで増悪。温めると少し楽。"></textarea>
+    <div class="btnRow">
+      <button class="btn" type="button">戻る</button>
+      <button class="btn primary" type="button">解析へ進む</button>
+    </div>
+  </div>
+
+  <div class="box" id="panel-paste" style="display:none;">
+    <div style="font-weight:800; margin-bottom:10px;">貼り付け</div>
+    <textarea placeholder="別ツールのメモを貼り付け…"></textarea>
+    <div class="btnRow">
+      <button class="btn" type="button">戻る</button>
+      <button class="btn primary" type="button">解析へ進む</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll(".tab");
+  const panels = {
+    rec: document.getElementById("panel-rec"),
+    text: document.getElementById("panel-text"),
+    paste: document.getElementById("panel-paste"),
+  };
+
+  tabs.forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      tabs.forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      Object.values(panels).forEach(p=>p.style.display="none");
+      panels[btn.dataset.tab].style.display="block";
+    });
+  });
+</script>
+
+{% endblock %}

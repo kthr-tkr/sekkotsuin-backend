@@ -1,0 +1,186 @@
+{% extends "patients/patient_base.html" %}
+{% block content %}
+
+<style>
+  .intake-shell{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  .intake-top{
+    margin-bottom: 18px;
+  }
+  .intake-eyebrow{
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: #3b82f6;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .intake-title{
+    font-size: 34px;
+    font-weight: 900;
+    margin: 0;
+    line-height: 1.25;
+    color: #0f172a;
+  }
+  .intake-sub{
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 16px;
+  }
+  .wizard__card{
+    margin-top: 20px;
+    padding: 32px 28px;
+    border: 1px solid #e5e7eb;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15,23,42,.06);
+  }
+  .wizard__title{
+    font-size: 28px;
+    font-weight: 900;
+    margin: 0 0 8px;
+    color: #0f172a;
+  }
+  .wizard__lead{
+    color: #64748b;
+    margin: 0 0 24px;
+    font-size: 15px;
+  }
+  .previous-box{
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    border-radius:18px;
+    padding:16px 18px;
+    margin-bottom:24px;
+  }
+  .previous-label{
+    font-size:13px;
+    font-weight:800;
+    color:#2563eb;
+    margin-bottom:6px;
+  }
+  .previous-text{
+    font-size:16px;
+    font-weight:700;
+    color:#0f172a;
+  }
+  .choice-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:12px;
+  }
+  .choice-card{
+    position:relative;
+  }
+  .choice-card input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+  }
+  .choice-card label{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:88px;
+    border:1px solid #d1d5db;
+    border-radius:18px;
+    background:#fff;
+    font-weight:800;
+    color:#0f172a;
+    cursor:pointer;
+    transition:.18s ease;
+    text-align:center;
+    padding:14px;
+  }
+  .choice-card input:checked + label{
+    border-color:#2563eb;
+    background:#eff6ff;
+    color:#1d4ed8;
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+  }
+  .field__error{
+    color:#dc2626;
+    margin-top:8px;
+    font-size:13px;
+    font-weight:700;
+  }
+  .wizard__actions{
+    display:flex;
+    gap:14px;
+    margin-top:28px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:52px;
+    padding:0 20px;
+    border-radius:14px;
+    border:1px solid #d1d5db;
+    background:#fff;
+    text-decoration:none;
+    font-weight:800;
+    color:#0f172a;
+    cursor:pointer;
+  }
+  .btn--primary{
+    flex:1;
+    background:linear-gradient(180deg,#163b7a,#1d4ed8);
+    color:#fff;
+    border-color:transparent;
+  }
+  @media (max-width: 768px){
+    .intake-title{ font-size:28px; }
+    .wizard__card{ padding:24px 18px; }
+    .choice-grid{ grid-template-columns:1fr; }
+    .wizard__actions{ flex-direction:column; }
+  }
+</style>
+
+<div class="intake-shell">
+  <div class="intake-top">
+    <div class="intake-eyebrow">Web Intake</div>
+    <h1 class="intake-title">今回の症状について教えてください</h1>
+    <div class="intake-sub">前回と同じ症状か、新しい症状かを選択してください。</div>
+  </div>
+
+  <div class="wizard__card">
+    <h2 class="wizard__title">来院内容の確認</h2>
+    <p class="wizard__lead">継続通院の方は、より短い入力で完了できます。</p>
+
+    {% if previous_complaint %}
+      <div class="previous-box">
+        <div class="previous-label">前回の主な症状</div>
+        <div class="previous-text">{{ previous_complaint }}</div>
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="choice-grid">
+        {% for radio in form.visit_type %}
+          <div class="choice-card">
+            {{ radio.tag }}
+            <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if form.visit_type.errors %}
+        <div class="field__error">{{ form.visit_type.errors|striptags }}</div>
+      {% endif %}
+
+      <div class="wizard__actions">
+        <a class="btn" href="{% url 'patients:booking_calendar' %}">← 戻る</a>
+        <button class="btn btn--primary" type="submit">次へ →</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

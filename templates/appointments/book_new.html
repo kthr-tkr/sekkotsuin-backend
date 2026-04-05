@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="max-width:720px;margin:0 auto;padding:28px 18px;">
+  <h1 style="font-size:22px;font-weight:900;margin:0;">希望日時を選択</h1>
+  <p style="color:var(--muted);margin-top:6px;">
+    {{ patient.last_name }} {{ patient.first_name }} 様 / {{ clinic.name }}
+  </p>
+
+  <form method="post" style="margin-top:18px;display:grid;gap:12px;">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn primary" type="submit">予約を確定</button>
+  </form>
+</div>
+{% endblock %}

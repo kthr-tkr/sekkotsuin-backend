@@ -1,0 +1,315 @@
+{% extends "patients/patient_base.html" %}
+{% block content %}
+
+<style>
+  .intake-shell{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  .intake-top{
+    margin-bottom: 18px;
+  }
+  .intake-eyebrow{
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: #3b82f6;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .intake-title{
+    font-size: 34px;
+    font-weight: 900;
+    margin: 0;
+    line-height: 1.25;
+    color: #0f172a;
+  }
+  .intake-sub{
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 16px;
+  }
+  .wizard__card{
+    margin-top:20px;
+    padding:32px 28px;
+    border:1px solid #e5e7eb;
+    border-radius:24px;
+    background:#fff;
+    box-shadow:0 12px 30px rgba(15,23,42,.06);
+  }
+  .wizard__title{
+    font-size:30px;
+    font-weight:900;
+    margin:0 0 8px;
+    color:#0f172a;
+  }
+  .wizard__lead{
+    color:#64748b;
+    margin:0 0 24px;
+    font-size:15px;
+  }
+  .previous-box{
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    border-radius:18px;
+    padding:16px 18px;
+    margin-bottom:24px;
+  }
+  .previous-label{
+    font-size:13px;
+    font-weight:800;
+    color:#2563eb;
+    margin-bottom:6px;
+  }
+  .previous-text{
+    font-size:16px;
+    font-weight:700;
+    color:#0f172a;
+  }
+  .field{
+    margin:20px 0;
+  }
+  .field__label{
+    display:block;
+    margin-bottom:8px;
+    color:#334155;
+    font-weight:800;
+    font-size:15px;
+  }
+  .req{
+    color:#ef4444;
+    margin-left:6px;
+  }
+  .choice-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:12px;
+  }
+  .choice-card{
+    position:relative;
+  }
+  .choice-card input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+  }
+  .choice-card label{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:56px;
+    border:1px solid #d1d5db;
+    border-radius:16px;
+    background:#fff;
+    font-weight:800;
+    color:#0f172a;
+    cursor:pointer;
+    transition:.18s ease;
+    text-align:center;
+    padding:10px 12px;
+  }
+  .choice-card input:checked + label{
+    border-color:#2563eb;
+    background:#eff6ff;
+    color:#1d4ed8;
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+  }
+  .check-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:12px;
+  }
+  .check-chip{
+    position:relative;
+  }
+  .check-chip input{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+  }
+  .check-chip label{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:52px;
+    border:1px solid #d1d5db;
+    border-radius:999px;
+    background:#fff;
+    font-weight:700;
+    cursor:pointer;
+    transition:.18s ease;
+    padding:10px 14px;
+    text-align:center;
+  }
+  .check-chip input:checked + label{
+    border-color:#16a34a;
+    background:#f0fdf4;
+    color:#15803d;
+    box-shadow:0 0 0 4px rgba(34,197,94,.10);
+  }
+  .severity-wrap{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .severity-wrap input[type="range"]{
+    flex:1;
+  }
+  .severity-value{
+    min-width:64px;
+    height:48px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1px solid #d1d5db;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    font-size:18px;
+    color:#0f172a;
+  }
+  .field__control textarea{
+    width:100%;
+    border:1px solid #d1d5db;
+    border-radius:16px;
+    padding:14px 16px;
+    font-size:16px;
+    background:#fff;
+    color:#0f172a;
+    min-height:120px;
+    resize:vertical;
+  }
+  .field__error{
+    color:#dc2626;
+    margin-top:8px;
+    font-size:13px;
+    font-weight:700;
+  }
+  .wizard__actions{
+    display:flex;
+    gap:14px;
+    margin-top:28px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:52px;
+    padding:0 20px;
+    border-radius:14px;
+    border:1px solid #d1d5db;
+    background:#fff;
+    text-decoration:none;
+    font-weight:800;
+    color:#0f172a;
+    cursor:pointer;
+  }
+  .btn--primary{
+    flex:1;
+    background:linear-gradient(180deg,#163b7a,#1d4ed8);
+    color:#fff;
+    border-color:transparent;
+  }
+  @media (max-width: 768px){
+    .intake-title{ font-size:28px; }
+    .wizard__card{ padding:24px 18px; }
+    .choice-grid, .check-grid{ grid-template-columns:1fr; }
+    .wizard__actions{ flex-direction:column; }
+  }
+</style>
+
+<div class="intake-shell">
+  <div class="intake-top">
+    <div class="intake-eyebrow">Web Intake</div>
+    <h1 class="intake-title">前回からの変化を教えてください</h1>
+    <div class="intake-sub">継続して通院されている方の簡単な確認です。</div>
+  </div>
+
+  <div class="wizard__card">
+    <h2 class="wizard__title">簡易問診</h2>
+    <p class="wizard__lead">短時間で入力できます。</p>
+
+    {% if previous_complaint %}
+      <div class="previous-box">
+        <div class="previous-label">前回の主な症状</div>
+        <div class="previous-text">{{ previous_complaint }}</div>
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="field">
+        <label class="field__label">{{ form.condition_change.label }}<span class="req">*</span></label>
+        <div class="choice-grid">
+          {% for radio in form.condition_change %}
+            <div class="choice-card">
+              {{ radio.tag }}
+              <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+            </div>
+          {% endfor %}
+        </div>
+        {% if form.condition_change.errors %}
+          <div class="field__error">{{ form.condition_change.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label class="field__label">{{ form.pain_level.label }}<span class="req">*</span></label>
+        <div class="severity-wrap">
+          {{ form.pain_level }}
+          <div class="severity-value"><span id="pain-level-value">5</span>/10</div>
+        </div>
+        {% if form.pain_level.errors %}
+          <div class="field__error">{{ form.pain_level.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label class="field__label">{{ form.changes.label }}</label>
+        <div class="check-grid">
+          {% for checkbox in form.changes %}
+            <div class="check-chip">
+              {{ checkbox.tag }}
+              <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+            </div>
+          {% endfor %}
+        </div>
+        {% if form.changes.errors %}
+          <div class="field__error">{{ form.changes.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label class="field__label">{{ form.comment.label }}</label>
+        <div class="field__control">{{ form.comment }}</div>
+        {% if form.comment.errors %}
+          <div class="field__error">{{ form.comment.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="wizard__actions">
+        <a class="btn" href="{% url 'intakes:intake_start' appointment.id %}">← 戻る</a>
+        <button class="btn btn--primary" type="submit">送信する</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const painInput = document.querySelector('input[name="pain_level"]');
+  const painValue = document.getElementById("pain-level-value");
+
+  if (painInput && painValue) {
+    painValue.textContent = painInput.value || 5;
+    painInput.addEventListener("input", function () {
+      painValue.textContent = this.value;
+    });
+  }
+});
+</script>
+
+{% endblock %}

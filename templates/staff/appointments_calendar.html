@@ -1,0 +1,1288 @@
+{% extends "staff/_layout.html" %}
+{% load static %}
+{% block title %}Medical AI | Appointment Manager{% endblock %}
+
+{% block extra_head %}
+<style>
+  .appt-page{
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:24px;
+  }
+
+  .page-head{
+    min-width:0;
+    padding-top:4px;
+  }
+
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(124,58,237,.08);
+    color:#5b38c5;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.02em;
+    margin-bottom:14px;
+    backdrop-filter:blur(10px);
+  }
+
+  .eyebrow::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+    box-shadow:0 0 0 4px rgba(124,58,237,.08);
+  }
+
+  .page-title{
+    margin:0;
+    font-size:52px;
+    line-height:1.02;
+    letter-spacing:-0.05em;
+    font-weight:900;
+    color:#0b1220;
+  }
+
+  .page-meta{
+    margin-top:12px;
+    color:#64748b;
+    font-size:14px;
+    font-weight:600;
+  }
+
+  .range-note{
+    margin-top:6px;
+    color:#94a3b8;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .page-tools{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .tool-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.82);
+    color:#111827;
+    font-size:14px;
+    font-weight:800;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    backdrop-filter:blur(10px);
+    transition:.2s ease;
+    text-decoration:none;
+  }
+
+  .tool-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(15,23,42,.08);
+  }
+
+  .hero{
+    position:relative;
+    overflow:hidden;
+    border-radius:32px;
+    padding:30px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 88% 16%, rgba(96,165,250,.26), transparent 26%),
+      radial-gradient(circle at 10% 90%, rgba(124,58,237,.18), transparent 24%),
+      linear-gradient(135deg, #060c19 0%, #111b36 38%, #1a2f73 68%, #4f86ff 100%);
+    box-shadow:
+      0 28px 80px rgba(15,23,42,.18),
+      inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .hero::after{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:31px;
+    border:1px solid rgba(255,255,255,.08);
+    pointer-events:none;
+  }
+
+  .hero-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.35fr .85fr;
+    gap:22px;
+    align-items:stretch;
+  }
+
+  .hero-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:14px;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.18em;
+    color:rgba(255,255,255,.62);
+    text-transform:uppercase;
+  }
+
+  .hero-kicker::before{
+    content:"";
+    width:22px;
+    height:1px;
+    background:rgba(255,255,255,.35);
+  }
+
+  .hero-title{
+    margin:0 0 12px;
+    font-size:30px;
+    line-height:1.22;
+    letter-spacing:-0.04em;
+    font-weight:900;
+  }
+
+  .hero-sub{
+    margin:0;
+    max-width:720px;
+    font-size:14px;
+    line-height:1.85;
+    color:rgba(255,255,255,.78);
+  }
+
+  .hero-side{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+
+  .mini-stat{
+    border-radius:22px;
+    padding:18px;
+    background:linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.08) 100%);
+    border:1px solid rgba(255,255,255,.12);
+    backdrop-filter:blur(12px);
+  }
+
+  .mini-stat-label{
+    color:rgba(255,255,255,.62);
+    font-size:12px;
+    letter-spacing:.08em;
+    font-weight:800;
+    margin-bottom:10px;
+  }
+
+  .mini-stat-value{
+    font-size:34px;
+    line-height:1;
+    font-weight:900;
+    letter-spacing:-0.04em;
+  }
+
+  .mini-stat-sub{
+    margin-top:8px;
+    font-size:12px;
+    color:rgba(255,255,255,.72);
+    line-height:1.6;
+  }
+
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+  }
+
+  .stat-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:24px;
+    padding:22px 22px 20px;
+    background:rgba(255,255,255,.76);
+    border:1px solid rgba(255,255,255,.75);
+    box-shadow:0 16px 36px rgba(15,23,42,.06);
+    backdrop-filter:blur(14px);
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .stat-top{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:14px;
+  }
+
+  .stat-label{
+    color:#64748b;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.01em;
+  }
+
+  .stat-accent{
+    width:38px;
+    height:38px;
+    border-radius:14px;
+    background:linear-gradient(135deg, rgba(59,130,246,.14) 0%, rgba(124,58,237,.12) 100%);
+    border:1px solid rgba(59,130,246,.10);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+  }
+
+  .stat-value{
+    position:relative;
+    z-index:1;
+    font-size:42px;
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-weight:900;
+    color:#09111f;
+    margin-bottom:10px;
+  }
+
+  .stat-sub{
+    position:relative;
+    z-index:1;
+    color:#94a3b8;
+    font-size:12px;
+    line-height:1.7;
+    font-weight:600;
+  }
+
+  .period-switch{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .period-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:42px;
+    padding:0 16px;
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.82);
+    color:#111827;
+    font-weight:900;
+    text-decoration:none;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    backdrop-filter:blur(10px);
+    transition:.18s ease;
+  }
+
+  .period-link:hover{
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(15,23,42,.08);
+  }
+
+  .period-link.active{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+    box-shadow:0 16px 36px rgba(29,78,216,.20), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  .filters-card,
+  .calendar-card,
+  .side-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:0 16px 36px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+  }
+
+  .filters-card::after,
+  .calendar-card::after,
+  .side-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .filters-head,
+  .card-head{
+    position:relative;
+    z-index:1;
+    margin-bottom:16px;
+  }
+
+  .filters-title,
+  .card-title{
+    margin:0;
+    font-size:20px;
+    font-weight:900;
+    color:#0b1220;
+    letter-spacing:-0.02em;
+  }
+
+  .filters-sub,
+  .card-sub{
+    margin-top:6px;
+    color:#7b8798;
+    font-size:13px;
+    font-weight:600;
+  }
+
+  .filters{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.1fr 1fr 1fr 1.2fr auto;
+    gap:12px;
+    align-items:end;
+  }
+
+  .field{
+    border-radius:18px;
+    padding:12px 14px;
+    border:1px solid #dbe5f0;
+    background:rgba(255,255,255,.92);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  }
+
+  .field label{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    font-weight:800;
+    margin-bottom:8px;
+  }
+
+  .field input,
+  .field select{
+    width:100%;
+    border:none;
+    outline:none;
+    background:transparent;
+    color:#0f172a;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:48px;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.82);
+    color:#111827;
+    font-size:14px;
+    font-weight:800;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    transition:.18s ease;
+    text-decoration:none;
+    cursor:pointer;
+  }
+
+  .btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(15,23,42,.08);
+  }
+
+  .btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+    box-shadow:0 16px 36px rgba(29,78,216,.20), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  .calendar-layout{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) 390px;
+    gap:18px;
+    align-items:start;
+  }
+
+  .calendar-card{
+    padding:18px;
+  }
+
+  .side-card{
+    position:sticky;
+    top:20px;
+  }
+
+  .side-title{
+    position:relative;
+    z-index:1;
+    font-size:22px;
+    font-weight:900;
+    color:#0b1220;
+    margin-bottom:14px;
+    letter-spacing:-0.02em;
+  }
+
+  .empty-note{
+    position:relative;
+    z-index:1;
+    color:#7b8798;
+    line-height:1.8;
+    font-size:14px;
+    font-weight:600;
+  }
+
+  .mini{
+    position:relative;
+    z-index:1;
+    font-size:12px;
+    color:#94a3b8;
+    margin-bottom:6px;
+    font-weight:800;
+    letter-spacing:.02em;
+  }
+
+  .big{
+    position:relative;
+    z-index:1;
+    font-size:16px;
+    font-weight:900;
+    color:#0f172a;
+    margin-bottom:12px;
+    line-height:1.5;
+  }
+
+  .panel-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:14px;
+  }
+
+  .panel-item{
+    border:1px solid #edf2f8;
+    border-radius:18px;
+    padding:14px;
+    background:linear-gradient(180deg, rgba(251,253,255,.92) 0%, rgba(245,248,252,.96) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+  }
+
+  .panel-item.wide{
+    grid-column:1 / -1;
+  }
+
+  .panel-actions{
+    position:relative;
+    z-index:1;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:18px;
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:34px;
+    padding:0 12px;
+    border-radius:999px;
+    font-weight:900;
+    font-size:12px;
+    border:1px solid rgba(15,23,42,.06);
+    margin-right:6px;
+    margin-bottom:8px;
+    background:linear-gradient(135deg, rgba(59,130,246,.10) 0%, rgba(124,58,237,.08) 100%);
+    color:#3658c9;
+  }
+
+  /* FullCalendar */
+  .fc{
+    position:relative;
+    z-index:1;
+  }
+
+  .fc .fc-toolbar{
+    margin-bottom:16px !important;
+  }
+
+  .fc .fc-toolbar-title{
+    font-size:30px;
+    font-weight:900;
+    letter-spacing:-0.03em;
+    color:#0b1220;
+  }
+
+  .fc .fc-button{
+    border:none !important;
+    border-radius:14px !important;
+    padding:10px 14px !important;
+    font-weight:900 !important;
+    box-shadow:none !important;
+    background:#334155 !important;
+    color:#fff !important;
+  }
+
+  .fc .fc-button:hover{
+    background:#1e293b !important;
+  }
+
+  .fc .fc-button.fc-button-active,
+  .fc .fc-button:active{
+    background:#0f172a !important;
+  }
+
+  .fc .fc-button-primary:disabled{
+    opacity:.45 !important;
+  }
+
+  .fc .fc-col-header-cell-cushion{
+    font-weight:900;
+    color:#0f172a;
+    padding:10px 6px !important;
+  }
+
+  .fc .fc-daygrid-day-number{
+    font-weight:900;
+    color:#0f172a;
+    padding:8px !important;
+  }
+
+  .fc .fc-day-today{
+    background:rgba(59,130,246,.06) !important;
+  }
+
+  .fc .fc-scrollgrid,
+  .fc-theme-standard td,
+  .fc-theme-standard th{
+    border-color:#e8edf5 !important;
+  }
+
+  .fc .fc-daygrid-day-frame{
+    min-height:120px;
+  }
+
+  .fc .fc-multimonth-daygrid-table .fc-daygrid-day-frame{
+    min-height:76px;
+  }
+
+  .fc .fc-multimonth-title{
+    font-size:28px;
+    font-weight:900;
+    color:#0b1220;
+  }
+
+  .fc .fc-multimonth-month{
+    border-radius:18px;
+    overflow:hidden;
+    background:rgba(255,255,255,.65);
+  }
+
+  .fc-event{
+    border-radius:12px !important;
+    padding:2px 6px !important;
+    font-weight:800 !important;
+    cursor:pointer;
+    transition:all .15s ease;
+    box-shadow:none !important;
+  }
+
+  .fc-event:hover{
+    transform:scale(1.02);
+  }
+
+  .fc-daygrid-event{
+    white-space:normal !important;
+    align-items:flex-start !important;
+  }
+
+  .fc-event-title{
+    white-space:normal !important;
+    line-height:1.35 !important;
+  }
+
+  .fc .fc-timegrid-slot-label{
+    color:#475569;
+    font-weight:800;
+  }
+
+  .fc .fc-timegrid-event-harness .fc-event{
+    box-shadow:none;
+  }
+
+  .day-summary{
+    position:absolute;
+    top:18px;
+    left:4px;
+    right:4px;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  .day-summary-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+  }
+
+  .fc-daygrid-day-events{
+    margin-top:30px !important;
+  }
+
+  .day-chip{
+    display:inline-flex;
+    align-items:center;
+    padding:2px 7px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:800;
+    line-height:1.2;
+    border:1px solid transparent;
+  }
+
+  .day-chip.total{
+    background:#e2e8f0;
+    color:#0f172a;
+  }
+
+  .day-chip.not-done{
+    background:#fee2e2;
+    color:#991b1b;
+  }
+
+  .day-chip.first{
+    background:#dbeafe;
+    color:#1d4ed8;
+  }
+
+  @media (max-width: 1280px){
+    .stats-grid{
+      grid-template-columns:repeat(2, 1fr);
+    }
+
+    .filters{
+      grid-template-columns:1fr 1fr;
+    }
+
+    .calendar-layout{
+      grid-template-columns:1fr;
+    }
+
+    .side-card{
+      position:static;
+    }
+  }
+
+  @media (max-width: 980px){
+    .topbar{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .hero-grid{
+      grid-template-columns:1fr;
+    }
+
+    .hero-side{
+      grid-template-columns:1fr 1fr;
+    }
+
+    .page-title{
+      font-size:40px;
+    }
+  }
+
+  @media (max-width: 640px){
+    .page-title{
+      font-size:32px;
+    }
+
+    .hero{
+      padding:22px;
+      border-radius:24px;
+    }
+
+    .hero-title{
+      font-size:24px;
+    }
+
+    .hero-side,
+    .stats-grid,
+    .filters,
+    .panel-grid{
+      grid-template-columns:1fr;
+    }
+
+    .filters-card,
+    .calendar-card,
+    .side-card{
+      padding:18px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="appt-page">
+
+  <header class="topbar">
+    <div class="page-head">
+      <div class="eyebrow">Premium Appointment Manager</div>
+      <h1 class="page-title">予約管理</h1>
+      <div class="page-meta">予約状況と問診内容を確認できます</div>
+      <div class="range-note">表示期間：{{ range_label }}</div>
+    </div>
+
+    <div class="page-tools">
+      <a href="{% url 'staff:dashboard' %}" class="tool-btn">ダッシュボードへ</a>
+      <a href="{% url 'staff:patient_search' %}" class="tool-btn">患者検索へ</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-kicker">Appointment Control Panel</div>
+        <h2 class="hero-title">予約、問診、診療導線をひとつのビューで管理。</h2>
+        <p class="hero-sub">
+          期間別の予約状況を確認しながら、問診未完了・来院済み・施術者別の状態を
+          見通しよく把握できるプレミアム予約マネジメント画面です。
+        </p>
+      </div>
+
+      <div class="hero-side">
+        <div class="mini-stat">
+          <div class="mini-stat-label">PERIOD</div>
+          <div class="mini-stat-value">
+            {% if period == 'day' %}DAY
+            {% elif period == 'week' %}WEEK
+            {% elif period == 'month' %}MONTH
+            {% elif period == 'year' %}YEAR
+            {% else %}VIEW{% endif %}
+          </div>
+          <div class="mini-stat-sub">現在の表示粒度</div>
+        </div>
+
+        <div class="mini-stat">
+          <div class="mini-stat-label">BOOKINGS</div>
+          <div class="mini-stat-value">{{ stats.total }}</div>
+          <div class="mini-stat-sub">期間内の予約件数</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">期間内予約</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-sub">現在の表示期間に含まれる予約件数</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label" style="color:#9a3412;">問診未完了</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value" style="color:#9a3412;">{{ stats.not_done }}</div>
+      <div class="stat-sub">まだ問診が完了していない予約</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label" style="color:#1d4ed8;">問診完了</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value" style="color:#1d4ed8;">{{ stats.done }}</div>
+      <div class="stat-sub">問診確認まで進んでいる予約</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">来院済み</div>
+        <div class="stat-accent"></div>
+      </div>
+      <div class="stat-value">{{ stats.arrived }}</div>
+      <div class="stat-sub">来院ステータスが更新済みの件数</div>
+    </div>
+  </section>
+
+  <div class="period-switch">
+    <a class="period-link {% if period == 'day' %}active{% endif %}"
+       href="?period=day&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      日
+    </a>
+    <a class="period-link {% if period == 'week' %}active{% endif %}"
+       href="?period=week&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      週
+    </a>
+    <a class="period-link {% if period == 'month' %}active{% endif %}"
+       href="?period=month&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      月
+    </a>
+    <a class="period-link {% if period == 'year' %}active{% endif %}"
+       href="?period=year&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      年
+    </a>
+  </div>
+
+  <section class="filters-card">
+    <div class="filters-head">
+      <h3 class="filters-title">検索・絞り込み</h3>
+      <div class="filters-sub">基準日、施術者、ステータス、患者情報から予約を絞り込めます</div>
+    </div>
+
+    <form method="get" class="filters">
+      <input type="hidden" name="period" value="{{ period }}">
+
+      <div class="field">
+        <label>基準日</label>
+        <input type="date" name="day" value="{{ day|date:'Y-m-d' }}">
+      </div>
+
+      <div class="field">
+        <label>施術者</label>
+        <select name="staff">
+          <option value="">全員</option>
+          {% for u in staff_users %}
+            <option value="{{ u.id }}" {% if filter_staff|add:'' == u.id|add:'' %}selected{% endif %}>
+              {{ u.username }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>ステータス</label>
+        <select name="status">
+          <option value="">すべて</option>
+          {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if filter_status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>検索</label>
+        <input type="text" name="q" placeholder="患者名・電話・メニュー" value="{{ filter_q }}">
+      </div>
+
+      <button class="btn primary" type="submit">検索</button>
+    </form>
+  </section>
+
+  <div class="calendar-layout">
+    <section class="calendar-card">
+      <div class="card-head">
+        <h3 class="card-title">カレンダービュー</h3>
+        <div class="card-sub">予約をクリックすると右側に詳細が表示されます</div>
+      </div>
+      <div id="calendar"></div>
+    </section>
+
+    <aside class="side-card" id="detailPanel">
+      <div class="side-title">予約詳細</div>
+      <div class="empty-note">
+        カレンダー上の予約をクリックすると、患者情報・問診状況・主訴・診察導線をここに表示します。
+      </div>
+    </aside>
+  </div>
+
+</div>
+
+{{ calendar_events|json_script:"calendar-events" }}
+{{ calendar_day_summary|json_script:"calendar-day-summary" }}
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script>
+  const events = JSON.parse(document.getElementById('calendar-events').textContent);
+  const daySummary = JSON.parse(document.getElementById('calendar-day-summary').textContent);
+  const panel = document.getElementById('detailPanel');
+
+  function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function getCSRFToken() {
+    return document.cookie
+      .split('; ')
+      .find(row => row.startsWith('csrftoken='))
+      ?.split('=')[1] || '';
+  }
+
+  function injectDaySummaries(calendar) {
+    const viewType = calendar.view.type;
+
+    if (viewType === 'timeGridWeek') {
+      calendar.el.querySelectorAll('.day-summary').forEach(el => el.remove());
+      return;
+    }
+
+    const dayCells = calendar.el.querySelectorAll('[data-date]');
+
+    dayCells.forEach(cell => {
+      const dateStr = cell.getAttribute('data-date');
+      if (!dateStr) return;
+
+      const info = daySummary[dateStr];
+      if (!info) return;
+
+      const existing = cell.querySelector('.day-summary');
+      if (existing) existing.remove();
+
+      const frame =
+        cell.querySelector('.fc-daygrid-day-frame') ||
+        cell.querySelector('.fc-multimonth-daygrid-day-frame') ||
+        cell;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'day-summary';
+
+      let chips = `<div class="day-summary-row">`;
+
+      if (viewType === 'multiMonthYear') {
+        chips += `<span class="day-chip total">${info.total}件</span>`;
+        if (info.not_done > 0) {
+          chips += `<span class="day-chip not-done">待${info.not_done}</span>`;
+        }
+      } else {
+        chips += `<span class="day-chip total">予約 ${info.total}</span>`;
+        if (info.not_done > 0) {
+          chips += `<span class="day-chip not-done">問診待ち ${info.not_done}</span>`;
+        }
+        if (info.first_visit > 0) {
+          chips += `<span class="day-chip first">初診 ${info.first_visit}</span>`;
+        }
+      }
+
+      chips += `</div>`;
+      wrap.innerHTML = chips;
+      frame.appendChild(wrap);
+    });
+  }
+
+  function renderPanel(event) {
+    const p = event.extendedProps;
+
+    panel.innerHTML = `
+      <div class="side-title">予約詳細</div>
+
+      <div class="mini">患者名</div>
+      <div class="big">${escapeHtml(p.patientName)}</div>
+
+      <div class="mini">日時</div>
+      <div class="big">${escapeHtml(event.start?.toLocaleString('ja-JP') || '')}</div>
+
+      <div>
+        <span class="badge">${escapeHtml(p.statusLabel)}</span>
+        <span class="badge">${escapeHtml(p.intakeState)}</span>
+        <span class="badge">${escapeHtml(p.intakeKindLabel)}</span>
+        <span class="badge">${escapeHtml(p.visitTypeLabel)}</span>
+      </div>
+
+      <div class="panel-grid">
+        <div class="panel-item">
+          <div class="mini">メニュー</div>
+          <div class="big">${escapeHtml(p.menu)}</div>
+        </div>
+        <div class="panel-item">
+          <div class="mini">施術者</div>
+          <div class="big">${escapeHtml(p.staffName)}</div>
+        </div>
+        <div class="panel-item wide">
+          <div class="mini">主訴</div>
+          <div class="big">${escapeHtml(p.chiefLabel)}</div>
+        </div>
+        <div class="panel-item">
+          <div class="mini">痛み強さ</div>
+          <div class="big">${escapeHtml(p.painLevelDisplay)}</div>
+        </div>
+        <div class="panel-item">
+          <div class="mini">来院種別</div>
+          <div class="big">${escapeHtml(p.visitTypeLabel)}</div>
+        </div>
+        <div class="panel-item wide">
+          <div class="mini">痛み部位</div>
+          <div class="big">${escapeHtml(p.areasDisplay)}</div>
+        </div>
+      </div>
+
+      <div class="panel-actions">
+        ${p.intakeDetailUrl ? `<a class="btn" href="${p.intakeDetailUrl}">問診を確認</a>` : ''}
+        <a class="btn primary" href="${p.recordingUrl}">診察へ</a>
+        <a class="btn" href="${p.dayUrl}">日表示で見る</a>
+      </div>
+    `;
+  }
+
+  function updateEventDatetime(info) {
+    const event = info.event;
+
+    const payload = {
+      start: event.start ? event.start.toISOString() : null,
+      end: event.end ? event.end.toISOString() : null
+    };
+
+    fetch(`/staff/api/appointments/${event.id}/move/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken(),
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || '更新に失敗しました');
+      }
+
+      renderPanel(event);
+    })
+    .catch((err) => {
+      alert(err.message || '予約時間の更新に失敗しました');
+      info.revert();
+    });
+  }
+
+  function confirmAndUpdateEvent(info) {
+    const event = info.event;
+    const startText = event.start
+      ? event.start.toLocaleString('ja-JP')
+      : '不明';
+
+    const ok = confirm(`予約日時を ${startText} に変更しますか？`);
+    if (!ok) {
+      info.revert();
+      return;
+    }
+
+    updateEventDatetime(info);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const calendarEl = document.getElementById('calendar');
+
+    let initialView = 'dayGridMonth';
+    if ("{{ period }}" === "week") {
+      initialView = 'timeGridWeek';
+    } else if ("{{ period }}" === "month") {
+      initialView = 'dayGridMonth';
+    } else if ("{{ period }}" === "year") {
+      initialView = 'multiMonthYear';
+    }
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      locale: 'ja',
+      initialView: initialView,
+      initialDate: "{{ day|date:'Y-m-d' }}",
+      height: "auto",
+
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: ''
+      },
+
+      buttonText: {
+        today: '今日'
+      },
+
+      firstDay: 1,
+      navLinks: true,
+      slotDuration: "00:30:00",
+      snapDuration: "00:30:00",
+      scrollTimeReset: false,
+      editable: "{{ period }}" === "week",
+      eventStartEditable: "{{ period }}" === "week",
+      eventDurationEditable: "{{ period }}" === "week",
+      dayMaxEvents: 2,
+      moreLinkText: function(n) {
+        return `他 ${n}件`;
+      },
+
+      events: events,
+
+      eventClick: function(info) {
+        info.jsEvent.preventDefault();
+        renderPanel(info.event);
+      },
+
+      eventDrop: function(info) {
+        confirmAndUpdateEvent(info);
+      },
+
+      eventResize: function(info) {
+        confirmAndUpdateEvent(info);
+      },
+
+      eventDragStart: function(info) {
+        info.el.style.opacity = "0.6";
+      },
+
+      eventDragStop: function(info) {
+        info.el.style.opacity = "1";
+      },
+
+      dateClick: function(info) {
+        const url = `?period=day&day=${info.dateStr}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q|urlencode }}`;
+        window.location.href = url;
+      },
+
+      datesSet: function() {
+        setTimeout(() => injectDaySummaries(calendar), 0);
+      },
+
+      eventDidMount: function(info) {
+        const status = info.event.extendedProps.status;
+
+        if (status === 'CANCELLED') {
+          info.el.style.backgroundColor = '#fee2e2';
+          info.el.style.borderColor = '#fecaca';
+          info.el.style.color = '#991b1b';
+        }
+
+        if (status === 'ARRIVED') {
+          info.el.style.backgroundColor = '#dbeafe';
+          info.el.style.borderColor = '#93c5fd';
+          info.el.style.color = '#1d4ed8';
+        }
+
+        if (status === 'COMPLETED') {
+          info.el.style.backgroundColor = '#e0f2fe';
+          info.el.style.borderColor = '#7dd3fc';
+          info.el.style.color = '#0369a1';
+        }
+
+        if (status === 'BOOKED') {
+          info.el.style.backgroundColor = '#fef3c7';
+          info.el.style.borderColor = '#fde68a';
+          info.el.style.color = '#92400e';
+        }
+      },
+
+      eventContent: function(arg) {
+        const viewType = arg.view.type;
+        const p = arg.event.extendedProps;
+
+        const start = arg.event.start;
+        const hh = start ? String(start.getHours()).padStart(2, '0') : '';
+        const mm = start ? String(start.getMinutes()).padStart(2, '0') : '';
+        const timeText = start ? `${hh}:${mm}` : '';
+
+        if (viewType === 'multiMonthYear') {
+          return {
+            html: `
+              <div style="
+                width:6px;
+                height:6px;
+                border-radius:50%;
+                background:#2563eb;
+                margin:2px auto;
+              "></div>
+            `
+          };
+        }
+
+        if (viewType === 'dayGridMonth') {
+          return {
+            html: `
+              <div style="font-size:11px; line-height:1.35;">
+                <div style="font-weight:800;">${timeText} ${escapeHtml(p.patientName)}</div>
+              </div>
+            `
+          };
+        }
+
+        if (viewType === 'timeGridWeek') {
+          return {
+            html: `
+              <div style="font-size:12px; line-height:1.3;">
+                <div style="font-weight:800;">
+                  ${escapeHtml(p.patientName)}
+                </div>
+                <div style="
+                  font-size:11px;
+                  opacity:.8;
+                  display:-webkit-box;
+                  -webkit-line-clamp:2;
+                  -webkit-box-orient:vertical;
+                  overflow:hidden;
+                ">
+                  ${escapeHtml(p.chiefLabel)}
+                </div>
+              </div>
+            `
+          };
+        }
+
+        return true;
+      },
+
+      views: {
+        timeGridWeek: {
+          allDaySlot: false,
+          slotMinTime: "08:00:00",
+          slotMaxTime: "21:00:00",
+          slotDuration: "00:30:00",
+          eventMinHeight: 36
+        },
+        dayGridMonth: {
+          dayMaxEventRows: 2,
+          fixedWeekCount: false
+        },
+        multiMonthYear: {
+          multiMonthMaxColumns: 3
+        }
+      }
+    });
+
+    calendar.render();
+
+    if (events.length > 0) {
+      const firstEvent = calendar.getEvents()[0];
+      if (firstEvent) {
+        renderPanel(firstEvent);
+      }
+    }
+  });
+</script>
+{% endblock %}

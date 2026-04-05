@@ -1,0 +1,94 @@
+{% extends "staff/_layout.html" %}
+{% block content %}
+<h1>問診録音</h1>
+
+<div class="card">
+  <div>予約：{{ appointment.start_at }} - {{ appointment.end_at }}</div>
+  <div>録音ID：{{ recording.id }}</div>
+
+  <div style="margin-top:16px; display:flex; gap:12px;">
+    <button id="btnStart" class="btn btn-primary">録音開始</button>
+    <button id="btnStop" class="btn btn-outline" disabled>録音停止</button>
+    <button id="btnUpload" class="btn btn-outline" disabled>アップロード</button>
+    <a id="btnProcess" class="btn btn-primary disabled"
+       href="{% url 'intakes:process_recording' recording.id %}">要約生成</a>
+  </div>
+
+  <p id="status" style="margin-top:12px; color: #666;">待機中</p>
+</div>
+
+<script>
+let mediaRecorder;
+let chunks = [];
+let audioBlob = null;
+
+const statusEl = document.getElementById("status");
+const btnStart = document.getElementById("btnStart");
+const btnStop = document.getElementById("btnStop");
+const btnUpload = document.getElementById("btnUpload");
+const btnProcess = document.getElementById("btnProcess");
+
+function setStatus(t){ statusEl.textContent = t; }
+
+btnStart.addEventListener("click", async () => {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  chunks = [];
+
+  // mimeTypeは環境で変わる。webmが無理ならブラウザが選ぶ形式に任せる。
+  const opts = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+    ? { mimeType: "audio/webm;codecs=opus" }
+    : {};
+
+  mediaRecorder = new MediaRecorder(stream, opts);
+
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data.size > 0) chunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = () => {
+    audioBlob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
+    btnUpload.disabled = false;
+    setStatus("録音停止。アップロードできます。");
+    stream.getTracks().forEach(t => t.stop());
+  };
+
+  mediaRecorder.start();
+  btnStart.disabled = true;
+  btnStop.disabled = false;
+  setStatus("録音中…");
+});
+
+btnStop.addEventListener("click", () => {
+  if (!mediaRecorder) return;
+  mediaRecorder.stop();
+  btnStop.disabled = true;
+  btnStart.disabled = false;
+});
+
+btnUpload.addEventListener("click", async () => {
+  if (!audioBlob) return;
+
+  const fd = new FormData();
+  fd.append("audio", audioBlob, "interview.webm");
+
+  setStatus("アップロード中…");
+
+  const res = await fetch("{% url 'intakes:upload_recording' recording.id %}", {
+    method: "POST",
+    headers: { "X-CSRFToken": "{{ csrf_token }}" },
+    body: fd
+  });
+
+  const data = await res.json();
+  if (!data.ok){
+    setStatus("アップロード失敗: " + (data.error || ""));
+    return;
+  }
+
+  setStatus("アップロード完了。要約生成できます。");
+  btnProcess.classList.remove("disabled");
+  btnProcess.classList.remove("btn-outline");
+  btnProcess.classList.add("btn-primary");
+});
+</script>
+{% endblock %}

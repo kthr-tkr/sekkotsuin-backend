@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-3">
+  <h3>Visits</h3>
+  <ul>
+    {% for v in visits %}
+      <li><a href="{% url 'visits:detail' v.pk %}">{{ v }}</a></li>
+    {% empty %}
+      <li>まだVisitがありません</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

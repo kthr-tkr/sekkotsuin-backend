@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>予約管理システム</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e5e7eb;
+      --blue:#2563eb;
+      --shadow: 0 12px 30px rgba(2,6,23,.06);
+      --radius:18px;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      min-height:100vh;
+      padding:42px 16px 28px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 22px;
+      border:1px solid #cfe1ff;
+      color:var(--blue);
+      font-size:12px;
+      letter-spacing:.18em;
+      border-radius:999px;
+      background:#f2f7ff;
+      margin-bottom:20px;
+    }
+
+    h1{
+      margin:0;
+      text-align:center;
+      font-weight:700;
+      font-size:34px;
+      line-height:1.25;
+      letter-spacing:.02em;
+    }
+    .sub{
+      margin:10px 0 0;
+      text-align:center;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .grid{
+      width:min(1100px, 100%);
+      margin-top:46px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:26px;
+    }
+
+    .tile{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:26px 26px 18px;
+      position:relative;
+      text-decoration:none;
+      color:inherit;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      min-height:260px;
+    }
+    .tile:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 18px 38px rgba(2,6,23,.08);
+      border-color:#dbe6ff;
+    }
+
+    .arrow{
+      position:absolute;
+      top:22px;
+      right:22px;
+      font-size:22px;
+      color:#94a3b8;
+    }
+
+    .icon{
+      width:52px; height:52px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--line);
+      background:#f8fafc;
+      margin-bottom:18px;
+    }
+    .icon svg{width:26px;height:26px;}
+
+    .tile h2{
+      margin:0 0 10px;
+      font-size:22px;
+      font-weight:800;
+      letter-spacing:.02em;
+    }
+    .desc{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.75;
+    }
+
+    .bullets{
+      margin:0;
+      padding-left:18px;
+      color:#1f2937;
+      font-size:13px;
+      line-height:1.9;
+    }
+    .bullets li{margin:4px 0;}
+    .bullets li::marker{color:var(--blue);}
+
+    .bottom{
+      margin-top:18px;
+      padding-top:14px;
+      border-top:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .note{
+      width:min(720px, 100%);
+      margin-top:36px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:14px;
+      box-shadow: 0 10px 24px rgba(2,6,23,.05);
+      padding:14px 18px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.9;
+    }
+    .note ul{margin:8px 0 0; padding-left:18px;}
+    .note li::marker{color:var(--blue);}
+
+    @media (max-width:900px){
+      .grid{grid-template-columns:1fr;}
+      h1{font-size:28px;}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="badge">MEDICAL CLINIC SYSTEM</div>
+
+    <h1>整形外科<br>予約管理システム</h1>
+    <p class="sub">ご利用される方を選択してください</p>
+
+    <div class="grid">
+      <!-- ✅ 患者側 -->
+      <a class="tile" href="{% url 'patients:login' %}">
+        <div class="arrow">→</div>
+
+        <div class="icon" aria-hidden="true">
+          <!-- calendar icon -->
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M7 2v3M17 2v3" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+            <path d="M4 7h16" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+            <rect x="4" y="5" width="16" height="17" rx="3" stroke="#2563eb" stroke-width="2"/>
+            <path d="M8 11h3M8 15h3M13 11h3M13 15h3" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <h2>患者側の予約フロー</h2>
+        <p class="desc">
+          オンライン予約システムです。診察券番号で認証後、希望日時を選択し、AI問診フローを通じて症状を入力できます。
+        </p>
+
+        <ul class="bullets">
+          <li>診察券番号による患者認証</li>
+          <li>カレンダーから日時・施術者選択</li>
+          <li>ステップ形式の詳細問診フォーム</li>
+          <li>予約確認と完了通知</li>
+        </ul>
+
+        <div class="bottom">
+          <!-- user icon -->
+          <span aria-hidden="true">👤</span>
+          <span>患者様向け</span>
+        </div>
+      </a>
+
+      <!-- ✅ 管理者側 -->
+      <a class="tile" href="{% url 'staff:login' %}">
+        <div class="arrow">→</div>
+
+        <div class="icon" aria-hidden="true">
+          <!-- shield icon -->
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4z"
+              stroke="#0f172a" stroke-width="2" fill="#eef2ff"/>
+            <path d="M9.5 12l1.7 1.7L14.8 10"
+              stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <h2>管理者側の予約確認フロー</h2>
+        <p class="desc">
+          スタッフ・管理者向けの管理画面です。予約管理、問診内容確認、患者検索、カルテ作成補助など全機能にアクセスできます。
+        </p>
+
+        <ul class="bullets">
+          <li>予約リストの一覧・検索・フィルタリング</li>
+          <li>問診内容の詳細確認・編集</li>
+          <li>予約ステータス管理（確認済・完了・キャンセル）</li>
+          <li>AI補助（SOAP/カルテ下書き）</li>
+        </ul>
+
+        <div class="bottom">
+          <span aria-hidden="true">🛡️</span>
+          <span>スタッフ・管理者向け</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="note">
+      <div>・このシステムは診察支援を目的としています。最終的な診断・判断は必ず施術者が行います。</div>
+      <ul>
+        <li>患者様の個人情報は厳重に管理され、医療目的以外には使用されません。</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

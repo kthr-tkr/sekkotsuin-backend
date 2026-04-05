@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="max-width:720px;margin:0 auto;padding:28px 18px;">
+  <h1 style="font-size:22px;font-weight:900;margin:0;">予約完了</h1>
+  <p style="color:var(--muted);margin-top:6px;">ご予約を受け付けました。</p>
+
+  <div style="margin-top:14px;border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff;">
+    <div><strong>日時：</strong>{{ appointment.start_at|date:"Y/m/d H:i" }} - {{ appointment.end_at|date:"H:i" }}</div>
+    <div><strong>メニュー：</strong>{{ appointment.menu }}</div>
+    <div><strong>状態：</strong>{{ appointment.get_status_display }}</div>
+  </div>
+
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+    <a class="btn primary" href="{% url 'appointments:book_intake' appointment.id %}">問診を入力する</a>
+    <a class="btn ghost" href="{% url 'appointments:book_start' %}">別の予約を取る</a>
+  </div>
+</div>
+{% endblock %}

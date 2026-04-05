@@ -1,0 +1,229 @@
+{% extends "staff/_layout.html" %}
+{% block content %}
+
+<style>
+  .page-wrap{
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .page-title{
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+
+  .lead{
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .card{
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .field{
+    border: 1px solid #eef2f7;
+    background: #fafafa;
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .field.wide{
+    grid-column: 1 / -1;
+  }
+
+  .label{
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .value{
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .answers{
+    display: grid;
+    gap: 12px;
+  }
+
+  .answer-row{
+    border: 1px solid #eef2f7;
+    border-radius: 14px;
+    background: #fff;
+    padding: 14px 16px;
+  }
+
+  .answer-label{
+    font-size: 13px;
+    font-weight: 800;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+
+  .answer-value{
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .actions{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .btn{
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #fff;
+    font-weight: 800;
+    color: #0f172a;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .btn.primary{
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+
+  @media (max-width: 768px){
+    .grid{
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="page-wrap">
+  <div class="page-title">問診詳細</div>
+  <div class="lead">Web問診の回答内容を確認できます</div>
+
+  <div class="card">
+    <div class="grid">
+      <div class="field">
+        <div class="label">患者名</div>
+        <div class="value">
+          {% if intake.patient %}
+            {{ intake.patient.last_name }} {{ intake.patient.first_name }}
+          {% else %}
+            -
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">提出日時</div>
+        <div class="value">
+          {% if intake.submitted_at %}
+            {{ intake.submitted_at|date:"Y/m/d H:i" }}
+          {% else %}
+            未提出
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">主訴</div>
+        <div class="value">{{ intake.chief_complaint|default:"-" }}</div>
+      </div>
+
+      <div class="field">
+        <div class="label">痛みの強さ</div>
+        <div class="value">{{ intake.pain_level|default:"-" }}</div>
+      </div>
+
+      <div class="field">
+        <div class="label">来院種別</div>
+        <div class="value">{{ intake.visit_type|default:"-" }}</div>
+      </div>
+
+      <div class="field">
+        <div class="label">予約ID</div>
+        <div class="value">
+          {% if intake.appointment %}#{{ intake.appointment.id }}{% else %}-{% endif %}
+        </div>
+      </div>
+
+      <div class="field wide">
+        <div class="label">痛みの部位</div>
+        <div class="value">{{ intake.areas|default:"-" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:20px; font-weight:900; margin-bottom:14px;">来院理由・症状</div>
+    <div class="answers">
+      {% for row in summary_rows %}
+        <div class="answer-row">
+          <div class="answer-label">{{ row.label }}</div>
+          <div class="answer-value">{{ row.value }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if note_rows %}
+  <div class="card">
+    <div style="font-size:20px; font-weight:900; margin-bottom:14px;">補足情報</div>
+    <div class="answers">
+      {% for row in note_rows %}
+        <div class="answer-row">
+          <div class="answer-label">{{ row.label }}</div>
+          <div class="answer-value">{{ row.value }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if medical_rows %}
+  <div class="card">
+    <div style="font-size:20px; font-weight:900; margin-bottom:14px;">確認事項</div>
+    <div class="answers">
+      {% for row in medical_rows %}
+        <div class="answer-row">
+          <div class="answer-label">{{ row.label }}</div>
+          <div class="answer-value">{{ row.value }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="actions">
+    <a class="btn" href="javascript:history.back()">戻る</a>
+
+    {% if intake.appointment %}
+      <a class="btn primary" href="{% url 'intakes:recording_new' intake.appointment.id %}">
+        診察へ
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

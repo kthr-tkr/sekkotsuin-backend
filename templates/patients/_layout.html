@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}接骨院 予約{% endblock %}</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #f6f8fc;
+      --card: #ffffff;
+      --card-soft: #f9fbff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e5e7eb;
+
+      --brand: #163b7a;
+      --brand-hover: #102c5d;
+      --brand-soft: #eaf2ff;
+
+      --success: #10b981;
+      --success-soft: #ecfdf3;
+      --danger: #ef4444;
+      --danger-soft: #fef2f2;
+      --warning: #f59e0b;
+      --warning-soft: #fffbeb;
+
+      --shadow-sm: 0 6px 18px rgba(15, 23, 42, .05);
+      --shadow-md: 0 12px 30px rgba(15, 23, 42, .08);
+
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+
+      --container: 1180px;
+    }
+
+    *{
+      box-sizing: border-box;
+    }
+
+    html, body{
+      margin: 0;
+      padding: 0;
+    }
+
+    body{
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      line-height: 1.55;
+    }
+
+    a{
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* =========================
+       Header
+    ========================= */
+    .p-nav{
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .p-nav__inner{
+      max-width: var(--container);
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .p-brand{
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: .02em;
+      color: var(--text);
+    }
+
+    .p-nav-right{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .p-user{
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* =========================
+       Layout
+    ========================= */
+    .p-wrap{
+      max-width: var(--container);
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    .p-page{
+      min-height: calc(100vh - 120px);
+    }
+
+    .p-head{
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .p-title{
+      margin: 0;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: -.02em;
+      line-height: 1.2;
+    }
+
+    .p-sub{
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .p-eyebrow{
+      margin: 0 0 8px;
+      color: #3b82f6;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    /* =========================
+       Flash messages
+    ========================= */
+    .p-flash-list{
+      display: grid;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .p-flash{
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      font-weight: 600;
+    }
+
+    .p-flash.success,
+    .p-flash .success{
+      background: var(--success-soft);
+      border-color: #b7efcf;
+      color: #047857;
+    }
+
+    .p-flash.error,
+    .p-flash .error,
+    .p-flash.danger{
+      background: var(--danger-soft);
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+
+    .p-flash.warning{
+      background: var(--warning-soft);
+      border-color: #fde68a;
+      color: #b45309;
+    }
+
+    .p-flash.info{
+      background: var(--brand-soft);
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+    }
+
+    /* =========================
+       Buttons
+    ========================= */
+    .p-btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .45rem;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 800;
+      transition: .2s ease;
+      cursor: pointer;
+    }
+
+    .p-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .p-btn-primary{
+      background: linear-gradient(180deg, var(--brand), #1d4f9c);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .p-btn-primary:hover{
+      background: linear-gradient(180deg, #13346c, #173f7f);
+      color: #fff;
+    }
+
+    .p-btn-ghost{
+      background: #fff;
+      color: var(--text);
+    }
+
+    .p-btn-soft{
+      background: var(--brand-soft);
+      color: var(--brand);
+      border-color: transparent;
+    }
+
+    .p-iconbtn{
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      display: inline-grid;
+      place-items: center;
+      background: #fff;
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 900;
+      transition: .2s ease;
+      text-decoration: none;
+    }
+
+    .p-iconbtn:hover{
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* =========================
+       Cards / Panels
+    ========================= */
+    .p-card{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+    }
+
+    .p-card-soft{
+      background: var(--card-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .p-section{
+      margin-top: 24px;
+    }
+
+    /* =========================
+       Grid helpers
+    ========================= */
+    .p-grid{
+      display: grid;
+      gap: 20px;
+    }
+
+    .p-grid-2{
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .p-grid-3{
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    /* =========================
+       Month / calendar helpers
+    ========================= */
+    .p-monthbar{
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .p-month{
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: -.01em;
+    }
+
+    .p-weekdays{
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      font-weight: 900;
+      color: var(--muted);
+      padding: 0 6px 10px;
+    }
+
+    .p-weekdays .sun{
+      color: #ef4444;
+    }
+
+    .p-weekdays .sat{
+      color: #2563eb;
+    }
+
+    .p-calendar-grid{
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    .p-cell{
+      min-height: 96px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 12px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: .18s ease;
+    }
+
+    .p-cell-empty{
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .p-cell-disabled{
+      opacity: .45;
+      background: #fafafa;
+      pointer-events: none;
+    }
+
+    .p-cell-active:hover{
+      border-color: #c7d2fe;
+      box-shadow: 0 10px 20px rgba(37,99,235,.10);
+      transform: translateY(-1px);
+    }
+
+    .p-day{
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .p-meta{
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    /* =========================
+       Wizard / form helpers
+    ========================= */
+    .wizard{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 8px 0 24px;
+    }
+
+    .wizard__top{
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .wizard__bar{
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .wizard__barfill{
+      height: 100%;
+      background: #111827;
+      border-radius: 999px;
+    }
+
+    .wizard__card{
+      margin-top: 20px;
+      padding: 36px 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: #fff;
+      box-shadow: var(--shadow-md);
+    }
+
+    .wizard__title{
+      font-size: 30px;
+      font-weight: 900;
+      margin: 0 0 18px;
+      letter-spacing: -.02em;
+    }
+
+    .wizard__actions{
+      display: flex;
+      gap: 14px;
+      margin-top: 26px;
+      flex-wrap: wrap;
+    }
+
+    .field{
+      margin: 18px 0;
+    }
+
+    .field__label{
+      display: block;
+      margin-bottom: 8px;
+      color: #374151;
+      font-weight: 700;
+    }
+
+    .field__error{
+      color: #ef4444;
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .req{
+      color: #ef4444;
+      margin-left: 6px;
+    }
+
+    /* =========================
+       Profile / rows
+    ========================= */
+    .profile-grid .row,
+    .done-reservation .row{
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f3f4f6;
+      margin: 0;
+    }
+
+    /* =========================
+       Complete / done page
+    ========================= */
+    .done-wrapper{
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 20px 0 40px;
+    }
+
+    .done-card{
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      border: 1px solid var(--line);
+      text-align: center;
+      box-shadow: var(--shadow-md);
+    }
+
+    .done-icon{
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      background: var(--success);
+      color: #fff;
+      font-size: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .done-title{
+      font-size: 28px;
+      font-weight: 900;
+      margin-bottom: 10px;
+      letter-spacing: -.02em;
+    }
+
+    .done-sub{
+      color: var(--muted);
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    .done-reservation,
+    .done-info{
+      text-align: left;
+      margin-top: 30px;
+    }
+
+    .done-actions{
+      display: flex;
+      gap: 16px;
+      margin-top: 40px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* =========================
+       Utility
+    ========================= */
+    .u-muted{
+      color: var(--muted);
+    }
+
+    .u-center{
+      text-align: center;
+    }
+
+    .u-mt-0{ margin-top: 0 !important; }
+    .u-mt-1{ margin-top: 8px !important; }
+    .u-mt-2{ margin-top: 16px !important; }
+    .u-mt-3{ margin-top: 24px !important; }
+    .u-mt-4{ margin-top: 32px !important; }
+
+    /* =========================
+       Responsive
+    ========================= */
+    @media (max-width: 992px){
+      .p-title{
+        font-size: 30px;
+      }
+
+      .p-grid-2,
+      .p-grid-3{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px){
+      .p-nav__inner{
+        padding: 12px 16px;
+      }
+
+      .p-wrap{
+        padding: 24px 16px 48px;
+      }
+
+      .p-brand{
+        font-size: 20px;
+      }
+
+      .p-title{
+        font-size: 26px;
+      }
+
+      .p-sub{
+        font-size: 15px;
+      }
+
+      .wizard__card{
+        padding: 24px 18px;
+      }
+
+      .wizard__title{
+        font-size: 24px;
+      }
+
+      .done-card{
+        padding: 28px 20px;
+      }
+
+      .done-title{
+        font-size: 24px;
+      }
+
+      .p-calendar-grid,
+      .p-weekdays{
+        gap: 8px;
+      }
+
+      .p-cell{
+        min-height: 82px;
+        padding: 10px;
+      }
+    }
+
+    @media (max-width: 640px){
+      .p-nav-right{
+        gap: 8px;
+      }
+
+      .p-user{
+        display: none;
+      }
+
+      .p-head{
+        align-items: flex-start;
+      }
+
+      .profile-grid .row,
+      .done-reservation .row{
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .wizard__actions,
+      .done-actions{
+        flex-direction: column;
+      }
+
+      .p-btn,
+      .p-btn-primary,
+      .p-btn-ghost,
+      .p-btn-soft{
+        width: 100%;
+      }
+    }
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+  <nav class="p-nav">
+    <div class="p-nav__inner">
+      <a href="{% url 'patients:dashboard' %}" class="p-brand">接骨院 予約</a>
+
+      <div class="p-nav-right">
+        {% if user.is_authenticated %}
+          <div class="p-user">{{ user.username }}</div>
+        {% endif %}
+        {% block nav_right %}{% endblock %}
+      </div>
+    </div>
+  </nav>
+
+  <main class="p-wrap">
+    {% if messages %}
+      <div class="p-flash-list">
+        {% for message in messages %}
+          <div class="p-flash {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="p-page">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

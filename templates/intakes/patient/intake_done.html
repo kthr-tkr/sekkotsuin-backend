@@ -1,0 +1,250 @@
+{% extends "patients/patient_base.html" %}
+{% block content %}
+
+<style>
+  .done-shell{
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 16px 56px;
+  }
+
+  .done-card{
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 24px;
+    box-shadow: 0 12px 30px rgba(15,23,42,.06);
+    padding: 40px 32px;
+  }
+
+  .done-head{
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .done-icon{
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #16a34a, #22c55e);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    font-weight: 900;
+    box-shadow: 0 12px 24px rgba(34,197,94,.22);
+  }
+
+  .done-title{
+    margin: 0;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .done-sub{
+    margin: 12px auto 0;
+    max-width: 560px;
+    color: #64748b;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .done-grid{
+    display: grid;
+    gap: 18px;
+    margin-top: 28px;
+  }
+
+  .done-section{
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    background: #fff;
+    padding: 22px 20px;
+  }
+
+  .done-section--reservation{
+    background: #f8fbff;
+    border-color: #dbeafe;
+  }
+
+  .done-section h3{
+    margin: 0 0 16px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .done-rows{
+    display: grid;
+    gap: 0;
+  }
+
+  .done-row{
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .done-row:last-child{
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .done-label{
+    color: #64748b;
+    font-weight: 700;
+  }
+
+  .done-value{
+    color: #0f172a;
+    font-weight: 900;
+    text-align: right;
+  }
+
+  .done-notes{
+    margin: 0;
+    padding-left: 20px;
+    color: #334155;
+  }
+
+  .done-notes li{
+    margin-bottom: 10px;
+    line-height: 1.7;
+  }
+
+  .done-actions{
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 30px;
+  }
+
+  .done-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: 0 22px;
+    border-radius: 14px;
+    text-decoration: none;
+    font-weight: 800;
+    transition: .2s ease;
+  }
+
+  .done-btn:hover{
+    transform: translateY(-1px);
+  }
+
+  .done-btn-outline{
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #0f172a;
+  }
+
+  .done-btn-primary{
+    border: 1px solid transparent;
+    background: linear-gradient(180deg, #163b7a, #1d4ed8);
+    color: #fff;
+  }
+
+  @media (max-width: 640px){
+    .done-card{
+      padding: 28px 20px;
+    }
+
+    .done-title{
+      font-size: 26px;
+    }
+
+    .done-row{
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .done-value{
+      text-align: left;
+    }
+
+    .done-actions{
+      flex-direction: column;
+    }
+
+    .done-btn{
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="done-shell">
+  <div class="done-card">
+
+    <div class="done-head">
+      <div class="done-icon">✓</div>
+      <h1 class="done-title">Web問診の送信が完了しました</h1>
+      <p class="done-sub">
+        ご入力ありがとうございました。<br>
+        ご予約が確定しました。ご予約日時に合わせてご来院ください。
+      </p>
+    </div>
+
+    <div class="done-grid">
+      <section class="done-section done-section--reservation">
+        <h3>ご予約内容</h3>
+        <div class="done-rows">
+          <div class="done-row">
+            <div class="done-label">日時</div>
+            <div class="done-value">{{ appointment.start_at|date:"Y年n月j日 (D) H:i" }}</div>
+          </div>
+
+          {% if appointment.clinic %}
+          <div class="done-row">
+            <div class="done-label">院名</div>
+            <div class="done-value">{{ appointment.clinic.name }}</div>
+          </div>
+          {% endif %}
+
+          {% if appointment.assigned_staff %}
+          <div class="done-row">
+            <div class="done-label">施術者</div>
+            <div class="done-value">{{ appointment.assigned_staff.username }}</div>
+          </div>
+          {% endif %}
+
+          {% if appointment.menu %}
+          <div class="done-row">
+            <div class="done-label">メニュー</div>
+            <div class="done-value">{{ appointment.menu }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="done-section">
+        <h3>ご来院時のお願い</h3>
+        <ul class="done-notes">
+          <li>ご予約時間の5分前を目安にお越しください。</li>
+          <li>動きやすい服装でのご来院をおすすめします。</li>
+          <li>保険証をお持ちの方はご持参ください。</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="done-actions">
+      <a href="{% url 'patients:my_appointments' %}" class="done-btn done-btn-outline">
+        予約一覧を見る
+      </a>
+      <a href="{% url 'patients:dashboard' %}" class="done-btn done-btn-primary">
+        マイページへ戻る
+      </a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

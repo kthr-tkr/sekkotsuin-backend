@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-3">
+
+  <h3 class="mb-3">来院詳細</h3>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div><strong>患者:</strong> {{ visit.patient }}</div>
+      <div><strong>来院日時:</strong> {{ visit.visited_at }}</div>
+      <div><strong>担当:</strong> {{ visit.practitioner }}</div>
+      <div class="mt-2"><strong>診察メモ:</strong><br>{{ visit.memo|linebreaksbr }}</div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mb-3">
+    <form method="post" action="{% url 'visits:ai_draft' visit.pk %}">
+      {% csrf_token %}
+      <button class="btn btn-primary" type="submit">AI下書き生成</button>
+    </form>
+
+    <form method="post" action="{% url 'visits:note_finalize' visit.pk %}">
+      {% csrf_token %}
+      <button class="btn btn-success" type="submit">確定</button>
+    </form>
+
+    <span class="badge bg-secondary align-self-center">
+      state: {{ note.state }}
+    </span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      カルテ（SOAP）
+    </div>
+    <div class="card-body">
+      <form method="post" action="{% url 'visits:note_save' visit.pk %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label">S（主観）</label>
+          {{ form.subjective_text }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">O（客観）</label>
+          {{ form.objective_text }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">A（評価）</label>
+          {{ form.assessment_text }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">P（計画）</label>
+          {{ form.plan_text }}
+        </div>
+
+        <button class="btn btn-outline-light" type="submit">保存</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

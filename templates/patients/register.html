@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>新規登録</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e5e7eb;
+      --primary:#0b1a33;
+      --primary2:#112a52;
+      --radius:14px;
+      --danger:#dc2626;
+      --info-bg:#eff6ff;
+      --info-line:#bfdbfe;
+      --info-text:#1d4ed8;
+      --success-bg:#f0fdf4;
+      --success-line:#bbf7d0;
+      --success-text:#15803d;
+    }
+
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:32px 16px;
+    }
+
+    .card{
+      width:min(720px, 100%);
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow: 0 10px 30px rgba(2,6,23,.06);
+      padding:28px 28px 20px;
+    }
+
+    .title{
+      font-size:22px;
+      font-weight:800;
+      margin:0 0 6px;
+      letter-spacing:.02em;
+    }
+    .subtitle{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+    }
+
+    .flow-note,
+    .flow-step{
+      border-radius:14px;
+      padding:14px 16px;
+      margin-bottom:16px;
+      line-height:1.7;
+      font-size:13px;
+    }
+
+    .flow-note{
+      background:var(--info-bg);
+      border:1px solid var(--info-line);
+      color:var(--info-text);
+      font-weight:700;
+    }
+
+    .flow-step{
+      background:var(--success-bg);
+      border:1px solid var(--success-line);
+      color:var(--success-text);
+      font-weight:700;
+    }
+
+    .divider{
+      height:1px;
+      background:var(--line);
+      margin:18px 0 18px;
+    }
+
+    .section{
+      margin-top:10px;
+    }
+    .section-title{
+      font-size:13px;
+      font-weight:900;
+      margin:0 0 10px;
+      color:#0f172a;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .section-badge{
+      width:28px;height:28px;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      border:1px solid var(--line);
+      background:#fff;
+      color:#111827;
+      font-size:14px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width:640px){
+      .grid2{grid-template-columns:1fr;}
+    }
+
+    .field{ margin-bottom:14px; }
+    label{
+      display:block;
+      font-size:12px;
+      font-weight:700;
+      color:#334155;
+      margin-bottom:8px;
+    }
+    input, select{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:14px 14px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+    }
+    input::placeholder{color:#b6c0cf;}
+    input:focus, select:focus{
+      border-color:#8aa4d6;
+      box-shadow:0 0 0 4px rgba(138,164,214,.25);
+    }
+
+    .hint{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .error{
+      margin-top:8px;
+      color:var(--danger);
+      font-size:12px;
+      line-height:1.5;
+      font-weight:700;
+    }
+
+    .actions{
+      display:flex;
+      gap:12px;
+      margin-top:18px;
+    }
+
+    .btn{
+      flex:1;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      border-radius:14px;
+      padding:13px 14px;
+      font-weight:800;
+      font-size:14px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:#0f172a;
+      cursor:pointer;
+      text-decoration:none;
+      user-select:none;
+    }
+    .btn:hover{filter:brightness(.98);}
+    .btn:active{transform:translateY(1px);}
+
+    .btn-primary{
+      background:linear-gradient(180deg, var(--primary2), var(--primary));
+      color:#fff;
+      border-color:transparent;
+      box-shadow: 0 10px 18px rgba(11,26,51,.18);
+    }
+    .btn-primary:focus{
+      outline:none;
+      box-shadow: 0 0 0 4px rgba(17,42,82,.25), 0 10px 18px rgba(11,26,51,.18);
+    }
+
+    .links{
+      margin-top:14px;
+      display:flex;
+      justify-content:center;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+    .link{
+      color:#1d4ed8;
+      text-decoration:none;
+      font-size:13px;
+      font-weight:700;
+    }
+    .link:hover{text-decoration:underline;}
+
+    .page-note{
+      margin-top:14px;
+      text-align:center;
+      font-size:12px;
+      color:#94a3b8;
+    }
+
+    @media (max-width:420px){
+      .card{padding:22px 18px 18px;}
+      .actions{flex-direction:column;}
+      .btn{width:100%;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 class="title">はじめての方（新規登録）</h1>
+      <p class="subtitle">ご本人確認と予約のために、基本情報を登録します。</p>
+
+      {% if request.session.pending_booking_clinic_id %}
+        <div class="flow-note">
+          ご入力内容に該当する患者情報が見つかりませんでした。<br>
+          先に患者登録を行い、そのまま予約日時の選択へ進みます。
+        </div>
+        <div class="flow-step">
+          ステップ 1/2：患者登録<br>
+          登録完了後、自動的に予約画面へ進みます。
+        </div>
+      {% endif %}
+
+      <div class="divider"></div>
+
+      <form method="post" action="">
+        {% csrf_token %}
+
+        {% if messages %}
+          <div class="field">
+            {% for message in messages %}
+              <div class="error">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="field">
+            {% for error in form.non_field_errors %}
+              <div class="error">{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="section">
+          <div class="section-title"><span class="section-badge">1</span>基本情報</div>
+
+          <div class="field">
+            {% if request.session.pending_booking_clinic_id %}
+              {{ form.clinic.as_hidden }}
+              <label>通院先</label>
+              <input type="text" value="{{ form.clinic.value|default_if_none:'' }}" hidden>
+              <div class="hint">通院先は予約導線にあわせて自動設定されています。</div>
+            {% endif %}
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="id_last_name">姓</label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}<div class="error">{{ form.last_name.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field">
+              <label for="id_first_name">名</label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}<div class="error">{{ form.first_name.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="id_last_name_kana">セイ</label>
+              {{ form.last_name_kana }}
+              <div class="hint">全角カナ推奨</div>
+              {% if form.last_name_kana.errors %}<div class="error">{{ form.last_name_kana.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field">
+              <label for="id_first_name_kana">メイ</label>
+              {{ form.first_name_kana }}
+              {% if form.first_name_kana.errors %}<div class="error">{{ form.first_name_kana.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="id_birth_date">生年月日</label>
+            {{ form.birth_date }}
+            {% if form.birth_date.errors %}<div class="error">{{ form.birth_date.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section">
+          <div class="section-title"><span class="section-badge">2</span>連絡先</div>
+
+          <div class="field">
+            <label for="id_phone">電話番号</label>
+            {{ form.phone }}
+            <div class="hint">例：090-1234-5678（ハイフンは入力しても問題ありません）</div>
+            {% if form.phone.errors %}<div class="error">{{ form.phone.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field">
+            <label for="id_address">住所（任意）</label>
+            {{ form.address }}
+            {% if form.address.errors %}<div class="error">{{ form.address.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section">
+          <div class="section-title"><span class="section-badge">3</span>ログイン情報</div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="id_username">ログインID</label>
+              {{ form.username }}
+              <div class="hint">英数字で入力してください</div>
+              {% if form.username.errors %}<div class="error">{{ form.username.errors|striptags }}</div>{% endif %}
+            </div>
+            <div class="field">
+              <label for="id_password">パスワード</label>
+              {{ form.password }}
+              <div class="hint">8文字以上推奨</div>
+              {% if form.password.errors %}<div class="error">{{ form.password.errors|striptags }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn"
+             href="{% if request.session.pending_booking_clinic_id %}{% url 'appointments:book_start' %}{% else %}{% url 'patients:login' %}{% endif %}">
+            ← 戻る
+          </a>
+
+          <button class="btn btn-primary" type="submit">
+            {% if request.session.pending_booking_clinic_id %}
+              登録して予約へ進む →
+            {% else %}
+              登録する →
+            {% endif %}
+          </button>
+        </div>
+
+        <div class="links">
+          <a class="link" href="{% url 'patients:login' %}">すでに登録済みの方はこちら（ログイン）</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="page-note">個人情報は厳重に管理されます</div>
+  </div>
+
+  <script>
+    (function(){
+      const el = document.getElementById("id_phone");
+      if(!el) return;
+      el.addEventListener("input", () => {
+        el.value = el.value.replace(/[^\d-]/g, "");
+      });
+    })();
+  </script>
+</body>
+</html>

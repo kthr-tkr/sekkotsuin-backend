@@ -1,0 +1,569 @@
+{% extends "patients/patient_base.html" %}
+{% block content %}
+
+<style>
+  .dash-page{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 30px 16px 60px;
+  }
+
+  .dash-hero{
+    margin-bottom: 26px;
+  }
+
+  .dash-eyebrow{
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: #4f7cff;
+    text-transform: uppercase;
+  }
+
+  .dash-title{
+    margin: 0;
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1.25;
+    color: #0f172a;
+  }
+
+  .dash-sub{
+    margin-top: 10px;
+    color: #64748b;
+    font-size: 16px;
+  }
+
+  .dash-actions{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  .action-card{
+    display: block;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 26px;
+    padding: 28px 24px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 10px 24px rgba(15,23,42,.05);
+    transition: .2s ease;
+  }
+
+  .action-card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(15,23,42,.08);
+  }
+
+  .action-icon{
+    width: 74px;
+    height: 74px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #eef8f1;
+    font-size: 32px;
+  }
+
+  .action-title{
+    text-align: center;
+    font-size: 28px;
+    font-weight: 900;
+    margin: 0;
+    color: #0f172a;
+  }
+
+  .action-sub{
+    text-align: center;
+    color: #64748b;
+    font-size: 15px;
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  .dash-grid{
+    display: grid;
+    grid-template-columns: 1.4fr .95fr;
+    gap: 18px;
+  }
+
+  .panel{
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 26px;
+    padding: 28px 24px;
+    box-shadow: 0 10px 24px rgba(15,23,42,.05);
+  }
+
+  .panel-title{
+    margin: 0 0 18px;
+    font-size: 24px;
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .next-card{
+    background: #f5fff8;
+    border: 1px solid #ccefd8;
+    border-radius: 22px;
+    padding: 20px 18px;
+  }
+
+  .next-date{
+    margin: 0;
+    font-size: 22px;
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .next-time{
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 15px;
+  }
+
+  .badge-row{
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .badge{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .badge-status{
+    background: #eef2ff;
+    color: #3730a3;
+  }
+
+  .badge-intake{
+    background: #ecfdf3;
+    color: #15803d;
+  }
+
+  .next-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(15,23,42,.08);
+  }
+
+  .field-label{
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .field-value{
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .panel-actions{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+
+  .panel-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 800;
+    transition: .2s ease;
+  }
+
+  .panel-btn:hover{
+    transform: translateY(-1px);
+  }
+
+  .panel-btn-primary{
+    background: linear-gradient(180deg, #163b7a, #1d4ed8);
+    color: #fff;
+  }
+
+  .panel-btn-secondary{
+    background: #fff;
+    color: #0f172a;
+    border: 1px solid #d1d5db;
+  }
+
+  .empty-box{
+    border: 1px dashed #d1d5db;
+    background: #fafcff;
+    border-radius: 22px;
+    padding: 20px 18px;
+    color: #64748b;
+    line-height: 1.8;
+  }
+
+  .profile-list{
+    display: grid;
+    gap: 0;
+  }
+
+  .profile-row{
+    padding: 14px 0;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .profile-row:last-child{
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .history-list{
+    display: grid;
+    gap: 14px;
+  }
+
+  .history-card{
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 18px 16px;
+    background: #fcfdff;
+  }
+
+  .history-date{
+    font-size: 18px;
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .history-time{
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 14px;
+  }
+
+  .history-meta{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #edf2f7;
+  }
+
+  .history-intake{
+    margin-top: 12px;
+    padding: 14px 14px;
+    border-radius: 16px;
+    background: #f8fbff;
+    border: 1px solid #dbeafe;
+  }
+
+  .history-intake-title{
+    font-size: 13px;
+    font-weight: 800;
+    color: #163b7a;
+    margin-bottom: 6px;
+  }
+
+  .history-intake-text{
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+
+  .history-footer{
+    margin-top: 16px;
+  }
+
+  .history-link{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 800;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #0f172a;
+    transition: .2s ease;
+  }
+
+  .history-link:hover{
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 980px){
+    .dash-actions{
+      grid-template-columns: 1fr;
+    }
+
+    .dash-grid{
+      grid-template-columns: 1fr;
+    }
+
+    .dash-title{
+      font-size: 30px;
+    }
+  }
+
+  @media (max-width: 768px){
+    .action-title{
+      font-size: 24px;
+    }
+
+    .next-grid,
+    .history-meta{
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px){
+    .panel-actions{
+      flex-direction: column;
+    }
+
+    .panel-btn,
+    .history-link{
+      width: 100%;
+    }
+  }
+
+.panel-btn-warning{
+  background: #f59e0b;
+  color: #fff;
+  border: 1px solid #f59e0b;
+}
+
+.panel-btn-warning:hover{
+  transform: translateY(-1px);
+}
+</style>
+
+<div class="dash-page">
+
+  <section class="dash-hero">
+    <div class="dash-eyebrow">Patient Dashboard</div>
+    <h1 class="dash-title">おかえりなさい、{{ patient.last_name }} {{ patient.first_name }}さん</h1>
+    <div class="dash-sub">診察券番号：{{ patient.card_no }}</div>
+  </section>
+
+  <section class="dash-actions">
+    <a href="{% url 'patients:booking_calendar' %}" class="action-card">
+      <div class="action-icon">🗓️</div>
+      <h2 class="action-title">予約を取る</h2>
+      <div class="action-sub">新しい予約を作成します</div>
+    </a>
+
+    <a href="{% url 'patients:my_appointments' %}" class="action-card">
+      <div class="action-icon">🕘</div>
+      <h2 class="action-title">予約一覧</h2>
+      <div class="action-sub">予約状況や来院履歴を確認します</div>
+    </a>
+
+    <a href="{% url 'patients:profile' %}" class="action-card">
+      <div class="action-icon">👤</div>
+      <h2 class="action-title">登録情報</h2>
+      <div class="action-sub">電話番号や住所などを確認、変更します</div>
+    </a>
+  </section>
+
+  <section class="dash-grid">
+    <div class="panel">
+      <h3 class="panel-title">次回予約</h3>
+
+      {% if next_appointment %}
+        <div class="next-card">
+          <p class="next-date">{{ next_appointment.start_at|date:"Y年m月d日 (D)" }}</p>
+          <div class="next-time">{{ next_appointment.start_at|date:"H:i" }} - {{ next_appointment.end_at|date:"H:i" }}</div>
+
+          <div class="badge-row">
+            <span class="badge badge-status">{{ next_appointment.get_status_display }}</span>
+            {% if next_appointment.intake_completed %}
+              <span class="badge badge-intake">Web問診入力済み</span>
+            {% endif %}
+          </div>
+
+          <div class="next-grid">
+            <div>
+              <div class="field-label">院名</div>
+              <div class="field-value">{{ next_appointment.clinic.name }}</div>
+            </div>
+
+            <div>
+              <div class="field-label">メニュー</div>
+              <div class="field-value">{{ next_appointment.menu }}</div>
+            </div>
+
+            <div>
+              <div class="field-label">施術者</div>
+              <div class="field-value">
+                {% if next_appointment.assigned_staff %}
+                  {{ next_appointment.assigned_staff.username }}
+                {% else %}
+                  未定
+                {% endif %}
+              </div>
+            </div>
+
+            <div>
+              <div class="field-label">予約作成日時</div>
+              <div class="field-value">{{ next_appointment.created_at|date:"Y年m月d日 H:i" }}</div>
+            </div>
+          </div>
+
+          <div class="panel-actions">
+            {% if next_appointment.show_resume_intake %}
+              <a href="{% url 'intakes:intake_start' next_appointment.id %}" class="panel-btn panel-btn-warning">
+                Web問診を続ける
+              </a>
+            {% endif %}
+
+            <a href="{% url 'patients:my_appointments' %}" class="panel-btn panel-btn-secondary">予約内容を見る</a>
+            <a href="{% url 'patients:booking_calendar' %}" class="panel-btn panel-btn-primary">予約を取る / 変更する</a>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty-box">
+          現在、次回予約は入っていません。ご都合のよい日時を選んでご予約ください。
+          <div class="panel-actions">
+            <a href="{% url 'patients:booking_calendar' %}" class="panel-btn panel-btn-primary">予約を取る</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h3 class="panel-title">登録情報</h3>
+
+      <div class="profile-list">
+        <div class="profile-row">
+          <div class="field-label">お名前</div>
+          <div class="field-value">{{ patient.last_name }} {{ patient.first_name }}</div>
+        </div>
+
+        <div class="profile-row">
+          <div class="field-label">診察券番号</div>
+          <div class="field-value">{{ patient.card_no }}</div>
+        </div>
+
+        <div class="profile-row">
+          <div class="field-label">電話番号</div>
+          <div class="field-value">{{ patient.phone|default:"未登録" }}</div>
+        </div>
+
+        <div class="profile-row">
+          <div class="field-label">住所</div>
+          <div class="field-value">{{ patient.address|default:"未登録" }}</div>
+        </div>
+
+        <div class="profile-row">
+          <div class="field-label">生年月日</div>
+          <div class="field-value">{{ patient.birth_date|date:"Y年n月j日" }}</div>
+        </div>
+      </div>
+
+      <div class="panel-actions">
+        <a href="{% url 'patients:profile' %}" class="panel-btn panel-btn-secondary">登録情報を編集</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="margin-top: 22px;">
+    <div class="panel">
+      <h3 class="panel-title">最近の履歴</h3>
+
+      {% if recent_appointments %}
+        <div class="history-list">
+          {% for a in recent_appointments %}
+            <div class="history-card">
+              <div class="history-date">{{ a.start_at|date:"Y年m月d日 (D)" }}</div>
+              <div class="history-time">{{ a.start_at|date:"H:i" }} - {{ a.end_at|date:"H:i" }}</div>
+
+              <div class="badge-row">
+                <span class="badge badge-status">{{ a.get_status_display }}</span>
+                {% if a.intake_completed %}
+                  <span class="badge badge-intake">Web問診入力済み</span>
+                {% endif %}
+              </div>
+
+              <div class="history-meta">
+                <div>
+                  <div class="field-label">院名</div>
+                  <div class="field-value">{{ a.clinic.name }}</div>
+                </div>
+
+                <div>
+                  <div class="field-label">メニュー</div>
+                  <div class="field-value">{{ a.menu }}</div>
+                </div>
+
+                <div>
+                  <div class="field-label">施術者</div>
+                  <div class="field-value">
+                    {% if a.assigned_staff %}
+                      {{ a.assigned_staff.username }}
+                    {% else %}
+                      未定
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="field-label">予約作成日時</div>
+                  <div class="field-value">{{ a.created_at|date:"Y年m月d日 H:i" }}</div>
+                </div>
+              </div>
+
+              {% if a.intake_completed %}
+                <div class="history-intake">
+                  <div class="history-intake-title">Web問診</div>
+                  <div class="history-intake-text">
+                    {% if a.intake.chief_complaint %}
+                      {{ a.intake.chief_complaint }}
+                    {% else %}
+                      問診内容は登録されています。
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="history-footer">
+          <a href="{% url 'patients:my_appointments' %}" class="history-link">履歴をもっと見る</a>
+        </div>
+      {% else %}
+        <div class="empty-box">まだ履歴はありません。</div>
+      {% endif %}
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}

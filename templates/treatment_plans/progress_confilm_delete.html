@@ -1,0 +1,66 @@
+{% extends "staff/_layout.html" %}
+{% block content %}
+
+<style>
+  .page-wrap{max-width:860px; margin:0 auto;}
+  .page-title{font-size:28px; font-weight:900; margin-bottom:8px;}
+  .lead{color:var(--muted); margin-bottom:20px;}
+  .card{background:#fff; border:1px solid #fecdd3; border-radius:18px; padding:20px; margin-bottom:18px;}
+  .field{border:1px solid #eef2f7; background:#fafafa; border-radius:14px; padding:14px; margin-bottom:12px;}
+  .label{font-size:12px; color:#64748b; font-weight:800; margin-bottom:6px;}
+  .value{font-size:16px; font-weight:700; color:#0f172a; line-height:1.6; word-break:break-word;}
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
+  .btn{
+    padding:10px 14px; border-radius:12px; border:1px solid var(--line);
+    background:#fff; font-weight:800; color:#0f172a; text-decoration:none;
+    display:inline-flex; align-items:center;
+  }
+  .btn.danger{background:#e11d48; border-color:#e11d48; color:#fff;}
+</style>
+
+<div class="page-wrap">
+  <div class="page-title">{{ page_title }}</div>
+  <div class="lead">削除前に対象の記録を確認してください</div>
+
+  <div class="card">
+    <div class="field">
+      <div class="label">患者名</div>
+      <div class="value">{{ plan.patient.last_name }} {{ plan.patient.first_name }}</div>
+    </div>
+
+    <div class="field">
+      <div class="label">施術日</div>
+      <div class="value">{{ progress.visit_date }}</div>
+    </div>
+
+    <div class="field">
+      <div class="label">痛みレベル</div>
+      <div class="value">{{ progress.pain_level|default:"-" }}</div>
+    </div>
+
+    <div class="field">
+      <div class="label">症状変化</div>
+      <div class="value">{{ progress.symptom_change|default:"-"|linebreaksbr }}</div>
+    </div>
+
+    <div class="field">
+      <div class="label">施術内容</div>
+      <div class="value">{{ progress.treatment_detail|default:"-"|linebreaksbr }}</div>
+    </div>
+
+    <div class="field">
+      <div class="label">備考</div>
+      <div class="value">{{ progress.memo|default:"-"|linebreaksbr }}</div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="btn-row">
+        <a href="{% url 'treatment_plans:plan_detail' plan.pk %}" class="btn">キャンセル</a>
+        <button type="submit" class="btn danger">削除する</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

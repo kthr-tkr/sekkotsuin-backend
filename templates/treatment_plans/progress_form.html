@@ -1,0 +1,119 @@
+{% extends "staff/_layout.html" %}
+{% block content %}
+
+<style>
+  .page-wrap{max-width:1100px; margin:0 auto;}
+  .page-title{font-size:28px; font-weight:900; margin-bottom:8px;}
+  .lead{color:var(--muted); margin-bottom:20px;}
+  .card{background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px; margin-bottom:18px;}
+  .grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px;}
+  .field{display:flex; flex-direction:column; gap:8px;}
+  .field.wide{grid-column:1 / -1;}
+  .field label{font-size:13px; font-weight:800; color:#64748b;}
+  .form-control, .form-select{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    background:#fff;
+  }
+  textarea.form-control{min-height:96px;}
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
+  .btn{
+    padding:10px 14px; border-radius:12px; border:1px solid var(--line);
+    background:#fff; font-weight:800; color:#0f172a; text-decoration:none;
+    display:inline-flex; align-items:center;
+  }
+  .btn.primary{background:var(--primary); border-color:var(--primary); color:#fff;}
+  .mini{font-size:13px; color:#64748b;}
+  .value{font-size:18px; font-weight:800; color:#0f172a;}
+  .errorlist{margin:6px 0 0; padding-left:18px; color:#dc2626; font-size:13px;}
+  @media (max-width: 768px){ .grid{grid-template-columns:1fr;} }
+</style>
+
+<div class="page-wrap">
+  <div class="page-title">{{ page_title }}</div>
+  <div class="lead">施術経過記録を編集します</div>
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <div class="mini">患者名</div>
+        <div class="value">{{ plan.patient.last_name }} {{ plan.patient.first_name }}</div>
+      </div>
+      <div>
+        <div class="mini">施術計画</div>
+        <div class="value">{{ plan.title|default:plan.chief_complaint|default:"施術計画" }}</div>
+      </div>
+      <div>
+        <div class="mini">施術日</div>
+        <div class="value">{{ progress.visit_date }}</div>
+      </div>
+      <div>
+        <div class="mini">記録者</div>
+        <div class="value">{{ progress.created_by|default:"-" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="card">
+    {% csrf_token %}
+
+    <div class="grid">
+      <div class="field">
+        <label>{{ form.visit_date.label }}</label>
+        {{ form.visit_date }}
+        {{ form.visit_date.errors }}
+      </div>
+
+      <div class="field">
+        <label>{{ form.pain_level.label }}</label>
+        {{ form.pain_level }}
+        {{ form.pain_level.errors }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.symptom_change.label }}</label>
+        {{ form.symptom_change }}
+        {{ form.symptom_change.errors }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.adl_status.label }}</label>
+        {{ form.adl_status }}
+        {{ form.adl_status.errors }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.treatment_detail.label }}</label>
+        {{ form.treatment_detail }}
+        {{ form.treatment_detail.errors }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.post_treatment_response.label }}</label>
+        {{ form.post_treatment_response }}
+        {{ form.post_treatment_response.errors }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.next_instruction.label }}</label>
+        {{ form.next_instruction }}
+        {{ form.next_instruction.errors }}
+      </div>
+
+      <div class="field wide">
+        <label>{{ form.memo.label }}</label>
+        {{ form.memo }}
+        {{ form.memo.errors }}
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <a href="{% url 'treatment_plans:plan_detail' plan.pk %}" class="btn">戻る</a>
+      <button type="submit" class="btn primary">{{ submit_label|default:"保存する" }}</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

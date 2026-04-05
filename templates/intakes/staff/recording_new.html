@@ -1,0 +1,69 @@
+{# templates/intakes/staff/recording_new.html #}
+{% extends "staff/_layout.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'intakes/css/recording.css' %}">
+<script defer src="{% static 'intakes/js/recording.js' %}"></script>
+
+<div class="ai-wrap"
+     data-upload-url="{{ upload_url }}"
+     data-process-url="{{ process_url }}"
+     data-detail-url="{{ detail_url }}"
+     data-csrf="{{ csrf_token }}">
+
+  <div class="ai-head">
+    <div>
+      <h1 class="ai-title">AI Interview</h1>
+      <div class="ai-sub">症状を記録してAIが整理します</div>
+    </div>
+    <div class="ai-actions">
+      <a class="btn btn-light" href="{{ back_url|default:'javascript:history.back()' }}">← 戻る</a>
+    </div>
+  </div>
+
+  <div class="ai-steps">
+    <div class="step active">INPUT</div>
+    <div class="step">PROCESSING</div>
+    <div class="step">VISUALIZATION</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="tabs">
+        <button class="tab active" type="button">音声録音</button>
+        <button class="tab" type="button" disabled>手入力</button>
+        <button class="tab" type="button" disabled>貼り付け</button>
+      </div>
+      <div class="hint">
+        マイクボタンをクリックして録音 → 停止後に自動アップロードします。
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="rec-area">
+        <button id="recBtn" class="rec-btn" type="button" aria-label="record">
+          <span id="recIcon" class="rec-icon">🎙️</span>
+        </button>
+
+        <div class="rec-status">
+          <div id="recState" class="rec-state">CLICK TO START RECORDING</div>
+          <div id="timer" class="rec-timer">00:00</div>
+        </div>
+
+        <div id="uploadState" class="upload-state"></div>
+
+        <div class="preview">
+          <audio id="audioPreview" controls style="display:none; width: 100%;"></audio>
+        </div>
+
+        <div class="rec-footer">
+          <a id="goDetailBtn" class="btn btn-primary" href="{{ detail_url }}" style="display:none;">
+            録音内容を整理 →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
