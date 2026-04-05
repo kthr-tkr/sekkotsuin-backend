@@ -18,11 +18,16 @@ def get_list_env(name: str, default: str = "") -> list[str]:
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = get_list_env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
-CSRF_TRUSTED_ORIGINS = get_list_env(
-    "DJANGO_CSRF_TRUSTED_ORIGINS",
-    "http://127.0.0.1:8000,http://localhost:8000",
-)
+ALLOWED_HOSTS = [
+    "app.carefrow.com",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://app.carefrow.com",
+]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -130,7 +135,7 @@ SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False  # Djangoでは実利が薄いのでFalseのままでOK
-SECURE_SSL_REDIRECT = not DEBUG
+SECURE_SSL_REDIRECT = False
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
@@ -152,3 +157,7 @@ if not DEBUG and not SECRET_KEY:
 
 if not DEBUG and not ALLOWED_HOSTS:
     raise Exception("DJANGO_ALLOWED_HOSTS must not be empty when DEBUG=False")
+
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
