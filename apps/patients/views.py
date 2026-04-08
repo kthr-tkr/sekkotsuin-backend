@@ -304,10 +304,13 @@ def patient_register_view(request):
     pending_clinic_id = request.session.get("pending_booking_clinic_id")
 
     if pending_clinic_id:
-        clinic = Clinic.objects.get(pk=pending_clinic_id)
+        clinic = get_object_or_404(Clinic, pk=pending_clinic_id)
     else:
-        # 単院運用ならこれでOK
         clinic = Clinic.objects.order_by("id").first()
+
+    if clinic is None:
+        messages.error(request, "クリニック情報が未設定です。管理者にお問い合わせください。")
+        return redirect("/")
 
     initial = {
         "last_name": request.session.get("pending_booking_last_name", ""),
@@ -315,12 +318,13 @@ def patient_register_view(request):
         "phone": request.session.get("pending_booking_phone", ""),
     }
 
-    if pending_clinic_id:
-        initial["clinic"] = pending_clinic_id
-
     form = PatientRegisterForm(request.POST or None, initial=initial)
 
-    if request.method == "POST" and form.is_valid():
+    if request.method == "POST":
+        if not form.is_valid():
+            messages.error(request, "入力内容を確認してください。")
+            return render(request, "patients/register.html", {"form": form})
+
         username = form.cleaned_data["username"].strip()
         password = form.cleaned_data["password"]
 
@@ -333,15 +337,16 @@ def patient_register_view(request):
                 user = User.objects.create_user(
                     username=username,
                     password=password,
+                    role=User.Role.PATIENT,
+                    clinic=clinic,
                 )
                 user.is_staff = False
                 user.is_superuser = False
-                user.save(update_fields=["is_staff", "is_superuser"])
+                user.is_active = True
+                user.save()
 
-                g, _ = Group.objects.get_or_create(name="patient")
-                user.groups.add(g)
-
-                clinic = form.cleaned_data["clinic"]
+                patient_group, _ = Group.objects.get_or_create(name="patient")
+                user.groups.add(patient_group)
 
                 patient = None
                 for _ in range(10):
@@ -355,7 +360,7 @@ def patient_register_view(request):
                             last_name_kana=form.cleaned_data["last_name_kana"],
                             first_name_kana=form.cleaned_data["first_name_kana"],
                             birth_date=form.cleaned_data["birth_date"],
-                            phone=_normalize_phone(form.cleaned_data["phone"]),
+                            phone=form.cleaned_data["phone"],
                             address=form.cleaned_data["address"],
                         )
                         break
@@ -369,7 +374,10 @@ def patient_register_view(request):
             messages.error(request, "登録に失敗しました。時間をおいてもう一度お試しください。")
             return render(request, "patients/register.html", {"form": form})
 
-        # 予約導線から来た場合は、そのまま予約作成へ戻す
+        except Exception as e:
+            messages.error(request, f"登録処理でエラーが発生しました: {e}")
+            return render(request, "patients/register.html", {"form": form})
+
         if pending_clinic_id:
             request.session["booking_patient_id"] = patient.id
             request.session["booking_clinic_id"] = clinic.id
@@ -383,6 +391,7 @@ def patient_register_view(request):
             return redirect("appointments:book_new")
 
         request.session["registered_card_no"] = patient.card_no
+        messages.success(request, "患者登録が完了しました。")
         return redirect("patients:register_complete")
 
     return render(request, "patients/register.html", {"form": form})
