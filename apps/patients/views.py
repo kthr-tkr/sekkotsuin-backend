@@ -375,7 +375,7 @@ def patient_register_view(request):
             return render(request, "patients/register.html", {"form": form})
 
         except Exception as e:
-            messages.error(request, f"登録処理でエラーが発生しました: {e}")
+            messages.error(request, f"登録処理でエラーが発生しました: {type(e).__name__}: {e}")
             return render(request, "patients/register.html", {"form": form})
 
         if pending_clinic_id:
