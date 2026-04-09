@@ -420,6 +420,91 @@
         padding:18px 14px 24px;
       }
     }
+
+    /* 既存CSSの下に追記 */
+
+    .mobile-topbar{
+      display:none;
+    }
+
+    .mobile-menu-btn{
+      appearance:none;
+      border:none;
+      background:rgba(255,255,255,.88);
+      border:1px solid rgba(15,23,42,.08);
+      box-shadow:var(--shadow-xs);
+      color:#111827;
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      font-size:18px;
+      font-weight:900;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      backdrop-filter:blur(10px);
+    }
+
+    .mobile-topbar-title{
+      font-size:15px;
+      font-weight:900;
+      color:#0b1220;
+      letter-spacing:.01em;
+    }
+
+    .sidebar-overlay{
+      display:none;
+    }
+
+    @media (max-width: 980px){
+      .app{
+        display:block;
+        min-height:100vh;
+      }
+
+      .mobile-topbar{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        padding:12px 14px 0;
+        position:sticky;
+        top:0;
+        z-index:35;
+        background:linear-gradient(180deg, rgba(246,248,252,.92) 0%, rgba(246,248,252,.78) 70%, rgba(246,248,252,0) 100%);
+        backdrop-filter:blur(10px);
+      }
+
+      .sidebar{
+        z-index:50;
+      }
+
+      .sidebar-overlay{
+        position:fixed;
+        inset:0;
+        background:rgba(15,23,42,.24);
+        backdrop-filter:blur(2px);
+        z-index:40;
+      }
+
+      .sidebar-overlay.is-open{
+        display:block;
+      }
+
+      .main{
+        padding:10px 14px 24px;
+      }
+
+      .content{
+        max-width:100%;
+      }
+
+      body.sidebar-open{
+        overflow:hidden;
+      }
+    }
+
   </style>
 </head>
 
@@ -510,92 +595,6 @@
       </div>
     </main>
   </div>
-
-  <style>
-    /* 既存CSSの下に追記 */
-
-    .mobile-topbar{
-      display:none;
-    }
-
-    .mobile-menu-btn{
-      appearance:none;
-      border:none;
-      background:rgba(255,255,255,.88);
-      border:1px solid rgba(15,23,42,.08);
-      box-shadow:var(--shadow-xs);
-      color:#111827;
-      width:44px;
-      height:44px;
-      border-radius:14px;
-      font-size:18px;
-      font-weight:900;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      backdrop-filter:blur(10px);
-    }
-
-    .mobile-topbar-title{
-      font-size:15px;
-      font-weight:900;
-      color:#0b1220;
-      letter-spacing:.01em;
-    }
-
-    .sidebar-overlay{
-      display:none;
-    }
-
-    @media (max-width: 980px){
-      .app{
-        display:block;
-        min-height:100vh;
-      }
-
-      .mobile-topbar{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:12px;
-        padding:12px 14px 0;
-        position:sticky;
-        top:0;
-        z-index:35;
-        background:linear-gradient(180deg, rgba(246,248,252,.92) 0%, rgba(246,248,252,.78) 70%, rgba(246,248,252,0) 100%);
-        backdrop-filter:blur(10px);
-      }
-
-      .sidebar{
-        z-index:50;
-      }
-
-      .sidebar-overlay{
-        position:fixed;
-        inset:0;
-        background:rgba(15,23,42,.24);
-        backdrop-filter:blur(2px);
-        z-index:40;
-      }
-
-      .sidebar-overlay.is-open{
-        display:block;
-      }
-
-      .main{
-        padding:10px 14px 24px;
-      }
-
-      .content{
-        max-width:100%;
-      }
-
-      body.sidebar-open{
-        overflow:hidden;
-      }
-    }
-  </style>
 
   {% block scripts %}{% endblock %}
 
