@@ -1,40 +1,39 @@
 # apps/patients/views.py
+# apps/patients/views.py
+import calendar
+import logging
 import re
-from datetime import datetime, date, time, timedelta
 from calendar import monthrange
+from datetime import date, datetime, time, timedelta
 
 from django.contrib import messages
-from django.contrib.auth import login, logout, get_user_model, authenticate
-from django.contrib.auth.models import Group
+from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.models import Group
+from django.db import IntegrityError, transaction
+from django.http import HttpResponseBase
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from apps.appointments.models import Appointment
 from apps.clinics.models import Clinic
-from .models import Patient
-from .forms import PatientRegisterForm, PatientProfileForm
-from django.db.models import Max
-from django.db import IntegrityError, transaction
-
-from calendar import monthrange
-from datetime import date
-import calendar
-from django.http import HttpResponseBase
-
+from apps.clinics.utils import get_current_clinic
 from apps.intakes.forms import (
-    SYMPTOM_TYPE_CHOICES,
-    SINCE_CHOICES,
     AREA_CHOICES,
-    PAIN_QUALITIES,
-    VISIT_TYPE_CHOICES,
     FOLLOWUP_CHANGE_CHOICES,
     FOLLOWUP_CHANGE_DETAIL_CHOICES,
+    PAIN_QUALITIES,
+    SINCE_CHOICES,
+    SYMPTOM_TYPE_CHOICES,
+    VISIT_TYPE_CHOICES,
 )
+from .forms import PatientProfileForm, PatientRegisterForm
+from .models import Patient
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 # ========= 設定（A案：スタッフ共通営業時間・30分刻み） =========
 OPEN_TIME = time(9, 0)#9に戻す
@@ -303,12 +302,13 @@ def patient_logout_view(request):
 def patient_register_view(request):
     pending_clinic_id = request.session.get("pending_booking_clinic_id")
 
-    if pending_clinic_id:
-        clinic = get_object_or_404(Clinic, pk=pending_clinic_id)
-    else:
-        clinic = Clinic.objects.order_by("id").first()
-
-    if clinic is None:
+    try:
+        if pending_clinic_id:
+            clinic = get_object_or_404(Clinic, pk=pending_clinic_id)
+        else:
+            clinic = get_current_clinic()
+    except Exception:
+        logger.exception("Clinic resolution failed in patient_register_view")
         messages.error(request, "クリニック情報が未設定です。管理者にお問い合わせください。")
         return redirect("/")
 
@@ -371,11 +371,21 @@ def patient_register_view(request):
                     raise IntegrityError("Failed to generate unique card_no")
 
         except IntegrityError:
+            logger.warning(
+                "Patient registration failed due to IntegrityError. username=%s clinic_id=%s",
+                username,
+                clinic.id,
+            )
             messages.error(request, "登録に失敗しました。時間をおいてもう一度お試しください。")
             return render(request, "patients/register.html", {"form": form})
 
-        except Exception as e:
-            messages.error(request, f"登録処理でエラーが発生しました: {type(e).__name__}: {e}")
+        except Exception:
+            logger.exception(
+                "Unexpected error in patient_register_view. username=%s clinic_id=%s",
+                username,
+                clinic.id,
+            )
+            messages.error(request, "登録処理でエラーが発生しました。時間をおいてもう一度お試しください。")
             return render(request, "patients/register.html", {"form": form})
 
         if pending_clinic_id:
@@ -847,21 +857,33 @@ def staff_booking_confirm_view(request, patient_id):
     patient = get_object_or_404(Patient.objects.select_related("clinic"), pk=patient_id)
     clinic = patient.clinic
 
-    print("DEBUG staff_booking_confirm POST =", request.POST.dict())
+    logger.info("staff_booking_confirm POST=%s", request.POST.dict())
 
     staff_id = request.POST.get("staff_id")
     start_iso = request.POST.get("start_at")
     menu = request.POST.get("menu") or "再診"
     treatment_plan_id = request.POST.get("treatment_plan_id")
 
-    print("DEBUG staff_id =", staff_id)
-    print("DEBUG start_iso =", start_iso)
-    print("DEBUG treatment_plan_id =", treatment_plan_id)
+    logger.info(
+        "staff_booking_confirm params staff_id=%r start_iso=%r treatment_plan_id=%r patient_id=%s clinic_id=%s user_id=%s",
+        staff_id,
+        start_iso,
+        treatment_plan_id,
+        patient.pk,
+        clinic.pk if clinic else None,
+        request.user.pk,
+    )
 
     if not staff_id or not start_iso:
         messages.error(
             request,
             f"予約枠の情報が不足しています。staff_id={staff_id!r}, start_at={start_iso!r}"
+        )
+        logger.warning(
+            "staff_booking_confirm missing params staff_id=%r start_at=%r patient_id=%s",
+            staff_id,
+            start_iso,
+            patient.pk,
         )
         return redirect("patients:staff_booking_calendar", patient_id=patient.pk)
 
@@ -870,21 +892,40 @@ def staff_booking_confirm_view(request, patient_id):
     try:
         start_naive = datetime.strptime(start_iso, "%Y-%m-%dT%H:%M")
         start_at = timezone.make_aware(start_naive, timezone.get_current_timezone())
-        print("DEBUG parsed start_at =", start_at)
-    except Exception as e:
-        print("DEBUG datetime parse error =", repr(e))
-        messages.error(request, f"日時の形式が不正です: {e}")
+        logger.info("staff_booking_confirm parsed start_at=%s", start_at.isoformat())
+    except Exception:
+        logger.exception(
+            "staff_booking_confirm datetime parse error start_iso=%r patient_id=%s",
+            start_iso,
+            patient.pk,
+        )
+        messages.error(request, "日時の形式が不正です。")
         return redirect("patients:staff_booking_calendar", patient_id=patient.pk)
 
     end_at = start_at + timedelta(minutes=DURATION_MIN)
 
-    print("DEBUG timezone.now() =", timezone.now())
-    if start_at < timezone.now():
-        messages.error(request, f"過去の日時は選択できません。 start_at={start_at}")
+    now = timezone.now()
+    logger.info("staff_booking_confirm now=%s", now.isoformat())
+
+    if start_at < now:
+        logger.warning(
+            "staff_booking_confirm rejected past datetime start_at=%s now=%s patient_id=%s",
+            start_at.isoformat(),
+            now.isoformat(),
+            patient.pk,
+        )
+        messages.error(request, "過去の日時は選択できません。")
         return redirect("patients:staff_booking_calendar", patient_id=patient.pk)
 
     is_free = _slot_free_for_staff(clinic, staff, start_at, end_at)
-    print("DEBUG is_free =", is_free)
+    logger.info(
+        "staff_booking_confirm slot availability is_free=%s clinic_id=%s staff_id=%s start_at=%s end_at=%s",
+        is_free,
+        clinic.pk if clinic else None,
+        staff.pk,
+        start_at.isoformat(),
+        end_at.isoformat(),
+    )
 
     if not is_free:
         messages.error(request, "選択した枠は埋まっています。別の枠を選択してください。")
@@ -901,7 +942,11 @@ def staff_booking_confirm_view(request, patient_id):
             pk=treatment_plan_id,
             patient=patient,
         ).first()
-        print("DEBUG treatment_plan found =", treatment_plan.pk if treatment_plan else None)
+        logger.info(
+            "staff_booking_confirm treatment_plan resolved treatment_plan_id=%r found=%s",
+            treatment_plan_id,
+            treatment_plan.pk if treatment_plan else None,
+        )
 
     appt = Appointment.objects.create(
         clinic=clinic,
@@ -915,7 +960,13 @@ def staff_booking_confirm_view(request, patient_id):
         treatment_plan=treatment_plan,
     )
 
-    print("DEBUG created appointment =", appt.pk)
+    logger.info(
+        "staff_booking_confirm appointment created appointment_id=%s patient_id=%s clinic_id=%s staff_id=%s",
+        appt.pk,
+        patient.pk,
+        clinic.pk if clinic else None,
+        staff.pk,
+    )
 
     messages.success(request, "予約を作成しました。")
     return redirect("staff:appointment_detail", appointment_id=appt.pk)
