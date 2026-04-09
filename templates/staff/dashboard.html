@@ -1202,6 +1202,25 @@
     }
   }
 
+  @media (max-width: 640px){
+    .hero-sub{
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+
+  @media (max-width: 980px){
+    .stats-grid{
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .plan-grid{
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+  }
+
 </style>
 {% endblock %}
 
