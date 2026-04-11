@@ -1183,6 +1183,104 @@
     }
   }
 
+  .mobile-kpi-accordion,
+  .mobile-filter-accordion{
+    display:block;
+  }
+
+  .mobile-kpi-accordion > summary,
+  .mobile-filter-accordion > summary{
+    list-style:none;
+    display:none;
+  }
+
+  .mobile-kpi-accordion > summary::-webkit-details-marker,
+  .mobile-filter-accordion > summary::-webkit-details-marker{
+    display:none;
+  }
+
+  @media (max-width: 980px){
+    .mobile-kpi-accordion,
+    .mobile-filter-accordion{
+      border-radius:20px;
+      background:rgba(255,255,255,.72);
+      border:1px solid rgba(255,255,255,.78);
+      box-shadow:0 16px 36px rgba(15,23,42,.06);
+      overflow:hidden;
+    }
+
+    .mobile-kpi-accordion > summary,
+    .mobile-filter-accordion > summary{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      padding:14px 14px 12px;
+      cursor:pointer;
+      background:rgba(255,255,255,.86);
+      font-weight:900;
+      color:#0b1220;
+      position:relative;
+    }
+
+    .mobile-kpi-accordion > summary::after,
+    .mobile-filter-accordion > summary::after{
+      content:"＋";
+      position:absolute;
+      right:14px;
+      top:14px;
+      font-size:18px;
+      line-height:1;
+      color:#64748b;
+    }
+
+    .mobile-kpi-accordion[open] > summary::after,
+    .mobile-filter-accordion[open] > summary::after{
+      content:"−";
+    }
+
+    .mobile-summary-text{
+      font-size:12px;
+      line-height:1.5;
+      color:#7b8798;
+      font-weight:700;
+      padding-right:24px;
+    }
+
+    .mobile-kpi-accordion .stats-grid{
+      padding:0 12px 12px;
+      margin-top:0;
+    }
+
+    .mobile-filter-accordion .filters-card{
+      margin:0;
+      border:none !important;
+      box-shadow:none !important;
+      background:transparent !important;
+      backdrop-filter:none !important;
+      padding:0 12px 12px !important;
+      border-radius:0 !important;
+    }
+
+    .mobile-filter-accordion .filters-head{
+      display:none;
+    }
+  }
+
+  @media (min-width: 981px){
+    .mobile-kpi-accordion,
+    .mobile-filter-accordion{
+      background:transparent;
+      border:none;
+      box-shadow:none;
+      overflow:visible;
+    }
+
+    .mobile-kpi-accordion > summary,
+    .mobile-filter-accordion > summary{
+      display:none !important;
+    }
+  }
+
 </style>
 {% endblock %}
 
@@ -1236,107 +1334,128 @@
     </div>
   </section>
 
-  <section class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-top">
-        <div class="stat-label">期間内予約</div>
-        <div class="stat-accent"></div>
-      </div>
-      <div class="stat-value">{{ stats.total }}</div>
-      <div class="stat-sub">現在の表示期間に含まれる予約件数</div>
-    </div>
+  <details class="mobile-kpi-accordion">
+    <summary>
+      <span>予約状況サマリー</span>
+      <span class="mobile-summary-text">
+        予約 {{ stats.total }} / 未完了 {{ stats.not_done }} / 完了 {{ stats.done }} / 来院 {{ stats.arrived }}
+      </span>
+    </summary>
 
-    <div class="stat-card">
-      <div class="stat-top">
-        <div class="stat-label" style="color:#9a3412;">問診未完了</div>
-        <div class="stat-accent"></div>
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-label">期間内予約</div>
+          <div class="stat-accent"></div>
+        </div>
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-sub">現在の表示期間に含まれる予約件数</div>
       </div>
-      <div class="stat-value" style="color:#9a3412;">{{ stats.not_done }}</div>
-      <div class="stat-sub">まだ問診が完了していない予約</div>
-    </div>
 
-    <div class="stat-card">
-      <div class="stat-top">
-        <div class="stat-label" style="color:#1d4ed8;">問診完了</div>
-        <div class="stat-accent"></div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-label" style="color:#9a3412;">問診未完了</div>
+          <div class="stat-accent"></div>
+        </div>
+        <div class="stat-value" style="color:#9a3412;">{{ stats.not_done }}</div>
+        <div class="stat-sub">まだ問診が完了していない予約</div>
       </div>
-      <div class="stat-value" style="color:#1d4ed8;">{{ stats.done }}</div>
-      <div class="stat-sub">問診確認まで進んでいる予約</div>
-    </div>
 
-    <div class="stat-card">
-      <div class="stat-top">
-        <div class="stat-label">来院済み</div>
-        <div class="stat-accent"></div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-label" style="color:#1d4ed8;">問診完了</div>
+          <div class="stat-accent"></div>
+        </div>
+        <div class="stat-value" style="color:#1d4ed8;">{{ stats.done }}</div>
+        <div class="stat-sub">問診確認まで進んでいる予約</div>
       </div>
-      <div class="stat-value">{{ stats.arrived }}</div>
-      <div class="stat-sub">来院ステータスが更新済みの件数</div>
-    </div>
-  </section>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-label">来院済み</div>
+          <div class="stat-accent"></div>
+        </div>
+        <div class="stat-value">{{ stats.arrived }}</div>
+        <div class="stat-sub">来院ステータスが更新済みの件数</div>
+      </div>
+    </section>
+  </details>
 
   <div class="period-switch">
     <a class="period-link {% if period == 'day' %}active{% endif %}"
-       href="?period=day&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      href="?period=day&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
       日
     </a>
     <a class="period-link {% if period == 'week' %}active{% endif %}"
-       href="?period=week&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      href="?period=week&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
       週
     </a>
     <a class="period-link {% if period == 'month' %}active{% endif %}"
-       href="?period=month&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      href="?period=month&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
       月
     </a>
     <a class="period-link {% if period == 'year' %}active{% endif %}"
-       href="?period=year&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      href="?period=year&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
       年
     </a>
   </div>
 
-  <section class="filters-card">
-    <div class="filters-head">
-      <h3 class="filters-title">検索・絞り込み</h3>
-      <div class="filters-sub">基準日、施術者、ステータス、患者情報から予約を絞り込めます</div>
-    </div>
+  <details class="mobile-filter-accordion" open>
+    <summary>
+      <span>検索・絞り込み</span>
+      <span class="mobile-summary-text">
+        基準日 {{ day|date:'Y/m/d' }}
+        {% if filter_staff %} / 施術者 {{ filter_staff }}{% endif %}
+        {% if filter_status %} / {{ filter_status }}{% else %} / すべて{% endif %}
+        {% if filter_q %} / {{ filter_q }}{% endif %}
+      </span>
+    </summary>
 
-    <form method="get" class="filters">
-      <input type="hidden" name="period" value="{{ period }}">
-
-      <div class="field">
-        <label>基準日</label>
-        <input type="date" name="day" value="{{ day|date:'Y-m-d' }}">
+    <section class="filters-card">
+      <div class="filters-head">
+        <h3 class="filters-title">検索・絞り込み</h3>
+        <div class="filters-sub">基準日、施術者、ステータス、患者情報から予約を絞り込めます</div>
       </div>
 
-      <div class="field">
-        <label>施術者</label>
-        <select name="staff">
-          <option value="">全員</option>
-          {% for u in staff_users %}
-            <option value="{{ u.id }}" {% if filter_staff|add:'' == u.id|add:'' %}selected{% endif %}>
-              {{ u.username }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+      <form method="get" class="filters">
+        <input type="hidden" name="period" value="{{ period }}">
 
-      <div class="field">
-        <label>ステータス</label>
-        <select name="status">
-          <option value="">すべて</option>
-          {% for val, label in status_choices %}
-            <option value="{{ val }}" {% if filter_status == val %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
+        <div class="field">
+          <label>基準日</label>
+          <input type="date" name="day" value="{{ day|date:'Y-m-d' }}">
+        </div>
 
-      <div class="field">
-        <label>検索</label>
-        <input type="text" name="q" placeholder="患者名・電話・メニュー" value="{{ filter_q }}">
-      </div>
+        <div class="field">
+          <label>施術者</label>
+          <select name="staff">
+            <option value="">全員</option>
+            {% for u in staff_users %}
+              <option value="{{ u.id }}" {% if filter_staff|add:'' == u.id|add:'' %}selected{% endif %}>
+                {{ u.username }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
 
-      <button class="btn primary" type="submit">検索</button>
-    </form>
-  </section>
+        <div class="field">
+          <label>ステータス</label>
+          <select name="status">
+            <option value="">すべて</option>
+            {% for val, label in status_choices %}
+              <option value="{{ val }}" {% if filter_status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>検索</label>
+          <input type="text" name="q" placeholder="患者名・電話・メニュー" value="{{ filter_q }}">
+        </div>
+
+        <button class="btn primary" type="submit">検索</button>
+      </form>
+    </section>
+  </details>
 
   <div class="calendar-layout">
     <section class="calendar-card">
