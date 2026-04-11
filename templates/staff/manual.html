@@ -1,0 +1,239 @@
+{% extends "staff/_layout.html" %}
+{% block title %}Medical AI | 操作マニュアル{% endblock %}
+
+{% block extra_head %}
+<style>
+  .manual-page{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  /* ===== Header ===== */
+  .manual-head{
+    border-radius:28px;
+    padding:24px;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(96,165,250,.22), transparent 30%),
+      linear-gradient(135deg, #060c19 0%, #111b36 40%, #1a2f73 70%, #4f86ff 100%);
+    color:#fff;
+    box-shadow:0 28px 80px rgba(15,23,42,.18);
+  }
+
+  .manual-title{
+    font-size:30px;
+    font-weight:900;
+    letter-spacing:-0.03em;
+  }
+
+  .manual-sub{
+    margin-top:8px;
+    color:rgba(255,255,255,.7);
+    font-size:14px;
+  }
+
+  /* ===== Card ===== */
+  .manual-card{
+    border-radius:26px;
+    padding:20px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.8);
+    box-shadow:0 16px 36px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+  }
+
+  .card-title{
+    font-size:18px;
+    font-weight:900;
+    margin-bottom:12px;
+  }
+
+  /* ===== Quick Buttons ===== */
+  .quick-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+  }
+
+  .quick-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:60px;
+    border-radius:16px;
+    font-weight:900;
+    font-size:14px;
+    color:#fff;
+    text-align:center;
+    background:linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+    box-shadow:0 16px 36px rgba(29,78,216,.18);
+    transition:.2s;
+  }
+
+  .quick-btn:hover{
+    transform:translateY(-2px);
+  }
+
+  /* ===== Flow ===== */
+  .flow{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .flow-step{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid #e5e7eb;
+    background:#fff;
+  }
+
+  .flow-no{
+    width:24px;
+    height:24px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#3b82f6,#7c3aed);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .flow-text{
+    font-weight:700;
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  /* ===== Accordion ===== */
+  details{
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    padding:10px 12px;
+    background:#fff;
+  }
+
+  summary{
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  .trouble{
+    margin-top:8px;
+    font-size:13px;
+    color:#475569;
+    line-height:1.6;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px){
+    .quick-grid{
+      grid-template-columns:1fr 1fr;
+    }
+
+    .manual-title{
+      font-size:24px;
+    }
+
+    .manual-card{
+      padding:16px;
+    }
+  }
+
+  @media (max-width: 480px){
+    .quick-grid{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="manual-page">
+
+  <!-- Header -->
+  <div class="manual-head">
+    <div class="manual-title">操作マニュアル</div>
+    <div class="manual-sub">
+      日々の診療オペレーションをスムーズに行うためのガイドです
+    </div>
+  </div>
+
+  <!-- Quick -->
+  <div class="manual-card">
+    <div class="card-title">クイック操作</div>
+    <div class="quick-grid">
+      <a href="{% url 'staff:intake' %}" class="quick-btn">問診開始</a>
+      <a href="{% url 'staff:appointments' %}" class="quick-btn">予約確認</a>
+      <a href="{% url 'staff:patient_search' %}" class="quick-btn">患者検索</a>
+    </div>
+  </div>
+
+  <!-- Flow -->
+  <div class="manual-card">
+    <div class="card-title">問診の流れ</div>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-no">1</div>
+        <div class="flow-text">AI Interviewを開く</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-no">2</div>
+        <div class="flow-text">録音ボタンを押す</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-no">3</div>
+        <div class="flow-text">内容を確認する</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-no">4</div>
+        <div class="flow-text">解析へ進む</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accordion -->
+  <div class="manual-card">
+    <div class="card-title">カテゴリ別ガイド</div>
+
+    <details>
+      <summary>問診</summary>
+      <div class="trouble">
+        ・録音できない → マイク許可を確認<br>
+        ・音声が認識されない → 再読み込み
+      </div>
+    </details>
+
+    <details>
+      <summary>予約管理</summary>
+      <div class="trouble">
+        ・予約が表示されない → 日付フィルター確認
+      </div>
+    </details>
+
+    <details>
+      <summary>患者管理</summary>
+      <div class="trouble">
+        ・患者が見つからない → 名前 or 電話番号検索
+      </div>
+    </details>
+
+  </div>
+
+  <!-- Trouble -->
+  <div class="manual-card">
+    <div class="card-title">トラブル対応</div>
+    <div class="trouble">
+      🎤 録音できない → マイク許可を確認<br>
+      📅 予約が出ない → 日付確認<br>
+      👤 患者が見つからない → 検索条件を見直す
+    </div>
+  </div>
+
+</div>
+{% endblock %}
