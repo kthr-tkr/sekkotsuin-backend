@@ -3,71 +3,461 @@
 {% block content %}
 
 <style>
-  .tabs{display:flex; gap:8px; margin:14px 0 16px;}
-  .tab{padding:10px 14px;border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--muted); font-weight:600;}
-  .tab.active{background:var(--primary); color:#fff; border-color:var(--primary);}
-  .panel{padding:26px;}
-  .sub{color:var(--muted); margin-top:6px;}
-  .box{border:1px solid var(--line); border-radius:14px; padding:16px; background:#fff;}
-  textarea{width:100%; min-height:140px; border:1px solid var(--line); border-radius:12px; padding:12px; font-size:14px;}
-  .micWrap{display:flex; flex-direction:column; align-items:center; justify-content:center; padding:34px 0;}
-  .mic{
-    width:120px;height:120px;border-radius:60px;border:2px solid #cbd5e1;
-    display:grid; place-items:center; box-shadow:0 16px 34px rgba(15,23,42,.10);
+  .intake-page{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .intake-card{
+    padding:24px;
+    border-radius:28px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:0 16px 36px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+  }
+
+  .intake-title{
+    font-size:32px;
+    font-weight:900;
+    letter-spacing:-0.03em;
+    color:#0b1220;
+    margin:0;
+  }
+
+  .sub{
+    color:var(--muted);
+    margin-top:6px;
+    font-size:14px;
+    line-height:1.7;
+  }
+
+  .tabs{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin:18px 0 16px;
+  }
+
+  .tab{
+    padding:10px 14px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#fff;
+    color:var(--muted);
+    font-weight:700;
+    font-size:14px;
+    min-height:42px;
+  }
+
+  .tab.active{
+    background:var(--primary);
+    color:#fff;
+    border-color:var(--primary);
+  }
+
+  .panel{
+    padding:0;
+  }
+
+  .box{
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:16px;
     background:#fff;
   }
-  .mic small{display:block; margin-top:12px; color:var(--muted); font-weight:700; letter-spacing:.06em;}
-  .btnRow{display:flex; justify-content:flex-end; gap:10px; margin-top:14px;}
-  .btn{padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#fff; font-weight:700;}
-  .btn.primary{background:var(--primary); color:#fff; border-color:var(--primary);}
+
+  .box-soft{
+    background:#f8fafc;
+  }
+
+  .section-title{
+    font-size:18px;
+    font-weight:900;
+    color:#0f172a;
+    margin-bottom:6px;
+  }
+
+  .section-sub{
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.7;
+    margin-bottom:14px;
+  }
+
+  .check-card{
+    margin-bottom:16px;
+  }
+
+  .check-title{
+    font-size:16px;
+    font-weight:900;
+    color:#0f172a;
+    margin-bottom:10px;
+  }
+
+  .check-sub{
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.6;
+    margin-bottom:12px;
+  }
+
+  .check-list{
+    display:grid;
+    gap:8px;
+  }
+
+  .check-item{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid #e2e8f0;
+    background:linear-gradient(180deg, rgba(251,253,255,.92) 0%, rgba(245,248,252,.96) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+  }
+
+  .check-no{
+    flex-shrink:0;
+    width:24px;
+    height:24px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:900;
+    background:linear-gradient(135deg, rgba(59,130,246,.12) 0%, rgba(124,58,237,.10) 100%);
+    color:#3658c9;
+    border:1px solid rgba(59,130,246,.10);
+  }
+
+  .check-text{
+    font-size:14px;
+    line-height:1.6;
+    color:#0f172a;
+    font-weight:700;
+  }
+
+  textarea{
+    width:100%;
+    min-height:160px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+    font-size:14px;
+    line-height:1.7;
+    resize:vertical;
+    background:#fff;
+  }
+
+  .micWrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:28px 0 20px;
+    text-align:center;
+  }
+
+  .mic{
+    width:108px;
+    height:108px;
+    border-radius:999px;
+    border:2px solid #cbd5e1;
+    display:grid;
+    place-items:center;
+    box-shadow:0 16px 34px rgba(15,23,42,.10);
+    background:#fff;
+    font-size:32px;
+    cursor:pointer;
+    transition:.18s ease;
+  }
+
+  .mic:hover{
+    transform:translateY(-1px);
+    box-shadow:0 20px 36px rgba(15,23,42,.12);
+  }
+
+  .mic-label{
+    display:block;
+    margin-top:12px;
+    color:var(--muted);
+    font-weight:800;
+    letter-spacing:.06em;
+    font-size:12px;
+  }
+
+  .mic-time{
+    margin-top:8px;
+    font-size:28px;
+    font-weight:900;
+    color:#0f172a;
+    letter-spacing:-0.03em;
+  }
+
+  .btnRow{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+
+  .btn{
+    padding:10px 14px;
+    min-height:42px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:#fff;
+    font-weight:800;
+    font-size:14px;
+    cursor:pointer;
+  }
+
+  .btn.primary{
+    background:var(--primary);
+    color:#fff;
+    border-color:var(--primary);
+  }
+
+  .hint{
+    margin-top:10px;
+    font-size:12px;
+    color:#64748b;
+    line-height:1.6;
+  }
+
+  @media (max-width: 980px){
+    .intake-card{
+      padding:18px 16px !important;
+      border-radius:22px !important;
+    }
+
+    .intake-title{
+      font-size:28px !important;
+      line-height:1.08 !important;
+    }
+
+    .sub{
+      font-size:13px !important;
+    }
+
+    .tabs{
+      gap:6px !important;
+      margin:14px 0 14px !important;
+    }
+
+    .tab{
+      font-size:13px !important;
+      min-height:40px !important;
+      padding:8px 12px !important;
+    }
+
+    .box{
+      border-radius:16px !important;
+      padding:14px !important;
+    }
+
+    .section-title{
+      font-size:16px !important;
+    }
+
+    .section-sub,
+    .check-sub,
+    .hint{
+      font-size:12px !important;
+      line-height:1.6 !important;
+    }
+
+    .check-item{
+      padding:9px 10px !important;
+      border-radius:12px !important;
+    }
+
+    .check-text{
+      font-size:13px !important;
+    }
+
+    .micWrap{
+      padding:22px 0 14px !important;
+    }
+
+    .mic{
+      width:92px !important;
+      height:92px !important;
+      font-size:28px !important;
+    }
+
+    .mic-label{
+      font-size:11px !important;
+    }
+
+    .mic-time{
+      font-size:24px !important;
+    }
+
+    textarea{
+      min-height:140px !important;
+      font-size:16px !important;
+    }
+
+    .btnRow{
+      flex-direction:column !important;
+      align-items:stretch !important;
+    }
+
+    .btn{
+      width:100% !important;
+      min-height:42px !important;
+      font-size:13px !important;
+    }
+  }
+
+  @media (max-width: 640px){
+    .intake-card{
+      padding:16px 14px !important;
+      border-radius:20px !important;
+    }
+
+    .intake-title{
+      font-size:24px !important;
+    }
+
+    .tabs{
+      flex-direction:row;
+      flex-wrap:wrap;
+    }
+
+    .tab{
+      flex:1 1 auto;
+      text-align:center;
+      min-width:90px;
+    }
+
+    .check-list{
+      gap:6px !important;
+    }
+
+    .check-no{
+      width:22px !important;
+      height:22px !important;
+      font-size:11px !important;
+    }
+
+    .check-text{
+      font-size:12px !important;
+      line-height:1.55 !important;
+    }
+
+    .mic{
+      width:84px !important;
+      height:84px !important;
+      font-size:26px !important;
+    }
+
+    .mic-time{
+      font-size:22px !important;
+    }
+  }
 </style>
 
-<div class="card panel">
-  <div style="font-size:28px; font-weight:800;">AI Interview</div>
-  <div class="sub">症状を記録してAIが解析します</div>
+<div class="intake-page">
+  <div class="intake-card">
+    <h1 class="intake-title">AI Interview</h1>
+    <div class="sub">症状を記録してAIが整理します</div>
 
-  <div class="tabs">
-    <button class="tab active" type="button" data-tab="rec">音声録音</button>
-    <button class="tab" type="button" data-tab="text">手入力</button>
-    <button class="tab" type="button" data-tab="paste">貼り付け</button>
-  </div>
-
-  <div class="box" id="panel-rec">
-    <div style="font-weight:800; margin-bottom:6px;">問診入力</div>
-    <div class="sub" style="margin-bottom:14px;">施術者の診察を補助する参考情報を記録します</div>
-
-    <div class="box" style="background:#f8fafc;">
-      マイクボタンをクリックして問診を録音します。AI音声認識により自動的にテキスト化し、施術者の判断を支援します。
+    <div class="tabs">
+      <button class="tab active" type="button" data-tab="rec">音声録音</button>
+      <button class="tab" type="button" data-tab="text">手入力</button>
+      <button class="tab" type="button" data-tab="paste">貼り付け</button>
     </div>
 
-    <div class="micWrap">
-      <div class="mic" aria-label="record button">
-        🎤
+    <div class="box check-card">
+      <div class="check-title">問診で確認したい項目</div>
+      <div class="check-sub">
+        聞き漏れ防止のため、録音前にこの項目を確認してください。
       </div>
-      <small>CLICK TO START RECORDING</small>
+
+      <div class="check-list">
+        <div class="check-item">
+          <div class="check-no">1</div>
+          <div class="check-text">今日はどこが一番つらいですか？</div>
+        </div>
+        <div class="check-item">
+          <div class="check-no">2</div>
+          <div class="check-text">いつから症状が出ていますか？</div>
+        </div>
+        <div class="check-item">
+          <div class="check-no">3</div>
+          <div class="check-text">きっかけはありますか？ 何をしていて痛くなりましたか？</div>
+        </div>
+        <div class="check-item">
+          <div class="check-no">4</div>
+          <div class="check-text">痛みの強さはどのくらいですか？</div>
+        </div>
+        <div class="check-item">
+          <div class="check-no">5</div>
+          <div class="check-text">どんな動きで悪化しますか？ 逆に楽になる動きはありますか？</div>
+        </div>
+        <div class="check-item">
+          <div class="check-no">6</div>
+          <div class="check-text">しびれ・熱感・腫れ・だるさなど、痛み以外の症状はありますか？</div>
+        </div>
+        <div class="check-item">
+          <div class="check-no">7</div>
+          <div class="check-text">今回が初めてですか？ 過去にも同じ症状はありましたか？</div>
+        </div>
+      </div>
     </div>
 
-    <div class="btnRow">
-      <button class="btn" type="button">戻る</button>
-      <button class="btn primary" type="button">解析へ進む</button>
-    </div>
-  </div>
+    <div class="box" id="panel-rec">
+      <div class="section-title">問診入力</div>
+      <div class="section-sub">施術者の診察を補助する参考情報を記録します</div>
 
-  <div class="box" id="panel-text" style="display:none;">
-    <div style="font-weight:800; margin-bottom:10px;">手入力</div>
-    <textarea placeholder="例：3日前から首の後ろが痛い。寝返りで増悪。温めると少し楽。"></textarea>
-    <div class="btnRow">
-      <button class="btn" type="button">戻る</button>
-      <button class="btn primary" type="button">解析へ進む</button>
-    </div>
-  </div>
+      <div class="box box-soft">
+        マイクボタンをクリックして問診を録音します。AI音声認識により自動的にテキスト化し、施術者の判断を支援します。
+      </div>
 
-  <div class="box" id="panel-paste" style="display:none;">
-    <div style="font-weight:800; margin-bottom:10px;">貼り付け</div>
-    <textarea placeholder="別ツールのメモを貼り付け…"></textarea>
-    <div class="btnRow">
-      <button class="btn" type="button">戻る</button>
-      <button class="btn primary" type="button">解析へ進む</button>
+      <div class="micWrap">
+        <div class="mic" aria-label="record button">
+          🎤
+        </div>
+        <span class="mic-label">CLICK TO START RECORDING</span>
+        <div class="mic-time">00:00</div>
+      </div>
+
+      <div class="hint">
+        録音前に、症状の部位・発症時期・きっかけ・悪化動作・軽減要因まで会話で確認しておくと、解析精度が安定しやすくなります。
+      </div>
+
+      <div class="btnRow">
+        <button class="btn" type="button">戻る</button>
+        <button class="btn primary" type="button">解析へ進む</button>
+      </div>
+    </div>
+
+    <div class="box" id="panel-text" style="display:none;">
+      <div class="section-title">手入力</div>
+      <div class="section-sub">会話内容をそのまま文章で入力できます</div>
+      <textarea placeholder="例：3日前から首の後ろが痛い。寝返りで増悪。温めると少し楽。"></textarea>
+      <div class="btnRow">
+        <button class="btn" type="button">戻る</button>
+        <button class="btn primary" type="button">解析へ進む</button>
+      </div>
+    </div>
+
+    <div class="box" id="panel-paste" style="display:none;">
+      <div class="section-title">貼り付け</div>
+      <div class="section-sub">他ツールのメモや受付情報を貼り付けて解析できます</div>
+      <textarea placeholder="別ツールのメモを貼り付け…"></textarea>
+      <div class="btnRow">
+        <button class="btn" type="button">戻る</button>
+        <button class="btn primary" type="button">解析へ進む</button>
+      </div>
     </div>
   </div>
 </div>
@@ -80,12 +470,12 @@
     paste: document.getElementById("panel-paste"),
   };
 
-  tabs.forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      tabs.forEach(b=>b.classList.remove("active"));
+  tabs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabs.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      Object.values(panels).forEach(p=>p.style.display="none");
-      panels[btn.dataset.tab].style.display="block";
+      Object.values(panels).forEach(p => p.style.display = "none");
+      panels[btn.dataset.tab].style.display = "block";
     });
   });
 </script>
