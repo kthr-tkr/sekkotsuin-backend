@@ -472,7 +472,7 @@ def staff_patient_search_view(request):
 
 @staff_required
 def staff_manual_view(request):
-    return render(request, "staff/placeholder.html", {
+    return render(request, "staff/manual.html", {
         "active": "manual",
         "page_title": "操作マニュアル",
     })
