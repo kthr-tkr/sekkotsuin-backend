@@ -41,6 +41,7 @@
     border-radius:30px;
     box-shadow:0 24px 70px rgba(2,6,23,.10);
     overflow:hidden;
+    max-width:none;
   }
 
   .onepage-head{
@@ -92,7 +93,7 @@
 
   .onepage-body{
     display:grid;
-    grid-template-columns:minmax(760px, .95fr) minmax(760px, 1.05fr);
+    grid-template-columns:minmax(0, 1.08fr) minmax(0, .92fr);
     min-height:calc(100vh - 180px);
   }
 
@@ -595,7 +596,7 @@
 
     .left,
     .right{
-      padding:16px;
+      min-width:0;
     }
 
     .patient-name{
@@ -607,12 +608,14 @@
     }
 
     .body-map{
-      min-height:360px;
+      min-height:680px;
     }
 
     .bodyimg,
     .bodyimg.bodyimg-lg{
-      max-width:190px;
+      width:100%;
+      max-width:320px;
+      height:auto;
     }
 
     .rightFoot{
