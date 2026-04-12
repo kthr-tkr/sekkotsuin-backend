@@ -189,6 +189,8 @@
       0 0 0 7px rgba(239,68,68,.18),
       0 8px 16px rgba(239,68,68,.22);
     z-index:10;
+    transition:transform .18s ease, box-shadow .18s ease, filter .18s ease, opacity .18s ease;
+    cursor:pointer;
   }
 
   .marker.sev-mid{
@@ -205,15 +207,51 @@
       0 8px 16px rgba(59,130,246,.18);
   }
 
+  .marker.is-dim{
+    opacity:.28;
+    filter:grayscale(.1);
+  }
+
+  .marker.is-active{
+    transform:translate(-50%, -50%) scale(1.28);
+    box-shadow:
+      0 0 0 10px rgba(245,158,11,.22),
+      0 12px 22px rgba(245,158,11,.28);
+    z-index:20;
+  }
+
   .location-summary{
     margin-top:16px;
+  }
+
+  .location-summary-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
   }
 
   .location-summary-title{
     font-size:13px;
     font-weight:900;
     color:#475569;
-    margin-bottom:8px;
+    margin:0;
+  }
+
+  .chip-clear{
+    border:none;
+    background:transparent;
+    color:#64748b;
+    font-size:12px;
+    font-weight:900;
+    cursor:pointer;
+    padding:0;
+  }
+
+  .chip-clear:hover{
+    color:#0f172a;
   }
 
   .location-chips{
@@ -232,6 +270,20 @@
     border:1px solid rgba(59,130,246,.10);
     font-size:12px;
     font-weight:900;
+    cursor:pointer;
+    transition:all .18s ease;
+  }
+
+  .loc-chip:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 14px rgba(59,130,246,.12);
+  }
+
+  .loc-chip.is-active{
+    background:linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    color:#fff;
+    border-color:transparent;
+    box-shadow:0 10px 18px rgba(37,99,235,.24);
   }
 
   .mini-note{
@@ -247,6 +299,116 @@
     gap:12px;
   }
 
+  /* ===== 診療要約 ===== */
+  .summary-hero{
+    border:1px solid var(--line);
+    border-radius:24px;
+    background:linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    box-shadow:0 18px 40px rgba(2,6,23,.08);
+    padding:18px;
+  }
+
+  .summary-hero-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+
+  .summary-hero-title{
+    font-size:20px;
+    font-weight:900;
+    color:#0f172a;
+  }
+
+  .summary-hero-tools{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .summary-alert{
+    background:rgba(245,158,11,.12);
+    color:#92400e;
+    border:1px solid rgba(245,158,11,.25);
+    padding:10px 12px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:800;
+    margin-bottom:12px;
+  }
+
+  .summary-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+  }
+
+  .summary-item{
+    border:1px solid rgba(148,163,184,.18);
+    background:#fff;
+    border-radius:14px;
+    padding:10px 12px;
+  }
+
+  .summary-item.is-wide{
+    grid-column:1 / -1;
+  }
+
+  .summary-label{
+    font-size:10px;
+    font-weight:900;
+    color:#64748b;
+    margin-bottom:4px;
+    letter-spacing:.05em;
+  }
+
+  .summary-value{
+    font-size:14px;
+    font-weight:800;
+    color:#0f172a;
+    line-height:1.45;
+    word-break:break-word;
+  }
+
+  /* ===== Followups inline ===== */
+  .followups-inline{
+    border:1px solid rgba(245,158,11,.18);
+    background:linear-gradient(180deg, rgba(255,251,235,.9) 0%, rgba(255,255,255,.95) 100%);
+    border-radius:20px;
+    padding:14px 14px 12px;
+  }
+
+  .followups-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+
+  .followups-title{
+    font-size:15px;
+    font-weight:900;
+    color:#92400e;
+  }
+
+  .followups-list{
+    margin:0;
+    padding-left:18px;
+  }
+
+  .followups-list li{
+    margin:8px 0;
+    line-height:1.6;
+    font-size:13px;
+  }
+
+  /* ===== SOAP ===== */
   .lane{
     display:grid;
     grid-template-columns:82px 54px 1fr;
@@ -346,13 +508,6 @@
   .s4 .laneLabel::after{border-left-color:var(--c4);}
   .s4 .laneBody{background:rgba(68,153,216,.16);}
 
-  .s5 .laneLabel{
-    background:var(--c5);
-    color:#fff;
-  }
-  .s5 .laneLabel::after{border-left-color:var(--c5);}
-  .s5 .laneBody{background:rgba(31,75,122,.16);}
-
   .rightFoot{
     margin-top:16px;
     display:flex;
@@ -379,11 +534,23 @@
     align-items:center;
     gap:8px;
     user-select:none;
+    transition:all .18s ease;
   }
 
   .miniBtn:hover{
     background:#f8fafc;
     color:var(--ink);
+  }
+
+  .miniBtn.primary{
+    background:#0f172a;
+    color:#fff;
+    border-color:#0f172a;
+  }
+
+  .miniBtn.primary:hover{
+    background:#020617;
+    color:#fff;
   }
 
   .chip{
@@ -558,6 +725,10 @@
       max-width:190px;
     }
 
+    .summary-grid{
+      grid-template-columns:1fr;
+    }
+
     .lane{
       grid-template-columns:96px 1fr;
     }
@@ -642,12 +813,16 @@
       </div>
 
       <div class="location-summary">
-        <div class="location-summary-title">AI抽出部位</div>
+        <div class="location-summary-head">
+          <div class="location-summary-title">AI抽出部位</div>
+          <button type="button" class="chip-clear" id="clearMarkerFocus">選択解除</button>
+        </div>
+
         {% with ex=summary.extract %}
           {% if ex.locations %}
-            <div class="location-chips">
+            <div class="location-chips" id="locationChips">
               {% for loc in ex.locations %}
-                <span class="loc-chip">{{ loc }}</span>
+                <button type="button" class="loc-chip" data-loc="{{ loc }}">{{ loc }}</button>
               {% endfor %}
             </div>
           {% else %}
@@ -657,14 +832,93 @@
       </div>
 
       <div class="mini-note">
-        赤マーカーは AI が抽出した違和感部位です。<br>
-        今後はクリック修正にも拡張できます。
+        部位チップを押すと、人体図の該当マーカーを強調表示します。<br>
+        マーカーを押しても同様に連動します。
       </div>
     </aside>
 
     <main class="ai-right">
       {% if summary %}
         <div class="flow">
+
+          {% with ex=summary.extract %}
+          <div class="summary-hero">
+
+            <div class="summary-hero-head">
+              <div class="summary-hero-title">診療要約</div>
+
+              <div class="summary-hero-tools">
+                {% if recording.summary_status == "confirmed" %}
+                  <span class="chip ok"><span class="dot"></span>確定済み</span>
+                {% else %}
+                  <span class="chip ng"><span class="dot"></span>AI下書き（要確認）</span>
+                {% endif %}
+
+                <button type="button" class="miniBtn" data-open="modal-editor">編集</button>
+              </div>
+            </div>
+
+            {% if summary.followups %}
+              <div class="summary-alert">
+                追加確認が必要です。未確認項目 {{ summary.followups|length }} 件
+              </div>
+            {% endif %}
+
+            <div class="summary-grid">
+              <div class="summary-item is-wide">
+                <div class="summary-label">主訴</div>
+                <div class="summary-value">{{ ex.chief_complaint|default:"-" }}</div>
+              </div>
+
+              <div class="summary-item">
+                <div class="summary-label">発症</div>
+                <div class="summary-value">{{ ex.onset|default:"-" }}</div>
+              </div>
+
+              <div class="summary-item">
+                <div class="summary-label">きっかけ</div>
+                <div class="summary-value">{{ ex.trigger|default:"-" }}</div>
+              </div>
+
+              <div class="summary-item">
+                <div class="summary-label">痛み(0-10)</div>
+                <div class="summary-value">{{ ex.severity_0_10|default:"-" }}</div>
+              </div>
+
+              <div class="summary-item">
+                <div class="summary-label">急性 / 慢性</div>
+                <div class="summary-value">{{ ex.symptom_type|default:"-" }}</div>
+              </div>
+
+              <div class="summary-item is-wide">
+                <div class="summary-label">部位</div>
+                <div class="summary-value">{{ ex.locations|default_if_none:""|join:" / "|default:"-" }}</div>
+              </div>
+
+              <div class="summary-item is-wide">
+                <div class="summary-label">性状</div>
+                <div class="summary-value">{{ ex.qualities|default_if_none:""|join:" / "|default:"-" }}</div>
+              </div>
+            </div>
+          </div>
+          {% endwith %}
+
+          <div class="followups-inline">
+            <div class="followups-head">
+              <div class="followups-title">追加確認事項</div>
+              <button type="button" class="miniBtn" data-open="modal-followups">一覧で見る</button>
+            </div>
+
+            {% if summary.followups %}
+              <ul class="followups-list">
+                {% for q in summary.followups %}
+                  <li>{{ q }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="muted">追加質問はありません。</div>
+            {% endif %}
+          </div>
 
           <div class="lane s1">
             <div class="laneNo"><div class="circle">01</div></div>
@@ -698,24 +952,6 @@
             </div>
           </div>
 
-          <div class="lane s5">
-            <div class="laneNo"><div class="circle">05</div></div>
-            <div class="laneLabel">抽出内容</div>
-            <div class="laneBody">
-              {% with ex=summary.extract %}
-                <ul>
-                  <li><b>主訴：</b>{{ ex.chief_complaint|default:"" }}</li>
-                  <li><b>発症：</b>{{ ex.onset|default:"" }}</li>
-                  <li><b>きっかけ：</b>{{ ex.trigger|default:"" }}</li>
-                  <li><b>痛み(0-10)：</b>{{ ex.severity_0_10|default:"" }}</li>
-                  <li><b>部位：</b>{{ ex.locations|default_if_none:""|join:" / " }}</li>
-                  <li><b>性状：</b>{{ ex.qualities|default_if_none:""|join:" / " }}</li>
-                  <li><b>急性/慢性：</b>{{ ex.symptom_type|default:"" }}</li>
-                </ul>
-              {% endwith %}
-            </div>
-          </div>
-
           <div class="rightFoot">
             <div>
               {% if recording.summary_status == "confirmed" %}
@@ -735,7 +971,7 @@
                     style="display:inline;"
                     onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='保存中...';">
                 {% csrf_token %}
-                <button type="submit" class="miniBtn">内容登録</button>
+                <button type="submit" class="miniBtn primary">内容登録</button>
               </form>
             </div>
           </div>
@@ -800,7 +1036,6 @@
 </div>
 
 {# ===== Modal: Editor ===== #}
-
 <div class="modalMask" id="modal-editor" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modalHead">
@@ -844,7 +1079,6 @@
 
         <div style="height:12px;"></div>
 
-        {# ★ 送信用：ここにJSONを入れてPOSTする（既存仕様維持） #}
         <textarea name="summary_json" id="summary_json_hidden" class="jsonarea" style="display:none;">
 {% if summary_json_pretty %}{{ summary_json_pretty }}{% else %}{{ recording.summary_json|default:"" }}{% endif %}
         </textarea>
@@ -874,6 +1108,7 @@
     </div>
   </div>
 </div>
+
 {{ summary.extract.locations|default_if_none:"[]"|json_script:"aiLocationsJson" }}
 
 {% endblock %}
@@ -887,6 +1122,7 @@
       m.classList.add("is-open");
       m.setAttribute("aria-hidden", "false");
     }
+
     function closeModal(m){
       m.classList.remove("is-open");
       m.setAttribute("aria-hidden", "true");
@@ -917,7 +1153,7 @@
       document.querySelectorAll(".modalMask.is-open").forEach(m => closeModal(m));
     });
 
-    // ===== SOAP editor -> JSON build (no backend change) =====
+    // ===== SOAP editor -> JSON build =====
     const form = document.getElementById("soapEditForm");
     if(form){
       const hidden = document.getElementById("summary_json_hidden");
@@ -931,7 +1167,6 @@
       }
 
       function buildJson(){
-        // ベースは hidden に入っている既存JSONを優先して保持
         let base = {};
         try{
           base = JSON.parse(hidden.value || "{}");
@@ -939,7 +1174,6 @@
           base = {};
         }
 
-        // soapだけ上書き
         const soap = base.soap || {};
         document.querySelectorAll("[data-soap]").forEach(el => {
           const key = el.getAttribute("data-soap");
@@ -952,111 +1186,177 @@
         if(preview) preview.value = out;
       }
 
-      // モーダル開いた時点でプレビューにも反映
       document.addEventListener("click", (e) => {
         const openBtn = e.target.closest('[data-open="modal-editor"]');
         if(openBtn) setTimeout(buildJson, 0);
       });
 
-      form.addEventListener("submit", (e) => {
+      form.addEventListener("submit", () => {
         buildJson();
       });
     }
-
   })();
 
-    // ===== Body markers from AI extract.locations =====
-    const aiLocations = JSON.parse(
-      document.getElementById("aiLocationsJson")?.textContent || "[]"
-    );
+  // ===== Body markers from AI extract.locations =====
+  const aiLocations = JSON.parse(
+    document.getElementById("aiLocationsJson")?.textContent || "[]"
+  );
 
-    const positionMap = {
-      "首":        { front: { top: "12%", left: "50%" }, back: { top: "12%", left: "50%" } },
-      "頚部":      { front: { top: "12%", left: "50%" }, back: { top: "12%", left: "50%" } },
+  const positionMap = {
+    "首":        { front: { top: "12%", left: "50%" }, back: { top: "12%", left: "50%" } },
+    "頚部":      { front: { top: "12%", left: "50%" }, back: { top: "12%", left: "50%" } },
 
-      "右肩":      { front: { top: "19%", left: "67%" }, back: { top: "19%", left: "65%" } },
-      "左肩":      { front: { top: "19%", left: "33%" }, back: { top: "19%", left: "35%" } },
-      "肩":        { front: { top: "19%", left: "50%" }, back: { top: "19%", left: "50%" } },
+    "右肩":      { front: { top: "19%", left: "67%" }, back: { top: "19%", left: "65%" } },
+    "左肩":      { front: { top: "19%", left: "33%" }, back: { top: "19%", left: "35%" } },
+    "肩":        { front: { top: "19%", left: "50%" }, back: { top: "19%", left: "50%" } },
 
-      "右上腕":    { front: { top: "28%", left: "78%" }, back: { top: "28%", left: "76%" } },
-      "左上腕":    { front: { top: "28%", left: "22%" }, back: { top: "28%", left: "24%" } },
-      "右肘":      { front: { top: "39%", left: "79%" }, back: { top: "39%", left: "77%" } },
-      "左肘":      { front: { top: "39%", left: "21%" }, back: { top: "39%", left: "23%" } },
-      "右前腕":    { front: { top: "48%", left: "80%" }, back: { top: "48%", left: "78%" } },
-      "左前腕":    { front: { top: "48%", left: "20%" }, back: { top: "48%", left: "22%" } },
+    "右上腕":    { front: { top: "28%", left: "78%" }, back: { top: "28%", left: "76%" } },
+    "左上腕":    { front: { top: "28%", left: "22%" }, back: { top: "28%", left: "24%" } },
+    "右肘":      { front: { top: "39%", left: "79%" }, back: { top: "39%", left: "77%" } },
+    "左肘":      { front: { top: "39%", left: "21%" }, back: { top: "39%", left: "23%" } },
+    "右前腕":    { front: { top: "48%", left: "80%" }, back: { top: "48%", left: "78%" } },
+    "左前腕":    { front: { top: "48%", left: "20%" }, back: { top: "48%", left: "22%" } },
 
-      "胸":        { front: { top: "23%", left: "50%" } },
-      "背中":      { back:  { top: "27%", left: "50%" } },
+    "胸":        { front: { top: "23%", left: "50%" } },
+    "背中":      { back:  { top: "27%", left: "50%" } },
 
-      "腰":        { back:  { top: "52%", left: "50%" }, front: { top: "50%", left: "50%" } },
-      "右腰":      { back:  { top: "52%", left: "58%" }, front: { top: "50%", left: "58%" } },
-      "左腰":      { back:  { top: "52%", left: "42%" }, front: { top: "50%", left: "42%" } },
+    "腰":        { back:  { top: "52%", left: "50%" }, front: { top: "50%", left: "50%" } },
+    "右腰":      { back:  { top: "52%", left: "58%" }, front: { top: "50%", left: "58%" } },
+    "左腰":      { back:  { top: "52%", left: "42%" }, front: { top: "50%", left: "42%" } },
 
-      "臀部":      { back:  { top: "61%", left: "50%" } },
-      "右臀部":    { back:  { top: "61%", left: "58%" } },
-      "左臀部":    { back:  { top: "61%", left: "42%" } },
+    "臀部":      { back:  { top: "61%", left: "50%" } },
+    "右臀部":    { back:  { top: "61%", left: "58%" } },
+    "左臀部":    { back:  { top: "61%", left: "42%" } },
 
-      "股関節":    { front: { top: "61%", left: "50%" }, back: { top: "61%", left: "50%" } },
-      "右股関節":  { front: { top: "61%", left: "58%" }, back: { top: "61%", left: "58%" } },
-      "左股関節":  { front: { top: "61%", left: "42%" }, back: { top: "61%", left: "42%" } },
+    "股関節":    { front: { top: "61%", left: "50%" }, back: { top: "61%", left: "50%" } },
+    "右股関節":  { front: { top: "61%", left: "58%" }, back: { top: "61%", left: "58%" } },
+    "左股関節":  { front: { top: "61%", left: "42%" }, back: { top: "61%", left: "42%" } },
 
-      "右大腿":    { front: { top: "71%", left: "57%" }, back: { top: "71%", left: "57%" } },
-      "左大腿":    { front: { top: "71%", left: "43%" }, back: { top: "71%", left: "43%" } },
+    "右大腿":    { front: { top: "71%", left: "57%" }, back: { top: "71%", left: "57%" } },
+    "左大腿":    { front: { top: "71%", left: "43%" }, back: { top: "71%", left: "43%" } },
 
-      "右膝":      { front: { top: "84%", left: "57%" }, back: { top: "84%", left: "57%" } },
-      "左膝":      { front: { top: "84%", left: "43%" }, back: { top: "84%", left: "43%" } },
+    "右膝":      { front: { top: "84%", left: "57%" }, back: { top: "84%", left: "57%" } },
+    "左膝":      { front: { top: "84%", left: "43%" }, back: { top: "84%", left: "43%" } },
 
-      "右下腿":    { front: { top: "92%", left: "57%" }, back: { top: "92%", left: "57%" } },
-      "左下腿":    { front: { top: "92%", left: "43%" }, back: { top: "92%", left: "43%" } },
+    "右下腿":    { front: { top: "92%", left: "57%" }, back: { top: "92%", left: "57%" } },
+    "左下腿":    { front: { top: "92%", left: "43%" }, back: { top: "92%", left: "43%" } },
 
-      "右足":      { front: { top: "98%", left: "58%" }, back: { top: "98%", left: "58%" } },
-      "左足":      { front: { top: "98%", left: "42%" }, back: { top: "98%", left: "42%" } },
+    "右足":      { front: { top: "98%", left: "58%" }, back: { top: "98%", left: "58%" } },
+    "左足":      { front: { top: "98%", left: "42%" }, back: { top: "98%", left: "42%" } },
+  };
+
+  function normalizeLocationName(name) {
+    const n = String(name || "").trim();
+    const aliases = {
+      "首肩": "肩",
+      "肩周り": "肩",
+      "背部": "背中",
+      "腰部": "腰",
+      "お尻": "臀部",
+      "ヒップ": "臀部",
+      "ひざ": "膝",
     };
+    return aliases[n] || n;
+  }
 
-    function normalizeLocationName(name) {
-      const n = String(name || "").trim();
-      const aliases = {
-        "首肩": "肩",
-        "肩周り": "肩",
-        "背部": "背中",
-        "腰部": "腰",
-        "お尻": "臀部",
-        "ヒップ": "臀部",
-        "ひざ": "膝",
-      };
-      return aliases[n] || n;
+  function createMarker(pos, severityClass, rawLoc, normalizedLoc) {
+    const el = document.createElement("div");
+    el.className = `marker ${severityClass || ""}`.trim();
+    el.style.top = pos.top;
+    el.style.left = pos.left;
+    el.dataset.loc = rawLoc;
+    el.dataset.normLoc = normalizedLoc;
+    el.title = rawLoc;
+    return el;
+  }
+
+  function clearMarkerFocus() {
+    document.querySelectorAll(".marker").forEach(el => {
+      el.classList.remove("is-active", "is-dim");
+    });
+    document.querySelectorAll(".loc-chip").forEach(el => {
+      el.classList.remove("is-active");
+    });
+  }
+
+  function focusLocation(rawLoc) {
+    const normalized = normalizeLocationName(rawLoc);
+
+    let hasMatch = false;
+
+    document.querySelectorAll(".marker").forEach(el => {
+      const matched =
+        el.dataset.loc === rawLoc ||
+        el.dataset.normLoc === normalized;
+
+      if (matched) {
+        el.classList.add("is-active");
+        el.classList.remove("is-dim");
+        hasMatch = true;
+      } else {
+        el.classList.remove("is-active");
+        el.classList.add("is-dim");
+      }
+    });
+
+    document.querySelectorAll(".loc-chip").forEach(el => {
+      const chipMatched =
+        el.dataset.loc === rawLoc ||
+        normalizeLocationName(el.dataset.loc) === normalized;
+
+      el.classList.toggle("is-active", chipMatched);
+    });
+
+    if (!hasMatch) {
+      clearMarkerFocus();
+    }
+  }
+
+  function drawBodyMarkers() {
+    const frontWrap = document.getElementById("bodyFrontWrap");
+    const backWrap = document.getElementById("bodyBackWrap");
+    if (!frontWrap || !backWrap || !Array.isArray(aiLocations)) return;
+
+    aiLocations.forEach(raw => {
+      const loc = normalizeLocationName(raw);
+      const pos = positionMap[loc];
+      if (!pos) return;
+
+      const sevClass = "sev-mid";
+
+      if (pos.front) {
+        frontWrap.appendChild(createMarker(pos.front, sevClass, raw, loc));
+      }
+      if (pos.back) {
+        backWrap.appendChild(createMarker(pos.back, sevClass, raw, loc));
+      }
+    });
+  }
+
+  drawBodyMarkers();
+
+  document.addEventListener("click", (e) => {
+    const chip = e.target.closest(".loc-chip");
+    if (chip) {
+      const isActive = chip.classList.contains("is-active");
+      if (isActive) {
+        clearMarkerFocus();
+      } else {
+        focusLocation(chip.dataset.loc);
+      }
+      return;
     }
 
-    function createMarker(pos, severityClass) {
-      const el = document.createElement("div");
-      el.className = `marker ${severityClass || ""}`.trim();
-      el.style.top = pos.top;
-      el.style.left = pos.left;
-      return el;
+    const marker = e.target.closest(".marker");
+    if (marker) {
+      focusLocation(marker.dataset.loc || marker.dataset.normLoc || "");
+      return;
     }
 
-    function drawBodyMarkers() {
-      const frontWrap = document.getElementById("bodyFrontWrap");
-      const backWrap = document.getElementById("bodyBackWrap");
-      if (!frontWrap || !backWrap || !Array.isArray(aiLocations)) return;
-
-      aiLocations.forEach(raw => {
-        const loc = normalizeLocationName(raw);
-        const pos = positionMap[loc];
-        if (!pos) return;
-
-        // いったん severity は無いので mid で統一。将来 severity_0_10 と連動可能
-        const sevClass = "sev-mid";
-
-        if (pos.front) {
-          frontWrap.appendChild(createMarker(pos.front, sevClass));
-        }
-        if (pos.back) {
-          backWrap.appendChild(createMarker(pos.back, sevClass));
-        }
-      });
+    const clearBtn = e.target.closest("#clearMarkerFocus");
+    if (clearBtn) {
+      clearMarkerFocus();
     }
-
-    drawBodyMarkers();
+  });
 </script>
 {% endblock %}
