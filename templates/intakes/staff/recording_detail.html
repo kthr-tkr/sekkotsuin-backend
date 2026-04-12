@@ -542,6 +542,154 @@
     max-width: 190px;
   }
 }
+.onepage-body{
+  grid-template-columns: 560px 1fr;
+  min-height: 900px;
+}
+
+.bodywrap{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items:start;
+  margin-top: 10px;
+}
+
+.body-card{
+  border:1px solid var(--line);
+  border-radius: 22px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,250,252,.96) 100%);
+  box-shadow: 0 12px 28px rgba(15,23,42,.06);
+}
+
+.body-map{
+  position: relative;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  min-height: 620px;
+  padding: 8px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.78);
+}
+
+.bodyimg.bodyimg-lg{
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  display:block;
+}
+
+.location-summary{
+  margin-top: 12px;
+}
+
+.location-summary-title{
+  font-size: 13px;
+  font-weight: 900;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.location-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.loc-chip{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  background:linear-gradient(135deg, rgba(59,130,246,.10) 0%, rgba(124,58,237,.08) 100%);
+  color:#3658c9;
+  border:1px solid rgba(59,130,246,.10);
+  font-size:12px;
+  font-weight:900;
+}
+
+.left{
+  position: sticky;
+  top: 18px;
+  align-self: start;
+}
+
+.left{
+  padding: 24px;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(59,130,246,.06), transparent 20%),
+    linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(246,248,252,.98) 100%);
+}
+
+.patient-name{
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: .03em;
+  margin: 0 0 4px;
+}
+
+.patient-sub{
+  color: var(--muted);
+  font-weight: 800;
+  margin: 0 0 14px;
+  font-size: 14px;
+}
+
+.onepage-body{
+  grid-template-columns: 560px 1fr;
+  min-height: 920px;
+}
+
+.left{
+  padding: 22px 20px;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(59,130,246,.05), transparent 20%),
+    linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(246,248,252,.98) 100%);
+}
+
+.patient-name{
+  font-size: 56px;
+  margin: 0 0 4px;
+}
+
+.patient-sub{
+  margin: 0 0 14px;
+}
+
+.bodywrap{
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.body-card{
+  padding: 10px;
+}
+
+.body-card-title{
+  margin-bottom: 8px;
+}
+
+.body-map{
+  min-height: 600px;
+  padding: 8px;
+}
+
+.bodyimg.bodyimg-lg{
+  max-width: 280px;
+}
+
+.location-summary{
+  margin-top: 10px;
+}
+
+.mini-note{
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.55;
+}
 
 </style>
 
