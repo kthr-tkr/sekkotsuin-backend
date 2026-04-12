@@ -15,7 +15,7 @@
     --muted:#64748b;
     --line:#e5e7eb;
     --shadow:0 16px 40px rgba(2,6,23,.08);
-    --radius:22px;
+    --radius:24px;
 
     --c1:#bff5f6;
     --c2:#86e7ea;
@@ -24,49 +24,40 @@
     --c5:#1f4b7a;
   }
 
-  .ai-wrap{
+  .ai-page{
     width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    color:var(--ink);
   }
 
-  .content{
-    width:100%;
-    max-width:none;
-    margin:0 auto;
-  }
-
-  .onepage{
-    width:100%;
-    background:var(--paper);
-    border:1px solid var(--line);
-    border-radius:30px;
-    box-shadow:0 24px 70px rgba(2,6,23,.10);
-    overflow:hidden;
-    max-width:none;
-  }
-
-  .onepage-head{
+  .ai-topbar{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
     gap:16px;
-    padding:20px 24px;
-    border-bottom:1px solid var(--line);
-    background:#fff;
+    padding:18px 20px;
+    border:1px solid var(--line);
+    border-radius:26px;
+    background:rgba(255,255,255,.88);
+    box-shadow:0 18px 40px rgba(2,6,23,.06);
+    backdrop-filter:blur(8px);
   }
 
-  .titleblock h1{
+  .ai-title h1{
     margin:0;
     font-size:28px;
     letter-spacing:.02em;
   }
 
-  .titleblock .sub{
+  .ai-title .sub{
     margin-top:6px;
     color:var(--muted);
     font-size:13px;
   }
 
-  .head-right{
+  .ai-head-right{
     display:flex;
     align-items:center;
     gap:12px;
@@ -91,19 +82,38 @@
     color:var(--ink);
   }
 
-  .onepage-body{
+  .ai-grid{
     display:grid;
-    grid-template-columns:minmax(0, 1.08fr) minmax(0, .92fr);
-    min-height:calc(100vh - 180px);
+    grid-template-columns:minmax(0, 1.18fr) minmax(460px, .82fr);
+    gap:18px;
+    align-items:start;
   }
 
-  /* ===== Left ===== */
-  .left{
-    border-right:1px solid var(--line);
-    padding:28px 26px 22px;
+  .ai-left,
+  .ai-right{
+    min-width:0;
+  }
+
+  .ai-left{
+    padding:22px;
+    border:1px solid var(--line);
+    border-radius:30px;
     background:
       radial-gradient(circle at 20% 10%, rgba(59,130,246,.05), transparent 20%),
       linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(246,248,252,.98) 100%);
+    box-shadow:0 22px 60px rgba(2,6,23,.06);
+  }
+
+  .ai-right{
+    padding:18px;
+    border:1px solid var(--line);
+    border-radius:30px;
+    background:
+      radial-gradient(circle at 85% 10%, rgba(96,165,250,.08), transparent 24%),
+      #fbfdff;
+    box-shadow:0 22px 60px rgba(2,6,23,.06);
+    position:sticky;
+    top:18px;
   }
 
   .patient-name{
@@ -117,7 +127,7 @@
   .patient-sub{
     color:var(--muted);
     font-weight:800;
-    margin:0 0 16px;
+    margin:0 0 18px;
     font-size:14px;
   }
 
@@ -126,15 +136,15 @@
     grid-template-columns:1fr 1fr;
     gap:18px;
     align-items:start;
-    margin-top:10px;
+    margin-top:8px;
   }
 
   .body-card{
     border:1px solid var(--line);
-    border-radius:24px;
-    padding:12px;
-    background:linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,250,252,.96) 100%);
-    box-shadow:0 12px 28px rgba(15,23,42,.06);
+    border-radius:26px;
+    padding:14px;
+    background:linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(248,250,252,.98) 100%);
+    box-shadow:0 12px 28px rgba(15,23,42,.05);
   }
 
   .body-card-title{
@@ -150,9 +160,9 @@
     justify-content:center;
     align-items:flex-start;
     min-height:760px;
-    border-radius:20px;
-    padding:14px 10px;
-    background:rgba(255,255,255,.84);
+    border-radius:22px;
+    padding:12px;
+    background:rgba(255,255,255,.86);
     border:1px solid rgba(148,163,184,.14);
   }
 
@@ -196,7 +206,7 @@
   }
 
   .location-summary{
-    margin-top:14px;
+    margin-top:16px;
   }
 
   .location-summary-title{
@@ -231,26 +241,15 @@
     line-height:1.55;
   }
 
-  /* ===== Right ===== */
-  .right{
-    padding:24px;
-    background:
-      radial-gradient(circle at 85% 10%, rgba(96,165,250,.08), transparent 24%),
-      #fbfdff;
-    min-width:0;
-    position:relative;
-    padding-bottom:88px;
-  }
-
   .flow{
     display:flex;
     flex-direction:column;
-    gap:14px;
+    gap:12px;
   }
 
   .lane{
     display:grid;
-    grid-template-columns:88px 66px 1fr;
+    grid-template-columns:82px 54px 1fr;
     border:1px solid var(--line);
     border-radius:20px;
     overflow:hidden;
@@ -267,8 +266,8 @@
   }
 
   .circle{
-    width:66px;
-    height:66px;
+    width:62px;
+    height:62px;
     border-radius:999px;
     background:#fff;
     border:1px solid rgba(15,23,42,.10);
@@ -288,8 +287,8 @@
     padding:14px 16px;
     font-weight:900;
     letter-spacing:.10em;
-    font-size:20px;
-    min-height:96px;
+    font-size:18px;
+    min-height:92px;
     color:#0b1220;
   }
 
@@ -300,14 +299,14 @@
     top:0;
     width:0;
     height:0;
-    border-top:48px solid transparent;
-    border-bottom:48px solid transparent;
+    border-top:46px solid transparent;
+    border-bottom:46px solid transparent;
     border-left:36px solid transparent;
     z-index:2;
   }
 
   .laneBody{
-    padding:16px 18px;
+    padding:14px 16px;
     min-width:0;
     background:rgba(255,255,255,.78);
   }
@@ -319,7 +318,7 @@
 
   .laneBody li{
     margin:7px 0;
-    line-height:1.7;
+    line-height:1.65;
     word-break:break-word;
     font-size:14px;
   }
@@ -355,9 +354,7 @@
   .s5 .laneBody{background:rgba(31,75,122,.16);}
 
   .rightFoot{
-    position:sticky;
-    bottom:14px;
-    margin-top:20px;
+    margin-top:16px;
     display:flex;
     justify-content:space-between;
     gap:10px;
@@ -365,16 +362,15 @@
     padding:12px 14px;
     background:rgba(251,253,255,.92);
     border:1px solid var(--line);
-    border-radius:999px;
+    border-radius:20px;
     backdrop-filter:blur(6px);
-    z-index:10;
   }
 
   .miniBtn{
     border:1px solid var(--line);
     background:#fff;
     border-radius:999px;
-    padding:10px 14px;
+    padding:9px 12px;
     font-weight:900;
     font-size:12.5px;
     color:var(--muted);
@@ -388,11 +384,6 @@
   .miniBtn:hover{
     background:#f8fafc;
     color:var(--ink);
-  }
-
-  .miniBtn.is-disabled{
-    opacity:.5;
-    cursor:not-allowed;
   }
 
   .chip{
@@ -427,7 +418,6 @@
     background:#f59e0b;
   }
 
-  /* ===== Modal ===== */
   .modalMask{
     position:fixed;
     inset:0;
@@ -503,9 +493,9 @@
     outline:none;
   }
 
-  @media (max-width: 1600px){
-    .onepage-body{
-      grid-template-columns:minmax(680px, .9fr) minmax(720px, 1.1fr);
+  @media (max-width: 1500px){
+    .ai-grid{
+      grid-template-columns:minmax(0, 1.08fr) minmax(420px, .92fr);
     }
 
     .body-map{
@@ -518,47 +508,54 @@
     }
   }
 
-  @media (max-width: 1360px){
-    .onepage-body{
-      grid-template-columns:minmax(580px, .9fr) minmax(640px, 1.1fr);
+  @media (max-width: 1280px){
+    .ai-grid{
+      grid-template-columns:1fr;
+    }
+
+    .ai-right{
+      position:static;
     }
 
     .patient-name{
-      font-size:52px;
+      font-size:50px;
     }
 
     .body-map{
-      min-height:620px;
-    }
-
-    .bodyimg,
-    .bodyimg.bodyimg-lg{
-      max-width:290px;
+      min-height:580px;
     }
   }
 
-  @media (max-width: 1120px){
-    .onepage-body{
-      grid-template-columns:1fr;
-      min-height:auto;
+  @media (max-width: 720px){
+    .ai-topbar{
+      flex-direction:column;
+      align-items:stretch;
     }
 
-    .left{
-      border-right:none;
-      border-bottom:1px solid var(--line);
+    .ai-head-right{
+      justify-content:flex-start;
+    }
+
+    .ai-left,
+    .ai-right{
+      padding:16px;
+    }
+
+    .patient-name{
+      font-size:34px;
     }
 
     .bodywrap{
-      grid-template-columns:1fr 1fr;
+      grid-template-columns:1fr;
     }
 
     .body-map{
-      min-height:480px;
+      min-height:360px;
     }
 
     .bodyimg,
     .bodyimg.bodyimg-lg{
-      max-width:220px;
+      max-width:190px;
     }
 
     .lane{
@@ -582,230 +579,182 @@
     .laneLabel::after{
       display:none;
     }
-  }
-
-  @media (max-width: 720px){
-    .onepage-head{
-      flex-direction:column;
-      align-items:stretch;
-    }
-
-    .head-right{
-      justify-content:flex-start;
-    }
-
-    .left,
-    .right{
-      min-width:0;
-    }
-
-    .patient-name{
-      font-size:34px;
-    }
-
-    .bodywrap{
-      grid-template-columns:1fr;
-    }
-
-    .body-map{
-      min-height:680px;
-    }
-
-    .bodyimg,
-    .bodyimg.bodyimg-lg{
-      width:100%;
-      max-width:320px;
-      height:auto;
-    }
 
     .rightFoot{
-      border-radius:20px;
       justify-content:flex-start;
     }
   }
 </style>
 
-<div class="ai-wrap">
-  <div class="onepage">
+<div class="ai-page">
 
-    <div class="onepage-head">
-      <div class="titleblock">
-        <h1>AI Interview</h1>
-        <div class="sub">1画面で SOAP / 抽出 / 質問 を確認します</div>
-      </div>
-
-      <div class="head-right">
-        <span class="badge">状態: <strong>{{ recording.get_status_display|default:recording.status }}</strong></span>
-
-        {% if summary %}
-          <span class="badge">model: <strong>{{ summary.meta.model|default:"" }}</strong></span>
-        {% endif %}
-
-        {% if recording.audio_file %}
-          <audio controls src="{{ recording.audio_file.url }}"></audio>
-        {% endif %}
-
-        <a class="btn btn-light" href="{{ back_url|default:'javascript:history.back()' }}">← 戻る</a>
-      </div>
+  <div class="ai-topbar">
+    <div class="ai-title">
+      <h1>AI Interview</h1>
+      <div class="sub">1画面で SOAP / 抽出 / 質問 を確認します</div>
     </div>
 
-    {% if recording.status == "failed" and recording.error_message %}
-      <div class="alert alert-danger" style="margin:14px 20px;">
-        {{ recording.error_message }}
+    <div class="ai-head-right">
+      <span class="badge">状態: <strong>{{ recording.get_status_display|default:recording.status }}</strong></span>
+
+      {% if summary %}
+        <span class="badge">model: <strong>{{ summary.meta.model|default:"" }}</strong></span>
+      {% endif %}
+
+      {% if recording.audio_file %}
+        <audio controls src="{{ recording.audio_file.url }}"></audio>
+      {% endif %}
+
+      <a class="btn btn-light" href="{{ back_url|default:'javascript:history.back()' }}">← 戻る</a>
+    </div>
+  </div>
+
+  {% if recording.status == "failed" and recording.error_message %}
+    <div class="alert alert-danger">
+      {{ recording.error_message }}
+    </div>
+  {% endif %}
+
+  <div class="ai-grid">
+
+    <aside class="ai-left">
+      <h2 class="patient-name">〜様</h2>
+      <div class="patient-sub">問診内容</div>
+
+      <div class="bodywrap">
+        <div class="body-card">
+          <div class="body-card-title">前面</div>
+          <div class="body-map" id="bodyFrontWrap">
+            <img class="bodyimg bodyimg-lg"
+                 src="{% static 'patients/img/body_front.png' %}"
+                 alt="body-front">
+          </div>
+        </div>
+
+        <div class="body-card">
+          <div class="body-card-title">背面</div>
+          <div class="body-map" id="bodyBackWrap">
+            <img class="bodyimg bodyimg-lg"
+                 src="{% static 'patients/img/body_back.png' %}"
+                 alt="body-back">
+          </div>
+        </div>
       </div>
-    {% endif %}
 
-    <div class="onepage-body">
+      <div class="location-summary">
+        <div class="location-summary-title">AI抽出部位</div>
+        {% with ex=summary.extract %}
+          {% if ex.locations %}
+            <div class="location-chips">
+              {% for loc in ex.locations %}
+                <span class="loc-chip">{{ loc }}</span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="mini-note">部位はまだ抽出されていません。</div>
+          {% endif %}
+        {% endwith %}
+      </div>
 
-      {# ===== LEFT ===== #}
-      <aside class="left">
-        <h2 class="patient-name">〜様</h2>
-        <div class="patient-sub">問診内容</div>
+      <div class="mini-note">
+        赤マーカーは AI が抽出した違和感部位です。<br>
+        今後はクリック修正にも拡張できます。
+      </div>
+    </aside>
 
-        <div class="bodywrap">
-          <div class="body-card">
-            <div class="body-card-title">前面</div>
-            <div class="body-map" id="bodyFrontWrap">
-              <img class="bodyimg bodyimg-lg"
-                  src="{% static 'patients/img/body_front.png' %}"
-                  alt="body-front">
+    <main class="ai-right">
+      {% if summary %}
+        <div class="flow">
+
+          <div class="lane s1">
+            <div class="laneNo"><div class="circle">01</div></div>
+            <div class="laneLabel">S</div>
+            <div class="laneBody">
+              <ul>{% for x in soap_view.S %}<li>{{ x }}</li>{% empty %}<li class="muted">-</li>{% endfor %}</ul>
             </div>
           </div>
 
-          <div class="body-card">
-            <div class="body-card-title">背面</div>
-            <div class="body-map" id="bodyBackWrap">
-              <img class="bodyimg bodyimg-lg"
-                  src="{% static 'patients/img/body_back.png' %}"
-                  alt="body-back">
+          <div class="lane s2">
+            <div class="laneNo"><div class="circle">02</div></div>
+            <div class="laneLabel">O</div>
+            <div class="laneBody">
+              <ul>{% for x in soap_view.O %}<li>{{ x }}</li>{% empty %}<li class="muted">-</li>{% endfor %}</ul>
             </div>
           </div>
-        </div>
 
-        <div class="location-summary">
-          <div class="location-summary-title">AI抽出部位</div>
-          {% with ex=summary.extract %}
-            {% if ex.locations %}
-              <div class="location-chips">
-                {% for loc in ex.locations %}
-                  <span class="loc-chip">{{ loc }}</span>
-                {% endfor %}
-              </div>
-            {% else %}
-              <div class="mini-note">部位はまだ抽出されていません。</div>
-            {% endif %}
-          {% endwith %}
-        </div>
-
-        <div class="mini-note">
-          赤マーカーは AI が抽出した違和感部位です。<br>
-          今後はクリック修正にも拡張できます。
-        </div>
-      </aside>
-
-      {# ===== RIGHT ===== #}
-      <main class="right">
-        {% if summary %}
-
-          <div class="flow">
-
-            <div class="lane s1">
-              <div class="laneNo"><div class="circle">01</div></div>
-              <div class="laneLabel">S</div>
-              <div class="laneBody">
-                <ul>{% for x in soap_view.S %}<li>{{ x }}</li>{% empty %}<li class="muted">-</li>{% endfor %}</ul>
-              </div>
+          <div class="lane s3">
+            <div class="laneNo"><div class="circle">03</div></div>
+            <div class="laneLabel">A</div>
+            <div class="laneBody">
+              <ul>{% for x in soap_view.A %}<li>{{ x }}</li>{% empty %}<li class="muted">-</li>{% endfor %}</ul>
             </div>
-
-            <div class="lane s2">
-              <div class="laneNo"><div class="circle">02</div></div>
-              <div class="laneLabel">O</div>
-              <div class="laneBody">
-                <ul>{% for x in soap_view.O %}<li>{{ x }}</li>{% empty %}<li class="muted">-</li>{% endfor %}</ul>
-              </div>
-            </div>
-
-            <div class="lane s3">
-              <div class="laneNo"><div class="circle">03</div></div>
-              <div class="laneLabel">A</div>
-              <div class="laneBody">
-                <ul>{% for x in soap_view.A %}<li>{{ x }}</li>{% empty %}<li class="muted">-</li>{% endfor %}</ul>
-              </div>
-            </div>
-
-            <div class="lane s4">
-              <div class="laneNo"><div class="circle">04</div></div>
-              <div class="laneLabel">P</div>
-              <div class="laneBody">
-                <ul>{% for x in soap_view.P %}<li>{{ x }}</li>{% empty %}<li class="muted">-</li>{% endfor %}</ul>
-              </div>
-            </div>
-
-            <div class="lane s5">
-              <div class="laneNo"><div class="circle">05</div></div>
-              <div class="laneLabel">抽出内容</div>
-              <div class="laneBody">
-
-                {% with ex=summary.extract%}
-                  <ul>
-                    <li><b>主訴：</b>{{ ex.chief_complaint|default:"" }}</li>
-                    <li><b>発症：</b>{{ ex.onset|default:"" }}</li>
-                    <li><b>きっかけ：</b>{{ ex.trigger|default:"" }}</li>
-                    <li><b>痛み(0-10)：</b>{{ ex.severity_0_10|default:"" }}</li>
-                    <li><b>部位：</b>{{ ex.locations|default_if_none:""|join:" / " }}</li>
-                    <li><b>性状：</b>{{ ex.qualities|default_if_none:""|join:" / " }}</li>
-                    <li><b>急性/慢性：</b>{{ ex.symptom_type|default:"" }}</li>
-                  </ul>
-                {% endwith %}
-
-                <div style="height:12px;"></div>
-                  <div class="rightFoot" style="justify-content:space-between;">
-                    <div>
-                      {% if recording.summary_status == "confirmed" %}
-                        <span class="chip ok"><span class="dot"></span>確定済み</span>
-                      {% else %}
-                        <span class="chip ng"><span class="dot"></span>未確定（AI下書き）</span>
-                      {% endif %}
-                    </div>
-
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-                      <button type="button" class="miniBtn" data-open="modal-followups">質問</button>
-                      <button type="button" class="miniBtn" data-open="modal-transcript">文字起こし</button>
-
-                      {# 編集＝モーダルを開くだけなので常に有効でOK #}
-                      <button type="button" class="miniBtn" data-open="modal-editor">編集</button>
-
-                      {# 内容登録＝staff側のPOSTに飛ばす #}
-                      <form method="post" action="{% url 'staff:register_clinical_note' recording.id %}" style="display:inline;"
-                            onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='保存中...';">
-                        {% csrf_token %}
-                        <button type="submit" class="miniBtn">内容登録</button>
-                      </form>
-                    </div>
-                  </div>
-              </div>
-            </div>
-
           </div>
 
+          <div class="lane s4">
+            <div class="laneNo"><div class="circle">04</div></div>
+            <div class="laneLabel">P</div>
+            <div class="laneBody">
+              <ul>{% for x in soap_view.P %}<li>{{ x }}</li>{% empty %}<li class="muted">-</li>{% endfor %}</ul>
+            </div>
+          </div>
 
+          <div class="lane s5">
+            <div class="laneNo"><div class="circle">05</div></div>
+            <div class="laneLabel">抽出内容</div>
+            <div class="laneBody">
+              {% with ex=summary.extract %}
+                <ul>
+                  <li><b>主訴：</b>{{ ex.chief_complaint|default:"" }}</li>
+                  <li><b>発症：</b>{{ ex.onset|default:"" }}</li>
+                  <li><b>きっかけ：</b>{{ ex.trigger|default:"" }}</li>
+                  <li><b>痛み(0-10)：</b>{{ ex.severity_0_10|default:"" }}</li>
+                  <li><b>部位：</b>{{ ex.locations|default_if_none:""|join:" / " }}</li>
+                  <li><b>性状：</b>{{ ex.qualities|default_if_none:""|join:" / " }}</li>
+                  <li><b>急性/慢性：</b>{{ ex.symptom_type|default:"" }}</li>
+                </ul>
+              {% endwith %}
+            </div>
+          </div>
 
-        {% else %}
-          <div class="box muted">まだ要約がありません。</div>
+          <div class="rightFoot">
+            <div>
+              {% if recording.summary_status == "confirmed" %}
+                <span class="chip ok"><span class="dot"></span>確定済み</span>
+              {% else %}
+                <span class="chip ng"><span class="dot"></span>未確定（AI下書き）</span>
+              {% endif %}
+            </div>
 
-          <div class="actions" style="margin-top:14px;">
-            {% if recording.audio_file and recording.status != "done" %}
-              <form method="post" action="{{ process_url }}">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+              <button type="button" class="miniBtn" data-open="modal-followups">質問</button>
+              <button type="button" class="miniBtn" data-open="modal-transcript">文字起こし</button>
+              <button type="button" class="miniBtn" data-open="modal-editor">編集</button>
+
+              <form method="post"
+                    action="{% url 'staff:register_clinical_note' recording.id %}"
+                    style="display:inline;"
+                    onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='保存中...';">
                 {% csrf_token %}
-                <button class="btn btn-primary" type="submit">問診内容を整理（処理開始）</button>
+                <button type="submit" class="miniBtn">内容登録</button>
               </form>
-            {% endif %}
-            <a class="btn btn-light" href="{{ retry_url|default:'#' }}">もう一度録音する</a>
+            </div>
           </div>
-        {% endif %}
-      </main>
+        </div>
 
-    </div>
+      {% else %}
+        <div class="box muted">まだ要約がありません。</div>
+
+        <div class="actions" style="margin-top:14px;">
+          {% if recording.audio_file and recording.status != "done" %}
+            <form method="post" action="{{ process_url }}">
+              {% csrf_token %}
+              <button class="btn btn-primary" type="submit">問診内容を整理（処理開始）</button>
+            </form>
+          {% endif %}
+          <a class="btn btn-light" href="{{ retry_url|default:'#' }}">もう一度録音する</a>
+        </div>
+      {% endif %}
+    </main>
 
   </div>
 </div>
