@@ -343,6 +343,206 @@
 .chip.ok .dot{ background:#22c55e; }
 .chip.ng .dot{ background:#f59e0b; }
 
+.body-map{
+  position:relative;
+}
+
+.marker{
+  position:absolute;
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#ef4444,#f97316);
+  box-shadow:0 0 0 6px rgba(239,68,68,.2);
+  transform:translate(-50%,-50%);
+  z-index:10;
+}
+
+.content{
+  max-width: 1600px;
+}
+
+.onepage{
+  border-radius: 28px;
+  box-shadow: 0 24px 70px rgba(2,6,23,.10);
+}
+
+.onepage-body{
+  display:grid;
+  grid-template-columns: 460px 1fr;
+  min-height: 860px;
+}
+
+.left{
+  padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(248,250,252,.96) 100%);
+}
+
+.right{
+  padding: 26px;
+  background:
+    radial-gradient(circle at 85% 10%, rgba(96,165,250,.08), transparent 24%),
+    #fbfdff;
+}
+
+.patient-name{
+  font-size: 52px;
+  letter-spacing: .03em;
+}
+
+.patient-sub{
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+
+.bodywrap{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items:start;
+  margin-top: 10px;
+}
+
+.body-card{
+  border:1px solid var(--line);
+  border-radius: 22px;
+  padding: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,250,252,.96) 100%);
+  box-shadow: 0 12px 28px rgba(15,23,42,.06);
+}
+
+.body-card-title{
+  font-size: 15px;
+  font-weight: 900;
+  color: #1e3a8a;
+  margin-bottom: 10px;
+}
+
+.body-map{
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 520px;
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(148,163,184,.14);
+}
+
+.bodyimg.bodyimg-lg{
+  width: 100%;
+  max-width: 230px;
+  filter: none;
+  opacity: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+.marker{
+  position:absolute;
+  width:16px;
+  height:16px;
+  border-radius:999px;
+  transform:translate(-50%, -50%);
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  box-shadow:
+    0 0 0 6px rgba(239,68,68,.18),
+    0 8px 16px rgba(239,68,68,.22);
+  z-index: 10;
+}
+
+.marker.sev-mid{
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  box-shadow:
+    0 0 0 6px rgba(245,158,11,.16),
+    0 8px 16px rgba(245,158,11,.18);
+}
+
+.marker.sev-low{
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  box-shadow:
+    0 0 0 6px rgba(59,130,246,.15),
+    0 8px 16px rgba(59,130,246,.18);
+}
+
+.location-summary{
+  margin-top: 16px;
+}
+
+.location-summary-title{
+  font-size: 13px;
+  font-weight: 900;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.location-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.loc-chip{
+  display:inline-flex;
+  align-items:center;
+  padding:7px 10px;
+  border-radius:999px;
+  background:linear-gradient(135deg, rgba(59,130,246,.10) 0%, rgba(124,58,237,.08) 100%);
+  color:#3658c9;
+  border:1px solid rgba(59,130,246,.10);
+  font-size:12px;
+  font-weight:900;
+}
+
+@media (max-width: 1320px){
+  .onepage-body{
+    grid-template-columns: 400px 1fr;
+  }
+
+  .body-map{
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 1020px){
+  .onepage-body{
+    grid-template-columns: 1fr;
+  }
+
+  .bodywrap{
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .body-map{
+    min-height: 420px;
+  }
+}
+
+@media (max-width: 720px){
+  .left,
+  .right{
+    padding: 16px;
+  }
+
+  .patient-name{
+    font-size: 34px;
+  }
+
+  .bodywrap{
+    grid-template-columns: 1fr;
+  }
+
+  .body-map{
+    min-height: 360px;
+  }
+
+  .bodyimg.bodyimg-lg{
+    max-width: 190px;
+  }
+}
+
 </style>
 
 <div class="ai-wrap">
@@ -383,13 +583,43 @@
         <div class="patient-sub">問診内容</div>
 
         <div class="bodywrap">
-          <img class="bodyimg" src="{% static 'intakes/img/body_front.png' %}" alt="body-front">
-          <img class="bodyimg" src="{% static 'intakes/img/body_side.png' %}" alt="body-side">
+          <div class="body-card">
+            <div class="body-card-title">前面</div>
+            <div class="body-map" id="bodyFrontWrap">
+              <img class="bodyimg bodyimg-lg"
+                  src="{% static 'patients/img/body_front.png' %}"
+                  alt="body-front">
+            </div>
+          </div>
+
+          <div class="body-card">
+            <div class="body-card-title">背面</div>
+            <div class="body-map" id="bodyBackWrap">
+              <img class="bodyimg bodyimg-lg"
+                  src="{% static 'patients/img/body_back.png' %}"
+                  alt="body-back">
+            </div>
+          </div>
+        </div>
+
+        <div class="location-summary">
+          <div class="location-summary-title">AI抽出部位</div>
+          {% with ex=summary.extract %}
+            {% if ex.locations %}
+              <div class="location-chips">
+                {% for loc in ex.locations %}
+                  <span class="loc-chip">{{ loc }}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="mini-note">部位はまだ抽出されていません。</div>
+            {% endif %}
+          {% endwith %}
         </div>
 
         <div class="mini-note">
-          ・ここは次のフェーズで「痛み部位のマーキング」を載せる領域。<br>
-          ・まずは extract.locations を表示 → 後でクリックで付与に拡張。
+          赤マーカーは AI が抽出した違和感部位です。<br>
+          今後はクリック修正にも拡張できます。
         </div>
       </aside>
 
@@ -615,7 +845,7 @@
     </div>
   </div>
 </div>
-
+{{ summary.extract.locations|default_if_none:"[]"|json_script:"aiLocationsJson" }}
 
 {% endblock %}
 
@@ -705,5 +935,99 @@
     }
 
   })();
+
+    // ===== Body markers from AI extract.locations =====
+    const aiLocations = JSON.parse(
+      document.getElementById("aiLocationsJson")?.textContent || "[]"
+    );
+
+    const positionMap = {
+      "首":        { front: { top: "12%", left: "50%" }, back: { top: "12%", left: "50%" } },
+      "頚部":      { front: { top: "12%", left: "50%" }, back: { top: "12%", left: "50%" } },
+
+      "右肩":      { front: { top: "19%", left: "67%" }, back: { top: "19%", left: "65%" } },
+      "左肩":      { front: { top: "19%", left: "33%" }, back: { top: "19%", left: "35%" } },
+      "肩":        { front: { top: "19%", left: "50%" }, back: { top: "19%", left: "50%" } },
+
+      "右上腕":    { front: { top: "28%", left: "78%" }, back: { top: "28%", left: "76%" } },
+      "左上腕":    { front: { top: "28%", left: "22%" }, back: { top: "28%", left: "24%" } },
+      "右肘":      { front: { top: "39%", left: "79%" }, back: { top: "39%", left: "77%" } },
+      "左肘":      { front: { top: "39%", left: "21%" }, back: { top: "39%", left: "23%" } },
+      "右前腕":    { front: { top: "48%", left: "80%" }, back: { top: "48%", left: "78%" } },
+      "左前腕":    { front: { top: "48%", left: "20%" }, back: { top: "48%", left: "22%" } },
+
+      "胸":        { front: { top: "23%", left: "50%" } },
+      "背中":      { back:  { top: "27%", left: "50%" } },
+
+      "腰":        { back:  { top: "52%", left: "50%" }, front: { top: "50%", left: "50%" } },
+      "右腰":      { back:  { top: "52%", left: "58%" }, front: { top: "50%", left: "58%" } },
+      "左腰":      { back:  { top: "52%", left: "42%" }, front: { top: "50%", left: "42%" } },
+
+      "臀部":      { back:  { top: "61%", left: "50%" } },
+      "右臀部":    { back:  { top: "61%", left: "58%" } },
+      "左臀部":    { back:  { top: "61%", left: "42%" } },
+
+      "股関節":    { front: { top: "61%", left: "50%" }, back: { top: "61%", left: "50%" } },
+      "右股関節":  { front: { top: "61%", left: "58%" }, back: { top: "61%", left: "58%" } },
+      "左股関節":  { front: { top: "61%", left: "42%" }, back: { top: "61%", left: "42%" } },
+
+      "右大腿":    { front: { top: "71%", left: "57%" }, back: { top: "71%", left: "57%" } },
+      "左大腿":    { front: { top: "71%", left: "43%" }, back: { top: "71%", left: "43%" } },
+
+      "右膝":      { front: { top: "84%", left: "57%" }, back: { top: "84%", left: "57%" } },
+      "左膝":      { front: { top: "84%", left: "43%" }, back: { top: "84%", left: "43%" } },
+
+      "右下腿":    { front: { top: "92%", left: "57%" }, back: { top: "92%", left: "57%" } },
+      "左下腿":    { front: { top: "92%", left: "43%" }, back: { top: "92%", left: "43%" } },
+
+      "右足":      { front: { top: "98%", left: "58%" }, back: { top: "98%", left: "58%" } },
+      "左足":      { front: { top: "98%", left: "42%" }, back: { top: "98%", left: "42%" } },
+    };
+
+    function normalizeLocationName(name) {
+      const n = String(name || "").trim();
+      const aliases = {
+        "首肩": "肩",
+        "肩周り": "肩",
+        "背部": "背中",
+        "腰部": "腰",
+        "お尻": "臀部",
+        "ヒップ": "臀部",
+        "ひざ": "膝",
+      };
+      return aliases[n] || n;
+    }
+
+    function createMarker(pos, severityClass) {
+      const el = document.createElement("div");
+      el.className = `marker ${severityClass || ""}`.trim();
+      el.style.top = pos.top;
+      el.style.left = pos.left;
+      return el;
+    }
+
+    function drawBodyMarkers() {
+      const frontWrap = document.getElementById("bodyFrontWrap");
+      const backWrap = document.getElementById("bodyBackWrap");
+      if (!frontWrap || !backWrap || !Array.isArray(aiLocations)) return;
+
+      aiLocations.forEach(raw => {
+        const loc = normalizeLocationName(raw);
+        const pos = positionMap[loc];
+        if (!pos) return;
+
+        // いったん severity は無いので mid で統一。将来 severity_0_10 と連動可能
+        const sevClass = "sev-mid";
+
+        if (pos.front) {
+          frontWrap.appendChild(createMarker(pos.front, sevClass));
+        }
+        if (pos.back) {
+          backWrap.appendChild(createMarker(pos.back, sevClass));
+        }
+      });
+    }
+
+    drawBodyMarkers();
 </script>
 {% endblock %}
