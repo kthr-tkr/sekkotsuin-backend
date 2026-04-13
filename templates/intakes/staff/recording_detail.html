@@ -1050,7 +1050,53 @@
 
       <form method="post" action="{{ confirm_url }}" id="soapEditForm">
         {% csrf_token %}
+        <div style="margin-bottom:14px;">
+          <div style="font-weight:900; margin:0 0 10px;">診療要約の編集</div>
 
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div style="grid-column:1 / -1;">
+              <div style="font-weight:900; margin:0 0 6px;">主訴</div>
+              <textarea class="jsonarea" style="min-height:90px;" data-extract="chief_complaint"
+                placeholder="例）腰をひねってからズキズキ痛む">{% if summary.extract.chief_complaint %}{{ summary.extract.chief_complaint }}{% endif %}</textarea>
+            </div>
+
+            <div>
+              <div style="font-weight:900; margin:0 0 6px;">発症</div>
+              <input class="jsonarea" style="min-height:auto; height:46px;" data-extract="onset"
+                value="{{ summary.extract.onset|default:'' }}" placeholder="例）2週間前">
+            </div>
+
+            <div>
+              <div style="font-weight:900; margin:0 0 6px;">きっかけ</div>
+              <input class="jsonarea" style="min-height:auto; height:46px;" data-extract="trigger"
+                value="{{ summary.extract.trigger|default:'' }}" placeholder="例）腰をひねった">
+            </div>
+
+            <div>
+              <div style="font-weight:900; margin:0 0 6px;">痛み(0-10)</div>
+              <input class="jsonarea" style="min-height:auto; height:46px;" data-extract="severity_0_10"
+                value="{{ summary.extract.severity_0_10|default:'' }}" placeholder="例）7">
+            </div>
+
+            <div>
+              <div style="font-weight:900; margin:0 0 6px;">急性 / 慢性</div>
+              <input class="jsonarea" style="min-height:auto; height:46px;" data-extract="symptom_type"
+                value="{{ summary.extract.symptom_type|default:'' }}" placeholder="例）acute">
+            </div>
+
+            <div style="grid-column:1 / -1;">
+              <div style="font-weight:900; margin:0 0 6px;">部位（1行に1項目）</div>
+              <textarea class="jsonarea" style="min-height:100px;" data-extract-list="locations"
+                placeholder="例）腰&#10;右腰">{% if summary.extract.locations %}{% for x in summary.extract.locations %}{{ x }}{% if not forloop.last %}\n{% endif %}{% endfor %}{% endif %}</textarea>
+            </div>
+
+            <div style="grid-column:1 / -1;">
+              <div style="font-weight:900; margin:0 0 6px;">性状（1行に1項目）</div>
+              <textarea class="jsonarea" style="min-height:100px;" data-extract-list="qualities"
+                placeholder="例）ズキズキする&#10;張っている">{% if summary.extract.qualities %}{% for x in summary.extract.qualities %}{{ x }}{% if not forloop.last %}\n{% endif %}{% endfor %}{% endif %}</textarea>
+            </div>
+          </div>
+        </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
           <div>
             <div style="font-weight:900; margin:0 0 6px;">S</div>
@@ -1174,12 +1220,35 @@
           base = {};
         }
 
+        function linesToList(text){
+          return (text || "")
+            .split("\n")
+            .map(s => s.trim())
+            .filter(Boolean);
+        }
+
+        // SOAP更新
         const soap = base.soap || {};
         document.querySelectorAll("[data-soap]").forEach(el => {
           const key = el.getAttribute("data-soap");
           soap[key] = linesToList(el.value);
         });
         base.soap = soap;
+
+        // extract更新
+        const extract = base.extract || {};
+
+        document.querySelectorAll("[data-extract]").forEach(el => {
+          const key = el.getAttribute("data-extract");
+          extract[key] = (el.value || "").trim();
+        });
+
+        document.querySelectorAll("[data-extract-list]").forEach(el => {
+          const key = el.getAttribute("data-extract-list");
+          extract[key] = linesToList(el.value);
+        });
+
+        base.extract = extract;
 
         const out = JSON.stringify(base, null, 2);
         hidden.value = out;
