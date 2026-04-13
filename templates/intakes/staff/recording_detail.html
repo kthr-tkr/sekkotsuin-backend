@@ -726,6 +726,21 @@
       justify-content:flex-start;
     }
   }
+
+.svg-marker-group{
+  cursor:pointer;
+}
+
+.svg-marker-label{
+  font-size:11px;
+  font-weight:700;
+  fill:#0f172a;
+  paint-order:stroke;
+  stroke:#ffffff;
+  stroke-width:3px;
+  stroke-linejoin:round;
+}
+
 </style>
 
 <div class="ai-page">
@@ -1160,6 +1175,9 @@
 
 {% block scripts %}
 <script>
+// ===== 一時的
+const DEBUG_SHOW_ALL_MARKERS = true;
+
   (function(){
     function openModal(id){
       const m = document.getElementById(id);
@@ -1291,16 +1309,17 @@ const positionMap = {
   "背中":      { back:  { x:150, y:190 } },
 
   "腰":        { front: { x:155, y:305 }, back: { x:155, y:308 } },
-  "右腰":      { front: { x:168, y:305 }, back: { x:164, y:308 } },
-  "左腰":      { front: { x:132, y:305 }, back: { x:128, y:308 } },
 
-  "臀部":      { back:  { x:150, y:390 } },
-  "右臀部":    { back:  { x:170, y:390 } },
-  "左臀部":    { back:  { x:130, y:390 } },
+  "右腰":      { front: { x:173, y:305 }, back: { x:171, y:308 } },
+  "左腰":      { front: { x:137, y:305 }, back: { x:139, y:308 } },
 
-  "股関節":    { front: { x:150, y:430 }, back: { x:150, y:430 } },
-  "右股関節":  { front: { x:170, y:430 }, back: { x:170, y:430 } },
-  "左股関節":  { front: { x:130, y:430 }, back: { x:130, y:430 } },
+  "臀部":      { back:  { x:155, y:360 } },
+  "右臀部":    { back:  { x:173, y:362 } },
+  "左臀部":    { back:  { x:137, y:362 } },
+
+  "股関節":    { front: { x:155, y:355 }, back: { x:155, y:355 } },
+  "右股関節":  { front: { x:173, y:355 }, back: { x:171, y:355 } },
+  "左股関節":  { front: { x:137, y:355 }, back: { x:139, y:355 } },
 
   "右大腿":    { front: { x:168, y:500 }, back: { x:168, y:500 } },
   "左大腿":    { front: { x:132, y:500 }, back: { x:132, y:500 } },
@@ -1330,6 +1349,11 @@ function normalizeLocationName(name) {
 }
 
 function createSvgMarker(pos, rawLoc, normalizedLoc) {
+  const g = document.createElementNS(SVG_NS, "g");
+  g.dataset.loc = rawLoc;
+  g.dataset.normLoc = normalizedLoc;
+  g.setAttribute("class", "svg-marker-group");
+
   const c = document.createElementNS(SVG_NS, "circle");
   c.setAttribute("cx", pos.x);
   c.setAttribute("cy", pos.y);
@@ -1338,10 +1362,25 @@ function createSvgMarker(pos, rawLoc, normalizedLoc) {
   c.dataset.loc = rawLoc;
   c.dataset.normLoc = normalizedLoc;
   c.setAttribute("title", rawLoc);
-  return c;
+
+  g.appendChild(c);
+
+  if (DEBUG_SHOW_ALL_MARKERS) {
+    const t = document.createElementNS(SVG_NS, "text");
+    t.setAttribute("x", pos.x + 12);
+    t.setAttribute("y", pos.y - 12);
+    t.setAttribute("class", "svg-marker-label");
+    t.textContent = rawLoc;
+    g.appendChild(t);
+  }
+
+  return g;
 }
 
 function clearMarkerFocus() {
+  document.querySelectorAll(".svg-marker-group").forEach(el => {
+    el.classList.remove("is-active", "is-dim");
+  });
   document.querySelectorAll(".svg-marker").forEach(el => {
     el.classList.remove("is-active", "is-dim");
   });
@@ -1354,18 +1393,28 @@ function focusLocation(rawLoc) {
   const normalized = normalizeLocationName(rawLoc);
   let hasMatch = false;
 
-  document.querySelectorAll(".svg-marker").forEach(el => {
+  document.querySelectorAll(".svg-marker-group").forEach(group => {
     const matched =
-      el.dataset.loc === rawLoc ||
-      el.dataset.normLoc === normalized;
+      group.dataset.loc === rawLoc ||
+      group.dataset.normLoc === normalized;
+
+    const circle = group.querySelector(".svg-marker");
 
     if (matched) {
-      el.classList.add("is-active");
-      el.classList.remove("is-dim");
+      group.classList.add("is-active");
+      group.classList.remove("is-dim");
+      if (circle) {
+        circle.classList.add("is-active");
+        circle.classList.remove("is-dim");
+      }
       hasMatch = true;
     } else {
-      el.classList.remove("is-active");
-      el.classList.add("is-dim");
+      group.classList.remove("is-active");
+      group.classList.add("is-dim");
+      if (circle) {
+        circle.classList.remove("is-active");
+        circle.classList.add("is-dim");
+      }
     }
   });
 
@@ -1385,12 +1434,16 @@ function focusLocation(rawLoc) {
 function drawBodyMarkers() {
   const frontLayer = document.getElementById("frontMarkers");
   const backLayer = document.getElementById("backMarkers");
-  if (!frontLayer || !backLayer || !Array.isArray(aiLocations)) return;
+  if (!frontLayer || !backLayer) return;
 
   frontLayer.innerHTML = "";
   backLayer.innerHTML = "";
 
-  aiLocations.forEach(raw => {
+  const markerSource = DEBUG_SHOW_ALL_MARKERS
+    ? Object.keys(positionMap)
+    : (Array.isArray(aiLocations) ? aiLocations : []);
+
+  markerSource.forEach(raw => {
     const loc = normalizeLocationName(raw);
     const pos = positionMap[loc];
     if (!pos) return;
@@ -1418,9 +1471,9 @@ document.addEventListener("click", (e) => {
     return;
   }
 
-  const marker = e.target.closest(".svg-marker");
-  if (marker) {
-    focusLocation(marker.dataset.loc || marker.dataset.normLoc || "");
+  const markerGroup = e.target.closest(".svg-marker-group");
+  if (markerGroup) {
+    focusLocation(markerGroup.dataset.loc || markerGroup.dataset.normLoc || "");
     return;
   }
 
