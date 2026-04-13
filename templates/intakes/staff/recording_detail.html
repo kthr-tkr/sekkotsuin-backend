@@ -166,60 +166,6 @@
     border:1px solid rgba(148,163,184,.14);
   }
 
-  .bodyimg,
-  .bodyimg.bodyimg-lg{
-    width:100%;
-    max-width:360px;
-    height:auto;
-    display:block;
-    filter:none;
-    opacity:1;
-    user-select:none;
-    pointer-events:none;
-  }
-
-  .marker{
-    position:absolute;
-    width:18px;
-    height:18px;
-    border-radius:999px;
-    transform:translate(-50%, -50%);
-    background:linear-gradient(135deg, #ef4444 0%, #f97316 100%);
-    box-shadow:
-      0 0 0 7px rgba(239,68,68,.18),
-      0 8px 16px rgba(239,68,68,.22);
-    z-index:10;
-    transition:transform .18s ease, box-shadow .18s ease, filter .18s ease, opacity .18s ease;
-    cursor:pointer;
-  }
-
-  .marker.sev-mid{
-    background:linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-    box-shadow:
-      0 0 0 7px rgba(245,158,11,.16),
-      0 8px 16px rgba(245,158,11,.18);
-  }
-
-  .marker.sev-low{
-    background:linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-    box-shadow:
-      0 0 0 7px rgba(59,130,246,.15),
-      0 8px 16px rgba(59,130,246,.18);
-  }
-
-  .marker.is-dim{
-    opacity:.28;
-    filter:grayscale(.1);
-  }
-
-  .marker.is-active{
-    transform:translate(-50%, -50%) scale(1.28);
-    box-shadow:
-      0 0 0 10px rgba(245,158,11,.22),
-      0 12px 22px rgba(245,158,11,.28);
-    z-index:20;
-  }
-
   .location-summary{
     margin-top:16px;
   }
@@ -238,6 +184,31 @@
     font-weight:900;
     color:#475569;
     margin:0;
+  }
+
+  .body-svg{
+    width:100%;
+    height:100%;
+    display:block;
+  }
+
+  .svg-marker{
+    fill:#f59e0b;
+    stroke:#fff7ed;
+    stroke-width:3;
+    cursor:pointer;
+    transition:transform .18s ease, opacity .18s ease, filter .18s ease;
+    transform-box:fill-box;
+    transform-origin:center;
+  }
+
+  .svg-marker.is-active{
+    transform:scale(1.22);
+    filter:drop-shadow(0 0 10px rgba(245,158,11,.35));
+  }
+
+  .svg-marker.is-dim{
+    opacity:.25;
   }
 
   .chip-clear{
@@ -796,18 +767,46 @@
         <div class="body-card">
           <div class="body-card-title">前面</div>
           <div class="body-map" id="bodyFrontWrap">
-            <img class="bodyimg bodyimg-lg"
-                 src="{% static 'patients/img/body_front.png' %}"
-                 alt="body-front">
+            <svg
+              id="bodyFrontSvg"
+              class="body-svg"
+              viewBox="0 0 300 700"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-label="body front"
+            >
+              <image
+                href="{% static 'patients/img/body_front.png' %}"
+                x="0"
+                y="0"
+                width="300"
+                height="700"
+                preserveAspectRatio="xMidYMid meet"
+              />
+              <g id="frontMarkers"></g>
+            </svg>
           </div>
         </div>
 
         <div class="body-card">
           <div class="body-card-title">背面</div>
           <div class="body-map" id="bodyBackWrap">
-            <img class="bodyimg bodyimg-lg"
-                 src="{% static 'patients/img/body_back.png' %}"
-                 alt="body-back">
+            <svg
+              id="bodyBackSvg"
+              class="body-svg"
+              viewBox="0 0 300 700"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-label="body back"
+            >
+              <image
+                href="{% static 'patients/img/body_back.png' %}"
+                x="0"
+                y="0"
+                width="300"
+                height="700"
+                preserveAspectRatio="xMidYMid meet"
+              />
+              <g id="backMarkers"></g>
+            </svg>
           </div>
         </div>
       </div>
@@ -1266,166 +1265,171 @@
     }
   })();
 
-  // ===== Body markers from AI extract.locations =====
-  const aiLocations = JSON.parse(
-    document.getElementById("aiLocationsJson")?.textContent || "[]"
-  );
+// ===== SVG body markers from AI extract.locations =====
+const SVG_NS = "http://www.w3.org/2000/svg";
 
-  const positionMap = {
-    "首":        { front: { top: "12%", left: "50%" }, back: { top: "12%", left: "50%" } },
-    "頚部":      { front: { top: "12%", left: "50%" }, back: { top: "12%", left: "50%" } },
+const aiLocations = JSON.parse(
+  document.getElementById("aiLocationsJson")?.textContent || "[]"
+);
 
-    "右肩":      { front: { top: "19%", left: "67%" }, back: { top: "19%", left: "65%" } },
-    "左肩":      { front: { top: "19%", left: "33%" }, back: { top: "19%", left: "35%" } },
-    "肩":        { front: { top: "19%", left: "50%" }, back: { top: "19%", left: "50%" } },
+const positionMap = {
+  "首":        { front: { x:150, y:85 },  back: { x:150, y:85 } },
+  "頚部":      { front: { x:150, y:85 },  back: { x:150, y:85 } },
 
-    "右上腕":    { front: { top: "28%", left: "78%" }, back: { top: "28%", left: "76%" } },
-    "左上腕":    { front: { top: "28%", left: "22%" }, back: { top: "28%", left: "24%" } },
-    "右肘":      { front: { top: "39%", left: "79%" }, back: { top: "39%", left: "77%" } },
-    "左肘":      { front: { top: "39%", left: "21%" }, back: { top: "39%", left: "23%" } },
-    "右前腕":    { front: { top: "48%", left: "80%" }, back: { top: "48%", left: "78%" } },
-    "左前腕":    { front: { top: "48%", left: "20%" }, back: { top: "48%", left: "22%" } },
+  "右肩":      { front: { x:200, y:130 }, back: { x:195, y:130 } },
+  "左肩":      { front: { x:100, y:130 }, back: { x:105, y:130 } },
+  "肩":        { front: { x:150, y:130 }, back: { x:150, y:130 } },
 
-    "胸":        { front: { top: "23%", left: "50%" } },
-    "背中":      { back:  { top: "27%", left: "50%" } },
+  "右上腕":    { front: { x:226, y:195 }, back: { x:220, y:195 } },
+  "左上腕":    { front: { x:74,  y:195 }, back: { x:80,  y:195 } },
+  "右肘":      { front: { x:230, y:275 }, back: { x:224, y:275 } },
+  "左肘":      { front: { x:70,  y:275 }, back: { x:76,  y:275 } },
+  "右前腕":    { front: { x:228, y:340 }, back: { x:222, y:340 } },
+  "左前腕":    { front: { x:72,  y:340 }, back: { x:78,  y:340 } },
 
-    "腰":        { back:  { top: "52%", left: "50%" }, front: { top: "50%", left: "50%" } },
-    "右腰":      { back:  { top: "52%", left: "58%" }, front: { top: "50%", left: "58%" } },
-    "左腰":      { back:  { top: "52%", left: "42%" }, front: { top: "50%", left: "42%" } },
+  "胸":        { front: { x:150, y:165 } },
+  "背中":      { back:  { x:150, y:190 } },
 
-    "臀部":      { back:  { top: "61%", left: "50%" } },
-    "右臀部":    { back:  { top: "61%", left: "58%" } },
-    "左臀部":    { back:  { top: "61%", left: "42%" } },
+  "腰":        { front: { x:150, y:330 }, back: { x:150, y:330 } },
+  "右腰":      { front: { x:170, y:330 }, back: { x:170, y:330 } },
+  "左腰":      { front: { x:130, y:330 }, back: { x:130, y:330 } },
 
-    "股関節":    { front: { top: "61%", left: "50%" }, back: { top: "61%", left: "50%" } },
-    "右股関節":  { front: { top: "61%", left: "58%" }, back: { top: "61%", left: "58%" } },
-    "左股関節":  { front: { top: "61%", left: "42%" }, back: { top: "61%", left: "42%" } },
+  "臀部":      { back:  { x:150, y:390 } },
+  "右臀部":    { back:  { x:170, y:390 } },
+  "左臀部":    { back:  { x:130, y:390 } },
 
-    "右大腿":    { front: { top: "71%", left: "57%" }, back: { top: "71%", left: "57%" } },
-    "左大腿":    { front: { top: "71%", left: "43%" }, back: { top: "71%", left: "43%" } },
+  "股関節":    { front: { x:150, y:430 }, back: { x:150, y:430 } },
+  "右股関節":  { front: { x:170, y:430 }, back: { x:170, y:430 } },
+  "左股関節":  { front: { x:130, y:430 }, back: { x:130, y:430 } },
 
-    "右膝":      { front: { top: "84%", left: "57%" }, back: { top: "84%", left: "57%" } },
-    "左膝":      { front: { top: "84%", left: "43%" }, back: { top: "84%", left: "43%" } },
+  "右大腿":    { front: { x:168, y:500 }, back: { x:168, y:500 } },
+  "左大腿":    { front: { x:132, y:500 }, back: { x:132, y:500 } },
 
-    "右下腿":    { front: { top: "92%", left: "57%" }, back: { top: "92%", left: "57%" } },
-    "左下腿":    { front: { top: "92%", left: "43%" }, back: { top: "92%", left: "43%" } },
+  "右膝":      { front: { x:168, y:585 }, back: { x:168, y:585 } },
+  "左膝":      { front: { x:132, y:585 }, back: { x:132, y:585 } },
 
-    "右足":      { front: { top: "98%", left: "58%" }, back: { top: "98%", left: "58%" } },
-    "左足":      { front: { top: "98%", left: "42%" }, back: { top: "98%", left: "42%" } },
+  "右下腿":    { front: { x:168, y:640 }, back: { x:168, y:640 } },
+  "左下腿":    { front: { x:132, y:640 }, back: { x:132, y:640 } },
+
+  "右足":      { front: { x:172, y:690 }, back: { x:172, y:690 } },
+  "左足":      { front: { x:128, y:690 }, back: { x:128, y:690 } },
+};
+
+function normalizeLocationName(name) {
+  const n = String(name || "").trim();
+  const aliases = {
+    "首肩": "肩",
+    "肩周り": "肩",
+    "背部": "背中",
+    "腰部": "腰",
+    "お尻": "臀部",
+    "ヒップ": "臀部",
+    "ひざ": "膝",
   };
+  return aliases[n] || n;
+}
 
-  function normalizeLocationName(name) {
-    const n = String(name || "").trim();
-    const aliases = {
-      "首肩": "肩",
-      "肩周り": "肩",
-      "背部": "背中",
-      "腰部": "腰",
-      "お尻": "臀部",
-      "ヒップ": "臀部",
-      "ひざ": "膝",
-    };
-    return aliases[n] || n;
-  }
+function createSvgMarker(pos, rawLoc, normalizedLoc) {
+  const c = document.createElementNS(SVG_NS, "circle");
+  c.setAttribute("cx", pos.x);
+  c.setAttribute("cy", pos.y);
+  c.setAttribute("r", 10);
+  c.setAttribute("class", "svg-marker");
+  c.dataset.loc = rawLoc;
+  c.dataset.normLoc = normalizedLoc;
+  c.setAttribute("title", rawLoc);
+  return c;
+}
 
-  function createMarker(pos, severityClass, rawLoc, normalizedLoc) {
-    const el = document.createElement("div");
-    el.className = `marker ${severityClass || ""}`.trim();
-    el.style.top = pos.top;
-    el.style.left = pos.left;
-    el.dataset.loc = rawLoc;
-    el.dataset.normLoc = normalizedLoc;
-    el.title = rawLoc;
-    return el;
-  }
+function clearMarkerFocus() {
+  document.querySelectorAll(".svg-marker").forEach(el => {
+    el.classList.remove("is-active", "is-dim");
+  });
+  document.querySelectorAll(".loc-chip").forEach(el => {
+    el.classList.remove("is-active");
+  });
+}
 
-  function clearMarkerFocus() {
-    document.querySelectorAll(".marker").forEach(el => {
-      el.classList.remove("is-active", "is-dim");
-    });
-    document.querySelectorAll(".loc-chip").forEach(el => {
+function focusLocation(rawLoc) {
+  const normalized = normalizeLocationName(rawLoc);
+  let hasMatch = false;
+
+  document.querySelectorAll(".svg-marker").forEach(el => {
+    const matched =
+      el.dataset.loc === rawLoc ||
+      el.dataset.normLoc === normalized;
+
+    if (matched) {
+      el.classList.add("is-active");
+      el.classList.remove("is-dim");
+      hasMatch = true;
+    } else {
       el.classList.remove("is-active");
-    });
-  }
-
-  function focusLocation(rawLoc) {
-    const normalized = normalizeLocationName(rawLoc);
-
-    let hasMatch = false;
-
-    document.querySelectorAll(".marker").forEach(el => {
-      const matched =
-        el.dataset.loc === rawLoc ||
-        el.dataset.normLoc === normalized;
-
-      if (matched) {
-        el.classList.add("is-active");
-        el.classList.remove("is-dim");
-        hasMatch = true;
-      } else {
-        el.classList.remove("is-active");
-        el.classList.add("is-dim");
-      }
-    });
-
-    document.querySelectorAll(".loc-chip").forEach(el => {
-      const chipMatched =
-        el.dataset.loc === rawLoc ||
-        normalizeLocationName(el.dataset.loc) === normalized;
-
-      el.classList.toggle("is-active", chipMatched);
-    });
-
-    if (!hasMatch) {
-      clearMarkerFocus();
-    }
-  }
-
-  function drawBodyMarkers() {
-    const frontWrap = document.getElementById("bodyFrontWrap");
-    const backWrap = document.getElementById("bodyBackWrap");
-    if (!frontWrap || !backWrap || !Array.isArray(aiLocations)) return;
-
-    aiLocations.forEach(raw => {
-      const loc = normalizeLocationName(raw);
-      const pos = positionMap[loc];
-      if (!pos) return;
-
-      const sevClass = "sev-mid";
-
-      if (pos.front) {
-        frontWrap.appendChild(createMarker(pos.front, sevClass, raw, loc));
-      }
-      if (pos.back) {
-        backWrap.appendChild(createMarker(pos.back, sevClass, raw, loc));
-      }
-    });
-  }
-
-  drawBodyMarkers();
-
-  document.addEventListener("click", (e) => {
-    const chip = e.target.closest(".loc-chip");
-    if (chip) {
-      const isActive = chip.classList.contains("is-active");
-      if (isActive) {
-        clearMarkerFocus();
-      } else {
-        focusLocation(chip.dataset.loc);
-      }
-      return;
-    }
-
-    const marker = e.target.closest(".marker");
-    if (marker) {
-      focusLocation(marker.dataset.loc || marker.dataset.normLoc || "");
-      return;
-    }
-
-    const clearBtn = e.target.closest("#clearMarkerFocus");
-    if (clearBtn) {
-      clearMarkerFocus();
+      el.classList.add("is-dim");
     }
   });
+
+  document.querySelectorAll(".loc-chip").forEach(el => {
+    const chipMatched =
+      el.dataset.loc === rawLoc ||
+      normalizeLocationName(el.dataset.loc) === normalized;
+
+    el.classList.toggle("is-active", chipMatched);
+  });
+
+  if (!hasMatch) {
+    clearMarkerFocus();
+  }
+}
+
+function drawBodyMarkers() {
+  const frontLayer = document.getElementById("frontMarkers");
+  const backLayer = document.getElementById("backMarkers");
+  if (!frontLayer || !backLayer || !Array.isArray(aiLocations)) return;
+
+  frontLayer.innerHTML = "";
+  backLayer.innerHTML = "";
+
+  aiLocations.forEach(raw => {
+    const loc = normalizeLocationName(raw);
+    const pos = positionMap[loc];
+    if (!pos) return;
+
+    if (pos.front) {
+      frontLayer.appendChild(createSvgMarker(pos.front, raw, loc));
+    }
+    if (pos.back) {
+      backLayer.appendChild(createSvgMarker(pos.back, raw, loc));
+    }
+  });
+}
+
+drawBodyMarkers();
+
+document.addEventListener("click", (e) => {
+  const chip = e.target.closest(".loc-chip");
+  if (chip) {
+    const isActive = chip.classList.contains("is-active");
+    if (isActive) {
+      clearMarkerFocus();
+    } else {
+      focusLocation(chip.dataset.loc);
+    }
+    return;
+  }
+
+  const marker = e.target.closest(".svg-marker");
+  if (marker) {
+    focusLocation(marker.dataset.loc || marker.dataset.normLoc || "");
+    return;
+  }
+
+  const clearBtn = e.target.closest("#clearMarkerFocus");
+  if (clearBtn) {
+    clearMarkerFocus();
+  }
+});
+
+
 </script>
 {% endblock %}
