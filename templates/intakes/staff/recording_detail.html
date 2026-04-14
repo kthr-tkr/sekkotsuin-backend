@@ -774,6 +774,68 @@
   filter:drop-shadow(0 0 12px rgba(242,160,7,.34));
 }
 
+.detail-wrap{
+  margin-top:18px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.detail-card{
+  border:1px solid rgba(226,232,240,.92);
+  border-radius:24px;
+  padding:14px;
+  background:linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(248,250,252,.98) 100%);
+  box-shadow:
+    0 16px 36px rgba(15,23,42,.05),
+    inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+.detail-card-title{
+  font-size:15px;
+  font-weight:900;
+  color:#1e3a8a;
+  margin-bottom:12px;
+}
+
+.detail-grid{
+  display:grid;
+  gap:12px;
+}
+
+.detail-grid-hands,
+.detail-grid-feet{
+  grid-template-columns:1fr 1fr;
+}
+
+.detail-map{
+  border:1px solid rgba(226,232,240,.85);
+  border-radius:18px;
+  background:#fff;
+  padding:10px;
+}
+
+.detail-map-label{
+  font-size:12px;
+  font-weight:900;
+  color:#64748b;
+  margin-bottom:8px;
+}
+
+.detail-map img{
+  width:100%;
+  display:block;
+  border-radius:12px;
+  background:#fff;
+}
+
+@media (max-width: 720px){
+  .detail-grid-hands,
+  .detail-grid-feet{
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 
 <div class="ai-page">
@@ -857,6 +919,40 @@
             </svg>
           </div>
         </div>
+      </div>
+
+      <div class="detail-wrap">
+
+        <div class="detail-card">
+          <div class="detail-card-title">手指</div>
+          <div class="detail-grid detail-grid-hands">
+            <div class="detail-map">
+              <div class="detail-map-label">左手</div>
+              <img src="{% static 'patients/img/hand_left.png' %}" alt="hand-left">
+            </div>
+
+            <div class="detail-map">
+              <div class="detail-map-label">右手</div>
+              <img src="{% static 'patients/img/hand_right.png' %}" alt="hand-right">
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-card-title">足指</div>
+          <div class="detail-grid detail-grid-feet">
+            <div class="detail-map">
+              <div class="detail-map-label">足背 / 前</div>
+              <img src="{% static 'patients/img/foot_front.png' %}" alt="foot-front">
+            </div>
+
+            <div class="detail-map">
+              <div class="detail-map-label">足底 / 後</div>
+              <img src="{% static 'patients/img/foot_back.png' %}" alt="foot-back">
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <div class="location-summary">
