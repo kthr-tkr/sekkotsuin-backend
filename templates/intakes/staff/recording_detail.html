@@ -741,6 +741,39 @@
   stroke-linejoin:round;
 }
 
+.body-card{
+  border:1px solid rgba(226,232,240,.9);
+  border-radius:28px;
+  padding:14px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(248,250,252,.98) 100%);
+  box-shadow:
+    0 20px 45px rgba(15,23,42,.06),
+    inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+.summary-hero{
+  border:1px solid rgba(226,232,240,.95);
+  border-radius:26px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(245,249,255,.95) 100%);
+  box-shadow:
+    0 24px 60px rgba(15,23,42,.08),
+    inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+.svg-marker{
+  fill:#f2a007;
+  stroke:#fffaf0;
+  stroke-width:3;
+  filter:drop-shadow(0 0 6px rgba(242,160,7,.22));
+}
+
+.svg-marker.is-active{
+  transform:scale(1.2);
+  filter:drop-shadow(0 0 12px rgba(242,160,7,.34));
+}
+
 </style>
 
 <div class="ai-page">
@@ -1328,7 +1361,7 @@ const positionMap = {
   "左足前":       { front: { x:186, y:660 } },
 
   // ===== 背面 =====
-  "後頭部後":     { back: { x:155, y:104 } },
+  "首":     { back: { x:155, y:104 } },
 
   "右肩後":       { back: { x:235, y:150 } },
   "左肩後":       { back: { x:75,  y:150 } },
@@ -1371,6 +1404,9 @@ function normalizeLocationName(name) {
     // 旧名称 → 新名称（暫定）
     "首": "喉前",
     "頚部": "喉前",
+
+    "後頭部後": "首",
+    "頚部": "首",
 
     "肩": "喉前",
     "肩周り": "右肩前",
