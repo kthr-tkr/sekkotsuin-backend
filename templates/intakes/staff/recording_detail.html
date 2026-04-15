@@ -889,6 +889,36 @@
   line-height:0;
 }
 
+.loc-chip.is-manual{
+  outline:2px solid rgba(37,99,235,.18);
+}
+
+.svg-marker,
+.detail-marker{
+  transition:
+    transform .18s ease,
+    opacity .18s ease,
+    filter .18s ease,
+    stroke-width .18s ease;
+}
+
+.svg-marker.is-active,
+.detail-marker.is-active{
+  transform:scale(1.2);
+  filter:drop-shadow(0 0 10px rgba(242,160,7,.34));
+}
+
+.svg-marker.is-dim,
+.detail-marker.is-dim{
+  opacity:.22;
+}
+
+.svg-marker-group.is-active .svg-marker-label,
+.detail-marker-group.is-active .detail-marker-label{
+  fill:#1d4ed8;
+  font-weight:900;
+}
+
 </style>
 
 <div class="ai-page">
@@ -1078,7 +1108,7 @@
 
       <div class="location-summary">
         <div class="location-summary-head">
-          <div class="location-summary-title">AI抽出部位</div>
+          <div class="location-summary-title">選択部位（AI抽出 + 手動補正）</div>
           <button type="button" class="chip-clear" id="clearMarkerFocus">選択解除</button>
         </div>
 
@@ -1094,6 +1124,8 @@
           {% endif %}
         {% endwith %}
       </div>
+
+      <input type="hidden" id="selectedLocationsInput" name="selected_locations_json" value="[]">
 
       <div class="mini-note">
         部位チップを押すと、人体図の該当マーカーを強調表示します。<br>
@@ -1425,122 +1457,131 @@
 
 {% block scripts %}
 <script>
-// ===== 一時的
-const DEBUG_SHOW_ALL_MARKERS = false;//trueで全表示
-const DEBUG_SHOW_ALL_DETAIL_MARKERS = false;
+// =====================================
+// Debug flags
+// =====================================
+const DEBUG_SHOW_ALL_MARKERS = false;       // trueで全身部位を全表示
+const DEBUG_SHOW_ALL_DETAIL_MARKERS = false; // trueで手足部位を全表示
 
-  (function(){
-    function openModal(id){
-      const m = document.getElementById(id);
-      if(!m) return;
-      m.classList.add("is-open");
-      m.setAttribute("aria-hidden", "false");
+// =====================================
+// Modal + SOAP editor
+// =====================================
+(function(){
+  function openModal(id){
+    const m = document.getElementById(id);
+    if(!m) return;
+    m.classList.add("is-open");
+    m.setAttribute("aria-hidden", "false");
+  }
+
+  function closeModal(m){
+    m.classList.remove("is-open");
+    m.setAttribute("aria-hidden", "true");
+  }
+
+  document.addEventListener("click", (e) => {
+    const openBtn = e.target.closest("[data-open]");
+    if(openBtn){
+      openModal(openBtn.getAttribute("data-open"));
+      return;
     }
 
-    function closeModal(m){
-      m.classList.remove("is-open");
-      m.setAttribute("aria-hidden", "true");
+    const mask = e.target.classList.contains("modalMask") ? e.target : null;
+    if(mask){
+      closeModal(mask);
+      return;
+    }
+
+    const closeBtn = e.target.closest("[data-close]");
+    if(closeBtn){
+      const m = e.target.closest(".modalMask");
+      if(m) closeModal(m);
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if(e.key !== "Escape") return;
+    document.querySelectorAll(".modalMask.is-open").forEach(m => closeModal(m));
+  });
+
+  const form = document.getElementById("soapEditForm");
+  if(form){
+    const hidden = document.getElementById("summary_json_hidden");
+    const preview = document.getElementById("summary_json_preview");
+
+    function linesToList(text){
+      return (text || "")
+        .split("\n")
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    function buildJson(){
+      let base = {};
+      try{
+        base = JSON.parse(hidden.value || "{}");
+      }catch(e){
+        base = {};
+      }
+
+      // SOAP更新
+      const soap = base.soap || {};
+      document.querySelectorAll("[data-soap]").forEach(el => {
+        const key = el.getAttribute("data-soap");
+        soap[key] = linesToList(el.value);
+      });
+      base.soap = soap;
+
+      // extract更新
+      const extract = base.extract || {};
+
+      document.querySelectorAll("[data-extract]").forEach(el => {
+        const key = el.getAttribute("data-extract");
+        extract[key] = (el.value || "").trim();
+      });
+
+      document.querySelectorAll("[data-extract-list]").forEach(el => {
+        const key = el.getAttribute("data-extract-list");
+        extract[key] = linesToList(el.value);
+      });
+
+      base.extract = extract;
+
+      const out = JSON.stringify(base, null, 2);
+      hidden.value = out;
+      if(preview) preview.value = out;
     }
 
     document.addEventListener("click", (e) => {
-      const openBtn = e.target.closest("[data-open]");
-      if(openBtn){
-        openModal(openBtn.getAttribute("data-open"));
-        return;
-      }
-
-      const mask = e.target.classList.contains("modalMask") ? e.target : null;
-      if(mask){
-        closeModal(mask);
-        return;
-      }
-
-      const closeBtn = e.target.closest("[data-close]");
-      if(closeBtn){
-        const m = e.target.closest(".modalMask");
-        if(m) closeModal(m);
-      }
+      const openBtn = e.target.closest('[data-open="modal-editor"]');
+      if(openBtn) setTimeout(buildJson, 0);
     });
 
-    document.addEventListener("keydown", (e) => {
-      if(e.key !== "Escape") return;
-      document.querySelectorAll(".modalMask.is-open").forEach(m => closeModal(m));
+    form.addEventListener("submit", () => {
+      buildJson();
     });
+  }
+})();
 
-    // ===== SOAP editor -> JSON build =====
-    const form = document.getElementById("soapEditForm");
-    if(form){
-      const hidden = document.getElementById("summary_json_hidden");
-      const preview = document.getElementById("summary_json_preview");
-
-      function linesToList(text){
-        return (text || "")
-          .split("\n")
-          .map(s => s.trim())
-          .filter(Boolean);
-      }
-
-      function buildJson(){
-        let base = {};
-        try{
-          base = JSON.parse(hidden.value || "{}");
-        }catch(e){
-          base = {};
-        }
-
-        function linesToList(text){
-          return (text || "")
-            .split("\n")
-            .map(s => s.trim())
-            .filter(Boolean);
-        }
-
-        // SOAP更新
-        const soap = base.soap || {};
-        document.querySelectorAll("[data-soap]").forEach(el => {
-          const key = el.getAttribute("data-soap");
-          soap[key] = linesToList(el.value);
-        });
-        base.soap = soap;
-
-        // extract更新
-        const extract = base.extract || {};
-
-        document.querySelectorAll("[data-extract]").forEach(el => {
-          const key = el.getAttribute("data-extract");
-          extract[key] = (el.value || "").trim();
-        });
-
-        document.querySelectorAll("[data-extract-list]").forEach(el => {
-          const key = el.getAttribute("data-extract-list");
-          extract[key] = linesToList(el.value);
-        });
-
-        base.extract = extract;
-
-        const out = JSON.stringify(base, null, 2);
-        hidden.value = out;
-        if(preview) preview.value = out;
-      }
-
-      document.addEventListener("click", (e) => {
-        const openBtn = e.target.closest('[data-open="modal-editor"]');
-        if(openBtn) setTimeout(buildJson, 0);
-      });
-
-      form.addEventListener("submit", () => {
-        buildJson();
-      });
-    }
-  })();
-
-// ===== SVG body markers from AI extract.locations =====
+// =====================================
+// Shared constants
+// =====================================
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 const aiLocations = JSON.parse(
   document.getElementById("aiLocationsJson")?.textContent || "[]"
 );
 
+const selectedLocationsInput = document.getElementById("selectedLocationsInput");
+
+// AI抽出部位を初期選択状態にする
+const selectedLocations = new Set(
+  (Array.isArray(aiLocations) ? aiLocations : []).map(v => normalizeLocationName(v))
+);
+
+// =====================================
+// Maps
+// =====================================
 const positionMap = {
   // ===== 前面 =====
   "喉前":         { front: { x:155, y:118 } },
@@ -1579,7 +1620,7 @@ const positionMap = {
   "左足前":       { front: { x:186, y:660 } },
 
   // ===== 背面 =====
-  "首後":          { back: { x:155, y:104 } },
+  "首後":         { back: { x:155, y:104 } },
 
   "右肩後":       { back: { x:235, y:150 } },
   "左肩後":       { back: { x:75,  y:150 } },
@@ -1629,15 +1670,15 @@ const handMap = {
   "左母指後":    { left: { x:113, y:100 } },
   "左示指後":    { left: { x:92,  y:55 } },
   "左中指後":    { left: { x:68,  y:42 } },
-  "左環指後":    { left: { x:45, y:55 } },
-  "左小指後":    { left: { x:25, y:70 } },
+  "左環指後":    { left: { x:45,  y:55 } },
+  "左小指後":    { left: { x:25,  y:70 } },
 
   // 右手画像: 左が手掌, 右が手背
   "右手掌":      { right: { x:60,  y:120 } },
   "右手背":      { right: { x:260, y:120 } },
 
-  "右母指前":    { right: { x:113,  y:100 } },
-  "右示指前":    { right: { x:88, y:55 } },
+  "右母指前":    { right: { x:113, y:100 } },
+  "右示指前":    { right: { x:88,  y:55 } },
   "右中指前":    { right: { x:68,  y:42 } },
   "右環指前":    { right: { x:45,  y:55 } },
   "右小指前":    { right: { x:25,  y:70 } },
@@ -1651,26 +1692,26 @@ const handMap = {
 
 const footMap = {
   // 足背 / 前
-  "右足背前":    { front: { x:228,  y:150 } },
-  "左足背前":    { front: { x:92, y:150 } },
+  "右足背前":    { front: { x:228, y:150 } },
+  "左足背前":    { front: { x:92,  y:150 } },
 
   "右母趾前":    { front: { x:188, y:42 } },
-  "右第2趾前":   { front: { x:218,  y:50 } },
-  "右第3趾前":   { front: { x:238,  y:60 } },
-  "右第4趾前":   { front: { x:255,  y:72 } },
-  "右小趾前":    { front: { x:273,  y:92 } },
+  "右第2趾前":   { front: { x:218, y:50 } },
+  "右第3趾前":   { front: { x:238, y:60 } },
+  "右第4趾前":   { front: { x:255, y:72 } },
+  "右小趾前":    { front: { x:273, y:92 } },
 
   "左母趾前":    { front: { x:132, y:42 } },
   "左第2趾前":   { front: { x:102, y:50 } },
-  "左第3趾前":   { front: { x:82, y:60 } },
-  "左第4趾前":   { front: { x:62, y:72 } },
-  "左小趾前":    { front: { x:42, y:92 } },
+  "左第3趾前":   { front: { x:82,  y:60 } },
+  "左第4趾前":   { front: { x:62,  y:72 } },
+  "左小趾前":    { front: { x:42,  y:92 } },
 
   // 足底 / 後
-  "右足底後":    { back: { x:100,  y:165 } },
+  "右足底後":    { back: { x:100, y:165 } },
   "左足底後":    { back: { x:228, y:165 } },
 
-  "右踵後":      { back: { x:100,  y:250 } },
+  "右踵後":      { back: { x:100, y:250 } },
   "左踵後":      { back: { x:228, y:250 } },
 
   "右母趾後":    { back: { x:128, y:34 } },
@@ -1686,16 +1727,17 @@ const footMap = {
   "左小趾後":    { back: { x:271, y:72 } },
 };
 
+// =====================================
+// Normalize
+// =====================================
 function normalizeLocationName(name) {
   const n = String(name || "").trim();
 
   const aliases = {
-    // 旧名称 → 新名称（暫定）
     "首": "喉前",
     "頚部": "喉前",
 
     "後頭部後": "首後",
-    "頚部": "首後",
 
     "肩": "喉前",
     "肩周り": "右肩前",
@@ -1748,6 +1790,81 @@ function normalizeLocationName(name) {
   return aliases[n] || n;
 }
 
+// =====================================
+// Selection state
+// =====================================
+function syncSelectedLocationsInput() {
+  if (!selectedLocationsInput) return;
+  selectedLocationsInput.value = JSON.stringify(Array.from(selectedLocations));
+}
+
+function toggleLocation(rawLoc) {
+  const loc = normalizeLocationName(rawLoc);
+  if (!loc) return;
+
+  if (selectedLocations.has(loc)) {
+    selectedLocations.delete(loc);
+  } else {
+    selectedLocations.add(loc);
+  }
+
+  syncSelectedLocationsInput();
+  refreshSelectionUI();
+}
+
+function clearSelectedLocations() {
+  selectedLocations.clear();
+  syncSelectedLocationsInput();
+  refreshSelectionUI();
+}
+
+// =====================================
+// UI refresh
+// =====================================
+function refreshSelectionUI() {
+  const hasAny = selectedLocations.size > 0;
+
+  // 全身マーカー
+  document.querySelectorAll(".svg-marker-group").forEach(group => {
+    const loc = normalizeLocationName(group.dataset.loc || group.dataset.normLoc || "");
+    const circle = group.querySelector(".svg-marker");
+    const active = selectedLocations.has(loc);
+
+    group.classList.toggle("is-active", active);
+    group.classList.toggle("is-dim", hasAny && !active);
+
+    if (circle) {
+      circle.classList.toggle("is-active", active);
+      circle.classList.toggle("is-dim", hasAny && !active);
+    }
+  });
+
+  // 手足マーカー
+  document.querySelectorAll(".detail-marker-group").forEach(group => {
+    const loc = normalizeLocationName(group.dataset.loc || "");
+    const circle = group.querySelector(".detail-marker");
+    const active = selectedLocations.has(loc);
+
+    group.classList.toggle("is-active", active);
+    group.classList.toggle("is-dim", hasAny && !active);
+
+    if (circle) {
+      circle.classList.toggle("is-active", active);
+      circle.classList.toggle("is-dim", hasAny && !active);
+    }
+  });
+
+  // チップ
+  document.querySelectorAll(".loc-chip").forEach(chip => {
+    const loc = normalizeLocationName(chip.dataset.loc || "");
+    const active = selectedLocations.has(loc);
+    chip.classList.toggle("is-active", active);
+  });
+}
+
+// =====================================
+// Marker creators
+// =====================================
 function createSvgMarker(pos, rawLoc, normalizedLoc) {
   const g = document.createElementNS(SVG_NS, "g");
   g.dataset.loc = rawLoc;
@@ -1762,99 +1879,9 @@ function createSvgMarker(pos, rawLoc, normalizedLoc) {
   c.dataset.loc = rawLoc;
   c.dataset.normLoc = normalizedLoc;
   c.setAttribute("title", rawLoc);
-
   g.appendChild(c);
 
-  if (DEBUG_SHOW_ALL_MARKERS) {
-    const t = document.createElementNS(SVG_NS, "text");
-    t.setAttribute("x", pos.x + 12);
-    t.setAttribute("y", pos.y - 12);
-    t.setAttribute("class", "svg-marker-label");
-    t.textContent = rawLoc;
-    g.appendChild(t);
-  }
-
   return g;
-}
-
-function clearMarkerFocus() {
-  document.querySelectorAll(".svg-marker-group").forEach(el => {
-    el.classList.remove("is-active", "is-dim");
-  });
-  document.querySelectorAll(".svg-marker").forEach(el => {
-    el.classList.remove("is-active", "is-dim");
-  });
-  document.querySelectorAll(".loc-chip").forEach(el => {
-    el.classList.remove("is-active");
-  });
-}
-
-function focusLocation(rawLoc) {
-  const normalized = normalizeLocationName(rawLoc);
-  let hasMatch = false;
-
-  document.querySelectorAll(".svg-marker-group").forEach(group => {
-    const matched =
-      group.dataset.loc === rawLoc ||
-      group.dataset.normLoc === normalized;
-
-    const circle = group.querySelector(".svg-marker");
-
-    if (matched) {
-      group.classList.add("is-active");
-      group.classList.remove("is-dim");
-      if (circle) {
-        circle.classList.add("is-active");
-        circle.classList.remove("is-dim");
-      }
-      hasMatch = true;
-    } else {
-      group.classList.remove("is-active");
-      group.classList.add("is-dim");
-      if (circle) {
-        circle.classList.remove("is-active");
-        circle.classList.add("is-dim");
-      }
-    }
-  });
-
-  document.querySelectorAll(".loc-chip").forEach(el => {
-    const chipMatched =
-      el.dataset.loc === rawLoc ||
-      normalizeLocationName(el.dataset.loc) === normalized;
-
-    el.classList.toggle("is-active", chipMatched);
-  });
-
-  if (!hasMatch) {
-    clearMarkerFocus();
-  }
-}
-
-function drawBodyMarkers() {
-  const frontLayer = document.getElementById("frontMarkers");
-  const backLayer = document.getElementById("backMarkers");
-  if (!frontLayer || !backLayer) return;
-
-  frontLayer.innerHTML = "";
-  backLayer.innerHTML = "";
-
-  const markerSource = DEBUG_SHOW_ALL_MARKERS
-    ? Object.keys(positionMap)
-    : (Array.isArray(aiLocations) ? aiLocations : []);
-
-  markerSource.forEach(raw => {
-    const loc = normalizeLocationName(raw);
-    const pos = positionMap[loc];
-    if (!pos) return;
-
-    if (pos.front) {
-      frontLayer.appendChild(createSvgMarker(pos.front, raw, loc));
-    }
-    if (pos.back) {
-      backLayer.appendChild(createSvgMarker(pos.back, raw, loc));
-    }
-  });
 }
 
 function createDetailMarker(pos, rawLoc) {
@@ -1870,16 +1897,36 @@ function createDetailMarker(pos, rawLoc) {
   c.dataset.loc = rawLoc;
   g.appendChild(c);
 
-  if (DEBUG_SHOW_ALL_DETAIL_MARKERS) {
-    const t = document.createElementNS(SVG_NS, "text");
-    t.setAttribute("x", pos.x + 10);
-    t.setAttribute("y", pos.y - 8);
-    t.setAttribute("class", "detail-marker-label");
-    t.textContent = rawLoc;
-    g.appendChild(t);
-  }
-
   return g;
+}
+
+// =====================================
+// Draw functions
+// =====================================
+function drawBodyMarkers() {
+  const frontLayer = document.getElementById("frontMarkers");
+  const backLayer = document.getElementById("backMarkers");
+  if (!frontLayer || !backLayer) return;
+
+  frontLayer.innerHTML = "";
+  backLayer.innerHTML = "";
+
+  Object.keys(positionMap).forEach(raw => {
+    const loc = normalizeLocationName(raw);
+    const pos = positionMap[raw] || positionMap[loc];
+    if (!pos) return;
+
+    if (!DEBUG_SHOW_ALL_MARKERS && !selectedLocations.has(loc)) {
+      return;
+    }
+
+    if (pos.front) {
+      frontLayer.appendChild(createSvgMarker(pos.front, raw, loc));
+    }
+    if (pos.back) {
+      backLayer.appendChild(createSvgMarker(pos.back, raw, loc));
+    }
+  });
 }
 
 function drawHandMarkers() {
@@ -1890,17 +1937,20 @@ function drawHandMarkers() {
   leftLayer.innerHTML = "";
   rightLayer.innerHTML = "";
 
-  const source = DEBUG_SHOW_ALL_DETAIL_MARKERS ? Object.keys(handMap) : [];
-
-  source.forEach(key => {
-    const pos = handMap[key];
+  Object.keys(handMap).forEach(raw => {
+    const loc = normalizeLocationName(raw);
+    const pos = handMap[raw];
     if (!pos) return;
 
+    if (!DEBUG_SHOW_ALL_DETAIL_MARKERS && !selectedLocations.has(loc)) {
+      return;
+    }
+
     if (pos.left) {
-      leftLayer.appendChild(createDetailMarker(pos.left, key));
+      leftLayer.appendChild(createDetailMarker(pos.left, raw));
     }
     if (pos.right) {
-      rightLayer.appendChild(createDetailMarker(pos.right, key));
+      rightLayer.appendChild(createDetailMarker(pos.right, raw));
     }
   });
 }
@@ -1913,50 +1963,74 @@ function drawFootMarkers() {
   frontLayer.innerHTML = "";
   backLayer.innerHTML = "";
 
-  const source = DEBUG_SHOW_ALL_DETAIL_MARKERS ? Object.keys(footMap) : [];
-
-  source.forEach(key => {
-    const pos = footMap[key];
+  Object.keys(footMap).forEach(raw => {
+    const loc = normalizeLocationName(raw);
+    const pos = footMap[raw];
     if (!pos) return;
 
+    if (!DEBUG_SHOW_ALL_DETAIL_MARKERS && !selectedLocations.has(loc)) {
+      return;
+    }
+
     if (pos.front) {
-      frontLayer.appendChild(createDetailMarker(pos.front, key));
+      frontLayer.appendChild(createDetailMarker(pos.front, raw));
     }
     if (pos.back) {
-      backLayer.appendChild(createDetailMarker(pos.back, key));
+      backLayer.appendChild(createDetailMarker(pos.back, raw));
     }
   });
 }
 
-drawBodyMarkers();
-drawHandMarkers();
-drawFootMarkers();
-
-
-document.addEventListener("click", (e) => {
-  const chip = e.target.closest(".loc-chip");
-  if (chip) {
-    const isActive = chip.classList.contains("is-active");
-    if (isActive) {
-      clearMarkerFocus();
-    } else {
-      focusLocation(chip.dataset.loc);
+// =====================================
+// Click interactions
+// =====================================
+function bindLocationInteractions() {
+  document.addEventListener("click", (e) => {
+    const chip = e.target.closest(".loc-chip");
+    if (chip) {
+      toggleLocation(chip.dataset.loc || "");
+      redrawAllMarkers();
+      return;
     }
-    return;
-  }
 
-  const markerGroup = e.target.closest(".svg-marker-group");
-  if (markerGroup) {
-    focusLocation(markerGroup.dataset.loc || markerGroup.dataset.normLoc || "");
-    return;
-  }
+    const bodyMarker = e.target.closest(".svg-marker-group");
+    if (bodyMarker) {
+      toggleLocation(bodyMarker.dataset.loc || bodyMarker.dataset.normLoc || "");
+      redrawAllMarkers();
+      return;
+    }
 
-  const clearBtn = e.target.closest("#clearMarkerFocus");
-  if (clearBtn) {
-    clearMarkerFocus();
-  }
-});
+    const detailMarker = e.target.closest(".detail-marker-group");
+    if (detailMarker) {
+      toggleLocation(detailMarker.dataset.loc || "");
+      redrawAllMarkers();
+      return;
+    }
 
+    const clearBtn = e.target.closest("#clearMarkerFocus");
+    if (clearBtn) {
+      clearSelectedLocations();
+      redrawAllMarkers();
+      return;
+    }
+  });
+}
 
+// =====================================
+// Redraw
+// =====================================
+function redrawAllMarkers() {
+  drawBodyMarkers();
+  drawHandMarkers();
+  drawFootMarkers();
+  refreshSelectionUI();
+}
+
+// =====================================
+// Init
+// =====================================
+bindLocationInteractions();
+syncSelectedLocationsInput();
+redrawAllMarkers();
 </script>
 {% endblock %}
