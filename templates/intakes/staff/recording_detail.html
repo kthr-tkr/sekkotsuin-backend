@@ -1125,7 +1125,7 @@
         {% endwith %}
       </div>
 
-      <input type="hidden" id="selectedLocationsInput" name="selected_locations_json" value="[]">
+      <input type="hidden" id="selectedLocationsInput" value="[]">
 
       <div class="mini-note">
         部位チップを押すと、人体図の該当マーカーを強調表示します。<br>
@@ -1264,9 +1264,17 @@
 
               <form method="post"
                     action="{% url 'staff:register_clinical_note' recording.id %}"
+                    id="clinicalNoteRegisterForm"
                     style="display:inline;"
-                    onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='保存中...';">
+                    onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='保存中...';">
                 {% csrf_token %}
+
+                <input type="hidden" id="register_selected_locations_json" name="selected_locations_json" value="[]">
+                <input type="hidden" id="register_summary_json" name="summary_json" value="">
+                <input type="hidden" id="register_soap_json" name="soap_json" value="">
+                <input type="hidden" id="register_extract_json" name="extract_json" value="">
+                <input type="hidden" id="register_followups_json" name="followups_json" value="">
+
                 <button type="submit" class="miniBtn primary">内容登録</button>
               </form>
             </div>
@@ -2033,4 +2041,89 @@ bindLocationInteractions();
 syncSelectedLocationsInput();
 redrawAllMarkers();
 </script>
+
+<script>
+function linesToList(text) {
+  return String(text || "")
+    .split("\n")
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function buildCurrentSummaryJson() {
+  let base = {};
+  const hiddenEditorJson = document.getElementById("summary_json_hidden");
+
+  try {
+    base = JSON.parse(hiddenEditorJson?.value || "{}");
+  } catch (e) {
+    base = {};
+  }
+
+  // SOAP
+  const soap = base.soap || {};
+  document.querySelectorAll("[data-soap]").forEach(el => {
+    const key = el.getAttribute("data-soap");
+    soap[key] = linesToList(el.value);
+  });
+  base.soap = soap;
+
+  // extract
+  const extract = base.extract || {};
+  document.querySelectorAll("[data-extract]").forEach(el => {
+    const key = el.getAttribute("data-extract");
+    extract[key] = (el.value || "").trim();
+  });
+
+  document.querySelectorAll("[data-extract-list]").forEach(el => {
+    const key = el.getAttribute("data-extract-list");
+    extract[key] = linesToList(el.value);
+  });
+
+  // ここが重要：最終的な部位はクリック補正結果を正にする
+  extract.locations = Array.from(selectedLocations);
+  base.extract = extract;
+
+  // followups
+  if (!Array.isArray(base.followups)) {
+    base.followups = [];
+  }
+
+  return base;
+}
+
+function syncRegisterFormHiddenFields() {
+  const registerForm = document.getElementById("clinicalNoteRegisterForm");
+  if (!registerForm) return;
+
+  const selectedInput = document.getElementById("register_selected_locations_json");
+  const summaryInput = document.getElementById("register_summary_json");
+  const soapInput = document.getElementById("register_soap_json");
+  const extractInput = document.getElementById("register_extract_json");
+  const followupsInput = document.getElementById("register_followups_json");
+
+  const summary = buildCurrentSummaryJson();
+
+  const selectedLocationsArray = Array.from(selectedLocations);
+  const soap = summary.soap || {};
+  const extract = summary.extract || {};
+  const followups = Array.isArray(summary.followups) ? summary.followups : [];
+
+  if (selectedInput) selectedInput.value = JSON.stringify(selectedLocationsArray);
+  if (summaryInput) summaryInput.value = JSON.stringify(summary);
+  if (soapInput) soapInput.value = JSON.stringify(soap);
+  if (extractInput) extractInput.value = JSON.stringify(extract);
+  if (followupsInput) followupsInput.value = JSON.stringify(followups);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const registerForm = document.getElementById("clinicalNoteRegisterForm");
+  if (registerForm) {
+    registerForm.addEventListener("submit", () => {
+      syncRegisterFormHiddenFields();
+    });
+  }
+});
+</script>
+
 {% endblock %}

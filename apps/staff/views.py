@@ -1019,9 +1019,40 @@ def register_clinical_note(request, recording_id):
     intake = recording.intake
 
     summary = recording.get_active_summary() or {}
-    soap = summary.get("soap", {}) or {}
-    extract = summary.get("extract", {}) or {}
-    followups = summary.get("followups", []) or []
+
+    def parse_json_field(name, default):
+        raw = request.POST.get(name, "")
+        if not raw:
+            return default
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return default
+
+    # 元データ
+    base_soap = summary.get("soap", {}) or {}
+    base_extract = summary.get("extract", {}) or {}
+    base_followups = summary.get("followups", []) or {}
+
+    # POST優先
+    posted_summary = parse_json_field("summary_json", None)
+    posted_soap = parse_json_field("soap_json", None)
+    posted_extract = parse_json_field("extract_json", None)
+    posted_followups = parse_json_field("followups_json", None)
+    posted_locations = parse_json_field("selected_locations_json", None)
+
+    if posted_summary and isinstance(posted_summary, dict):
+        soap = posted_summary.get("soap", {}) or {}
+        extract = posted_summary.get("extract", {}) or {}
+        followups = posted_summary.get("followups", []) or []
+    else:
+        soap = posted_soap if isinstance(posted_soap, dict) else base_soap
+        extract = posted_extract if isinstance(posted_extract, dict) else base_extract
+        followups = posted_followups if isinstance(posted_followups, list) else base_followups
+
+    # 部位は selected_locations_json を最優先にして上書き
+    if isinstance(posted_locations, list):
+        extract["locations"] = posted_locations
 
     web_snapshot = {}
     if intake:
