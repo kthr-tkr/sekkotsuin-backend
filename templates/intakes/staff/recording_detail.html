@@ -836,6 +836,43 @@
   }
 }
 
+.detail-svg{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius:12px;
+  background:#fff;
+}
+
+.detail-marker{
+  fill:#f2a007;
+  stroke:#fffaf0;
+  stroke-width:2.5;
+  cursor:pointer;
+  transition:transform .18s ease, opacity .18s ease, filter .18s ease;
+  transform-box:fill-box;
+  transform-origin:center;
+}
+
+.detail-marker.is-active{
+  transform:scale(1.18);
+  filter:drop-shadow(0 0 10px rgba(242,160,7,.32));
+}
+
+.detail-marker.is-dim{
+  opacity:.25;
+}
+
+.detail-marker-label{
+  font-size:10px;
+  font-weight:700;
+  fill:#0f172a;
+  paint-order:stroke;
+  stroke:#ffffff;
+  stroke-width:3px;
+  stroke-linejoin:round;
+}
+
 </style>
 
 <div class="ai-page">
@@ -926,30 +963,98 @@
         <div class="detail-card">
           <div class="detail-card-title">手指</div>
           <div class="detail-grid detail-grid-hands">
+
             <div class="detail-map">
               <div class="detail-map-label">左手</div>
-              <img src="{% static 'patients/img/hand_left.png' %}" alt="hand-left">
+              <svg
+                id="handLeftSvg"
+                class="detail-svg"
+                viewBox="0 0 320 220"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-label="left hand map"
+              >
+                <image
+                  href="{% static 'patients/img/hand_left.png' %}"
+                  x="0"
+                  y="0"
+                  width="320"
+                  height="220"
+                  preserveAspectRatio="xMidYMid meet"
+                />
+                <g id="handLeftMarkers"></g>
+              </svg>
             </div>
 
             <div class="detail-map">
               <div class="detail-map-label">右手</div>
-              <img src="{% static 'patients/img/hand_right.png' %}" alt="hand-right">
+              <svg
+                id="handRightSvg"
+                class="detail-svg"
+                viewBox="0 0 320 220"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-label="right hand map"
+              >
+                <image
+                  href="{% static 'patients/img/hand_right.png' %}"
+                  x="0"
+                  y="0"
+                  width="320"
+                  height="220"
+                  preserveAspectRatio="xMidYMid meet"
+                />
+                <g id="handRightMarkers"></g>
+              </svg>
             </div>
+
           </div>
         </div>
 
         <div class="detail-card">
           <div class="detail-card-title">足指</div>
           <div class="detail-grid detail-grid-feet">
+
             <div class="detail-map">
               <div class="detail-map-label">足背 / 前</div>
-              <img src="{% static 'patients/img/foot_front.png' %}" alt="foot-front">
+              <svg
+                id="footFrontSvg"
+                class="detail-svg"
+                viewBox="0 0 320 300"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-label="foot front map"
+              >
+                <image
+                  href="{% static 'patients/img/foot_front.png' %}"
+                  x="0"
+                  y="0"
+                  width="320"
+                  height="300"
+                  preserveAspectRatio="xMidYMid meet"
+                />
+                <g id="footFrontMarkers"></g>
+              </svg>
             </div>
 
             <div class="detail-map">
               <div class="detail-map-label">足底 / 後</div>
-              <img src="{% static 'patients/img/foot_back.png' %}" alt="foot-back">
+              <svg
+                id="footBackSvg"
+                class="detail-svg"
+                viewBox="0 0 320 300"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-label="foot back map"
+              >
+                <image
+                  href="{% static 'patients/img/foot_back.png' %}"
+                  x="0"
+                  y="0"
+                  width="320"
+                  height="300"
+                  preserveAspectRatio="xMidYMid meet"
+                />
+                <g id="footBackMarkers"></g>
+              </svg>
             </div>
+
           </div>
         </div>
 
@@ -1305,7 +1410,8 @@
 {% block scripts %}
 <script>
 // ===== 一時的
-const DEBUG_SHOW_ALL_MARKERS = false;//trueで全表示
+const DEBUG_SHOW_ALL_MARKERS = true;//trueで全表示
+const DEBUG_SHOW_ALL_DETAIL_MARKERS = true;
 
   (function(){
     function openModal(id){
@@ -1493,6 +1599,77 @@ const positionMap = {
   "左足後":       { back: { x:127, y:660 } },
 };
 
+const handMap = {
+  // 左手画像: 左が手背, 右が手掌
+  "左手背":      { left: { x:70,  y:120 } },
+  "左手掌":      { left: { x:245, y:120 } },
+
+  "左母指前":    { left: { x:275, y:115 } },
+  "左示指前":    { left: { x:210, y:55 } },
+  "左中指前":    { left: { x:245, y:42 } },
+  "左環指前":    { left: { x:278, y:55 } },
+  "左小指前":    { left: { x:304, y:84 } },
+
+  "左母指後":    { left: { x:110, y:115 } },
+  "左示指後":    { left: { x:40,  y:78 } },
+  "左中指後":    { left: { x:70,  y:42 } },
+  "左環指後":    { left: { x:102, y:46 } },
+  "左小指後":    { left: { x:130, y:84 } },
+
+  // 右手画像: 左が手掌, 右が手背
+  "右手掌":      { right: { x:75,  y:120 } },
+  "右手背":      { right: { x:248, y:120 } },
+
+  "右母指前":    { right: { x:45,  y:115 } },
+  "右示指前":    { right: { x:110, y:55 } },
+  "右中指前":    { right: { x:76,  y:42 } },
+  "右環指前":    { right: { x:44,  y:55 } },
+  "右小指前":    { right: { x:18,  y:84 } },
+
+  "右母指後":    { right: { x:210, y:115 } },
+  "右示指後":    { right: { x:278, y:78 } },
+  "右中指後":    { right: { x:248, y:42 } },
+  "右環指後":    { right: { x:216, y:46 } },
+  "右小指後":    { right: { x:190, y:84 } },
+};
+
+const footMap = {
+  // 足背 / 前
+  "右足背前":    { front: { x:92,  y:150 } },
+  "左足背前":    { front: { x:228, y:150 } },
+
+  "右母趾前":    { front: { x:110, y:42 } },
+  "右第2趾前":   { front: { x:89,  y:50 } },
+  "右第3趾前":   { front: { x:69,  y:60 } },
+  "右第4趾前":   { front: { x:50,  y:72 } },
+  "右小趾前":    { front: { x:32,  y:92 } },
+
+  "左母趾前":    { front: { x:208, y:42 } },
+  "左第2趾前":   { front: { x:228, y:50 } },
+  "左第3趾前":   { front: { x:248, y:60 } },
+  "左第4趾前":   { front: { x:267, y:72 } },
+  "左小趾前":    { front: { x:285, y:92 } },
+
+  // 足底 / 後
+  "右足底後":    { back: { x:92,  y:165 } },
+  "左足底後":    { back: { x:228, y:165 } },
+
+  "右踵後":      { back: { x:92,  y:250 } },
+  "左踵後":      { back: { x:228, y:250 } },
+
+  "右母趾後":    { back: { x:128, y:34 } },
+  "右第2趾後":   { back: { x:106, y:38 } },
+  "右第3趾後":   { back: { x:86,  y:45 } },
+  "右第4趾後":   { back: { x:67,  y:56 } },
+  "右小趾後":    { back: { x:49,  y:72 } },
+
+  "左母趾後":    { back: { x:192, y:34 } },
+  "左第2趾後":   { back: { x:214, y:38 } },
+  "左第3趾後":   { back: { x:234, y:45 } },
+  "左第4趾後":   { back: { x:253, y:56 } },
+  "左小趾後":    { back: { x:271, y:72 } },
+};
+
 function normalizeLocationName(name) {
   const n = String(name || "").trim();
 
@@ -1664,7 +1841,81 @@ function drawBodyMarkers() {
   });
 }
 
+function createDetailMarker(pos, rawLoc) {
+  const g = document.createElementNS(SVG_NS, "g");
+  g.dataset.loc = rawLoc;
+  g.setAttribute("class", "detail-marker-group");
+
+  const c = document.createElementNS(SVG_NS, "circle");
+  c.setAttribute("cx", pos.x);
+  c.setAttribute("cy", pos.y);
+  c.setAttribute("r", 8);
+  c.setAttribute("class", "detail-marker");
+  c.dataset.loc = rawLoc;
+  g.appendChild(c);
+
+  if (DEBUG_SHOW_ALL_DETAIL_MARKERS) {
+    const t = document.createElementNS(SVG_NS, "text");
+    t.setAttribute("x", pos.x + 10);
+    t.setAttribute("y", pos.y - 8);
+    t.setAttribute("class", "detail-marker-label");
+    t.textContent = rawLoc;
+    g.appendChild(t);
+  }
+
+  return g;
+}
+
+function drawHandMarkers() {
+  const leftLayer = document.getElementById("handLeftMarkers");
+  const rightLayer = document.getElementById("handRightMarkers");
+  if (!leftLayer || !rightLayer) return;
+
+  leftLayer.innerHTML = "";
+  rightLayer.innerHTML = "";
+
+  const source = DEBUG_SHOW_ALL_DETAIL_MARKERS ? Object.keys(handMap) : [];
+
+  source.forEach(key => {
+    const pos = handMap[key];
+    if (!pos) return;
+
+    if (pos.left) {
+      leftLayer.appendChild(createDetailMarker(pos.left, key));
+    }
+    if (pos.right) {
+      rightLayer.appendChild(createDetailMarker(pos.right, key));
+    }
+  });
+}
+
+function drawFootMarkers() {
+  const frontLayer = document.getElementById("footFrontMarkers");
+  const backLayer = document.getElementById("footBackMarkers");
+  if (!frontLayer || !backLayer) return;
+
+  frontLayer.innerHTML = "";
+  backLayer.innerHTML = "";
+
+  const source = DEBUG_SHOW_ALL_DETAIL_MARKERS ? Object.keys(footMap) : [];
+
+  source.forEach(key => {
+    const pos = footMap[key];
+    if (!pos) return;
+
+    if (pos.front) {
+      frontLayer.appendChild(createDetailMarker(pos.front, key));
+    }
+    if (pos.back) {
+      backLayer.appendChild(createDetailMarker(pos.back, key));
+    }
+  });
+}
+
 drawBodyMarkers();
+drawHandMarkers();
+drawFootMarkers();
+
 
 document.addEventListener("click", (e) => {
   const chip = e.target.closest(".loc-chip");
