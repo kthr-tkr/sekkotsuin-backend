@@ -1,44 +1,211 @@
 {% extends "patients/patient_base.html" %}
 {% block content %}
-<div style="max-width:1100px;margin:0 auto;padding:24px 18px;">
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+<div class="booking-day-page">
+  <div class="booking-day-head">
     <div>
-      <h1 style="font-size:26px;font-weight:900;margin:0;">{{ day|date:"n月j日" }} の空き枠</h1>
-      <div style="color:var(--muted);margin-top:6px;">施術者と時間を選択してください</div>
+      <h1 class="booking-day-title">{{ day|date:"n月j日" }} の空き枠</h1>
+      <div class="booking-day-sub">施術者と時間を選択してください</div>
     </div>
-    <a class="btn ghost" href="{% url 'patients:booking_calendar' %}">← 日付へ戻る</a>
+    <a class="booking-back-btn" href="{% url 'patients:booking_calendar' %}">← 日付へ戻る</a>
   </div>
 
-  <div style="margin-top:16px;display:grid;gap:14px;">
+  <div class="booking-staff-list">
     {% for item in staff_slots %}
-      <div style="border:1px solid var(--line);border-radius:18px;background:#fff;padding:16px;">
-        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-          <div style="font-weight:900;">{{ item.staff.get_full_name|default:item.staff.username }}</div>
-          <div style="color:var(--muted);font-size:12px;">空き：{{ item.slots|length }}枠</div>
+      <section class="booking-staff-card">
+        <div class="booking-staff-head">
+          <div class="booking-staff-name">{{ item.staff.get_full_name|default:item.staff.username }}</div>
+          <div class="booking-staff-count">空き：{{ item.slots|length }}枠</div>
         </div>
 
         {% if item.slots %}
-          <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;">
+          <div class="booking-time-grid">
             {% for s in item.slots %}
-              <form method="post" action="{% url 'patients:booking_confirm' %}">
+              <form method="post" action="{% url 'patients:booking_confirm' %}" class="booking-time-form">
                 {% csrf_token %}
                 <input type="hidden" name="staff_id" value="{{ item.staff.id }}">
                 <input type="hidden" name="start_at" value="{{ s.start|date:'Y-m-d\\TH:i' }}">
                 <input type="hidden" name="menu" value="初診">
-
                 {% if treatment_plan_id %}
                   <input type="hidden" name="treatment_plan_id" value="{{ treatment_plan_id }}">
                 {% endif %}
-
-                <button class="btn" type="submit" style="width:100%;">{{ s.start|date:"H:i" }}</button>
+                <button class="booking-time-btn" type="submit">{{ s.start|date:"H:i" }}</button>
               </form>
             {% endfor %}
           </div>
         {% else %}
-          <div style="margin-top:10px;color:var(--muted);">空き枠がありません</div>
+          <div class="booking-empty">空き枠がありません</div>
         {% endif %}
-      </div>
+      </section>
     {% endfor %}
   </div>
 </div>
+
+<style>
+  .booking-day-page{
+    max-width:760px;
+    margin:0 auto;
+    padding:20px 16px 32px;
+  }
+
+  .booking-day-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+
+  .booking-day-title{
+    margin:0;
+    font-size:clamp(28px, 5vw, 42px);
+    line-height:1.15;
+    font-weight:900;
+    color:#101935;
+    letter-spacing:-0.02em;
+  }
+
+  .booking-day-sub{
+    margin-top:8px;
+    color:#7b8498;
+    font-size:15px;
+  }
+
+  .booking-back-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    padding:0 18px;
+    border-radius:16px;
+    border:1px solid rgba(16,25,53,.12);
+    background:#fff;
+    color:#111a3a;
+    text-decoration:none;
+    font-weight:800;
+  }
+
+  .booking-staff-list{
+    display:grid;
+    gap:14px;
+  }
+
+  .booking-staff-card{
+    background:#fff;
+    border:1px solid rgba(16,25,53,.08);
+    border-radius:22px;
+    padding:16px;
+  }
+
+  .booking-staff-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+
+  .booking-staff-name{
+    font-size:18px;
+    font-weight:900;
+    color:#111a3a;
+  }
+
+  .booking-staff-count{
+    color:#7b8498;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .booking-time-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+  }
+
+  .booking-time-form{
+    margin:0;
+  }
+
+  .booking-time-btn{
+    width:100%;
+    min-height:52px;
+    border-radius:14px;
+    border:1px solid rgba(16,25,53,.12);
+    background:#fff;
+    color:#111a3a;
+    font-size:18px;
+    font-weight:800;
+    cursor:pointer;
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+
+  .booking-time-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 18px rgba(16,25,53,.08);
+    border-color:rgba(37,99,235,.28);
+  }
+
+  .booking-empty{
+    color:#7b8498;
+    font-size:14px;
+    padding:8px 0 2px;
+  }
+
+  @media (min-width: 560px){
+    .booking-time-grid{
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+    }
+
+    .booking-time-btn{
+      min-height:48px;
+      font-size:17px;
+    }
+  }
+
+  @media (max-width: 640px){
+    .booking-day-page{
+      padding:16px 12px 28px;
+    }
+
+    .booking-day-head{
+      align-items:flex-start;
+    }
+
+    .booking-day-sub{
+      font-size:14px;
+    }
+
+    .booking-back-btn{
+      min-height:42px;
+      padding:0 14px;
+      border-radius:14px;
+      font-size:14px;
+    }
+
+    .booking-staff-card{
+      padding:14px;
+      border-radius:18px;
+    }
+
+    .booking-staff-name{
+      font-size:17px;
+    }
+
+    .booking-staff-count{
+      font-size:12px;
+    }
+
+    .booking-time-grid{
+      gap:8px;
+    }
+
+    .booking-time-btn{
+      min-height:46px;
+      border-radius:12px;
+      font-size:16px;
+    }
+  }
+</style>
 {% endblock %}

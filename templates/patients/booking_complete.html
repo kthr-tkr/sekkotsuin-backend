@@ -1,19 +1,263 @@
 {% extends "patients/patient_base.html" %}
-{% block content %}
-<div style="max-width:900px;margin:0 auto;padding:28px 18px;">
-  <h1 style="font-size:26px;font-weight:900;margin:0;">予約完了</h1>
-  <p style="color:var(--muted);margin-top:6px;">ご予約を受け付けました。</p>
+{% block title %}予約完了{% endblock %}
 
-  <div style="margin-top:14px;border:1px solid var(--line);border-radius:18px;background:#fff;padding:16px;">
-    <div><strong>日時：</strong>{{ appointment.start_at|date:"Y/m/d H:i" }} - {{ appointment.end_at|date:"H:i" }}</div>
-    <div><strong>メニュー：</strong>{{ appointment.menu }}</div>
-    <div><strong>施術者：</strong>{{ appointment.assigned_staff.get_full_name|default:appointment.assigned_staff.username }}</div>
-    <div><strong>状態：</strong>{{ appointment.get_status_display }}</div>
+{% block content %}
+<div class="booking-complete-page">
+  <section class="booking-complete-hero">
+    <div class="booking-complete-icon">✓</div>
+    <h1 class="booking-complete-title">予約が完了しました</h1>
+    <p class="booking-complete-sub">ご予約を受け付けました。当日はお気をつけてお越しください。</p>
+  </section>
+
+  <section class="booking-complete-card">
+    <div class="booking-complete-card-head">
+      <h2>ご予約内容</h2>
+      <span class="booking-status">{{ appointment.get_status_display }}</span>
+    </div>
+
+    <dl class="booking-info-list">
+      <div class="booking-info-row">
+        <dt>日時</dt>
+        <dd>{{ appointment.start_at|date:"Y年n月j日 H:i" }} - {{ appointment.end_at|date:"H:i" }}</dd>
+      </div>
+
+      <div class="booking-info-row">
+        <dt>メニュー</dt>
+        <dd>{{ appointment.menu }}</dd>
+      </div>
+
+      <div class="booking-info-row">
+        <dt>施術者</dt>
+        <dd>{{ appointment.assigned_staff.get_full_name|default:appointment.assigned_staff.username }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <div class="booking-complete-note">
+    予約内容の確認や変更は「予約一覧」から行えます。
   </div>
 
-  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
-    <a class="btn primary" href="{% url 'patients:my_appointments' %}">予約一覧へ</a>
-    <a class="btn ghost" href="{% url 'patients:booking_calendar' %}">別日で予約する</a>
+  <div class="booking-complete-actions">
+    <a class="booking-btn booking-btn-primary" href="{% url 'patients:my_appointments' %}">
+      予約一覧へ
+    </a>
+    <a class="booking-btn booking-btn-ghost" href="{% url 'patients:booking_calendar' %}">
+      別日で予約する
+    </a>
   </div>
 </div>
+
+<style>
+  .booking-complete-page{
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px 16px 36px;
+  }
+
+  .booking-complete-hero{
+    text-align: center;
+    padding: 8px 0 18px;
+  }
+
+  .booking-complete-icon{
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 14px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    font-size: 34px;
+    font-weight: 900;
+    box-shadow: 0 12px 30px rgba(37, 99, 235, .22);
+  }
+
+  .booking-complete-title{
+    margin: 0;
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.15;
+    font-weight: 900;
+    color: #101935;
+    letter-spacing: -0.02em;
+  }
+
+  .booking-complete-sub{
+    margin: 10px auto 0;
+    max-width: 520px;
+    color: #7b8498;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .booking-complete-card{
+    margin-top: 18px;
+    background: #fff;
+    border: 1px solid rgba(16, 25, 53, .08);
+    border-radius: 24px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(16, 25, 53, .04);
+  }
+
+  .booking-complete-card-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(16, 25, 53, .08);
+  }
+
+  .booking-complete-card-head h2{
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
+    color: #111a3a;
+  }
+
+  .booking-status{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #eef4ff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .booking-info-list{
+    margin: 14px 0 0;
+  }
+
+  .booking-info-row{
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(16, 25, 53, .06);
+  }
+
+  .booking-info-row:last-child{
+    border-bottom: none;
+    padding-bottom: 4px;
+  }
+
+  .booking-info-row dt{
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: #7b8498;
+  }
+
+  .booking-info-row dd{
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #111a3a;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .booking-complete-note{
+    margin-top: 14px;
+    color: #7b8498;
+    font-size: 14px;
+    text-align: center;
+    line-height: 1.7;
+  }
+
+  .booking-complete-actions{
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .booking-btn{
+    min-height: 50px;
+    padding: 0 16px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+  }
+
+  .booking-btn:hover{
+    transform: translateY(-1px);
+  }
+
+  .booking-btn-primary{
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    border: 1px solid transparent;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, .18);
+  }
+
+  .booking-btn-ghost{
+    background: #fff;
+    color: #111a3a;
+    border: 1px solid rgba(16, 25, 53, .12);
+  }
+
+  @media (max-width: 640px){
+    .booking-complete-page{
+      padding: 18px 12px 28px;
+    }
+
+    .booking-complete-icon{
+      width: 64px;
+      height: 64px;
+      font-size: 30px;
+      margin-bottom: 12px;
+    }
+
+    .booking-complete-sub{
+      font-size: 14px;
+    }
+
+    .booking-complete-card{
+      border-radius: 20px;
+      padding: 14px;
+    }
+
+    .booking-complete-card-head{
+      padding-bottom: 12px;
+    }
+
+    .booking-info-row{
+      grid-template-columns: 1fr;
+      gap: 4px;
+      padding: 12px 0;
+    }
+
+    .booking-info-row dt{
+      font-size: 13px;
+    }
+
+    .booking-info-row dd{
+      font-size: 15px;
+    }
+
+    .booking-complete-actions{
+      grid-template-columns: 1fr;
+    }
+
+    .booking-btn{
+      min-height: 46px;
+      border-radius: 14px;
+      font-size: 14px;
+    }
+  }
+</style>
 {% endblock %}
