@@ -1,0 +1,200 @@
+{% extends "patients/patient_base.html" %}
+{% block title %}予約内容の確認{% endblock %}
+
+{% block content %}
+<div class="booking-review-page">
+  <section class="booking-review-head">
+    <h1 class="booking-review-title">予約内容の確認</h1>
+    <p class="booking-review-sub">
+      内容をご確認のうえ、「この内容で予約する」を押してください。
+    </p>
+  </section>
+
+  <section class="booking-review-card">
+    <div class="booking-review-row">
+      <div class="booking-review-label">院名</div>
+      <div class="booking-review-value">{{ clinic.name }}</div>
+    </div>
+
+    <div class="booking-review-row">
+      <div class="booking-review-label">日時</div>
+      <div class="booking-review-value">
+        {{ start_at|date:"Y年n月j日 (D) H:i" }} - {{ end_at|date:"H:i" }}
+      </div>
+    </div>
+
+    <div class="booking-review-row">
+      <div class="booking-review-label">施術者</div>
+      <div class="booking-review-value">
+        {{ staff.get_full_name|default:staff.username }}
+      </div>
+    </div>
+
+    <div class="booking-review-row">
+      <div class="booking-review-label">メニュー</div>
+      <div class="booking-review-value">{{ menu }}</div>
+    </div>
+  </section>
+
+  <div class="booking-review-note">
+    予約確定後、そのままWeb問診の入力へ進みます。
+  </div>
+
+  <div class="booking-review-actions">
+    <button type="button" class="booking-btn booking-btn-ghost" onclick="history.back()">
+      時間選択へ戻る
+    </button>
+
+    <form method="post" action="{% url 'patients:booking_confirm' %}">
+      {% csrf_token %}
+      <button type="submit" class="booking-btn booking-btn-primary">
+        この内容で予約する
+      </button>
+    </form>
+  </div>
+</div>
+
+<style>
+  .booking-review-page{
+    max-width:760px;
+    margin:0 auto;
+    padding:20px 16px 32px;
+  }
+
+  .booking-review-head{
+    margin-bottom:18px;
+  }
+
+  .booking-review-title{
+    margin:0;
+    font-size:clamp(28px, 5vw, 42px);
+    line-height:1.15;
+    font-weight:900;
+    color:#101935;
+    letter-spacing:-0.02em;
+  }
+
+  .booking-review-sub{
+    margin-top:10px;
+    color:#7b8498;
+    font-size:15px;
+    line-height:1.7;
+  }
+
+  .booking-review-card{
+    background:#fff;
+    border:1px solid rgba(16,25,53,.08);
+    border-radius:24px;
+    padding:18px;
+    box-shadow:0 8px 24px rgba(16,25,53,.04);
+  }
+
+  .booking-review-row{
+    display:grid;
+    grid-template-columns:110px 1fr;
+    gap:12px;
+    padding:14px 0;
+    border-bottom:1px solid rgba(16,25,53,.06);
+  }
+
+  .booking-review-row:last-child{
+    border-bottom:none;
+  }
+
+  .booking-review-label{
+    font-size:14px;
+    font-weight:800;
+    color:#7b8498;
+  }
+
+  .booking-review-value{
+    font-size:16px;
+    font-weight:800;
+    color:#111a3a;
+    line-height:1.7;
+    word-break:break-word;
+  }
+
+  .booking-review-note{
+    margin-top:14px;
+    color:#7b8498;
+    font-size:14px;
+    line-height:1.7;
+  }
+
+  .booking-review-actions{
+    margin-top:18px;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:10px;
+  }
+
+  .booking-review-actions form{
+    margin:0;
+  }
+
+  .booking-btn{
+    width:100%;
+    min-height:48px;
+    padding:0 16px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    font-size:15px;
+    font-weight:800;
+    box-sizing:border-box;
+    border:1px solid rgba(16,25,53,.12);
+    background:#fff;
+    color:#111a3a;
+    cursor:pointer;
+  }
+
+  .booking-btn-primary{
+    background:linear-gradient(135deg, #2563eb, #1d4ed8);
+    color:#fff;
+    border-color:transparent;
+    box-shadow:0 10px 22px rgba(37,99,235,.18);
+  }
+
+  .booking-btn-ghost{
+    background:#fff;
+  }
+
+  @media (max-width:640px){
+    .booking-review-page{
+      padding:16px 12px 28px;
+    }
+
+    .booking-review-card{
+      padding:14px;
+      border-radius:20px;
+    }
+
+    .booking-review-row{
+      grid-template-columns:1fr;
+      gap:4px;
+      padding:12px 0;
+    }
+
+    .booking-review-label{
+      font-size:13px;
+    }
+
+    .booking-review-value{
+      font-size:15px;
+    }
+
+    .booking-review-actions{
+      grid-template-columns:1fr;
+    }
+
+    .booking-btn{
+      min-height:46px;
+      border-radius:14px;
+      font-size:14px;
+    }
+  }
+</style>
+{% endblock %}

@@ -61,6 +61,12 @@ def _labels_from_codes(values, label_map):
         return []
     return [label_map.get(v, v) for v in values]
 
+def _clear_booking_draft_session(request):
+    request.session.pop("booking_draft", None)
+
+
+def _get_booking_draft_session(request):
+    return request.session.get("booking_draft") or {}
 
 def _build_intake_display(intake):
     if not intake:
@@ -432,8 +438,6 @@ def generate_card_no():
 # ========= Booking =========
 
 # 追加import（すでに monthrange はあるけど、monthcalendarを使う）
-
-
 @login_required(login_url="/patients/login/")
 def booking_calendar_view(request):
     patient_or_resp = require_patient_or_redirect(request)
@@ -468,7 +472,6 @@ def booking_calendar_view(request):
         except Exception:
             first_day = date(today.year, today.month, 1)
     else:
-        # suggest_date があればその月を優先
         if suggest_date:
             try:
                 suggested = datetime.strptime(suggest_date, "%Y-%m-%d").date()
@@ -482,13 +485,17 @@ def booking_calendar_view(request):
     next_month = (first_day.replace(day=28) + timedelta(days=10)).replace(day=1)
 
     staffs = list(_get_staff_candidates())
-    weeks = calendar.monthcalendar(first_day.year, first_day.month)
+
+    # 日曜始まりを明示
+    cal = calendar.Calendar(firstweekday=calendar.SUNDAY)
+    month_weeks = cal.monthdayscalendar(first_day.year, first_day.month)
 
     day_stats = {}
-    for week in weeks:
+    for week in month_weeks:
         for d in week:
             if d == 0:
                 continue
+
             day = date(first_day.year, first_day.month, d)
 
             if day < today:
@@ -501,18 +508,22 @@ def booking_calendar_view(request):
 
             day_stats[day.isoformat()] = {
                 "free": free_total,
-                "disabled": free_total == 0
+                "disabled": free_total == 0,
             }
 
     cal_weeks = []
-    for week in weeks:
+    for week in month_weeks:
         row = []
         for d in week:
             if d == 0:
                 row.append({"day": 0, "ds": "", "stat": None})
             else:
                 ds = date(first_day.year, first_day.month, d).isoformat()
-                row.append({"day": d, "ds": ds, "stat": day_stats.get(ds)})
+                row.append({
+                    "day": d,
+                    "ds": ds,
+                    "stat": day_stats.get(ds),
+                })
         cal_weeks.append(row)
 
     return render(request, "patients/booking_calendar.html", {
@@ -573,12 +584,11 @@ def booking_day_view(request, ymd: str):
 
 @login_required(login_url="/patients/login/")
 @require_http_methods(["POST"])
-def booking_confirm_view(request):
+def booking_review_view(request):
     patient_or_resp = require_patient_or_redirect(request)
     if isinstance(patient_or_resp, HttpResponseBase):
         return patient_or_resp
     patient = patient_or_resp
-
     clinic = patient.clinic
 
     staff_id = request.POST.get("staff_id")
@@ -607,7 +617,87 @@ def booking_confirm_view(request):
 
     if not _slot_free_for_staff(clinic, staff, start_at, end_at):
         messages.error(request, "選択した枠は埋まりました。別の枠を選択してください。")
-        return redirect(f"{reverse('patients:booking_calendar')}?date={start_at.date().isoformat()}")
+        return redirect(
+            f"{reverse('patients:booking_calendar')}?suggest_date={start_at.date().isoformat()}"
+        )
+
+    treatment_plan = None
+    if treatment_plan_id:
+        from apps.treatment_plans.models import TreatmentPlan
+        treatment_plan = TreatmentPlan.objects.filter(
+            pk=treatment_plan_id,
+            patient=patient
+        ).first()
+
+    request.session["booking_draft"] = {
+        "staff_id": staff.id,
+        "staff_name": staff.get_full_name() or staff.username,
+        "start_at": start_at.isoformat(),
+        "end_at": end_at.isoformat(),
+        "menu": menu,
+        "clinic_name": clinic.name,
+        "treatment_plan_id": treatment_plan.id if treatment_plan else None,
+    }
+
+    return render(request, "patients/booking_review.html", {
+        "clinic": clinic,
+        "patient": patient,
+        "staff": staff,
+        "start_at": start_at,
+        "end_at": end_at,
+        "menu": menu,
+        "treatment_plan_id": treatment_plan.id if treatment_plan else None,
+    })
+
+@login_required(login_url="/patients/login/")
+@require_http_methods(["POST"])
+def booking_confirm_view(request):
+    patient_or_resp = require_patient_or_redirect(request)
+    if isinstance(patient_or_resp, HttpResponseBase):
+        return patient_or_resp
+    patient = patient_or_resp
+
+    clinic = patient.clinic
+    draft = _get_booking_draft_session(request)
+
+    if not draft:
+        messages.error(request, "予約確認情報が見つかりません。もう一度やり直してください。")
+        return redirect("patients:booking_calendar")
+
+    staff_id = draft.get("staff_id")
+    start_iso = draft.get("start_at")
+    menu = draft.get("menu") or request.session.get("rebook_menu") or "初診"
+    treatment_plan_id = draft.get("treatment_plan_id")
+
+    if not staff_id or not start_iso:
+        _clear_booking_draft_session(request)
+        messages.error(request, "予約情報が不足しています。もう一度やり直してください。")
+        return redirect("patients:booking_calendar")
+
+    staff = get_object_or_404(User, pk=staff_id)
+
+    try:
+        start_at = datetime.fromisoformat(start_iso)
+        if timezone.is_naive(start_at):
+            start_at = timezone.make_aware(start_at, timezone.get_current_timezone())
+    except Exception:
+        _clear_booking_draft_session(request)
+        messages.error(request, "日時の形式が不正です。")
+        return redirect("patients:booking_calendar")
+
+    end_at = start_at + timedelta(minutes=DURATION_MIN)
+
+    if start_at < timezone.now():
+        _clear_booking_draft_session(request)
+        messages.error(request, "過去の日時は選択できません。")
+        return redirect("patients:booking_calendar")
+
+    if not _slot_free_for_staff(clinic, staff, start_at, end_at):
+        _clear_booking_draft_session(request)
+        messages.error(request, "選択した枠は埋まりました。別の枠を選択してください。")
+        return redirect(
+            f"{reverse('patients:booking_calendar')}?suggest_date={start_at.date().isoformat()}"
+        )
 
     treatment_plan = None
     if treatment_plan_id:
@@ -629,6 +719,7 @@ def booking_confirm_view(request):
         treatment_plan=treatment_plan,
     )
 
+    _clear_booking_draft_session(request)
     request.session.pop("rebook_menu", None)
     request.session.pop("rebook_staff_id", None)
     request.session.pop("rebook_from_id", None)

@@ -20,7 +20,7 @@
         {% if item.slots %}
           <div class="booking-time-grid">
             {% for s in item.slots %}
-              <form method="post" action="{% url 'patients:booking_confirm' %}" class="booking-time-form">
+              <form method="post" action="{% url 'patients:booking_review' %}" class="booking-time-form">
                 {% csrf_token %}
                 <input type="hidden" name="staff_id" value="{{ item.staff.id }}">
                 <input type="hidden" name="start_at" value="{{ s.start|date:'Y-m-d\\TH:i' }}">

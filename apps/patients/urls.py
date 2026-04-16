@@ -16,6 +16,7 @@ urlpatterns = [
     path("booking/day/<str:ymd>/", views.booking_day_view, name="booking_day"),
     path("booking/confirm/", views.booking_confirm_view, name="booking_confirm"),
     path("booking/complete/<int:appointment_id>/", views.booking_complete_view, name="booking_complete"),
+    path("booking/review/", views.booking_review_view, name="booking_review"),
 
     # 自分の予約
     path("appointments/", views.patient_my_appointments_view, name="my_appointments"),
