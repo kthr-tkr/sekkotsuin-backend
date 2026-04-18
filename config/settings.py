@@ -18,9 +18,16 @@ def get_list_env(name: str, default: str = "") -> list[str]:
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
+# settings.py
+
 SESSION_COOKIE_AGE = 1800  # 30分
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# セキュリティ強化もおすすめ
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
 
 ALLOWED_HOSTS = [
     "app.carefrow.com",

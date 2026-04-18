@@ -158,6 +158,91 @@
   letter-spacing: .02em;
 }
 
+  .session-timeout-modal{
+    display:none;
+  }
+
+  .session-timeout-modal.is-open{
+    display:block;
+  }
+
+  .session-timeout-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(15, 23, 42, 0.45);
+    z-index:9998;
+  }
+
+  .session-timeout-dialog{
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%);
+    width:min(92vw, 420px);
+    background:#fff;
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 20px 50px rgba(0,0,0,.18);
+    z-index:9999;
+  }
+
+  .session-timeout-title{
+    margin:0;
+    font-size:22px;
+    font-weight:900;
+    color:#101935;
+  }
+
+  .session-timeout-text{
+    margin:12px 0 0;
+    font-size:14px;
+    line-height:1.8;
+    color:#64748b;
+  }
+
+  .session-timeout-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:18px;
+  }
+
+  .session-btn{
+    min-height:46px;
+    border-radius:14px;
+    border:1px solid rgba(16,25,53,.12);
+    background:#fff;
+    color:#111a3a;
+    font-size:14px;
+    font-weight:800;
+    cursor:pointer;
+  }
+
+  .session-btn-primary{
+    background:linear-gradient(135deg, #2563eb, #1d4ed8);
+    color:#fff;
+    border-color:transparent;
+  }
+
+  .session-btn-ghost{
+    background:#fff;
+  }
+
+  @media (max-width: 640px){
+    .session-timeout-dialog{
+      padding:16px;
+      border-radius:18px;
+    }
+
+    .session-timeout-title{
+      font-size:20px;
+    }
+
+    .session-timeout-actions{
+      grid-template-columns:1fr;
+    }
+  }
+
   </style>
 </head>
 
@@ -192,6 +277,30 @@
     </div>
   </nav>
 
+<div id="session-timeout-modal" class="session-timeout-modal">
+  <div class="session-timeout-backdrop"></div>
+
+  <div class="session-timeout-dialog" role="dialog" aria-modal="true" aria-labelledby="session-timeout-title">
+    <h2 id="session-timeout-title" class="session-timeout-title">
+      まもなくログアウトします
+    </h2>
+
+    <p class="session-timeout-text">
+      しばらく操作がなかったため、セキュリティ保護のため自動的にログアウトします。<br>
+      引き続き利用する場合は「継続する」を押してください。
+    </p>
+
+    <div class="session-timeout-actions">
+      <button type="button" id="session-continue-btn" class="session-btn session-btn-primary">
+        継続する
+      </button>
+      <button type="button" id="session-logout-btn" class="session-btn session-btn-ghost">
+        ログアウトする
+      </button>
+    </div>
+  </div>
+</div>
+
   <main class="p-wrap">
     {% if messages %}
       {% for message in messages %}
@@ -202,5 +311,91 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+(function () {
+  const WARNING_AFTER_MS = 25 * 60 * 1000;   // 25分
+  const LOGOUT_AFTER_MS  = 30 * 60 * 1000;   // 30分
+
+  let warningTimer = null;
+  let logoutTimer = null;
+
+  function clearTimers() {
+    if (warningTimer) clearTimeout(warningTimer);
+    if (logoutTimer) clearTimeout(logoutTimer);
+  }
+
+  function showSessionWarning() {
+    const modal = document.getElementById("session-timeout-modal");
+    if (modal) {
+      modal.classList.add("is-open");
+    }
+  }
+
+  function hideSessionWarning() {
+    const modal = document.getElementById("session-timeout-modal");
+    if (modal) {
+      modal.classList.remove("is-open");
+    }
+  }
+
+  function forceLogout() {
+    window.location.href = "{% url 'patients:logout' %}";
+  }
+
+  function resetInactivityTimers() {
+    clearTimers();
+    hideSessionWarning();
+
+    warningTimer = setTimeout(showSessionWarning, WARNING_AFTER_MS);
+    logoutTimer = setTimeout(forceLogout, LOGOUT_AFTER_MS);
+  }
+
+  function continueSession() {
+    fetch("{% url 'patients:session_ping' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      credentials: "same-origin"
+    })
+    .then(() => {
+      resetInactivityTimers();
+    })
+    .catch(() => {
+      forceLogout();
+    });
+  }
+
+  function getCookie(name) {
+    const cookies = document.cookie ? document.cookie.split(";") : [];
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.startsWith(name + "=")) {
+        return decodeURIComponent(cookie.substring(name.length + 1));
+      }
+    }
+    return "";
+  }
+
+  ["click", "keydown", "touchstart", "scroll"].forEach(eventName => {
+    window.addEventListener(eventName, resetInactivityTimers, { passive: true });
+  });
+
+  const continueBtn = document.getElementById("session-continue-btn");
+  if (continueBtn) {
+    continueBtn.addEventListener("click", continueSession);
+  }
+
+  const logoutBtn = document.getElementById("session-logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", forceLogout);
+  }
+
+  resetInactivityTimers();
+})();
+</script>
+
 </body>
 </html>

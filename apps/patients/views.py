@@ -32,6 +32,9 @@ from apps.intakes.forms import (
 from .forms import PatientProfileForm, PatientRegisterForm
 from .models import Patient
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -1061,3 +1064,14 @@ def staff_booking_confirm_view(request, patient_id):
 
     messages.success(request, "予約を作成しました。")
     return redirect("staff:appointment_detail", appointment_id=appt.pk)
+
+# 予約延長
+@login_required(login_url="/patients/login/")
+@require_POST
+def patient_session_ping_view(request):
+    patient_or_resp = require_patient_or_redirect(request)
+    if isinstance(patient_or_resp, HttpResponseBase):
+        return JsonResponse({"ok": False, "message": "unauthorized"}, status=401)
+
+    request.session.modified = True
+    return JsonResponse({"ok": True})

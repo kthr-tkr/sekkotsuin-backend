@@ -10,6 +10,7 @@ urlpatterns = [
     path("register/complete/", views.patient_register_complete_view, name="register_complete"),
     path("logout/", views.patient_logout_view, name="logout"),
     path("dashboard/", views.patient_dashboard_view, name="dashboard"),
+    path("session/ping/", views.patient_session_ping_view, name="session_ping"),
 
     # 予約（A: カレンダー→日→枠）
     path("booking/", views.booking_calendar_view, name="booking_calendar"),
