@@ -767,6 +767,8 @@ def patient_my_appointments_view(request):
     past_preview = past[-3:]
     past_more = past[:-3]
 
+    history_count = len(past_preview) + len(past_more)
+
     return render(
         request,
         "patients/my_appointments.html",
@@ -775,6 +777,7 @@ def patient_my_appointments_view(request):
             "upcoming": upcoming,
             "past_preview": past_preview,
             "past_more": past_more,
+            "history_count": history_count,
         }
     )
 
