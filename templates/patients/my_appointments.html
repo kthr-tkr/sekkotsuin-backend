@@ -711,6 +711,41 @@ font-size:14px;
   padding-bottom:0;
 }
 
+.ap-modal-dialog-lg{
+  width:min(92vw, 720px);
+  max-height:85vh;
+  overflow:auto;
+}
+
+.ap-modal-intake{
+  margin-top:18px;
+  padding-top:18px;
+  border-top:1px solid rgba(16,25,53,.08);
+}
+
+.ap-modal-intake-title{
+  margin:0 0 12px;
+  font-size:18px;
+  font-weight:900;
+  color:#111a3a;
+}
+
+.ap-reservation-modal-grid{
+  margin-top:14px;
+  display:grid;
+  gap:12px;
+}
+
+.ap-reservation-modal-row{
+  padding:12px 0;
+  border-bottom:1px solid rgba(16,25,53,.06);
+}
+
+.ap-reservation-modal-row:last-child{
+  border-bottom:none;
+  padding-bottom:0;
+}
+
 </style>
 
 <div class="ap-page">
@@ -765,34 +800,54 @@ font-size:14px;
             <button type="button" class="ap-btn ap-btn-soft" onclick="toggleIntakeDetail('intake-{{ next_appointment.id }}', this)">
               Web問診を見る
             </button>
-            <button type="button"
-                    class="ap-btn ap-btn-primary"
-                    onclick="openReservationModal(this)"
-                    data-date="{{ next_appointment.start_at|date:'Y年n月j日 (D)' }}"
-                    data-time="{{ next_appointment.start_at|date:'H:i' }} - {{ next_appointment.end_at|date:'H:i' }}"
-                    data-clinic="{{ next_appointment.clinic.name }}"
-                    data-menu="{{ next_appointment.menu }}"
-                    data-staff="{% if next_appointment.assigned_staff %}{{ next_appointment.assigned_staff.get_full_name|default:next_appointment.assigned_staff.username }}{% else %}未定{% endif %}"
-                    data-status="{% if next_appointment.show_resume_intake %}問診待ち{% elif next_appointment.intake_completed %}問診済み{% else %}{{ next_appointment.get_status_display }}{% endif %}">
-              予約内容を見る
-            </button>
+              <button type="button"
+                      class="ap-btn ap-btn-primary"
+                      onclick="openReservationModal(this)"
+                      data-date="{{ next_appointment.start_at|date:'Y年n月j日 (D)' }}"
+                      data-time="{{ next_appointment.start_at|date:'H:i' }} - {{ next_appointment.end_at|date:'H:i' }}"
+                      data-clinic="{{ next_appointment.clinic.name }}"
+                      data-menu="{{ next_appointment.menu }}"
+                      data-staff="{% if next_appointment.assigned_staff %}{{ next_appointment.assigned_staff.get_full_name|default:next_appointment.assigned_staff.username }}{% else %}未定{% endif %}"
+                      data-status="{% if next_appointment.show_resume_intake %}問診待ち{% elif next_appointment.intake_completed %}問診済み{% else %}{{ next_appointment.get_status_display }}{% endif %}"
+                      data-intake-completed="{% if next_appointment.intake_completed %}1{% else %}0{% endif %}"
+                      data-intake-submitted-at="{% if next_appointment.intake_completed and next_appointment.intake.submitted_at %}{{ next_appointment.intake.submitted_at|date:'Y年n月j日 H:i' }}{% endif %}"
+                      data-intake-symptom-type="{{ next_appointment.intake_display.symptom_type|default:'' }}"
+                      data-intake-chief-complaint="{{ next_appointment.intake_display.chief_complaint|default:'' }}"
+                      data-intake-onset="{{ next_appointment.intake_display.onset|default:'' }}"
+                      data-intake-severity="{% if next_appointment.intake_display.severity or next_appointment.intake_display.severity == 0 %}{{ next_appointment.intake_display.severity }}/10{% endif %}"
+                      data-intake-trigger="{{ next_appointment.intake_display.trigger|default:'' }}"
+                      data-intake-areas="{% if next_appointment.intake_display.areas %}{{ next_appointment.intake_display.areas|join:'、' }}{% endif %}"
+                      data-intake-qualities="{% if next_appointment.intake_display.qualities %}{{ next_appointment.intake_display.qualities|join:'、' }}{% endif %}"
+                      data-intake-free-text="{{ next_appointment.intake_display.free_text|default:'' }}">
+                予約内容を見る
+              </button>
           </div>
         {% elif next_appointment.show_resume_intake %}
           <div class="ap-actions">
             <a href="{% url 'intakes:intake_start' next_appointment.id %}" class="ap-btn ap-btn-warning">
               Web問診を続ける
             </a>
-            <button type="button"
-                    class="ap-btn ap-btn-primary"
-                    onclick="openReservationModal(this)"
-                    data-date="{{ next_appointment.start_at|date:'Y年n月j日 (D)' }}"
-                    data-time="{{ next_appointment.start_at|date:'H:i' }} - {{ next_appointment.end_at|date:'H:i' }}"
-                    data-clinic="{{ next_appointment.clinic.name }}"
-                    data-menu="{{ next_appointment.menu }}"
-                    data-staff="{% if next_appointment.assigned_staff %}{{ next_appointment.assigned_staff.get_full_name|default:next_appointment.assigned_staff.username }}{% else %}未定{% endif %}"
-                    data-status="{% if next_appointment.show_resume_intake %}問診待ち{% elif next_appointment.intake_completed %}問診済み{% else %}{{ next_appointment.get_status_display }}{% endif %}">
-              予約内容を見る
-            </button>
+              <button type="button"
+                      class="ap-btn ap-btn-primary"
+                      onclick="openReservationModal(this)"
+                      data-date="{{ next_appointment.start_at|date:'Y年n月j日 (D)' }}"
+                      data-time="{{ next_appointment.start_at|date:'H:i' }} - {{ next_appointment.end_at|date:'H:i' }}"
+                      data-clinic="{{ next_appointment.clinic.name }}"
+                      data-menu="{{ next_appointment.menu }}"
+                      data-staff="{% if next_appointment.assigned_staff %}{{ next_appointment.assigned_staff.get_full_name|default:next_appointment.assigned_staff.username }}{% else %}未定{% endif %}"
+                      data-status="{% if next_appointment.show_resume_intake %}問診待ち{% elif next_appointment.intake_completed %}問診済み{% else %}{{ next_appointment.get_status_display }}{% endif %}"
+                      data-intake-completed="{% if next_appointment.intake_completed %}1{% else %}0{% endif %}"
+                      data-intake-submitted-at="{% if next_appointment.intake_completed and next_appointment.intake.submitted_at %}{{ next_appointment.intake.submitted_at|date:'Y年n月j日 H:i' }}{% endif %}"
+                      data-intake-symptom-type="{{ next_appointment.intake_display.symptom_type|default:'' }}"
+                      data-intake-chief-complaint="{{ next_appointment.intake_display.chief_complaint|default:'' }}"
+                      data-intake-onset="{{ next_appointment.intake_display.onset|default:'' }}"
+                      data-intake-severity="{% if next_appointment.intake_display.severity or next_appointment.intake_display.severity == 0 %}{{ next_appointment.intake_display.severity }}/10{% endif %}"
+                      data-intake-trigger="{{ next_appointment.intake_display.trigger|default:'' }}"
+                      data-intake-areas="{% if next_appointment.intake_display.areas %}{{ next_appointment.intake_display.areas|join:'、' }}{% endif %}"
+                      data-intake-qualities="{% if next_appointment.intake_display.qualities %}{{ next_appointment.intake_display.qualities|join:'、' }}{% endif %}"
+                      data-intake-free-text="{{ next_appointment.intake_display.free_text|default:'' }}">
+                予約内容を見る
+              </button>
           </div>
         {% else %}
           <div class="ap-actions">
@@ -804,7 +859,17 @@ font-size:14px;
                     data-clinic="{{ next_appointment.clinic.name }}"
                     data-menu="{{ next_appointment.menu }}"
                     data-staff="{% if next_appointment.assigned_staff %}{{ next_appointment.assigned_staff.get_full_name|default:next_appointment.assigned_staff.username }}{% else %}未定{% endif %}"
-                    data-status="{% if next_appointment.show_resume_intake %}問診待ち{% elif next_appointment.intake_completed %}問診済み{% else %}{{ next_appointment.get_status_display }}{% endif %}">
+                    data-status="{% if next_appointment.show_resume_intake %}問診待ち{% elif next_appointment.intake_completed %}問診済み{% else %}{{ next_appointment.get_status_display }}{% endif %}"
+                    data-intake-completed="{% if next_appointment.intake_completed %}1{% else %}0{% endif %}"
+                    data-intake-submitted-at="{% if next_appointment.intake_completed and next_appointment.intake.submitted_at %}{{ next_appointment.intake.submitted_at|date:'Y年n月j日 H:i' }}{% endif %}"
+                    data-intake-symptom-type="{{ next_appointment.intake_display.symptom_type|default:'' }}"
+                    data-intake-chief-complaint="{{ next_appointment.intake_display.chief_complaint|default:'' }}"
+                    data-intake-onset="{{ next_appointment.intake_display.onset|default:'' }}"
+                    data-intake-severity="{% if next_appointment.intake_display.severity or next_appointment.intake_display.severity == 0 %}{{ next_appointment.intake_display.severity }}/10{% endif %}"
+                    data-intake-trigger="{{ next_appointment.intake_display.trigger|default:'' }}"
+                    data-intake-areas="{% if next_appointment.intake_display.areas %}{{ next_appointment.intake_display.areas|join:'、' }}{% endif %}"
+                    data-intake-qualities="{% if next_appointment.intake_display.qualities %}{{ next_appointment.intake_display.qualities|join:'、' }}{% endif %}"
+                    data-intake-free-text="{{ next_appointment.intake_display.free_text|default:'' }}">
               予約内容を見る
             </button>
             <a href="{% url 'patients:booking_calendar' %}" class="ap-btn">
@@ -943,7 +1008,17 @@ font-size:14px;
                       data-clinic="{{ a.clinic.name }}"
                       data-menu="{{ a.menu }}"
                       data-staff="{% if a.assigned_staff %}{{ a.assigned_staff.get_full_name|default:a.assigned_staff.username }}{% else %}未定{% endif %}"
-                      data-status="{% if a.show_resume_intake %}問診待ち{% elif a.intake_completed %}問診済み{% else %}{{ a.get_status_display }}{% endif %}">
+                      data-status="{% if a.show_resume_intake %}問診待ち{% elif a.intake_completed %}問診済み{% else %}{{ a.get_status_display }}{% endif %}"
+                      data-intake-completed="{% if a.intake_completed %}1{% else %}0{% endif %}"
+                      data-intake-submitted-at="{% if a.intake_completed and a.intake.submitted_at %}{{ a.intake.submitted_at|date:'Y年n月j日 H:i' }}{% endif %}"
+                      data-intake-symptom-type="{{ a.intake_display.symptom_type|default:'' }}"
+                      data-intake-chief-complaint="{{ a.intake_display.chief_complaint|default:'' }}"
+                      data-intake-onset="{{ a.intake_display.onset|default:'' }}"
+                      data-intake-severity="{% if a.intake_display.severity or a.intake_display.severity == 0 %}{{ a.intake_display.severity }}/10{% endif %}"
+                      data-intake-trigger="{{ a.intake_display.trigger|default:'' }}"
+                      data-intake-areas="{% if a.intake_display.areas %}{{ a.intake_display.areas|join:'、' }}{% endif %}"
+                      data-intake-qualities="{% if a.intake_display.qualities %}{{ a.intake_display.qualities|join:'、' }}{% endif %}"
+                      data-intake-free-text="{{ a.intake_display.free_text|default:'' }}">
                 予約内容を見る
               </button>
             {% endif %}
@@ -1354,7 +1429,7 @@ font-size:14px;
 <div id="reservation-modal" class="ap-modal" aria-hidden="true">
   <div class="ap-modal-backdrop" onclick="closeReservationModal()"></div>
 
-  <div class="ap-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="reservation-modal-title">
+  <div class="ap-modal-dialog ap-modal-dialog-lg" role="dialog" aria-modal="true" aria-labelledby="reservation-modal-title">
     <h3 id="reservation-modal-title" class="ap-modal-title">予約内容</h3>
 
     <div class="ap-reservation-modal-grid">
@@ -1386,6 +1461,57 @@ font-size:14px;
       <div class="ap-reservation-modal-row">
         <div class="ap-label">状態</div>
         <div class="ap-value" id="reservation-modal-status"></div>
+      </div>
+    </div>
+
+    <div id="reservation-modal-intake-section" class="ap-modal-intake">
+      <h4 class="ap-modal-intake-title">Web問診</h4>
+
+      <div class="ap-intake-grid">
+        <div>
+          <div class="ap-intake-item-label">問診入力日時</div>
+          <div class="ap-intake-item-value" id="reservation-modal-intake-submitted-at">-</div>
+        </div>
+
+        <div>
+          <div class="ap-intake-item-label">症状タイプ</div>
+          <div class="ap-intake-item-value" id="reservation-modal-intake-symptom-type">-</div>
+        </div>
+
+        <div class="ap-intake-item-full">
+          <div class="ap-intake-item-label">主な症状</div>
+          <div class="ap-intake-item-value" id="reservation-modal-intake-chief-complaint">-</div>
+        </div>
+
+        <div>
+          <div class="ap-intake-item-label">いつから</div>
+          <div class="ap-intake-item-value" id="reservation-modal-intake-onset">-</div>
+        </div>
+
+        <div>
+          <div class="ap-intake-item-label">痛みの強さ</div>
+          <div class="ap-intake-item-value" id="reservation-modal-intake-severity">-</div>
+        </div>
+
+        <div class="ap-intake-item-full">
+          <div class="ap-intake-item-label">症状のきっかけ</div>
+          <div class="ap-intake-item-value" id="reservation-modal-intake-trigger">-</div>
+        </div>
+
+        <div class="ap-intake-item-full">
+          <div class="ap-intake-item-label">痛みや違和感のある部位</div>
+          <div class="ap-intake-item-value" id="reservation-modal-intake-areas">-</div>
+        </div>
+
+        <div class="ap-intake-item-full">
+          <div class="ap-intake-item-label">症状の感じ</div>
+          <div class="ap-intake-item-value" id="reservation-modal-intake-qualities">-</div>
+        </div>
+
+        <div class="ap-intake-item-full">
+          <div class="ap-intake-item-label">自由記入</div>
+          <div class="ap-intake-item-value" id="reservation-modal-intake-free-text">-</div>
+        </div>
       </div>
     </div>
 
@@ -1492,16 +1618,41 @@ icon.textContent="＋";
 </script>
     /* 予約確認モーダル */
 <script>
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = value && value.trim() ? value : "-";
+  }
+
   function openReservationModal(btn) {
     const modal = document.getElementById("reservation-modal");
+    const intakeSection = document.getElementById("reservation-modal-intake-section");
     if (!modal) return;
 
-    document.getElementById("reservation-modal-date").textContent = btn.dataset.date || "-";
-    document.getElementById("reservation-modal-time").textContent = btn.dataset.time || "-";
-    document.getElementById("reservation-modal-clinic").textContent = btn.dataset.clinic || "-";
-    document.getElementById("reservation-modal-menu").textContent = btn.dataset.menu || "-";
-    document.getElementById("reservation-modal-staff").textContent = btn.dataset.staff || "-";
-    document.getElementById("reservation-modal-status").textContent = btn.dataset.status || "-";
+    setText("reservation-modal-date", btn.dataset.date || "");
+    setText("reservation-modal-time", btn.dataset.time || "");
+    setText("reservation-modal-clinic", btn.dataset.clinic || "");
+    setText("reservation-modal-menu", btn.dataset.menu || "");
+    setText("reservation-modal-staff", btn.dataset.staff || "");
+    setText("reservation-modal-status", btn.dataset.status || "");
+
+    const intakeCompleted = btn.dataset.intakeCompleted === "1";
+
+    if (intakeSection) {
+      intakeSection.style.display = intakeCompleted ? "block" : "none";
+    }
+
+    if (intakeCompleted) {
+      setText("reservation-modal-intake-submitted-at", btn.dataset.intakeSubmittedAt || "");
+      setText("reservation-modal-intake-symptom-type", btn.dataset.intakeSymptomType || "");
+      setText("reservation-modal-intake-chief-complaint", btn.dataset.intakeChiefComplaint || "");
+      setText("reservation-modal-intake-onset", btn.dataset.intakeOnset || "");
+      setText("reservation-modal-intake-severity", btn.dataset.intakeSeverity || "");
+      setText("reservation-modal-intake-trigger", btn.dataset.intakeTrigger || "");
+      setText("reservation-modal-intake-areas", btn.dataset.intakeAreas || "");
+      setText("reservation-modal-intake-qualities", btn.dataset.intakeQualities || "");
+      setText("reservation-modal-intake-free-text", btn.dataset.intakeFreeText || "");
+    }
 
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
