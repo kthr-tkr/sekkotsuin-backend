@@ -551,7 +551,7 @@ font-size:14px;
   margin-top: 24px;
 }
 
-.ap-history-toggle{
+.ap-history-section-toggle{
   width: 100%;
   display: flex;
   align-items: center;
@@ -564,13 +564,13 @@ font-size:14px;
   cursor: pointer;
 }
 
-.ap-history-toggle-left{
+.ap-history-section-toggle-left{
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.ap-history-toggle-bar{
+.ap-history-section-toggle-bar{
   width: 6px;
   height: 22px;
   border-radius: 999px;
@@ -578,20 +578,20 @@ font-size:14px;
   flex: 0 0 6px;
 }
 
-.ap-history-toggle-title{
+.ap-history-section-toggle-title{
   margin: 0;
   font-size: 20px;
   font-weight: 900;
   color: #111a3a;
 }
 
-.ap-history-toggle-count{
+.ap-history-section-toggle-count{
   color: #64748b;
   font-size: 14px;
   font-weight: 700;
 }
 
-.ap-history-toggle-icon{
+.ap-history-section-toggle-icon{
   width: 36px;
   height: 36px;
   border-radius: 999px;
@@ -607,7 +607,7 @@ font-size:14px;
   flex: 0 0 36px;
 }
 
-.ap-history-section.is-open .ap-history-toggle-icon{
+.ap-history-section.is-open .ap-history-section-toggle-icon{
   transform: rotate(180deg);
   background: #f8fafc;
 }
@@ -622,11 +622,11 @@ font-size:14px;
 }
 
 @media (max-width: 640px){
-  .ap-history-toggle-title{
+  .ap-history-section-toggle-title{
     font-size: 18px;
   }
 
-  .ap-history-toggle-count{
+  .ap-history-section-toggle-count{
     font-size: 13px;
   }
 }
@@ -913,15 +913,17 @@ font-size:14px;
 
   <section class="ap-section ap-history-section" id="ap-history-section">
     <button type="button"
-            class="ap-history-toggle"
+            class="ap-history-section-toggle"
             onclick="toggleHistorySection(this)"
             aria-expanded="false">
-      <div class="ap-history-toggle-left">
-        <span class="ap-history-toggle-bar"></span>
-        <h2 class="ap-history-toggle-title">来院履歴</h2>
-          <span class="ap-history-toggle-count">（{{ history_count }}件）</span>
+      <div class="ap-history-section-toggle-left">
+        <span class="ap-history-section-toggle-bar"></span>
+        <h2 class="ap-history-section-toggle-title">来院履歴</h2>
+        <span class="ap-history-section-toggle-count">
+          （{{ history_count }}件）
+        </span>
       </div>
-      <span class="ap-history-toggle-icon">⌄</span>
+      <span class="ap-history-section-toggle-icon">⌄</span>
     </button>
 
     <div class="ap-history-panel">
