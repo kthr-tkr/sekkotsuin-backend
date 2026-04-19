@@ -420,6 +420,133 @@ font-size:14px;
 
 }
 
+.ap-history-list{
+  display:grid;
+  gap:12px;
+}
+
+.ap-history-item{
+  background:#fff;
+  border:1px solid rgba(16,25,53,.08);
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 8px 24px rgba(16,25,53,.04);
+}
+
+.ap-history-summary{
+  width:100%;
+  border:0;
+  background:#fff;
+  padding:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  text-align:left;
+  cursor:pointer;
+}
+
+.ap-history-main{
+  min-width:0;
+  flex:1;
+}
+
+.ap-history-date{
+  margin:0;
+  font-size:22px;
+  line-height:1.3;
+  font-weight:900;
+  color:#101935;
+  word-break:break-word;
+}
+
+.ap-history-time{
+  margin-top:6px;
+  font-size:15px;
+  color:#6b7280;
+  font-weight:700;
+}
+
+.ap-history-badges{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.ap-history-toggle{
+  flex:0 0 auto;
+  width:36px;
+  height:36px;
+  border-radius:999px;
+  border:1px solid rgba(16,25,53,.10);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  font-weight:700;
+  color:#64748b;
+  background:#fff;
+  transition:transform .18s ease, background .18s ease;
+}
+
+.ap-history-item.is-open .ap-history-toggle{
+  transform:rotate(45deg);
+  background:#f8fafc;
+}
+
+.ap-history-detail{
+  display:none;
+  padding:0 16px 16px;
+  border-top:1px solid rgba(16,25,53,.06);
+  background:#fcfdff;
+}
+
+.ap-history-item.is-open .ap-history-detail{
+  display:block;
+}
+
+.ap-history-detail-inner{
+  padding-top:14px;
+  display:grid;
+  gap:10px;
+}
+
+.ap-history-detail-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:14px 16px;
+}
+
+.ap-history-actions{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:10px;
+}
+
+@media (max-width: 640px){
+  .ap-history-summary{
+    padding:14px;
+  }
+
+  .ap-history-date{
+    font-size:18px;
+  }
+
+  .ap-history-time{
+    font-size:14px;
+  }
+
+  .ap-history-detail{
+    padding:0 14px 14px;
+  }
+
+  .ap-history-detail-grid,
+  .ap-history-actions{
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 
 <div class="ap-page">
@@ -702,80 +829,280 @@ font-size:14px;
 
   <!-- 来院履歴 -->
   <section class="ap-section">
-    <div class="ap-section-head">
-      <span class="ap-bar"></span>
-      <h2>来院履歴</h2>
-    </div>
+    <h2 class="ap-section-title">来院履歴</h2>
 
     {% if past_preview %}
-      <div class="history-accordion">
+      <div class="ap-history-list">
 
-        {% for ap in past_preview %}
-        <div class="history-item">
-          
-          <!-- 開閉トリガ -->
-          <button
-            type="button"
-            class="history-summary"
-            onclick="toggleHistory(this)"
-          >
-            <div class="history-main">
-              <div class="history-date">
-                {{ ap.start_at|date:"Y年n月j日 (D)" }}
+        {% for a in past_preview reversed %}
+          <article class="ap-history-item">
+            <button type="button"
+                    class="ap-history-summary"
+                    onclick="toggleHistoryDetail(this)"
+                    aria-expanded="false">
+              <div class="ap-history-main">
+                <div class="ap-history-date">{{ a.start_at|date:"Y年n月j日 (D)" }}</div>
+                <div class="ap-history-time">{{ a.start_at|date:"H:i" }} - {{ a.end_at|date:"H:i" }}</div>
+
+                <div class="ap-history-badges">
+                  {% if a.intake_completed %}
+                    <span class="ap-badge ap-badge-intake">問診済み</span>
+                  {% else %}
+                    <span class="ap-badge ap-badge-status">{{ a.get_status_display }}</span>
+                  {% endif %}
+                </div>
               </div>
 
-              <div class="history-time">
-                {{ ap.start_at|date:"H:i" }} - {{ ap.end_at|date:"H:i" }}
+              <div class="ap-history-toggle">＋</div>
+            </button>
+
+            <div class="ap-history-detail">
+              <div class="ap-history-detail-inner">
+
+                <div class="ap-history-detail-grid">
+                  <div>
+                    <div class="ap-label">院名</div>
+                    <div class="ap-value">{{ a.clinic.name }}</div>
+                  </div>
+
+                  <div>
+                    <div class="ap-label">メニュー</div>
+                    <div class="ap-value">{{ a.menu }}</div>
+                  </div>
+                </div>
+
+                <div class="ap-history-actions">
+                  {% if a.intake_completed %}
+                    <button type="button"
+                            class="ap-btn ap-btn-soft"
+                            onclick="toggleIntakeDetail('intake-{{ a.id }}', this)">
+                      Web問診を見る
+                    </button>
+                  {% endif %}
+
+                  <a href="{% url 'patients:booking_calendar' %}?rebook_from={{ a.id }}"
+                    class="ap-btn ap-btn-primary">
+                    前回と同じ内容で予約する
+                  </a>
+                </div>
+
+                {% if a.intake_completed %}
+                  <div id="intake-{{ a.id }}" class="ap-intake">
+                    <div class="ap-intake-grid">
+                      <div>
+                        <div class="ap-intake-item-label">問診入力日時</div>
+                        <div class="ap-intake-item-value">{{ a.intake.submitted_at|date:"Y年n月j日 H:i" }}</div>
+                      </div>
+
+                      <div>
+                        <div class="ap-intake-item-label">症状タイプ</div>
+                        <div class="ap-intake-item-value">{{ a.intake_display.symptom_type|default:"-" }}</div>
+                      </div>
+
+                      <div class="ap-intake-item-full">
+                        <div class="ap-intake-item-label">主な症状</div>
+                        <div class="ap-intake-item-value">{{ a.intake_display.chief_complaint|default:"-" }}</div>
+                      </div>
+
+                      <div>
+                        <div class="ap-intake-item-label">いつから</div>
+                        <div class="ap-intake-item-value">{{ a.intake_display.onset|default:"-" }}</div>
+                      </div>
+
+                      <div>
+                        <div class="ap-intake-item-label">痛みの強さ</div>
+                        <div class="ap-intake-item-value">
+                          {% if a.intake_display.severity or a.intake_display.severity == 0 %}
+                            {{ a.intake_display.severity }}/10
+                          {% else %}
+                            -
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      <div class="ap-intake-item-full">
+                        <div class="ap-intake-item-label">症状のきっかけ</div>
+                        <div class="ap-intake-item-value">{{ a.intake_display.trigger|default:"-" }}</div>
+                      </div>
+
+                      <div class="ap-intake-item-full">
+                        <div class="ap-intake-item-label">痛みや違和感のある部位</div>
+                        <div class="ap-intake-item-value">
+                          {% if a.intake_display.areas %}
+                            {{ a.intake_display.areas|join:"、" }}
+                          {% else %}
+                            -
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      <div class="ap-intake-item-full">
+                        <div class="ap-intake-item-label">症状の感じ</div>
+                        <div class="ap-intake-item-value">
+                          {% if a.intake_display.qualities %}
+                            {{ a.intake_display.qualities|join:"、" }}
+                          {% else %}
+                            -
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      <div class="ap-intake-item-full">
+                        <div class="ap-intake-item-label">自由記入</div>
+                        <div class="ap-intake-item-value">{{ a.intake_display.free_text|default:"-" }}</div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+
               </div>
-
-              <div class="history-status">
-                <span class="status-chip">
-                  {{ ap.get_status_display }}
-                </span>
-              </div>
             </div>
-
-            <div class="history-chevron">
-              ＋
-            </div>
-          </button>
-
-          <!-- 開いた時だけ出る -->
-          <div class="history-detail">
-            
-            <div class="history-actions">
-
-              <a
-                href="{% url 'intakes:resume' ap.id %}"
-                class="p-btn p-btn-ghost w-100"
-              >
-                Web問診を見る
-              </a>
-
-              <a
-                href="{% url 'patients:booking_calendar' %}?repeat={{ ap.id }}"
-                class="p-btn p-btn-primary w-100"
-              >
-                前回と同じ内容で予約する
-              </a>
-
-            </div>
-
-          </div>
-
-        </div>
+          </article>
         {% endfor %}
 
       </div>
 
       {% if past_more %}
-        <button class="p-btn p-btn-ghost w-100 mt-3">
-          履歴をもっと見る
-        </button>
-      {% endif %}
+        <div id="past-more-wrap" class="ap-history-more-wrap">
+          <div class="ap-history-list" style="margin-top:12px;">
 
+            {% for a in past_more reversed %}
+              <article class="ap-history-item">
+                <button type="button"
+                        class="ap-history-summary"
+                        onclick="toggleHistoryDetail(this)"
+                        aria-expanded="false">
+                  <div class="ap-history-main">
+                    <div class="ap-history-date">{{ a.start_at|date:"Y年n月j日 (D)" }}</div>
+                    <div class="ap-history-time">{{ a.start_at|date:"H:i" }} - {{ a.end_at|date:"H:i" }}</div>
+
+                    <div class="ap-history-badges">
+                      {% if a.intake_completed %}
+                        <span class="ap-badge ap-badge-intake">問診済み</span>
+                      {% else %}
+                        <span class="ap-badge ap-badge-status">{{ a.get_status_display }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="ap-history-toggle">＋</div>
+                </button>
+
+                <div class="ap-history-detail">
+                  <div class="ap-history-detail-inner">
+
+                    <div class="ap-history-detail-grid">
+                      <div>
+                        <div class="ap-label">院名</div>
+                        <div class="ap-value">{{ a.clinic.name }}</div>
+                      </div>
+
+                      <div>
+                        <div class="ap-label">メニュー</div>
+                        <div class="ap-value">{{ a.menu }}</div>
+                      </div>
+                    </div>
+
+                    <div class="ap-history-actions">
+                      {% if a.intake_completed %}
+                        <button type="button"
+                                class="ap-btn ap-btn-soft"
+                                onclick="toggleIntakeDetail('intake-{{ a.id }}', this)">
+                          Web問診を見る
+                        </button>
+                      {% endif %}
+
+                      <a href="{% url 'patients:booking_calendar' %}?rebook_from={{ a.id }}"
+                        class="ap-btn ap-btn-primary">
+                        前回と同じ内容で予約する
+                      </a>
+                    </div>
+
+                    {% if a.intake_completed %}
+                      <div id="intake-{{ a.id }}" class="ap-intake">
+                        <div class="ap-intake-grid">
+                          <div>
+                            <div class="ap-intake-item-label">問診入力日時</div>
+                            <div class="ap-intake-item-value">{{ a.intake.submitted_at|date:"Y年n月j日 H:i" }}</div>
+                          </div>
+
+                          <div>
+                            <div class="ap-intake-item-label">症状タイプ</div>
+                            <div class="ap-intake-item-value">{{ a.intake_display.symptom_type|default:"-" }}</div>
+                          </div>
+
+                          <div class="ap-intake-item-full">
+                            <div class="ap-intake-item-label">主な症状</div>
+                            <div class="ap-intake-item-value">{{ a.intake_display.chief_complaint|default:"-" }}</div>
+                          </div>
+
+                          <div>
+                            <div class="ap-intake-item-label">いつから</div>
+                            <div class="ap-intake-item-value">{{ a.intake_display.onset|default:"-" }}</div>
+                          </div>
+
+                          <div>
+                            <div class="ap-intake-item-label">痛みの強さ</div>
+                            <div class="ap-intake-item-value">
+                              {% if a.intake_display.severity or a.intake_display.severity == 0 %}
+                                {{ a.intake_display.severity }}/10
+                              {% else %}
+                                -
+                              {% endif %}
+                            </div>
+                          </div>
+
+                          <div class="ap-intake-item-full">
+                            <div class="ap-intake-item-label">症状のきっかけ</div>
+                            <div class="ap-intake-item-value">{{ a.intake_display.trigger|default:"-" }}</div>
+                          </div>
+
+                          <div class="ap-intake-item-full">
+                            <div class="ap-intake-item-label">痛みや違和感のある部位</div>
+                            <div class="ap-intake-item-value">
+                              {% if a.intake_display.areas %}
+                                {{ a.intake_display.areas|join:"、" }}
+                              {% else %}
+                                -
+                              {% endif %}
+                            </div>
+                          </div>
+
+                          <div class="ap-intake-item-full">
+                            <div class="ap-intake-item-label">症状の感じ</div>
+                            <div class="ap-intake-item-value">
+                              {% if a.intake_display.qualities %}
+                                {{ a.intake_display.qualities|join:"、" }}
+                              {% else %}
+                                -
+                              {% endif %}
+                            </div>
+                          </div>
+
+                          <div class="ap-intake-item-full">
+                            <div class="ap-intake-item-label">自由記入</div>
+                            <div class="ap-intake-item-value">{{ a.intake_display.free_text|default:"-" }}</div>
+                          </div>
+                        </div>
+                      </div>
+                    {% endif %}
+
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+
+          </div>
+        </div>
+
+        <div class="ap-history-more">
+          <button id="past-more-btn" class="ap-btn ap-btn-soft" type="button" onclick="togglePastHistory(this)">
+            もっと見る
+          </button>
+        </div>
+      {% endif %}
     {% else %}
-      <p>履歴はありません。</p>
+      <div class="ap-empty">来院履歴はありません</div>
     {% endif %}
   </section>
 
@@ -803,9 +1130,7 @@ font-size:14px;
       btn.textContent = isOpen ? "閉じる" : "もっと見る";
     }
   }
-</script>
 
-<script>
 function toggleHistory(btn){
 
 const item = btn.closest(".history-item");
@@ -822,6 +1147,15 @@ icon.textContent="＋";
 }
 
 }
+
+  function toggleHistoryDetail(btn) {
+    const item = btn.closest(".ap-history-item");
+    if (!item) return;
+
+    const isOpen = item.classList.toggle("is-open");
+    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  }
+
 </script>
 
 {% endblock %}
