@@ -15,22 +15,179 @@
       --line:#e5e7eb;
       --brand:#2563eb;
       --brand2:#1d4ed8;
-      --shadow: 0 12px 30px rgba(15,23,42,.08);
+      --shadow:0 12px 30px rgba(15,23,42,.08);
       --r:18px;
     }
-    body{background:var(--bg); color:var(--text);}
-    .p-nav{background:#fff;border-bottom:1px solid var(--line);}
-    .p-nav .brand{font-weight:900;letter-spacing:.02em;}
-    .p-wrap{max-width:1100px;margin:0 auto;padding:24px 18px;}
 
-    .p-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
-      padding:10px 14px;border-radius:999px;border:1px solid var(--line);
-      background:#fff;color:var(--text);text-decoration:none;font-weight:700;}
-    .p-btn:hover{filter:brightness(.98);}
-    .p-btn-primary{background:linear-gradient(180deg,var(--brand),var(--brand2));color:#fff;border:0;}
-    .p-btn-ghost{background:#fff;}
-    .p-iconbtn{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);
-      display:grid;place-items:center;background:#fff;text-decoration:none;color:var(--text);font-size:20px;font-weight:900;}
+    body{
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .p-wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:24px 18px;
+    }
+
+    .p-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:.4rem;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      text-decoration:none;
+      font-weight:700;
+      min-height:42px;
+      transition:.2s ease;
+    }
+
+    .p-btn:hover{
+      filter:brightness(.98);
+      transform:translateY(-1px);
+    }
+
+    .p-btn-primary{
+      background:linear-gradient(180deg,var(--brand),var(--brand2));
+      color:#fff;
+      border:0;
+    }
+
+    .p-btn-ghost{
+      background:#fff;
+    }
+
+    .p-nav{
+      position:sticky;
+      top:0;
+      z-index:1040;
+      background:rgba(255,255,255,.92);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+
+    .p-nav-inner{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+
+    .p-brand{
+      font-weight:900;
+      font-size:28px;
+      letter-spacing:.02em;
+      color:var(--text);
+      text-decoration:none;
+      white-space:nowrap;
+    }
+
+    .p-brand:hover{
+      color:var(--text);
+    }
+
+    .p-desktop-nav{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .p-user{
+      color:var(--muted);
+      font-size:14px;
+      font-weight:700;
+      margin-right:4px;
+      white-space:nowrap;
+    }
+
+    .p-mobile-toggle{
+      display:none;
+      width:44px;
+      height:44px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      padding:0;
+    }
+
+    .p-mobile-toggle span,
+    .p-mobile-toggle::before,
+    .p-mobile-toggle::after{
+      content:"";
+      display:block;
+      width:18px;
+      height:2px;
+      background:#111827;
+      border-radius:999px;
+      transition:.2s ease;
+      position:relative;
+    }
+
+    .p-mobile-toggle::before{
+      position:absolute;
+      transform:translateY(-6px);
+    }
+
+    .p-mobile-toggle::after{
+      position:absolute;
+      transform:translateY(6px);
+    }
+
+    .p-mobile-menu{
+      display:none;
+      border-top:1px solid var(--line);
+      background:#fff;
+    }
+
+    .p-mobile-menu.is-open{
+      display:block;
+    }
+
+    .p-mobile-menu-inner{
+      max-width:1100px;
+      margin:0 auto;
+      padding:12px 18px 16px;
+      display:grid;
+      gap:10px;
+    }
+
+    .p-mobile-user{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+      padding:2px 2px 6px;
+    }
+
+    .p-mobile-link{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      min-height:46px;
+      padding:0 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      text-decoration:none;
+      font-weight:800;
+    }
+
+    .p-mobile-link-primary{
+      background:linear-gradient(180deg,var(--brand),var(--brand2));
+      color:#fff;
+      border:0;
+    }
 
     .p-page{}
     .p-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;}
@@ -40,17 +197,13 @@
     .p-monthbar{margin-top:18px;display:flex;align-items:center;justify-content:center;gap:14px;}
     .p-month{font-weight:900;font-size:18px;}
 
-    .p-card{margin-top:18px;background:var(--card);border:1px solid var(--line);
-      border-radius:var(--r);box-shadow:var(--shadow);padding:18px;}
-    .p-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;
-      font-weight:900;color:var(--muted);padding:0 6px 10px;}
+    .p-card{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;}
+    .p-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;font-weight:900;color:var(--muted);padding:0 6px 10px;}
     .p-weekdays .sun{color:#ef4444;}
     .p-weekdays .sat{color:#2563eb;}
 
     .p-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
-    .p-cell{min-height:92px;border-radius:16px;border:1px solid var(--line);
-      background:#fff;padding:12px;text-decoration:none;color:inherit;
-      display:flex;flex-direction:column;justify-content:space-between;}
+    .p-cell{min-height:92px;border-radius:16px;border:1px solid var(--line);background:#fff;padding:12px;text-decoration:none;color:inherit;display:flex;flex-direction:column;justify-content:space-between;}
     .p-cell-empty{border:0;background:transparent;}
     .p-cell-disabled{opacity:.45;background:#fafafa;}
     .p-cell-active:hover{border-color:#c7d2fe;box-shadow:0 10px 20px rgba(37,99,235,.10);transform:translateY(-1px);}
@@ -58,248 +211,148 @@
     .p-meta{color:var(--muted);font-weight:800;font-size:13px;}
 
     .p-footerbar{margin-top:16px;display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap;}
-    .wizard { max-width: 980px; margin: 0 auto; padding: 24px 16px; }
-    .wizard__top { display:flex; justify-content:space-between; color:#6b7280; margin-bottom:10px; }
-    .wizard__bar { height: 6px; background:#e5e7eb; border-radius: 999px; overflow:hidden; }
-    .wizard__barfill { height:100%; background:#111827; }
-    .wizard__card { margin-top: 20px; padding: 36px 28px; border:1px solid #e5e7eb; border-radius: 14px; background:#fff; }
-    .wizard__title { font-size: 26px; margin: 0 0 18px; }
-    .field { margin: 18px 0; }
-    .field__label { display:block; margin-bottom: 8px; color:#374151; }
-    .req { color:#ef4444; margin-left:6px; }
-    .field__error { color:#ef4444; margin-top:8px; font-size: 13px; }
-    .wizard__actions { display:flex; gap:14px; margin-top: 26px; }
-    .btn { padding: 12px 18px; border-radius: 12px; border:1px solid #d1d5db; background:#fff; cursor:pointer; }
-    .btn--ghost { background:#fff; }
-    .btn--primary { flex:1; background:#6b7280; color:#fff; border-color:#6b7280; }
-    .profile-grid .row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f3f4f6; }
-.done-wrapper {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
 
-.done-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 40px;
-  border: 1px solid #e5e7eb;
-  text-align: center;
-}
-
-.done-icon {
-  width: 70px;
-  height: 70px;
-  margin: 0 auto 20px;
-  background: #10b981;
-  color: #ffffff;
-  font-size: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.done-title {
-  font-size: 24px;
-  margin-bottom: 10px;
-}
-
-.done-sub {
-  color: #6b7280;
-  margin-bottom: 30px;
-}
-
-.done-reservation,
-.done-info {
-  text-align: left;
-  margin-top: 30px;
-}
-
-.done-reservation .row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.done-actions {
-  display: flex;
-  gap: 16px;
-  margin-top: 40px;
-  justify-content: center;
-}
-
-.btn {
-  padding: 12px 18px;
-  border-radius: 10px;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.btn-outline {
-  border: 1px solid #6b7280;
-  color: #374151;
-}
-
-.btn-primary {
-  background: #6b7280;
-  color: #ffffff;
-}
-
-.p-nav .p-btn{
-  min-height: 40px;
-  padding: 8px 14px;
-  font-size: 14px;
-}
-
-.p-nav .brand{
-  font-weight: 900;
-  letter-spacing: .02em;
-}
-
-  .session-timeout-modal{
-    display:none;
-  }
-
-  .session-timeout-modal.is-open{
-    display:block;
-  }
-
-  .session-timeout-backdrop{
-    position:fixed;
-    inset:0;
-    background:rgba(15, 23, 42, 0.45);
-    z-index:9998;
-  }
-
-  .session-timeout-dialog{
-    position:fixed;
-    left:50%;
-    top:50%;
-    transform:translate(-50%, -50%);
-    width:min(92vw, 420px);
-    background:#fff;
-    border-radius:20px;
-    padding:20px;
-    box-shadow:0 20px 50px rgba(0,0,0,.18);
-    z-index:9999;
-  }
-
-  .session-timeout-title{
-    margin:0;
-    font-size:22px;
-    font-weight:900;
-    color:#101935;
-  }
-
-  .session-timeout-text{
-    margin:12px 0 0;
-    font-size:14px;
-    line-height:1.8;
-    color:#64748b;
-  }
-
-  .session-timeout-actions{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-top:18px;
-  }
-
-  .session-btn{
-    min-height:46px;
-    border-radius:14px;
-    border:1px solid rgba(16,25,53,.12);
-    background:#fff;
-    color:#111a3a;
-    font-size:14px;
-    font-weight:800;
-    cursor:pointer;
-  }
-
-  .session-btn-primary{
-    background:linear-gradient(135deg, #2563eb, #1d4ed8);
-    color:#fff;
-    border-color:transparent;
-  }
-
-  .session-btn-ghost{
-    background:#fff;
-  }
-
-  @media (max-width: 640px){
+    .session-timeout-modal{display:none;}
+    .session-timeout-modal.is-open{display:block;}
+    .session-timeout-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.45);
+      z-index:9998;
+    }
     .session-timeout-dialog{
-      padding:16px;
-      border-radius:18px;
+      position:fixed;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      width:min(92vw,420px);
+      background:#fff;
+      border-radius:20px;
+      padding:20px;
+      box-shadow:0 20px 50px rgba(0,0,0,.18);
+      z-index:9999;
     }
-
     .session-timeout-title{
-      font-size:20px;
+      margin:0;
+      font-size:22px;
+      font-weight:900;
+      color:#101935;
     }
-
+    .session-timeout-text{
+      margin:12px 0 0;
+      font-size:14px;
+      line-height:1.8;
+      color:#64748b;
+    }
     .session-timeout-actions{
-      grid-template-columns:1fr;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:18px;
     }
-  }
+    .session-btn{
+      min-height:46px;
+      border-radius:14px;
+      border:1px solid rgba(16,25,53,.12);
+      background:#fff;
+      color:#111a3a;
+      font-size:14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .session-btn-primary{
+      background:linear-gradient(135deg,#2563eb,#1d4ed8);
+      color:#fff;
+      border-color:transparent;
+    }
 
+    @media (max-width: 768px){
+      .p-wrap{
+        padding:18px 12px 28px;
+      }
+
+      .p-nav-inner{
+        padding:12px;
+      }
+
+      .p-brand{
+        font-size:20px;
+      }
+
+      .p-desktop-nav{
+        display:none;
+      }
+
+      .p-mobile-toggle{
+        display:inline-flex;
+        position:relative;
+      }
+    }
+
+    @media (max-width: 640px){
+      .session-timeout-dialog{
+        padding:16px;
+        border-radius:18px;
+      }
+
+      .session-timeout-title{
+        font-size:20px;
+      }
+
+      .session-timeout-actions{
+        grid-template-columns:1fr;
+      }
+    }
   </style>
 </head>
 
 <body>
   <nav class="p-nav">
-    <div class="container py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
-      <a href="{% url 'patients:dashboard' %}" class="brand text-decoration-none text-dark">
-        接骨院 予約
-      </a>
+    <div class="p-nav-inner">
+      <a href="{% url 'patients:dashboard' %}" class="p-brand">接骨院 予約</a>
 
-      <div class="d-flex align-items-center gap-2 flex-wrap">
-        {% if user.is_authenticated %}
-          <div class="text-secondary small me-2">
-            {{ user.username }}
-          </div>
+      {% if user.is_authenticated %}
+        <div class="p-desktop-nav">
+          <div class="p-user">{{ user.username }}</div>
+          <a href="{% url 'patients:dashboard' %}" class="p-btn p-btn-ghost">ホーム</a>
+          <a href="{% url 'patients:my_appointments' %}" class="p-btn p-btn-ghost">予約</a>
+          <a href="{% url 'patients:profile' %}" class="p-btn p-btn-ghost">登録情報</a>
+          <a href="{% url 'patients:logout' %}" class="p-btn p-btn-primary">ログアウト</a>
+          {% block nav_right %}{% endblock %}
+        </div>
 
-          <a href="{% url 'patients:dashboard' %}" class="p-btn p-btn-ghost">
-            ホーム
-          </a>
-
-          <a href="{% url 'patients:my_appointments' %}" class="p-btn p-btn-ghost">
-            予約一覧
-          </a>
-
-          <a href="{% url 'patients:logout' %}" class="p-btn p-btn-primary">
-            ログアウト
-          </a>
-        {% endif %}
-
-        {% block nav_right %}{% endblock %}
-      </div>
+        <button type="button" class="p-mobile-toggle" id="p-mobile-toggle" aria-label="メニューを開く"></button>
+      {% endif %}
     </div>
+
+    {% if user.is_authenticated %}
+      <div class="p-mobile-menu" id="p-mobile-menu">
+        <div class="p-mobile-menu-inner">
+          <div class="p-mobile-user">{{ user.username }}</div>
+          <a href="{% url 'patients:dashboard' %}" class="p-mobile-link">ホーム</a>
+          <a href="{% url 'patients:my_appointments' %}" class="p-mobile-link">予約</a>
+          <a href="{% url 'patients:profile' %}" class="p-mobile-link">登録情報</a>
+          <a href="{% url 'patients:logout' %}" class="p-mobile-link p-mobile-link-primary">ログアウト</a>
+          {% block nav_right_mobile %}{% endblock %}
+        </div>
+      </div>
+    {% endif %}
   </nav>
 
-<div id="session-timeout-modal" class="session-timeout-modal">
-  <div class="session-timeout-backdrop"></div>
-
-  <div class="session-timeout-dialog" role="dialog" aria-modal="true" aria-labelledby="session-timeout-title">
-    <h2 id="session-timeout-title" class="session-timeout-title">
-      まもなくログアウトします
-    </h2>
-
-    <p class="session-timeout-text">
-      しばらく操作がなかったため、セキュリティ保護のため自動的にログアウトします。<br>
-      引き続き利用する場合は「継続する」を押してください。
-    </p>
-
-    <div class="session-timeout-actions">
-      <button type="button" id="session-continue-btn" class="session-btn session-btn-primary">
-        継続する
-      </button>
-      <button type="button" id="session-logout-btn" class="session-btn session-btn-ghost">
-        ログアウトする
-      </button>
+  <div id="session-timeout-modal" class="session-timeout-modal">
+    <div class="session-timeout-backdrop"></div>
+    <div class="session-timeout-dialog" role="dialog" aria-modal="true" aria-labelledby="session-timeout-title">
+      <h2 id="session-timeout-title" class="session-timeout-title">まもなくログアウトします</h2>
+      <p class="session-timeout-text">
+        しばらく操作がなかったため、セキュリティ保護のため自動的にログアウトします。<br>
+        引き続き利用する場合は「継続する」を押してください。
+      </p>
+      <div class="session-timeout-actions">
+        <button type="button" id="session-continue-btn" class="session-btn session-btn-primary">継続する</button>
+        <button type="button" id="session-logout-btn" class="session-btn">ログアウトする</button>
+      </div>
     </div>
   </div>
-</div>
 
   <main class="p-wrap">
     {% if messages %}
@@ -312,90 +365,89 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-(function () {
-  const WARNING_AFTER_MS = 25 * 60 * 1000;   // 25分
-  const LOGOUT_AFTER_MS  = 30 * 60 * 1000;   // 30分
+  <script>
+  (function () {
+    const mobileToggle = document.getElementById("p-mobile-toggle");
+    const mobileMenu = document.getElementById("p-mobile-menu");
 
-  let warningTimer = null;
-  let logoutTimer = null;
-
-  function clearTimers() {
-    if (warningTimer) clearTimeout(warningTimer);
-    if (logoutTimer) clearTimeout(logoutTimer);
-  }
-
-  function showSessionWarning() {
-    const modal = document.getElementById("session-timeout-modal");
-    if (modal) {
-      modal.classList.add("is-open");
+    if (mobileToggle && mobileMenu) {
+      mobileToggle.addEventListener("click", function () {
+        mobileMenu.classList.toggle("is-open");
+      });
     }
-  }
+  })();
+  </script>
 
-  function hideSessionWarning() {
-    const modal = document.getElementById("session-timeout-modal");
-    if (modal) {
-      modal.classList.remove("is-open");
+  <script>
+  (function () {
+    const WARNING_AFTER_MS = 25 * 60 * 1000;
+    const LOGOUT_AFTER_MS  = 30 * 60 * 1000;
+
+    let warningTimer = null;
+    let logoutTimer = null;
+
+    function clearTimers() {
+      if (warningTimer) clearTimeout(warningTimer);
+      if (logoutTimer) clearTimeout(logoutTimer);
     }
-  }
 
-  function forceLogout() {
-    window.location.href = "{% url 'patients:logout' %}";
-  }
+    function showSessionWarning() {
+      const modal = document.getElementById("session-timeout-modal");
+      if (modal) modal.classList.add("is-open");
+    }
 
-  function resetInactivityTimers() {
-    clearTimers();
-    hideSessionWarning();
+    function hideSessionWarning() {
+      const modal = document.getElementById("session-timeout-modal");
+      if (modal) modal.classList.remove("is-open");
+    }
 
-    warningTimer = setTimeout(showSessionWarning, WARNING_AFTER_MS);
-    logoutTimer = setTimeout(forceLogout, LOGOUT_AFTER_MS);
-  }
+    function forceLogout() {
+      window.location.href = "{% url 'patients:logout' %}";
+    }
 
-  function continueSession() {
-    fetch("{% url 'patients:session_ping' %}", {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken"),
-        "X-Requested-With": "XMLHttpRequest"
-      },
-      credentials: "same-origin"
-    })
-    .then(() => {
-      resetInactivityTimers();
-    })
-    .catch(() => {
-      forceLogout();
-    });
-  }
+    function resetInactivityTimers() {
+      clearTimers();
+      hideSessionWarning();
+      warningTimer = setTimeout(showSessionWarning, WARNING_AFTER_MS);
+      logoutTimer = setTimeout(forceLogout, LOGOUT_AFTER_MS);
+    }
 
-  function getCookie(name) {
-    const cookies = document.cookie ? document.cookie.split(";") : [];
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.startsWith(name + "=")) {
-        return decodeURIComponent(cookie.substring(name.length + 1));
+    function continueSession() {
+      fetch("{% url 'patients:session_ping' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        credentials: "same-origin"
+      })
+      .then(() => resetInactivityTimers())
+      .catch(() => forceLogout());
+    }
+
+    function getCookie(name) {
+      const cookies = document.cookie ? document.cookie.split(";") : [];
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name + "=")) {
+          return decodeURIComponent(cookie.substring(name.length + 1));
+        }
       }
+      return "";
     }
-    return "";
-  }
 
-  ["click", "keydown", "touchstart", "scroll"].forEach(eventName => {
-    window.addEventListener(eventName, resetInactivityTimers, { passive: true });
-  });
+    ["click", "keydown", "touchstart", "scroll"].forEach(eventName => {
+      window.addEventListener(eventName, resetInactivityTimers, { passive: true });
+    });
 
-  const continueBtn = document.getElementById("session-continue-btn");
-  if (continueBtn) {
-    continueBtn.addEventListener("click", continueSession);
-  }
+    const continueBtn = document.getElementById("session-continue-btn");
+    if (continueBtn) continueBtn.addEventListener("click", continueSession);
 
-  const logoutBtn = document.getElementById("session-logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", forceLogout);
-  }
+    const logoutBtn = document.getElementById("session-logout-btn");
+    if (logoutBtn) logoutBtn.addEventListener("click", forceLogout);
 
-  resetInactivityTimers();
-})();
-</script>
-
+    resetInactivityTimers();
+  })();
+  </script>
 </body>
 </html>
