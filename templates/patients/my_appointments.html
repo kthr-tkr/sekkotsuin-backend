@@ -695,6 +695,22 @@ font-size:14px;
   }
 }
 
+.ap-reservation-modal-grid{
+  margin-top:14px;
+  display:grid;
+  gap:12px;
+}
+
+.ap-reservation-modal-row{
+  padding:12px 0;
+  border-bottom:1px solid rgba(16,25,53,.06);
+}
+
+.ap-reservation-modal-row:last-child{
+  border-bottom:none;
+  padding-bottom:0;
+}
+
 </style>
 
 <div class="ap-page">
@@ -749,24 +765,48 @@ font-size:14px;
             <button type="button" class="ap-btn ap-btn-soft" onclick="toggleIntakeDetail('intake-{{ next_appointment.id }}', this)">
               Web問診を見る
             </button>
-            <a href="{% url 'patients:my_appointments' %}" class="ap-btn ap-btn-primary">
+            <button type="button"
+                    class="ap-btn ap-btn-primary"
+                    onclick="openReservationModal(this)"
+                    data-date="{{ next_appointment.start_at|date:'Y年n月j日 (D)' }}"
+                    data-time="{{ next_appointment.start_at|date:'H:i' }} - {{ next_appointment.end_at|date:'H:i' }}"
+                    data-clinic="{{ next_appointment.clinic.name }}"
+                    data-menu="{{ next_appointment.menu }}"
+                    data-staff="{% if next_appointment.assigned_staff %}{{ next_appointment.assigned_staff.get_full_name|default:next_appointment.assigned_staff.username }}{% else %}未定{% endif %}"
+                    data-status="{% if next_appointment.show_resume_intake %}問診待ち{% elif next_appointment.intake_completed %}問診済み{% else %}{{ next_appointment.get_status_display }}{% endif %}">
               予約内容を見る
-            </a>
+            </button>
           </div>
         {% elif next_appointment.show_resume_intake %}
           <div class="ap-actions">
             <a href="{% url 'intakes:intake_start' next_appointment.id %}" class="ap-btn ap-btn-warning">
               Web問診を続ける
             </a>
-            <a href="{% url 'patients:my_appointments' %}" class="ap-btn ap-btn-primary">
+            <button type="button"
+                    class="ap-btn ap-btn-primary"
+                    onclick="openReservationModal(this)"
+                    data-date="{{ next_appointment.start_at|date:'Y年n月j日 (D)' }}"
+                    data-time="{{ next_appointment.start_at|date:'H:i' }} - {{ next_appointment.end_at|date:'H:i' }}"
+                    data-clinic="{{ next_appointment.clinic.name }}"
+                    data-menu="{{ next_appointment.menu }}"
+                    data-staff="{% if next_appointment.assigned_staff %}{{ next_appointment.assigned_staff.get_full_name|default:next_appointment.assigned_staff.username }}{% else %}未定{% endif %}"
+                    data-status="{% if next_appointment.show_resume_intake %}問診待ち{% elif next_appointment.intake_completed %}問診済み{% else %}{{ next_appointment.get_status_display }}{% endif %}">
               予約内容を見る
-            </a>
+            </button>
           </div>
         {% else %}
           <div class="ap-actions">
-            <a href="{% url 'patients:my_appointments' %}" class="ap-btn ap-btn-primary">
+            <button type="button"
+                    class="ap-btn ap-btn-primary"
+                    onclick="openReservationModal(this)"
+                    data-date="{{ next_appointment.start_at|date:'Y年n月j日 (D)' }}"
+                    data-time="{{ next_appointment.start_at|date:'H:i' }} - {{ next_appointment.end_at|date:'H:i' }}"
+                    data-clinic="{{ next_appointment.clinic.name }}"
+                    data-menu="{{ next_appointment.menu }}"
+                    data-staff="{% if next_appointment.assigned_staff %}{{ next_appointment.assigned_staff.get_full_name|default:next_appointment.assigned_staff.username }}{% else %}未定{% endif %}"
+                    data-status="{% if next_appointment.show_resume_intake %}問診待ち{% elif next_appointment.intake_completed %}問診済み{% else %}{{ next_appointment.get_status_display }}{% endif %}">
               予約内容を見る
-            </a>
+            </button>
             <a href="{% url 'patients:booking_calendar' %}" class="ap-btn">
               予約を取る / 変更する
             </a>
@@ -895,7 +935,17 @@ font-size:14px;
             {% elif a.intake_completed %}
               <button type="button" class="ap-btn ap-btn-soft" onclick="toggleIntakeDetail('intake-{{ a.id }}', this)">Web問診を見る</button>
             {% else %}
-              <a href="{% url 'patients:my_appointments' %}" class="ap-btn ap-btn-soft">予約内容を見る</a>
+              <button type="button"
+                      class="ap-btn ap-btn-soft"
+                      onclick="openReservationModal(this)"
+                      data-date="{{ a.start_at|date:'Y年n月j日 (D)' }}"
+                      data-time="{{ a.start_at|date:'H:i' }} - {{ a.end_at|date:'H:i' }}"
+                      data-clinic="{{ a.clinic.name }}"
+                      data-menu="{{ a.menu }}"
+                      data-staff="{% if a.assigned_staff %}{{ a.assigned_staff.get_full_name|default:a.assigned_staff.username }}{% else %}未定{% endif %}"
+                      data-status="{% if a.show_resume_intake %}問診待ち{% elif a.intake_completed %}問診済み{% else %}{{ a.get_status_display }}{% endif %}">
+                予約内容を見る
+              </button>
             {% endif %}
 
             {% if a.status == "pending" or a.status == "booked" %}
@@ -1301,6 +1351,52 @@ font-size:14px;
   </div>
 </div>
 
+<div id="reservation-modal" class="ap-modal" aria-hidden="true">
+  <div class="ap-modal-backdrop" onclick="closeReservationModal()"></div>
+
+  <div class="ap-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="reservation-modal-title">
+    <h3 id="reservation-modal-title" class="ap-modal-title">予約内容</h3>
+
+    <div class="ap-reservation-modal-grid">
+      <div class="ap-reservation-modal-row">
+        <div class="ap-label">日時</div>
+        <div class="ap-value" id="reservation-modal-date"></div>
+      </div>
+
+      <div class="ap-reservation-modal-row">
+        <div class="ap-label">時間</div>
+        <div class="ap-value" id="reservation-modal-time"></div>
+      </div>
+
+      <div class="ap-reservation-modal-row">
+        <div class="ap-label">院名</div>
+        <div class="ap-value" id="reservation-modal-clinic"></div>
+      </div>
+
+      <div class="ap-reservation-modal-row">
+        <div class="ap-label">メニュー</div>
+        <div class="ap-value" id="reservation-modal-menu"></div>
+      </div>
+
+      <div class="ap-reservation-modal-row">
+        <div class="ap-label">施術者</div>
+        <div class="ap-value" id="reservation-modal-staff"></div>
+      </div>
+
+      <div class="ap-reservation-modal-row">
+        <div class="ap-label">状態</div>
+        <div class="ap-value" id="reservation-modal-status"></div>
+      </div>
+    </div>
+
+    <div class="ap-modal-actions">
+      <button type="button" class="ap-btn ap-btn-soft" onclick="closeReservationModal()">
+        閉じる
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
   function toggleIntakeDetail(id, btn) {
     const el = document.getElementById(id);
@@ -1354,7 +1450,7 @@ icon.textContent="＋";
   }
 
 </script>
-
+    /* 予約キャンセルモーダル */
 <script>
   let currentCancelForm = null;
 
@@ -1391,6 +1487,37 @@ icon.textContent="＋";
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
       closeCancelModal();
+    }
+  });
+</script>
+    /* 予約確認モーダル */
+<script>
+  function openReservationModal(btn) {
+    const modal = document.getElementById("reservation-modal");
+    if (!modal) return;
+
+    document.getElementById("reservation-modal-date").textContent = btn.dataset.date || "-";
+    document.getElementById("reservation-modal-time").textContent = btn.dataset.time || "-";
+    document.getElementById("reservation-modal-clinic").textContent = btn.dataset.clinic || "-";
+    document.getElementById("reservation-modal-menu").textContent = btn.dataset.menu || "-";
+    document.getElementById("reservation-modal-staff").textContent = btn.dataset.staff || "-";
+    document.getElementById("reservation-modal-status").textContent = btn.dataset.status || "-";
+
+    modal.classList.add("is-open");
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeReservationModal() {
+    const modal = document.getElementById("reservation-modal");
+    if (!modal) return;
+
+    modal.classList.remove("is-open");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      closeReservationModal();
     }
   });
 </script>
