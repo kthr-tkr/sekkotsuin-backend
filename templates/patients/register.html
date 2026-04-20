@@ -344,12 +344,6 @@
 
           <div class="grid2">
             <div class="field">
-              <label for="id_username">ログインID</label>
-              {{ form.username }}
-              <div class="hint">英数字で入力してください</div>
-              {% if form.username.errors %}<div class="error">{{ form.username.errors|striptags }}</div>{% endif %}
-            </div>
-            <div class="field">
               <label for="id_password">パスワード</label>
               {{ form.password }}
               <div class="hint">8文字以上推奨</div>

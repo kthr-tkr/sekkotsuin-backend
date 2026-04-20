@@ -23,7 +23,6 @@ BASE_ATTRS = {"class": "", "autocomplete": "off"}  # class は未使用でもOK
 
 
 class PatientRegisterForm(forms.Form):
-    username = forms.CharField(label="ログインID", max_length=150)
     password = forms.CharField(label="パスワード", widget=forms.PasswordInput)
     email = forms.EmailField(label="メールアドレス")
 
@@ -38,9 +37,6 @@ class PatientRegisterForm(forms.Form):
     )
     phone = forms.CharField(label="電話番号", max_length=20)
     address = forms.CharField(label="住所", max_length=255, required=False)
-
-    def clean_username(self):
-        return (self.cleaned_data["username"] or "").strip()
 
     def clean_email(self):
         email = (self.cleaned_data["email"] or "").strip().lower()

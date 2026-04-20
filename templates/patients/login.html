@@ -179,9 +179,9 @@
         <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
 
         <div class="field">
-          <label for="login_id">ログインID（ユーザー名 または 診察券番号）</label>
-          <input id="login_id" name="login_id" type="text" placeholder="例: taro / P000123" required>
-          <div class="hint">ユーザー名か診察券番号のどちらでもログインできます</div>
+          <label for="login_id">メールアドレス または 診察券番号</label>
+          <input id="login_id" name="login_id" type="text" placeholder="例: example@example.com / P000123" required>
+          <div class="hint">ご登録のメールアドレス、または診察券番号でログインできます</div>
         </div>
 
         <div class="field">

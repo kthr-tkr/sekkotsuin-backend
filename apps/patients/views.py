@@ -1,8 +1,8 @@
 # apps/patients/views.py
-# apps/patients/views.py
 import calendar
 import logging
 import re
+import uuid
 from calendar import monthrange
 from datetime import date, datetime, time, timedelta
 
@@ -202,36 +202,61 @@ def _count_free_slots_for_staff(clinic, staff, day: date) -> int:
 def patient_login_view(request):
     if request.user.is_authenticated:
         if request.user.is_staff or request.user.is_superuser:
-            messages.info(request, "現在スタッフでログイン中です。患者アカウントで利用する場合は一度ログアウトしてください。")
+            messages.info(
+                request,
+                "現在スタッフでログイン中です。患者アカウントで利用する場合は一度ログアウトしてください。"
+            )
             return redirect("/")
         return redirect("patients:dashboard")
 
     if request.method == "POST":
-        login_id = request.POST.get("login_id", "").strip()
-        password = request.POST.get("password", "").strip()
+        login_id = (request.POST.get("login_id") or "").strip()
+        password = request.POST.get("password") or ""
 
-        # 1) username として認証
-        user = authenticate(request, username=login_id, password=password)
+        user = None
 
-        # 2) ダメなら診察券番号として探す → その user で認証
+        # 1) メールアドレスで探す
+        if "@" in login_id:
+            user = (
+                User.objects
+                .filter(
+                    email__iexact=login_id,
+                    is_active=True,
+                    groups__name="patient",
+                )
+                .distinct()
+                .first()
+            )
+        else:
+            # 2) 診察券番号で探す
+            patient = (
+                Patient.objects
+                .filter(card_no=login_id)
+                .select_related("user")
+                .first()
+            )
+            if patient and patient.user and patient.user.is_active:
+                user = patient.user
+
         if user is None:
-            patient = Patient.objects.filter(card_no=login_id).select_related("user").first()
-            if patient and patient.user:
-                user = authenticate(request, username=patient.user.username, password=password)
-
-        if user is None:
-            messages.error(request, "ログインIDまたはパスワードが正しくありません。")
+            messages.error(request, "メールアドレスまたは診察券番号、もしくはパスワードが正しくありません。")
             return render(request, "patients/login.html")
 
-        # patientグループ制限（必要なら）
-        if not user.groups.filter(name="patient").exists():
+        # 実際の認証は内部 username で行う
+        auth_user = authenticate(request, username=user.username, password=password)
+
+        if auth_user is None:
+            messages.error(request, "メールアドレスまたは診察券番号、もしくはパスワードが正しくありません。")
+            return render(request, "patients/login.html")
+
+        # 念のため patient グループ確認
+        if not auth_user.groups.filter(name="patient").exists():
             messages.error(request, "患者用アカウントではありません。")
             return render(request, "patients/login.html")
 
-        login(request, user)
+        login(request, auth_user)
 
         next_url = request.POST.get("next") or request.GET.get("next")
-
         if next_url:
             return redirect(next_url)
 
@@ -334,18 +359,15 @@ def patient_register_view(request):
             messages.error(request, "入力内容を確認してください。")
             return render(request, "patients/register.html", {"form": form})
 
-        username = form.cleaned_data["username"].strip()
         password = form.cleaned_data["password"]
-
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "このログインIDは既に使用されています。別のIDにしてください。")
-            return render(request, "patients/register.html", {"form": form})
+        email = form.cleaned_data["email"]
+        username = generate_patient_username()
 
         try:
             with transaction.atomic():
                 user = User.objects.create_user(
                     username=username,
-                    email=form.cleaned_data["email"],
+                    email=email,
                     password=password,
                     role=User.Role.PATIENT,
                     clinic=clinic,
@@ -382,8 +404,8 @@ def patient_register_view(request):
 
         except IntegrityError:
             logger.warning(
-                "Patient registration failed due to IntegrityError. username=%s clinic_id=%s",
-                username,
+                "Patient registration failed due to IntegrityError. email=%s clinic_id=%s",
+                email,
                 clinic.id,
             )
             messages.error(request, "登録に失敗しました。時間をおいてもう一度お試しください。")
@@ -391,8 +413,8 @@ def patient_register_view(request):
 
         except Exception:
             logger.exception(
-                "Unexpected error in patient_register_view. username=%s clinic_id=%s",
-                username,
+                "Unexpected error in patient_register_view. email=%s clinic_id=%s",
+                email,
                 clinic.id,
             )
             messages.error(request, "登録処理でエラーが発生しました。時間をおいてもう一度お試しください。")
@@ -415,7 +437,6 @@ def patient_register_view(request):
         return redirect("patients:register_complete")
 
     return render(request, "patients/register.html", {"form": form})
-
 def generate_card_no():
     """
     P000001 のような形式で採番する
@@ -437,7 +458,16 @@ def generate_card_no():
     num = int(m.group(1)) + 1
     return f"P{num:06d}"
 
-
+def generate_patient_username() -> str:
+    """
+    患者用の内部 username を自動生成する。
+    患者には見せない前提。
+    """
+    for _ in range(20):
+        username = f"p_{uuid.uuid4().hex[:12]}"
+        if not User.objects.filter(username=username).exists():
+            return username
+    raise RuntimeError("一意な username を生成できませんでした。")
 
 # ========= Booking =========
 
