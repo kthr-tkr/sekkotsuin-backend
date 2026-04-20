@@ -1,6 +1,10 @@
 # apps/patients/urls.py
 from django.urls import path
 from . import views
+from django.contrib.auth import views as auth_views
+from django.urls import reverse_lazy
+
+from .forms import PatientPasswordResetForm, PatientSetPasswordForm
 
 app_name = "patients"
 
@@ -27,4 +31,38 @@ urlpatterns = [
     path("staff-booking/<int:patient_id>/<str:ymd>/", views.staff_booking_day_view, name="staff_booking_day"),
     path("staff-booking/<int:patient_id>/confirm/", views.staff_booking_confirm_view, name="staff_booking_confirm"),
 
+    path(
+        "password-reset/",
+        auth_views.PasswordResetView.as_view(
+            template_name="patients/auth/password_reset_form.html",
+            email_template_name="patients/auth/password_reset_email.txt",
+            subject_template_name="patients/auth/password_reset_subject.txt",
+            success_url=reverse_lazy("patients:password_reset_done"),
+            form_class=PatientPasswordResetForm,
+        ),
+        name="password_reset",
+    ),
+    path(
+        "password-reset/done/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="patients/auth/password_reset_done.html",
+        ),
+        name="password_reset_done",
+    ),
+    path(
+        "reset/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name="patients/auth/password_reset_confirm.html",
+            success_url=reverse_lazy("patients:password_reset_complete"),
+            form_class=PatientSetPasswordForm,
+        ),
+        name="password_reset_confirm",
+    ),
+    path(
+        "reset/done/",
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name="patients/auth/password_reset_complete.html",
+        ),
+        name="password_reset_complete",
+    ),
 ]

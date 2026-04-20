@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from apps.clinics.models import Clinic
 from .models import Patient
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 
 User = get_user_model()
 
@@ -178,3 +179,39 @@ class PatientProfileForm(forms.ModelForm):
                 patient.user.save(update_fields=["email"])
 
         return patient
+
+
+class PatientPasswordResetForm(PasswordResetForm):
+    email = forms.EmailField(
+        label="メールアドレス",
+        widget=forms.EmailInput(attrs={
+            "class": "auth-input",
+            "placeholder": "ご登録のメールアドレス",
+            "autocomplete": "email",
+        }),
+    )
+
+    def clean_email(self):
+        email = (self.cleaned_data["email"] or "").strip().lower()
+        return email
+
+
+class PatientSetPasswordForm(SetPasswordForm):
+    new_password1 = forms.CharField(
+        label="新しいパスワード",
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            "class": "auth-input",
+            "placeholder": "新しいパスワード",
+            "autocomplete": "new-password",
+        }),
+    )
+    new_password2 = forms.CharField(
+        label="新しいパスワード（確認）",
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            "class": "auth-input",
+            "placeholder": "もう一度入力してください",
+            "autocomplete": "new-password",
+        }),
+    )
