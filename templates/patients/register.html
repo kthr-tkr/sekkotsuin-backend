@@ -324,6 +324,13 @@
           </div>
 
           <div class="field">
+            <label for="id_email">メールアドレス</label>
+            {{ form.email }}
+            <div class="hint">パスワード再設定やご案内メールの送信先になります</div>
+            {% if form.email.errors %}<div class="error">{{ form.email.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="field">
             <label for="id_address">住所（任意）</label>
             {{ form.address }}
             {% if form.address.errors %}<div class="error">{{ form.address.errors|striptags }}</div>{% endif %}

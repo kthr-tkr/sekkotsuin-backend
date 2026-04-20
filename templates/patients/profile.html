@@ -266,6 +266,14 @@
         </div>
 
         <div class="profile-field">
+          <label class="profile-label">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% if form.email.errors %}
+            <div class="profile-error">{{ form.email.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="profile-field">
           <label class="profile-label">{{ form.birth_date.label }}</label>
           {{ form.birth_date }}
           {% if form.birth_date.errors %}

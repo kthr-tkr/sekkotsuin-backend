@@ -345,6 +345,7 @@ def patient_register_view(request):
             with transaction.atomic():
                 user = User.objects.create_user(
                     username=username,
+                    email=form.cleaned_data["email"],
                     password=password,
                     role=User.Role.PATIENT,
                     clinic=clinic,
