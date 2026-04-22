@@ -314,10 +314,11 @@
       {% if user.is_authenticated %}
         <div class="p-desktop-nav">
           <div class="p-user">{{ user.username }}</div>
-          <a href="{% url 'patients:dashboard' %}" class="p-btn p-btn-ghost">ホーム</a>
-          <a href="{% url 'patients:my_appointments' %}" class="p-btn p-btn-ghost">予約</a>
-          <a href="{% url 'patients:profile' %}" class="p-btn p-btn-ghost">登録情報</a>
-          <a href="{% url 'patients:logout' %}" class="p-btn p-btn-primary">ログアウト</a>
+            <a href="{% url 'patients:dashboard' %}" class="p-btn p-btn-ghost">ホーム</a>
+            <a href="{% url 'patients:my_appointments' %}" class="p-btn p-btn-ghost">予約</a>
+            <a href="{% url 'patients:profile' %}" class="p-btn p-btn-ghost">登録情報</a>
+            <a href="{% url 'patients:inquiry' %}" class="p-btn p-btn-ghost">お問い合わせ</a>
+            <a href="{% url 'patients:logout' %}" class="p-btn p-btn-primary">ログアウト</a>
           {% block nav_right %}{% endblock %}
         </div>
 
@@ -329,10 +330,11 @@
       <div class="p-mobile-menu" id="p-mobile-menu">
         <div class="p-mobile-menu-inner">
           <div class="p-mobile-user">{{ user.username }}</div>
-          <a href="{% url 'patients:dashboard' %}" class="p-mobile-link">ホーム</a>
-          <a href="{% url 'patients:my_appointments' %}" class="p-mobile-link">予約</a>
-          <a href="{% url 'patients:profile' %}" class="p-mobile-link">登録情報</a>
-          <a href="{% url 'patients:logout' %}" class="p-mobile-link p-mobile-link-primary">ログアウト</a>
+            <a href="{% url 'patients:dashboard' %}" class="p-mobile-link">ホーム</a>
+            <a href="{% url 'patients:my_appointments' %}" class="p-mobile-link">予約</a>
+            <a href="{% url 'patients:profile' %}" class="p-mobile-link">登録情報</a>
+            <a href="{% url 'patients:inquiry' %}" class="p-mobile-link">お問い合わせ</a>
+            <a href="{% url 'patients:logout' %}" class="p-mobile-link p-mobile-link-primary">ログアウト</a>
           {% block nav_right_mobile %}{% endblock %}
         </div>
       </div>

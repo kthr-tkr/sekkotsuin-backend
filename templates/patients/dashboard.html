@@ -191,7 +191,7 @@
 
   .quick-grid{
     display:grid;
-    grid-template-columns:repeat(3, minmax(0,1fr));
+    grid-template-columns:repeat(auto-fit, minmax(160px,1fr));
     gap:10px;
   }
 
@@ -469,6 +469,12 @@
           <div class="quick-icon">👤</div>
           <h3 class="quick-title">登録情報</h3>
           <div class="quick-sub">確認・変更</div>
+        </a>
+
+        <a href="{% url 'patients:inquiry' %}" class="quick-card">
+          <div class="quick-icon">✉️</div>
+          <h3 class="quick-title">お問い合わせ</h3>
+          <div class="quick-sub">ご不明点はこちら</div>
         </a>
       </div>
     </section>
