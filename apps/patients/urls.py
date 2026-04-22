@@ -65,4 +65,7 @@ urlpatterns = [
         ),
         name="password_reset_complete",
     ),
+    
+    path("inquiry/", views.patient_inquiry_view, name="inquiry"),
+    path("inquiry/done/", views.patient_inquiry_done_view, name="inquiry_done"),
 ]

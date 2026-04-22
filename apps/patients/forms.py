@@ -215,3 +215,36 @@ class PatientSetPasswordForm(SetPasswordForm):
             "autocomplete": "new-password",
         }),
     )
+
+class PatientInquiryForm(forms.Form):
+    name = forms.CharField(
+        label="お名前",
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            "class": "auth-input",
+            "placeholder": "お名前を入力してください",
+        }),
+    )
+    email = forms.EmailField(
+        label="メールアドレス",
+        widget=forms.EmailInput(attrs={
+            "class": "auth-input",
+            "placeholder": "返信を受け取るメールアドレス",
+        }),
+    )
+    subject = forms.CharField(
+        label="件名",
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            "class": "auth-input",
+            "placeholder": "件名を入力してください",
+        }),
+    )
+    message = forms.CharField(
+        label="お問い合わせ内容",
+        widget=forms.Textarea(attrs={
+            "class": "auth-textarea",
+            "placeholder": "お問い合わせ内容をご入力ください",
+            "rows": 6,
+        }),
+    )

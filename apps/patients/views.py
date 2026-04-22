@@ -35,6 +35,10 @@ from .models import Patient
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
+from django.conf import settings
+from django.core.mail import send_mail
+from .forms import PatientInquiryForm
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -1109,3 +1113,45 @@ def patient_session_ping_view(request):
 
     request.session.modified = True
     return JsonResponse({"ok": True})
+
+def patient_inquiry_view(request):
+    initial = {}
+
+    if request.user.is_authenticated and hasattr(request.user, "patient_profile"):
+        patient = request.user.patient_profile
+        initial["name"] = f"{patient.last_name} {patient.first_name}"
+        if request.user.email:
+            initial["email"] = request.user.email
+
+    form = PatientInquiryForm(request.POST or None, initial=initial)
+
+    if request.method == "POST":
+        if form.is_valid():
+            name = form.cleaned_data["name"]
+            email = form.cleaned_data["email"]
+            subject = form.cleaned_data["subject"]
+            message = form.cleaned_data["message"]
+
+            body = (
+                f"患者様からお問い合わせが届きました。\n\n"
+                f"お名前: {name}\n"
+                f"メールアドレス: {email}\n"
+                f"件名: {subject}\n\n"
+                f"お問い合わせ内容:\n{message}\n"
+            )
+
+            send_mail(
+                subject=f"【お問い合わせ】{subject}",
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=["support@carefrow.com"],
+                fail_silently=False,
+            )
+
+            messages.success(request, "お問い合わせを送信しました。")
+            return redirect("patients:inquiry_done")
+
+    return render(request, "patients/inquiry_form.html", {"form": form})
+
+def patient_inquiry_done_view(request):
+    return render(request, "patients/inquiry_done.html")
