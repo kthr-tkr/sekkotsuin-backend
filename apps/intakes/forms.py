@@ -218,6 +218,14 @@ PAIN_QUALITIES = [
     ("other", "その他"),
 ]
 
+SYMPTOM_DETAIL_CHOICES = [
+    ("numbness", "しびれ"),
+    ("swelling", "腫れ"),
+    ("heat", "熱感"),
+    ("limited_motion", "動かしにくい"),
+    ("weakness", "力が入りにくい"),
+]
+
 class IntakeStep3Form(forms.Form):
     areas = forms.MultipleChoiceField(
         required=True,
@@ -264,6 +272,36 @@ class IntakeStep3Form(forms.Form):
             "placeholder": "例：ピリピリ、圧迫感"
         }),
     )
+
+    symptom_details = forms.MultipleChoiceField(
+        required=False,
+        choices=SYMPTOM_DETAIL_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        label="当てはまる症状（複数可）"
+    )
+
+    worse_when = forms.CharField(
+        required=False,
+        max_length=255,
+        label="どんな時に悪化しますか？",
+        widget=forms.Textarea(attrs={
+            "rows": 3,
+            "class": "intake-textarea",
+            "placeholder": "例：歩く時、階段、朝起きた時、前かがみ など"
+        }),
+    )
+
+    better_when = forms.CharField(
+        required=False,
+        max_length=255,
+        label="どんな時に楽になりますか？",
+        widget=forms.Textarea(attrs={
+            "rows": 3,
+            "class": "intake-textarea",
+            "placeholder": "例：横になる、温める、安静にする など"
+        }),
+    )
+
     free_text = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={

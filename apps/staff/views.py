@@ -119,6 +119,13 @@ INTAKE_VALUE_LABELS = {
     "no": "なし",
     "true": "はい",
     "false": "いいえ",
+    "numbness": "しびれ",
+    "swelling": "腫れ",
+    "heat": "熱感",
+    "limited_motion": "動かしにくい",
+    "weakness": "力が入りにくい",
+    "stiff": "こわばり",
+    "tingle": "しびれ",
 }
 
 User = get_user_model()
@@ -852,6 +859,9 @@ def staff_intake_detail_view(request, pk):
         "symptom_type": extract.get("symptom_type") or step2.get("symptom_type") or intake.symptom_type,
         "locations": extract.get("locations") or step3.get("areas") or symptoms.get("areas") or [],
         "qualities": extract.get("qualities") or step3.get("qualities") or symptoms.get("qualities") or [],
+        "symptom_details": extract.get("symptom_details") or step3.get("symptom_details") or symptoms.get("symptom_details") or [],
+        "worse_when": extract.get("worse_when") or step3.get("worse_when") or symptoms.get("worse_when"),
+        "better_when": extract.get("better_when") or step3.get("better_when") or symptoms.get("better_when"),
     }
 
     visit_type_label = _jp_value(payload.get("visit_type"))
@@ -865,6 +875,9 @@ def staff_intake_detail_view(request, pk):
         {"label": "痛みの部位", "value": _jp_value(extract.get("locations"))},
         {"label": "痛みの強さ", "value": _jp_value(extract.get("severity_0_10"))},
         {"label": "症状の感じ", "value": _jp_value(extract.get("qualities"))},
+        {"label": "当てはまる症状", "value": _jp_value(extract.get("symptom_details"))},
+        {"label": "悪化する時", "value": _jp_value(extract.get("worse_when"))},
+        {"label": "楽になる時", "value": _jp_value(extract.get("better_when"))},
     ]
 
     note_rows = [

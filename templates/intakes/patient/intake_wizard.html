@@ -861,6 +861,37 @@
           </div>
 
           <div class="field">
+            <label class="field__label">{{ form.symptom_details.label }}</label>
+            <div class="check-grid check-grid--qualities">
+              {% for checkbox in form.symptom_details %}
+                <div class="check-chip">
+                  {{ checkbox.tag }}
+                  <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                </div>
+              {% endfor %}
+            </div>
+            {% if form.symptom_details.errors %}
+              <div class="field__error">{{ form.symptom_details.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.worse_when.label }}</label>
+            <div class="field__control">{{ form.worse_when }}</div>
+            {% if form.worse_when.errors %}
+              <div class="field__error">{{ form.worse_when.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.better_when.label }}</label>
+            <div class="field__control">{{ form.better_when }}</div>
+            {% if form.better_when.errors %}
+              <div class="field__error">{{ form.better_when.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
             <label class="field__label">{{ form.free_text.label }}</label>
             <div class="field__control">{{ form.free_text }}</div>
             {% if form.free_text.errors %}
