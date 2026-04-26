@@ -174,14 +174,32 @@ def intake_wizard(request, appointment_id):
 
             # ④ 概要用キーへ集約（任意だけど強い：スタッフ画面が超楽）
             # Step3: 症状（患部/強さ/性質）
+            # ④ 概要用キーへ集約
+            # Step3: 症状（患部/強さ/性質）
             if step == 3:
+                areas = cd.get("areas") or []
+                qualities = cd.get("qualities") or []
+
                 payload["symptoms"] = {
-                    "areas": cd.get("areas", []),
+                    "areas": areas,
                     "other_area_text": cd.get("other_area_text", ""),
                     "severity": cd.get("severity"),
-                    "qualities": cd.get("qualities", []),
+                    "qualities": qualities,
                     "other_quality_text": cd.get("other_quality_text", ""),
                     "free_text": cd.get("free_text", ""),
+                }
+
+                # 病院側問診画面・AI要約・カルテ登録で使いやすい共通形式
+                step2 = payload.get("step2", {}) or {}
+
+                payload["extract"] = {
+                    "chief_complaint": step2.get("chief_complaint", ""),
+                    "onset": step2.get("since", ""),
+                    "trigger": step2.get("trigger", ""),
+                    "severity_0_10": cd.get("severity"),
+                    "symptom_type": step2.get("symptom_type", ""),
+                    "locations": areas,
+                    "qualities": qualities,
                 }
 
             # Step4: 既往等 + 同意
@@ -196,6 +214,20 @@ def intake_wizard(request, appointment_id):
                     "final_note": cd.get("final_note", ""),
                 }
                 payload["consent"] = {"agreed": bool(cd.get("consent_agreed"))}
+
+                # ✅ 最終送信時点で病院側と同じ extract 形式を作る
+                step2 = payload.get("step2", {}) or {}
+                step3 = payload.get("step3", {}) or {}
+
+                payload["extract"] = {
+                    "chief_complaint": step2.get("chief_complaint", ""),
+                    "onset": step2.get("since", ""),
+                    "trigger": step2.get("trigger", ""),
+                    "severity_0_10": step3.get("severity"),
+                    "symptom_type": step2.get("symptom_type", ""),
+                    "locations": step3.get("areas") or [],
+                    "qualities": step3.get("qualities") or [],
+                }
 
             intake.payload = payload
 
