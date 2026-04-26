@@ -324,13 +324,6 @@ class IntakeStep3Form(forms.Form):
         }),
     )
 
-    symptom_details = forms.MultipleChoiceField(
-        required=False,
-        choices=SYMPTOM_DETAIL_CHOICES,
-        widget=forms.CheckboxSelectMultiple,
-        label="当てはまる症状（複数可）"
-    )
-
     free_text = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={
