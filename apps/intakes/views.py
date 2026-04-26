@@ -186,9 +186,6 @@ def intake_wizard(request, appointment_id):
                     "severity": cd.get("severity"),
                     "qualities": qualities,
                     "other_quality_text": cd.get("other_quality_text", ""),
-                    "symptom_details": cd.get("symptom_details") or [],
-                    "worse_when": cd.get("worse_when", ""),
-                    "better_when": cd.get("better_when", ""),
                     "free_text": cd.get("free_text", ""),
                 }
 
@@ -204,8 +201,6 @@ def intake_wizard(request, appointment_id):
                     "locations": areas,
                     "qualities": qualities,
                     "symptom_details": cd.get("symptom_details") or [],
-                    "worse_when": cd.get("worse_when", ""),
-                    "better_when": cd.get("better_when", ""),
                 }
 
             # Step4: 既往等 + 同意
@@ -229,13 +224,12 @@ def intake_wizard(request, appointment_id):
                     "chief_complaint": step2.get("chief_complaint", ""),
                     "onset": step2.get("since", ""),
                     "trigger": step2.get("trigger", ""),
+                    "worse_when": step2.get("worse_when", ""),
+                    "better_when": step2.get("better_when", ""),
                     "severity_0_10": step3.get("severity"),
                     "symptom_type": step2.get("symptom_type", ""),
                     "locations": step3.get("areas") or [],
                     "qualities": step3.get("qualities") or [],
-                    "symptom_details": step3.get("symptom_details") or [],
-                    "worse_when": step3.get("worse_when", ""),
-                    "better_when": step3.get("better_when", ""),
                 }
 
             intake.payload = payload

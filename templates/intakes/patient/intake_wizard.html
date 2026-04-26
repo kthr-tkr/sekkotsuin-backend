@@ -675,6 +675,11 @@
   }
 }
 
+.body-hotspot,
+.detail-hotspot{
+  z-index: 5;
+}
+
 </style>
 
 <div class="intake-shell">
@@ -834,6 +839,22 @@
             <div class="field__control">{{ form.trigger }}</div>
             {% if form.trigger.errors %}
               <div class="field__error">{{ form.trigger.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.worse_when.label }}</label>
+            <div class="field__control">{{ form.worse_when }}</div>
+            {% if form.worse_when.errors %}
+              <div class="field__error">{{ form.worse_when.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ form.better_when.label }}</label>
+            <div class="field__control">{{ form.better_when }}</div>
+            {% if form.better_when.errors %}
+              <div class="field__error">{{ form.better_when.errors|striptags }}</div>
             {% endif %}
           </div>
         {% endif %}
@@ -1027,21 +1048,6 @@
           </div>
 
           <div class="field">
-            <label class="field__label">{{ form.symptom_details.label }}</label>
-            <div class="check-grid check-grid--qualities">
-              {% for checkbox in form.symptom_details %}
-                <div class="check-chip">
-                  {{ checkbox.tag }}
-                  <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
-                </div>
-              {% endfor %}
-            </div>
-            {% if form.symptom_details.errors %}
-              <div class="field__error">{{ form.symptom_details.errors|striptags }}</div>
-            {% endif %}
-          </div>
-
-          <div class="field">
             <label class="field__label">{{ form.worse_when.label }}</label>
             <div class="field__control">{{ form.worse_when }}</div>
             {% if form.worse_when.errors %}
@@ -1196,9 +1202,24 @@ document.addEventListener("DOMContentLoaded", function () {
       otherAreaWrap.style.display = otherAreaCheckbox.checked ? "block" : "none";
     }
   }
+
   if (otherAreaCheckbox) {
     toggleOtherArea();
     otherAreaCheckbox.addEventListener("change", toggleOtherArea);
+  }
+
+  const otherQualityCheckbox = document.querySelector('input[name="qualities"][value="other"]');
+  const otherQualityWrap = document.getElementById("other-quality-wrap");
+
+  function toggleOtherQuality() {
+    if (otherQualityCheckbox && otherQualityWrap) {
+      otherQualityWrap.style.display = otherQualityCheckbox.checked ? "block" : "none";
+    }
+  }
+
+  if (otherQualityCheckbox) {
+    toggleOtherQuality();
+    otherQualityCheckbox.addEventListener("change", toggleOtherQuality);
   }
 
   function bindYesNoToggle(fieldName, wrapId) {
@@ -1220,21 +1241,6 @@ document.addEventListener("DOMContentLoaded", function () {
   bindYesNoToggle("other_clinic", "other-clinic-note-wrap");
   bindYesNoToggle("taking_meds", "meds-note-wrap");
   bindYesNoToggle("past_history", "history-note-wrap");
-});
-
-  const otherQualityCheckbox = document.querySelector('input[name="qualities"][value="other"]');
-  const otherQualityWrap = document.getElementById("other-quality-wrap");
-
-  function toggleOtherQuality() {
-    if (otherQualityCheckbox && otherQualityWrap) {
-      otherQualityWrap.style.display = otherQualityCheckbox.checked ? "block" : "none";
-    }
-  }
-
-  if (otherQualityCheckbox) {
-    toggleOtherQuality();
-    otherQualityCheckbox.addEventListener("change", toggleOtherQuality);
-  }
 
   const areaLabelMap = {
     "喉前": "首",
@@ -1242,6 +1248,10 @@ document.addEventListener("DOMContentLoaded", function () {
     "左肩前": "左肩",
     "右上腕前": "右上腕",
     "左上腕前": "左上腕",
+    "右肘前": "右肘",
+    "左肘前": "左肘",
+    "右前腕前": "右前腕",
+    "左前腕前": "左前腕",
     "右手前": "右手",
     "左手前": "左手",
     "鳩尾前": "胸・みぞおち",
@@ -1254,7 +1264,8 @@ document.addEventListener("DOMContentLoaded", function () {
     "右膝前": "右膝",
     "左膝前": "左膝",
     "右足前": "右足",
-    "左足前": "左足"
+    "左足前": "左足",
+
     "左手背": "左手の甲",
     "左手掌": "左手のひら",
     "左母指前": "左親指",
@@ -1278,7 +1289,7 @@ document.addEventListener("DOMContentLoaded", function () {
     "右足底後": "右足裏",
     "左足底後": "左足裏",
     "右踵後": "右かかと",
-    "左踵後": "左かかと",
+    "左踵後": "左かかと"
   };
 
   const areaCheckboxes = document.querySelectorAll('input[name="areas"]');
@@ -1286,7 +1297,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const selectedAreasList = document.getElementById('selected-areas-list');
 
   function findAreaCheckbox(value) {
-    return document.querySelector(`input[name="areas"][value="${value}"]`);
+    return document.querySelector(`input[name="areas"][value="${CSS.escape(value)}"]`);
   }
 
   function renderSelectedAreas() {
@@ -1320,6 +1331,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!cb) return;
       hs.classList.toggle("is-active", cb.checked);
     });
+
     renderSelectedAreas();
   }
 
@@ -1327,7 +1339,11 @@ document.addEventListener("DOMContentLoaded", function () {
     hs.addEventListener("click", function () {
       const value = this.dataset.area;
       const cb = findAreaCheckbox(value);
-      if (!cb) return;
+      if (!cb) {
+        console.warn("対応するcheckboxがありません:", value);
+        return;
+      }
+
       cb.checked = !cb.checked;
       cb.dispatchEvent(new Event("change", { bubbles: true }));
       syncHotspots();
@@ -1339,6 +1355,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   syncHotspots();
+});
 </script>
 
 {% endblock %}

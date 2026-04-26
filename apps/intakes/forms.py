@@ -119,7 +119,7 @@ class IntakeStep2Form(forms.Form):
     chief_complaint = forms.CharField(
         required=True,
         max_length=255,
-        label="主な症状",
+        label="主な症状について",
         widget=forms.Textarea(attrs={
             "rows": 5,
             "placeholder": "例：朝起きたときに腰が痛い",
@@ -140,14 +140,34 @@ class IntakeStep2Form(forms.Form):
     )
     trigger = forms.CharField(
         required=True,
-        label="症状のきっかけは何ですか？",
+        label="お悩みのきっかけなどはございましたか？",
         widget=forms.Textarea(attrs={
             "rows": 4,
             "placeholder": "例：重い荷物を持ち上げた後",
             "class": "intake-textarea",
         }),
     )
+    worse_when = forms.CharField(
+        required=False,
+        max_length=255,
+        label="どのようなときに気になったり、悪化しますか？",
+        widget=forms.Textarea(attrs={
+            "rows": 3,
+            "class": "intake-textarea",
+            "placeholder": "例：歩く時、階段、朝起きた時、前かがみ など"
+        }),
+    )
 
+    better_when = forms.CharField(
+        required=False,
+        max_length=255,
+        label="どのような時に楽になりますか？",
+        widget=forms.Textarea(attrs={
+            "rows": 3,
+            "class": "intake-textarea",
+            "placeholder": "例：横になる、温める、安静にする など"
+        }),
+    )
 
 # --- Step3 ---
 AREA_CHOICES = [
@@ -252,15 +272,9 @@ PAIN_QUALITIES = [
     ("tingle", "しびれ"),
     ("hot", "熱っぽい"),
     ("swelling", "腫れ"),
-    ("other", "その他"),
-]
-
-SYMPTOM_DETAIL_CHOICES = [
-    ("numbness", "しびれ"),
-    ("swelling", "腫れ"),
-    ("heat", "熱感"),
     ("limited_motion", "動かしにくい"),
     ("weakness", "力が入りにくい"),
+    ("other", "その他"),
 ]
 
 class IntakeStep3Form(forms.Form):
@@ -315,28 +329,6 @@ class IntakeStep3Form(forms.Form):
         choices=SYMPTOM_DETAIL_CHOICES,
         widget=forms.CheckboxSelectMultiple,
         label="当てはまる症状（複数可）"
-    )
-
-    worse_when = forms.CharField(
-        required=False,
-        max_length=255,
-        label="どんな時に悪化しますか？",
-        widget=forms.Textarea(attrs={
-            "rows": 3,
-            "class": "intake-textarea",
-            "placeholder": "例：歩く時、階段、朝起きた時、前かがみ など"
-        }),
-    )
-
-    better_when = forms.CharField(
-        required=False,
-        max_length=255,
-        label="どんな時に楽になりますか？",
-        widget=forms.Textarea(attrs={
-            "rows": 3,
-            "class": "intake-textarea",
-            "placeholder": "例：横になる、温める、安静にする など"
-        }),
     )
 
     free_text = forms.CharField(
