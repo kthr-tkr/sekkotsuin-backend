@@ -148,17 +148,17 @@
 
       <div class="field">
         <div class="label">主訴</div>
-        <div class="value">{{ intake.chief_complaint|default:"-" }}</div>
+        <div class="value">{{ extract.chief_complaint|default:intake.chief_complaint|default:"-" }}</div>
       </div>
 
       <div class="field">
         <div class="label">痛みの強さ</div>
-        <div class="value">{{ intake.pain_level|default:"-" }}</div>
+        <div class="value">{{ extract.severity_0_10|default:"-" }} / 10</div>
       </div>
 
       <div class="field">
         <div class="label">来院種別</div>
-        <div class="value">{{ intake.visit_type|default:"-" }}</div>
+        <div class="value">{{ payload.visit_type|default:"-" }}</div>
       </div>
 
       <div class="field">
@@ -170,7 +170,13 @@
 
       <div class="field wide">
         <div class="label">痛みの部位</div>
-        <div class="value">{{ intake.areas|default:"-" }}</div>
+        <div class="value">
+          {% if extract.locations %}
+            {{ extract.locations|join:" / " }}
+          {% else %}
+            -
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
