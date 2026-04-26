@@ -1,4 +1,5 @@
 {% extends "staff/_layout.html" %}
+{% load static %}
 {% block content %}
 
 <style>
@@ -116,6 +117,68 @@
       grid-template-columns: 1fr;
     }
   }
+
+.chip{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  font-size:13px;
+  font-weight:800;
+  margin-right:6px;
+  margin-bottom:6px;
+}
+.body-map-section{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+
+.body-map-card{
+  border:1px solid #eef2f7;
+  background:#fafafa;
+  border-radius:18px;
+  padding:14px;
+}
+
+.body-map-title{
+  font-size:14px;
+  font-weight:900;
+  color:#1e3a8a;
+  margin-bottom:10px;
+}
+
+.body-svg{
+  width:100%;
+  height:auto;
+  display:block;
+  background:#fff;
+  border-radius:16px;
+}
+
+.body-marker{
+  fill:#f59e0b;
+  stroke:#fff;
+  stroke-width:4;
+  filter:drop-shadow(0 0 8px rgba(245,158,11,.35));
+}
+
+.body-marker-label{
+  font-size:11px;
+  font-weight:900;
+  fill:#0f172a;
+  paint-order:stroke;
+  stroke:#fff;
+  stroke-width:4px;
+}
+
+@media (max-width: 768px){
+  .body-map-section{
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 
 <div class="page-wrap">
@@ -153,7 +216,13 @@
 
       <div class="field">
         <div class="label">痛みの強さ</div>
-        <div class="value">{{ extract.severity_0_10|default:"-" }} / 10</div>
+        <div class="value">
+          {% if extract.severity_0_10 %}
+            {{ extract.severity_0_10 }} / 10
+          {% else %}
+            -
+          {% endif %}
+        </div>
       </div>
 
       <div class="field">
@@ -172,7 +241,9 @@
         <div class="label">痛みの部位</div>
         <div class="value">
           {% if extract.locations %}
-            {{ extract.locations|join:" / " }}
+            {% for loc in extract.locations %}
+              <span class="chip">{{ loc }}</span>
+            {% endfor %}
           {% else %}
             -
           {% endif %}
@@ -180,6 +251,32 @@
       </div>
     </div>
   </div>
+
+  {% if extract.locations %}
+  <div class="card">
+    <div style="font-size:20px; font-weight:900; margin-bottom:14px;">痛みの部位マップ</div>
+
+    <div class="body-map-section">
+      <div class="body-map-card">
+        <div class="body-map-title">前面</div>
+        <svg class="body-svg" viewBox="0 0 300 700" xmlns="http://www.w3.org/2000/svg">
+          <image href="{% static 'patients/img/body_front3.png' %}" x="0" y="0" width="300" height="700" preserveAspectRatio="xMidYMid meet" />
+          <g id="intakeFrontMarkers"></g>
+        </svg>
+      </div>
+
+      <div class="body-map-card">
+        <div class="body-map-title">背面</div>
+        <svg class="body-svg" viewBox="0 0 300 700" xmlns="http://www.w3.org/2000/svg">
+          <image href="{% static 'patients/img/body_back3.png' %}" x="0" y="0" width="300" height="700" preserveAspectRatio="xMidYMid meet" />
+          <g id="intakeBackMarkers"></g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  {{ extract.locations|json_script:"intakeLocationsJson" }}
+  {% endif %}
 
   <div class="card">
     <div style="font-size:20px; font-weight:900; margin-bottom:14px;">来院理由・症状</div>
@@ -231,5 +328,103 @@
     {% endif %}
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const locationsEl = document.getElementById("intakeLocationsJson");
+  if (!locationsEl) return;
+
+  const locations = JSON.parse(locationsEl.textContent || "[]");
+  const frontLayer = document.getElementById("intakeFrontMarkers");
+  const backLayer = document.getElementById("intakeBackMarkers");
+
+  const positionMap = {
+    "喉前": { front: { x:155, y:118 } },
+    "右肩前": { front: { x:75, y:150 } },
+    "左肩前": { front: { x:235, y:150 } },
+    "右上腕前": { front: { x:75, y:240 } },
+    "左上腕前": { front: { x:235, y:240 } },
+    "右肘前": { front: { x:70, y:270 } },
+    "左肘前": { front: { x:240, y:270 } },
+    "右前腕前": { front: { x:68, y:305 } },
+    "左前腕前": { front: { x:242, y:305 } },
+    "右胸前": { front: { x:132, y:184 } },
+    "左胸前": { front: { x:178, y:184 } },
+    "鳩尾前": { front: { x:155, y:215 } },
+    "右鼠径部前": { front: { x:138, y:345 } },
+    "左鼠径部前": { front: { x:172, y:345 } },
+    "右大腿前": { front: { x:124, y:425 } },
+    "左大腿前": { front: { x:186, y:425 } },
+    "右膝前": { front: { x:127, y:490 } },
+    "左膝前": { front: { x:189, y:490 } },
+    "右下腿前": { front: { x:127, y:580 } },
+    "左下腿前": { front: { x:186, y:580 } },
+    "右足前": { front: { x:127, y:660 } },
+    "左足前": { front: { x:186, y:660 } },
+
+    "首後": { back: { x:155, y:104 } },
+    "右肩後": { back: { x:235, y:150 } },
+    "左肩後": { back: { x:75, y:150 } },
+    "右肩甲骨後": { back: { x:132, y:185 } },
+    "左肩甲骨後": { back: { x:178, y:185 } },
+    "背中上後": { back: { x:155, y:215 } },
+    "背中下後": { back: { x:155, y:275 } },
+    "腰後": { back: { x:155, y:308 } },
+    "右腰後": { back: { x:186, y:308 } },
+    "左腰後": { back: { x:124, y:308 } },
+    "右臀部後": { back: { x:186, y:360 } },
+    "左臀部後": { back: { x:124, y:360 } },
+    "右上腕後": { back: { x:235, y:240 } },
+    "左上腕後": { back: { x:75, y:240 } },
+    "右肘後": { back: { x:240, y:270 } },
+    "左肘後": { back: { x:70, y:270 } },
+    "右前腕後": { back: { x:242, y:305 } },
+    "左前腕後": { back: { x:68, y:305 } },
+    "右大腿後": { back: { x:186, y:425 } },
+    "左大腿後": { back: { x:124, y:425 } },
+    "右膝後": { back: { x:189, y:490 } },
+    "左膝後": { back: { x:127, y:490 } },
+    "右下腿後": { back: { x:186, y:580 } },
+    "左下腿後": { back: { x:127, y:580 } },
+    "右足後": { back: { x:186, y:660 } },
+    "左足後": { back: { x:127, y:660 } }
+  };
+
+  const SVG_NS = "http://www.w3.org/2000/svg";
+
+  function drawMarker(layer, pos, label){
+    const g = document.createElementNS(SVG_NS, "g");
+
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", pos.x);
+    c.setAttribute("cy", pos.y);
+    c.setAttribute("r", 11);
+    c.setAttribute("class", "body-marker");
+    g.appendChild(c);
+
+    const t = document.createElementNS(SVG_NS, "text");
+    t.setAttribute("x", pos.x + 14);
+    t.setAttribute("y", pos.y + 4);
+    t.setAttribute("class", "body-marker-label");
+    t.textContent = label;
+    g.appendChild(t);
+
+    layer.appendChild(g);
+  }
+
+  locations.forEach(loc => {
+    const pos = positionMap[loc];
+    if (!pos) return;
+
+    if (pos.front && frontLayer) {
+      drawMarker(frontLayer, pos.front, loc);
+    }
+
+    if (pos.back && backLayer) {
+      drawMarker(backLayer, pos.back, loc);
+    }
+  });
+});
+</script>
 
 {% endblock %}

@@ -836,74 +836,35 @@ def staff_intake_detail_view(request, pk):
     )
 
     payload = intake.payload or {}
+    extract = payload.get("extract", {}) or {}
+    symptoms = payload.get("symptoms", {}) or {}
+    history = payload.get("history", {}) or {}
 
     summary_rows = [
-        {
-            "label": "来院種別",
-            "value": _jp_value(
-                _payload_get(payload, "visit_type", "followup_type")
-                or getattr(intake, "visit_type", None)
-            ),
-        },
-        {
-            "label": "主訴",
-            "value": _jp_value(
-                _payload_get(payload, "chief_complaint")
-                or getattr(intake, "chief_complaint", None)
-            ),
-        },
-        {
-            "label": "症状タイプ",
-            "value": _jp_value(
-                _payload_get(payload, "symptom_type")
-                or getattr(intake, "symptom_type", None)
-            ),
-        },
-        {
-            "label": "いつから",
-            "value": _jp_value(
-                _payload_get(payload, "since", "onset")
-                or getattr(intake, "onset", None)
-            ),
-        },
-        {
-            "label": "きっかけ",
-            "value": _jp_value(_payload_get(payload, "trigger")),
-        },
-        {
-            "label": "痛みの部位",
-            "value": _jp_value(
-                _payload_get(payload, "areas")
-                or getattr(intake, "areas", None)
-            ),
-        },
-        {
-            "label": "痛みの強さ",
-            "value": _jp_value(
-                _payload_get(payload, "severity", "pain_level")
-                or getattr(intake, "pain_level", None)
-            ),
-        },
-        {
-            "label": "症状の感じ",
-            "value": _jp_value(_payload_get(payload, "qualities", "pain_qualities")),
-        },
+        {"label": "来院種別", "value": _jp_value(payload.get("visit_type"))},
+        {"label": "主訴", "value": _jp_value(extract.get("chief_complaint") or intake.chief_complaint)},
+        {"label": "症状タイプ", "value": _jp_value(extract.get("symptom_type") or intake.symptom_type)},
+        {"label": "いつから", "value": _jp_value(extract.get("onset") or intake.onset)},
+        {"label": "きっかけ", "value": _jp_value(extract.get("trigger"))},
+        {"label": "痛みの部位", "value": _jp_value(extract.get("locations"))},
+        {"label": "痛みの強さ", "value": _jp_value(extract.get("severity_0_10"))},
+        {"label": "症状の感じ", "value": _jp_value(extract.get("qualities"))},
     ]
 
     note_rows = [
-        {"label": "自由記入", "value": _jp_value(_payload_get(payload, "free_text"))},
-        {"label": "その他の部位", "value": _jp_value(_payload_get(payload, "other_area_text"))},
-        {"label": "その他の症状詳細", "value": _jp_value(_payload_get(payload, "other_quality_text"))},
+        {"label": "自由記入", "value": _jp_value(symptoms.get("free_text"))},
+        {"label": "その他の部位", "value": _jp_value(symptoms.get("other_area_text"))},
+        {"label": "その他の症状詳細", "value": _jp_value(symptoms.get("other_quality_text"))},
     ]
 
     medical_rows = [
-        {"label": "他院通院", "value": _jp_value(_payload_get(payload, "other_clinic"))},
-        {"label": "他院通院メモ", "value": _jp_value(_payload_get(payload, "other_clinic_note"))},
-        {"label": "服薬中", "value": _jp_value(_payload_get(payload, "taking_meds"))},
-        {"label": "服薬メモ", "value": _jp_value(_payload_get(payload, "meds_note"))},
-        {"label": "既往歴", "value": _jp_value(_payload_get(payload, "past_history"))},
-        {"label": "既往歴メモ", "value": _jp_value(_payload_get(payload, "history_note"))},
-        {"label": "最後に伝えたいこと", "value": _jp_value(_payload_get(payload, "final_note"))},
+        {"label": "他院通院", "value": _jp_value(history.get("other_clinic"))},
+        {"label": "他院通院メモ", "value": _jp_value(history.get("other_clinic_note"))},
+        {"label": "服薬中", "value": _jp_value(history.get("taking_meds"))},
+        {"label": "服薬メモ", "value": _jp_value(history.get("meds_note"))},
+        {"label": "既往歴", "value": _jp_value(history.get("past_history"))},
+        {"label": "既往歴メモ", "value": _jp_value(history.get("history_note"))},
+        {"label": "最後に伝えたいこと", "value": _jp_value(history.get("final_note"))},
     ]
 
     summary_rows = [row for row in summary_rows if row["value"] != "-"]
@@ -914,6 +875,10 @@ def staff_intake_detail_view(request, pk):
         "active": "intake",
         "page_title": "問診詳細",
         "intake": intake,
+        "payload": payload,
+        "extract": extract,
+        "symptoms": symptoms,
+        "history": history,
         "summary_rows": summary_rows,
         "note_rows": note_rows,
         "medical_rows": medical_rows,
