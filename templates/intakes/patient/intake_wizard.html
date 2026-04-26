@@ -749,22 +749,23 @@
                 <div class="body-image-stage body-image-stage--front">
                   <img src="{% static 'patients/img/body_front3.png' %}" alt="人体図 前面" class="body-image">
 
-                  <button type="button" class="body-hotspot hs-head" data-area="head" aria-label="頭"></button>
-                  <button type="button" class="body-hotspot hs-neck" data-area="neck" aria-label="首"></button>
-                  <button type="button" class="body-hotspot hs-shoulder-r" data-area="shoulder_r" aria-label="右肩"></button>
-                  <button type="button" class="body-hotspot hs-shoulder-l" data-area="shoulder_l" aria-label="左肩"></button>
-                  <button type="button" class="body-hotspot hs-arm-r" data-area="arm_r" aria-label="右腕"></button>
-                  <button type="button" class="body-hotspot hs-arm-l" data-area="arm_l" aria-label="左腕"></button>
-                  <button type="button" class="body-hotspot hs-hand-r" data-area="hand_r" aria-label="右手"></button>
-                  <button type="button" class="body-hotspot hs-hand-l" data-area="hand_l" aria-label="左手"></button>
-                  <button type="button" class="body-hotspot hs-chest" data-area="chest" aria-label="胸"></button>
-                  <button type="button" class="body-hotspot hs-waist" data-area="waist" aria-label="腰"></button>
-                  <button type="button" class="body-hotspot hs-thigh-r" data-area="thigh_r" aria-label="右太もも"></button>
-                  <button type="button" class="body-hotspot hs-thigh-l" data-area="thigh_l" aria-label="左太もも"></button>
-                  <button type="button" class="body-hotspot hs-knee-r" data-area="knee_r" aria-label="右膝"></button>
-                  <button type="button" class="body-hotspot hs-knee-l" data-area="knee_l" aria-label="左膝"></button>
-                  <button type="button" class="body-hotspot hs-ankle-r" data-area="ankle_r" aria-label="右足首"></button>
-                  <button type="button" class="body-hotspot hs-ankle-l" data-area="ankle_l" aria-label="左足首"></button>
+                  {# <button type="button" class="body-hotspot hs-head" data-area="頭前" aria-label="頭"></button> #}
+                  <button type="button" class="body-hotspot hs-neck" data-area="喉前" aria-label="首"></button>
+                  <button type="button" class="body-hotspot hs-shoulder-r" data-area="右肩前" aria-label="右肩"></button>
+                  <button type="button" class="body-hotspot hs-shoulder-l" data-area="左肩前" aria-label="左肩"></button>
+                  <button type="button" class="body-hotspot hs-arm-r" data-area="右上腕前" aria-label="右上腕"></button>
+                  <button type="button" class="body-hotspot hs-arm-l" data-area="左上腕前" aria-label="左上腕"></button>
+                  <button type="button" class="body-hotspot hs-hand-r" data-area="右手前" aria-label="右手"></button>
+                  <button type="button" class="body-hotspot hs-hand-l" data-area="左手前" aria-label="左手"></button>
+                  <button type="button" class="body-hotspot hs-chest" data-area="鳩尾前" aria-label="胸・みぞおち"></button>
+                  <button type="button" class="body-hotspot hs-waist" data-area="腰後" aria-label="腰"></button>
+                  <button type="button" class="body-hotspot hs-thigh-r" data-area="右大腿前" aria-label="右太もも"></button>
+                  <button type="button" class="body-hotspot hs-thigh-l" data-area="左大腿前" aria-label="左太もも"></button>
+                  <button type="button" class="body-hotspot hs-knee-r" data-area="右膝前" aria-label="右膝"></button>
+                  <button type="button" class="body-hotspot hs-knee-l" data-area="左膝前" aria-label="左膝"></button>
+                  <button type="button" class="body-hotspot hs-ankle-r" data-area="右足前" aria-label="右足"></button>
+                  <button type="button" class="body-hotspot hs-ankle-l" data-area="左足前" aria-label="左足"></button>
+
                 </div>
               </div>
 
@@ -773,9 +774,9 @@
                 <div class="body-image-stage body-image-stage--back">
                   <img src="{% static 'patients/img/body_back3.png' %}" alt="人体図 背面" class="body-image">
 
-                  <button type="button" class="body-hotspot hs-back" data-area="back" aria-label="背中"></button>
-                  <button type="button" class="body-hotspot hs-hip-r" data-area="hip_r" aria-label="右臀部"></button>
-                  <button type="button" class="body-hotspot hs-hip-l" data-area="hip_l" aria-label="左臀部"></button>
+                  <button type="button" class="body-hotspot hs-back" data-area="背中下後" aria-label="背中"></button>
+                  <button type="button" class="body-hotspot hs-hip-r" data-area="右臀部後" aria-label="右臀部"></button>
+                  <button type="button" class="body-hotspot hs-hip-l" data-area="左臀部後" aria-label="左臀部"></button>
                 </div>
               </div>
             </div>
@@ -1039,25 +1040,24 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   const areaLabelMap = {
-    head: "頭",
-    neck: "首",
-    shoulder_r: "右肩",
-    shoulder_l: "左肩",
-    arm_r: "右腕",
-    arm_l: "左腕",
-    hand_r: "右手",
-    hand_l: "左手",
-    back: "背中",
-    chest: "胸",
-    waist: "腰",
-    hip_r: "右臀部",
-    hip_l: "左臀部",
-    thigh_r: "右太もも",
-    thigh_l: "左太もも",
-    knee_r: "右膝",
-    knee_l: "左膝",
-    ankle_r: "右足首",
-    ankle_l: "左足首"
+    "喉前": "首",
+    "右肩前": "右肩",
+    "左肩前": "左肩",
+    "右上腕前": "右上腕",
+    "左上腕前": "左上腕",
+    "右手前": "右手",
+    "左手前": "左手",
+    "鳩尾前": "胸・みぞおち",
+    "腰後": "腰",
+    "背中下後": "背中",
+    "右臀部後": "右臀部",
+    "左臀部後": "左臀部",
+    "右大腿前": "右太もも",
+    "左大腿前": "左太もも",
+    "右膝前": "右膝",
+    "左膝前": "左膝",
+    "右足前": "右足",
+    "左足前": "左足"
   };
 
   const areaCheckboxes = document.querySelectorAll('input[name="areas"]');
