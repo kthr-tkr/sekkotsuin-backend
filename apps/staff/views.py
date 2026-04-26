@@ -523,38 +523,39 @@ def _build_staff_intake_summary(intake):
     data["has_intake"] = True
     data["intake_completed"] = bool(getattr(intake, "submitted_at", None))
 
-    followup_type = getattr(intake, "followup_type", "") or ""
-    visit_type = getattr(intake, "visit_type", "") or ""
+    payload = intake.payload or {}
+    extract = payload.get("extract", {}) or {}
+    symptoms = payload.get("symptoms", {}) or {}
+    step2 = payload.get("step2", {}) or {}
+    step3 = payload.get("step3", {}) or {}
 
-    if followup_type:
-        data["intake_kind_label"] = "再診簡易問診"
-        followup_map = {
-            "followup": "再診",
-            "new_issue": "新しい症状",
-            "unknown": "不明",
-        }
-        data["visit_type_label"] = followup_map.get(followup_type, followup_type)
+    visit_type = payload.get("visit_type") or getattr(intake, "visit_type", "") or ""
+    data["visit_type_label"] = _jp_value(visit_type)
+    data["intake_kind_label"] = "再診簡易問診" if visit_type == "followup" else "通常問診"
 
-        chief = getattr(intake, "chief_complaint", "") or ""
-        data["chief_label"] = chief or "再診問診"
-    else:
-        data["intake_kind_label"] = "通常問診"
+    chief = (
+        extract.get("chief_complaint")
+        or step2.get("chief_complaint")
+        or getattr(intake, "chief_complaint", "")
+        or ""
+    )
+    data["chief_label"] = chief
 
-        if visit_type:
-            data["visit_type_label"] = _choice_dict(VISIT_TYPE_CHOICES).get(visit_type, visit_type)
+    areas = (
+        extract.get("locations")
+        or step3.get("areas")
+        or symptoms.get("areas")
+        or []
+    )
+    data["areas_display"] = [_jp_value(x) for x in areas] if areas else []
 
-        chief_complaint = getattr(intake, "chief_complaint", "") or ""
-        symptom_type = getattr(intake, "symptom_type", "") or ""
+    pain_level = (
+        extract.get("severity_0_10")
+        or step3.get("severity")
+        or symptoms.get("severity")
+        or getattr(intake, "pain_level", None)
+    )
 
-        if chief_complaint:
-            data["chief_label"] = chief_complaint
-        elif symptom_type:
-            data["chief_label"] = _choice_dict(SYMPTOM_TYPE_CHOICES).get(symptom_type, symptom_type)
-
-        areas = getattr(intake, "areas", None)
-        data["areas_display"] = _labels_from_codes(areas, AREA_CHOICES)
-
-    pain_level = getattr(intake, "pain_level", None)
     if pain_level not in [None, ""]:
         data["pain_level_display"] = f"{pain_level}/10"
 
@@ -840,6 +841,21 @@ def staff_intake_detail_view(request, pk):
     symptoms = payload.get("symptoms", {}) or {}
     history = payload.get("history", {}) or {}
 
+    step2 = payload.get("step2", {}) or {}
+    step3 = payload.get("step3", {}) or {}
+
+    extract = {
+        "chief_complaint": extract.get("chief_complaint") or step2.get("chief_complaint") or intake.chief_complaint,
+        "onset": extract.get("onset") or step2.get("since") or intake.onset,
+        "trigger": extract.get("trigger") or step2.get("trigger"),
+        "severity_0_10": extract.get("severity_0_10") or step3.get("severity") or symptoms.get("severity"),
+        "symptom_type": extract.get("symptom_type") or step2.get("symptom_type") or intake.symptom_type,
+        "locations": extract.get("locations") or step3.get("areas") or symptoms.get("areas") or [],
+        "qualities": extract.get("qualities") or step3.get("qualities") or symptoms.get("qualities") or [],
+    }
+
+    visit_type_label = _jp_value(payload.get("visit_type"))
+
     summary_rows = [
         {"label": "来院種別", "value": _jp_value(payload.get("visit_type"))},
         {"label": "主訴", "value": _jp_value(extract.get("chief_complaint") or intake.chief_complaint)},
@@ -882,6 +898,7 @@ def staff_intake_detail_view(request, pk):
         "summary_rows": summary_rows,
         "note_rows": note_rows,
         "medical_rows": medical_rows,
+        "visit_type_label": visit_type_label,
     })
 
 
