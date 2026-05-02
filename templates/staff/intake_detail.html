@@ -307,26 +307,26 @@
           <g id="intakeBackMarkers"></g>
         </svg>
       </div>
-      <div style="font-size:20px; font-weight:900; margin:24px 0 14px;">手足の詳細マップ</div>
+    </div>
+    <div style="font-size:20px; font-weight:900; margin:24px 0 14px;">手足の詳細マップ</div>
 
-      <div class="detail-map-section">
-        <div class="detail-map-card">
-          <div class="detail-map-title">手指</div>
-          <svg class="detail-svg" viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg">
-            <image href="{% static 'patients/img/hand_left.png' %}" x="0" y="0" width="290" height="260" preserveAspectRatio="xMidYMid meet" />
-            <image href="{% static 'patients/img/hand_right.png' %}" x="310" y="0" width="290" height="260" preserveAspectRatio="xMidYMid meet" />
-            <g id="intakeHandMarkers"></g>
-          </svg>
-        </div>
+    <div class="detail-map-section">
+      <div class="detail-map-card">
+        <div class="detail-map-title">手指</div>
+        <svg class="detail-svg" viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg">
+          <image href="{% static 'patients/img/hand_left.png' %}" x="0" y="0" width="290" height="260" preserveAspectRatio="xMidYMid meet" />
+          <image href="{% static 'patients/img/hand_right.png' %}" x="310" y="0" width="290" height="260" preserveAspectRatio="xMidYMid meet" />
+          <g id="intakeHandMarkers"></g>
+        </svg>
+      </div>
 
-        <div class="detail-map-card">
-          <div class="detail-map-title">足指・足裏</div>
-          <svg class="detail-svg" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
-            <image href="{% static 'patients/img/foot_front.png' %}" x="0" y="0" width="290" height="320" preserveAspectRatio="xMidYMid meet" />
-            <image href="{% static 'patients/img/foot_back.png' %}" x="310" y="0" width="290" height="320" preserveAspectRatio="xMidYMid meet" />
-            <g id="intakeFootMarkers"></g>
-          </svg>
-        </div>
+      <div class="detail-map-card">
+        <div class="detail-map-title">足指・足裏</div>
+        <svg class="detail-svg" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
+          <image href="{% static 'patients/img/foot_front.png' %}" x="0" y="0" width="290" height="320" preserveAspectRatio="xMidYMid meet" />
+          <image href="{% static 'patients/img/foot_back.png' %}" x="310" y="0" width="290" height="320" preserveAspectRatio="xMidYMid meet" />
+          <g id="intakeFootMarkers"></g>
+        </svg>
       </div>
     </div>
   </div>
@@ -397,6 +397,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const footLayer = document.getElementById("intakeFootMarkers");
 
   const positionMap = {
+    // 前面
     "喉前": { front: { x:155, y:118 } },
     "右肩前": { front: { x:75, y:150 } },
     "左肩前": { front: { x:235, y:150 } },
@@ -420,18 +421,22 @@ document.addEventListener("DOMContentLoaded", () => {
     "右足前": { front: { x:127, y:660 } },
     "左足前": { front: { x:186, y:660 } },
 
+    // 背面
     "首後": { back: { x:155, y:104 } },
     "右肩後": { back: { x:235, y:150 } },
     "左肩後": { back: { x:75, y:150 } },
     "右肩甲骨後": { back: { x:132, y:185 } },
     "左肩甲骨後": { back: { x:178, y:185 } },
     "背中上後": { back: { x:155, y:215 } },
+    "背中中央後": { back: { x:155, y:245 } },
     "背中下後": { back: { x:155, y:275 } },
     "腰後": { back: { x:155, y:308 } },
     "右腰後": { back: { x:186, y:308 } },
     "左腰後": { back: { x:124, y:308 } },
     "右臀部後": { back: { x:186, y:360 } },
     "左臀部後": { back: { x:124, y:360 } },
+    "左背部後": { back: { x:132, y:230 } },
+    "右背部後": { back: { x:178, y:230 } },
     "右上腕後": { back: { x:235, y:240 } },
     "左上腕後": { back: { x:75, y:240 } },
     "右肘後": { back: { x:240, y:270 } },
@@ -447,36 +452,39 @@ document.addEventListener("DOMContentLoaded", () => {
     "右足後": { back: { x:186, y:660 } },
     "左足後": { back: { x:127, y:660 } },
 
-    "右手背": { front: { x:255, y:120 } },
-    "右手掌": { front: { x:60, y:120 } },
-    "左手背": { front: { x:60, y:120 } },
-    "左手掌": { front: { x:255, y:120 } },
-
-    "左背部後": { back: { x:132, y:230 } },
-    "右背部後": { back: { x:178, y:230 } },
-    "背中中央後": { back: { x:155, y:245 } },
-
+    // 手首・足首
     "右手首前": { front: { x:68, y:350 } },
     "左手首前": { front: { x:242, y:350 } },
     "右足首前": { front: { x:127, y:625 } },
     "左足首前": { front: { x:186, y:625 } },
-
     "右手首後": { back: { x:242, y:350 } },
     "左手首後": { back: { x:68, y:350 } },
     "右足首後": { back: { x:186, y:625 } },
     "左足首後": { back: { x:127, y:625 } },
 
     // 手指詳細
-    "左手背": { hand: { x:105, y:145 } },
-    "左手掌": { hand: { x:230, y:145 } },
+    "左手背": {
+      front: { x:60, y:120 },
+      hand: { x:105, y:145 }
+    },
+    "左手掌": {
+      front: { x:255, y:120 },
+      hand: { x:230, y:145 }
+    },
     "左母指前": { hand: { x:205, y:95 } },
     "左示指前": { hand: { x:225, y:55 } },
     "左中指前": { hand: { x:245, y:45 } },
     "左環指前": { hand: { x:265, y:55 } },
     "左小指前": { hand: { x:282, y:75 } },
 
-    "右手掌": { hand: { x:415, y:145 } },
-    "右手背": { hand: { x:540, y:145 } },
+    "右手掌": {
+      front: { x:60, y:120 },
+      hand: { x:415, y:145 }
+    },
+    "右手背": {
+      front: { x:255, y:120 },
+      hand: { x:540, y:145 }
+    },
     "右母指前": { hand: { x:440, y:95 } },
     "右示指前": { hand: { x:415, y:55 } },
     "右中指前": { hand: { x:395, y:45 } },
@@ -484,8 +492,14 @@ document.addEventListener("DOMContentLoaded", () => {
     "右小指前": { hand: { x:355, y:75 } },
 
     // 足詳細
-    "右足背前": { foot: { x:180, y:205 } },
-    "左足背前": { foot: { x:90, y:205 } },
+    "右足背前": {
+      front: { x:127, y:660 },
+      foot: { x:180, y:205 }
+    },
+    "左足背前": {
+      front: { x:186, y:660 },
+      foot: { x:90, y:205 }
+    },
     "右母趾前": { foot: { x:175, y:65 } },
     "左母趾前": { foot: { x:115, y:65 } },
 
@@ -503,12 +517,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const c = document.createElementNS(SVG_NS, "circle");
     c.setAttribute("cx", pos.x);
     c.setAttribute("cy", pos.y);
-    c.setAttribute("r", 11);
+    c.setAttribute("r", 8);
     c.setAttribute("class", "body-marker");
     g.appendChild(c);
 
     const t = document.createElementNS(SVG_NS, "text");
-    t.setAttribute("x", pos.x + 14);
+    t.setAttribute("x", pos.x + 16);
     t.setAttribute("y", pos.y + 4);
     t.setAttribute("class", "body-marker-label");
     t.textContent = label;
