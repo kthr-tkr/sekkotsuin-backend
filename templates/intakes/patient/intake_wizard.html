@@ -680,6 +680,35 @@
   z-index: 5;
 }
 
+/* 追加：手首 */
+.hs-wrist-r{ top:39.5%; left:25%; width:7%; height:5.5%; }
+.hs-wrist-l{ top:39.5%; left:68%; width:7%; height:5.5%; }
+
+/* 追加：足首 */
+.hs-ankle-front-r{ top:75.5%; left:37.5%; width:7%; height:5.5%; }
+.hs-ankle-front-l{ top:75.5%; left:54%; width:7%; height:5.5%; }
+
+/* 背面：背中細分化 */
+.hs-back-upper{ top:22%; left:45%; width:17%; height:9%; }
+.hs-back-middle{ top:31%; left:45%; width:17%; height:9%; }
+.hs-back-lower{ top:39%; left:45%; width:17%; height:7%; }
+
+.hs-right-back{ top:25%; left:58%; width:11%; height:14%; }
+.hs-left-back{ top:25%; left:38%; width:11%; height:14%; }
+
+/* 背面：腰 */
+.hs-waist-back{ top:41%; left:45%; width:17%; height:7%; }
+.hs-waist-back-r{ top:41%; left:56%; width:10%; height:7%; }
+.hs-waist-back-l{ top:41%; left:40%; width:10%; height:7%; }
+
+/* 背面：手首 */
+.hs-wrist-back-r{ top:39.5%; left:69%; width:7%; height:5.5%; }
+.hs-wrist-back-l{ top:39.5%; left:24%; width:7%; height:5.5%; }
+
+/* 背面：足首 */
+.hs-ankle-back-r{ top:75.5%; left:54%; width:7%; height:5.5%; }
+.hs-ankle-back-l{ top:75.5%; left:38%; width:7%; height:5.5%; }
+
 </style>
 
 <div class="intake-shell">
@@ -880,6 +909,8 @@
                   <button type="button" class="body-hotspot hs-arm-l" data-area="左上腕前" aria-label="左上腕"></button>
                   <button type="button" class="body-hotspot hs-hand-r" data-area="右手前" aria-label="右手"></button>
                   <button type="button" class="body-hotspot hs-hand-l" data-area="左手前" aria-label="左手"></button>
+                  <button type="button" class="body-hotspot hs-wrist-r" data-area="右手首前" aria-label="右手首"></button>
+                  <button type="button" class="body-hotspot hs-wrist-l" data-area="左手首前" aria-label="左手首"></button>
                   <button type="button" class="body-hotspot hs-chest" data-area="鳩尾前" aria-label="胸・みぞおち"></button>
                   <button type="button" class="body-hotspot hs-waist" data-area="腰後" aria-label="腰"></button>
                   <button type="button" class="body-hotspot hs-thigh-r" data-area="右大腿前" aria-label="右太もも"></button>
@@ -888,7 +919,8 @@
                   <button type="button" class="body-hotspot hs-knee-l" data-area="左膝前" aria-label="左膝"></button>
                   <button type="button" class="body-hotspot hs-ankle-r" data-area="右足前" aria-label="右足"></button>
                   <button type="button" class="body-hotspot hs-ankle-l" data-area="左足前" aria-label="左足"></button>
-
+                  <button type="button" class="body-hotspot hs-ankle-front-r" data-area="右足首前" aria-label="右足首"></button>
+                  <button type="button" class="body-hotspot hs-ankle-front-l" data-area="左足首前" aria-label="左足首"></button>
                 </div>
               </div>
 
@@ -897,9 +929,24 @@
                 <div class="body-image-stage body-image-stage--back">
                   <img src="{% static 'patients/img/body_back3.png' %}" alt="人体図 背面" class="body-image">
 
-                  <button type="button" class="body-hotspot hs-back" data-area="背中下後" aria-label="背中"></button>
                   <button type="button" class="body-hotspot hs-hip-r" data-area="右臀部後" aria-label="右臀部"></button>
                   <button type="button" class="body-hotspot hs-hip-l" data-area="左臀部後" aria-label="左臀部"></button>
+                  <button type="button" class="body-hotspot hs-back-upper" data-area="背中上後" aria-label="背中上部"></button>
+                  <button type="button" class="body-hotspot hs-back-middle" data-area="背中中央後" aria-label="背中中央"></button>
+                  <button type="button" class="body-hotspot hs-back-lower" data-area="背中下後" aria-label="背中下部"></button>
+
+                  <button type="button" class="body-hotspot hs-right-back" data-area="右背部後" aria-label="右背部"></button>
+                  <button type="button" class="body-hotspot hs-left-back" data-area="左背部後" aria-label="左背部"></button>
+
+                  <button type="button" class="body-hotspot hs-waist-back" data-area="腰後" aria-label="腰"></button>
+                  <button type="button" class="body-hotspot hs-waist-back-r" data-area="右腰後" aria-label="右腰"></button>
+                  <button type="button" class="body-hotspot hs-waist-back-l" data-area="左腰後" aria-label="左腰"></button>
+
+                  <button type="button" class="body-hotspot hs-wrist-back-r" data-area="右手首後" aria-label="右手首後ろ"></button>
+                  <button type="button" class="body-hotspot hs-wrist-back-l" data-area="左手首後" aria-label="左手首後ろ"></button>
+
+                  <button type="button" class="body-hotspot hs-ankle-back-r" data-area="右足首後" aria-label="右足首後ろ"></button>
+                  <button type="button" class="body-hotspot hs-ankle-back-l" data-area="左足首後" aria-label="左足首後ろ"></button>
                 </div>
               </div>
             </div>
@@ -1289,7 +1336,26 @@ document.addEventListener("DOMContentLoaded", function () {
     "右足底後": "右足裏",
     "左足底後": "左足裏",
     "右踵後": "右かかと",
-    "左踵後": "左かかと"
+    "左踵後": "左かかと",
+
+    "右手首前": "右手首",
+    "左手首前": "左手首",
+    "右手首後": "右手首後ろ",
+    "左手首後": "左手首後ろ",
+
+    "右足首前": "右足首",
+    "左足首前": "左足首",
+    "右足首後": "右足首後ろ",
+    "左足首後": "左足首後ろ",
+
+    "背中中央後": "背中中央",
+    "右背部後": "右背部",
+    "左背部後": "左背部",
+    "背中上後": "背中上部",
+    "背中下後": "背中下部",
+    "右腰後": "右腰",
+    "左腰後": "左腰",
+
   };
 
   const areaCheckboxes = document.querySelectorAll('input[name="areas"]');
