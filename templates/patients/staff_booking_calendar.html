@@ -1,43 +1,102 @@
-{% extends "patients/patient_base.html" %}
-{% block title %}予約日を選択{% endblock %}
+{% extends "staff/_layout.html" %}
+{% block title %}Medical AI | Staff Booking Calendar{% endblock %}
+
+{% block extra_head %}
+<style>
+  .staff-booking-page{display:flex;flex-direction:column;gap:22px;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:rgba(124,58,237,.08);color:#5b38c5;font-size:12px;font-weight:800;margin-bottom:14px;}
+  .eyebrow::before{content:"";width:8px;height:8px;border-radius:999px;background:linear-gradient(135deg,#7c3aed,#3b82f6);}
+  .page-title{margin:0;font-size:48px;line-height:1.05;letter-spacing:-.05em;font-weight:900;color:#0b1220;}
+  .page-meta{margin-top:12px;color:#64748b;font-size:14px;font-weight:700;}
+  .tool-row{display:flex;gap:12px;flex-wrap:wrap;}
+  .tool-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:16px;border:1px solid rgba(15,23,42,.08);background:rgba(255,255,255,.86);color:#111827;font-size:14px;font-weight:900;text-decoration:none;box-shadow:0 10px 24px rgba(15,23,42,.05);}
+
+  .hero{border-radius:32px;padding:30px;color:#fff;background:linear-gradient(135deg,#060c19 0%,#111b36 42%,#1a2f73 70%,#4f86ff 100%);box-shadow:0 28px 80px rgba(15,23,42,.18);}
+  .hero-kicker{font-size:11px;font-weight:800;letter-spacing:.18em;color:rgba(255,255,255,.62);text-transform:uppercase;margin-bottom:12px;}
+  .hero-title{margin:0 0 10px;font-size:28px;font-weight:900;letter-spacing:-.04em;}
+  .hero-sub{margin:0;color:rgba(255,255,255,.78);font-size:14px;line-height:1.8;}
+
+  .monthbar{display:flex;align-items:center;justify-content:center;gap:12px;}
+  .month-btn{width:42px;height:42px;border-radius:999px;border:1px solid rgba(15,23,42,.08);background:#fff;text-decoration:none;color:#1d4ed8;font-size:24px;font-weight:900;display:flex;align-items:center;justify-content:center;}
+  .month-label{font-size:20px;font-weight:900;color:#0b1220;min-width:160px;text-align:center;}
+
+  .calendar-card{border-radius:28px;padding:22px;background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.82);box-shadow:0 16px 36px rgba(15,23,42,.06);backdrop-filter:blur(16px);}
+  .weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
+  .weekdays{margin-bottom:10px;color:#64748b;font-size:13px;font-weight:900;text-align:center;}
+  .sun{color:#ef4444}.sat{color:#2563eb}
+
+  .day-cell{min-height:92px;border-radius:18px;padding:14px;background:#fff;border:1px solid #edf2f8;text-decoration:none;color:#0f172a;display:flex;flex-direction:column;justify-content:space-between;transition:.18s ease;}
+  .day-cell:hover{transform:translateY(-2px);box-shadow:0 16px 30px rgba(15,23,42,.08);}
+  .day-empty{background:transparent;border:none;}
+  .day-disabled{opacity:.42;background:#f8fafc;}
+  .day-num{font-size:18px;font-weight:900;}
+  .day-meta{font-size:12px;font-weight:800;color:#64748b;}
+  .day-active .day-meta{color:#3658c9;}
+
+  @media(max-width:820px){
+    .page-title{font-size:34px;}
+    .hero{padding:22px;border-radius:24px;}
+    .weekdays,.calendar-grid{gap:6px;}
+    .day-cell{min-height:70px;border-radius:14px;padding:10px;}
+    .day-meta{font-size:11px;}
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="p-page">
-  <div class="p-head">
+<div class="staff-booking-page">
+
+  <header class="topbar">
     <div>
-      <h1 class="p-title">予約日を選択</h1>
-      <div class="p-sub">{{ clinic.name }} / {{ patient.last_name }} {{ patient.first_name }} 様</div>
+      <div class="eyebrow">Staff Booking</div>
+      <h1 class="page-title">患者予約作成</h1>
+      <div class="page-meta">
+        {{ clinic.name }} / {{ patient.last_name }} {{ patient.first_name }} 様の予約日を選択します
+      </div>
     </div>
-    <a class="p-btn p-btn-ghost" href="{% url 'patients:logout' %}">ログアウト</a>
+
+    <div class="tool-row">
+      <a href="{% url 'staff:patient_detail' patient.pk %}" class="tool-btn">← 患者詳細へ戻る</a>
+      <a href="{% url 'staff:patient_search' %}" class="tool-btn">患者検索へ</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-kicker">Appointment Create</div>
+    <h2 class="hero-title">受付・スタッフ側から、患者の予約を直接作成します。</h2>
+    <p class="hero-sub">
+      患者アカウントへ切り替えず、管理画面のまま予約日・施術者・時間を選択できます。
+    </p>
+  </section>
+
+  <div class="monthbar">
+    <a class="month-btn" href="?ym={{ prev_ym }}" aria-label="前月">‹</a>
+    <div class="month-label">{{ first_day|date:"Y年n月" }}</div>
+    <a class="month-btn" href="?ym={{ next_ym }}" aria-label="翌月">›</a>
   </div>
 
-  <div class="p-monthbar">
-    <a class="p-iconbtn" href="?ym={{ prev_ym }}" aria-label="前月">‹</a>
-    <div class="p-month">{{ first_day|date:"Y年n月" }}</div>
-    <a class="p-iconbtn" href="?ym={{ next_ym }}" aria-label="翌月">›</a>
-  </div>
-
-  <div class="p-card">
-    <div class="p-weekdays">
+  <section class="calendar-card">
+    <div class="weekdays">
       <div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div>
     </div>
 
-    <div class="p-grid">
+    <div class="calendar-grid">
       {% for week in cal_weeks %}
         {% for cell in week %}
           {% if cell.day == 0 %}
-            <div class="p-cell p-cell-empty"></div>
+            <div class="day-cell day-empty"></div>
           {% else %}
             {% with stat=cell.stat %}
               {% if stat and not stat.disabled %}
-                <a class="p-cell p-cell-active" href="{% url 'patients:staff_booking_day' patient.pk cell.ds %}{% if treatment_plan_id %}?treatment_plan_id={{ treatment_plan_id }}{% endif %}">
-                  <div class="p-day">{{ cell.day }}</div>
-                  <div class="p-meta">残り {{ stat.free }}</div>
+                <a class="day-cell day-active" href="{% url 'patients:staff_booking_day' patient.pk cell.ds %}{% if treatment_plan_id %}?treatment_plan_id={{ treatment_plan_id }}{% endif %}">
+                  <div class="day-num">{{ cell.day }}</div>
+                  <div class="day-meta">空き {{ stat.free }} 枠</div>
                 </a>
               {% else %}
-                <div class="p-cell p-cell-disabled">
-                  <div class="p-day">{{ cell.day }}</div>
-                  <div class="p-meta">×</div>
+                <div class="day-cell day-disabled">
+                  <div class="day-num">{{ cell.day }}</div>
+                  <div class="day-meta">予約不可</div>
                 </div>
               {% endif %}
             {% endwith %}
@@ -45,67 +104,7 @@
         {% endfor %}
       {% endfor %}
     </div>
-  </div>
+  </section>
 
-  <div class="p-footerbar">
-    <a class="p-btn p-btn-ghost" href="{% url 'patients:my_appointments' %}">予約一覧</a>
-  </div>
 </div>
-
-<style>
-  .page{max-width:1100px;margin:0 auto;padding:24px 18px;}
-  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;}
-  .head h1{font-size:26px;font-weight:900;margin:0;}
-  .sub{opacity:.7;margin-top:6px;}
-  .monthbar{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:10px;}
-  .month{font-weight:900;font-size:18px;min-width:140px;text-align:center;}
-
-  .cal{
-    margin-top:14px;
-    display:grid;
-    grid-template-columns:repeat(7, 1fr);
-    gap:10px;
-    background:rgba(255,255,255,.65);
-    border:1px solid rgba(0,0,0,.08);
-    border-radius:18px;
-    padding:14px;
-  }
-  .dow{
-    font-weight:800;
-    text-align:center;
-    padding:10px 0;
-    opacity:.75;
-  }
-  .cell{
-    border-radius:14px;
-    padding:12px;
-    min-height:74px;
-    background:#fff;
-    border:1px solid rgba(0,0,0,.06);
-    text-decoration:none;
-    color:inherit;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-  }
-  .cell.day:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.08);}
-  .cell.blank{background:transparent;border:none;}
-  .cell.disabled{opacity:.45;cursor:not-allowed;}
-  .num{font-weight:900;font-size:18px;}
-  .num.today{
-    display:inline-block;
-    padding:2px 8px;
-    border-radius:999px;
-    background:#0d6efd;
-    color:#fff;
-    width:max-content;
-  }
-  .meta{opacity:.7;font-size:13px;}
-  .foot{margin-top:14px;}
-
-  /* 既存 btn が無い場合の保険 */
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid rgba(0,0,0,.12);background:#fff;text-decoration:none;color:inherit;font-weight:700;}
-  .btn.ghost{background:transparent;}
-</style>
-
 {% endblock %}
