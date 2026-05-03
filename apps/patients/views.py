@@ -1163,7 +1163,14 @@ def staff_patient_create_view(request):
         messages.error(request, "スタッフのみ利用できます。")
         return redirect("patients:login")
 
-    clinic = get_current_clinic(request)
+    try:
+        clinic = get_current_clinic(request)
+    except TypeError:
+        clinic = get_current_clinic()
+    except Exception:
+        logger.exception("Clinic resolution failed in staff_patient_create_view")
+        messages.error(request, "クリニック情報が取得できませんでした。")
+        return redirect("staff:patient_search")
 
     form = StaffPatientCreateForm(request.POST or None)
 
@@ -1189,8 +1196,9 @@ def staff_patient_create_view(request):
                 messages.success(request, "患者情報を登録しました。")
                 return redirect("staff:patient_detail", patient_id=patient.pk)
 
-            except IntegrityError:
-                messages.error(request, "登録に失敗しました。もう一度お試しください。")
+            except Exception:
+                logger.exception("Staff patient create failed")
+                messages.error(request, "登録に失敗しました。入力内容を確認してください。")
 
     return render(request, "patients/staff_patient_create.html", {
         "form": form,
