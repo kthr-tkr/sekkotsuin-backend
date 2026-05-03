@@ -78,7 +78,7 @@
             <form method="post" action="{% url 'patients:staff_booking_confirm' patient.pk %}">
               {% csrf_token %}
               <input type="hidden" name="staff_id" value="{{ item.staff.id }}">
-              <input type="hidden" name="start_at" value="{{ s.start|date:'Y-m-d\\TH:i' }}">
+              <input type="hidden" name="start_at" value="{{ s.start|date:'Y-m-d' }}T{{ s.start|date:'H:i' }}">
               <input type="hidden" name="menu" value="再診">
               {% if treatment_plan_id %}
                 <input type="hidden" name="treatment_plan_id" value="{{ treatment_plan_id }}">
