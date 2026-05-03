@@ -28,8 +28,8 @@ urlpatterns = [
     path("profile/", views.patient_profile_view, name="profile"),
     path("appointments/<int:appointment_id>/cancel/", views.appointment_cancel_view, name="appointment_cancel"),
     path("staff-booking/<int:patient_id>/", views.staff_booking_calendar_view, name="staff_booking_calendar"),
-    path("staff-booking/<int:patient_id>/<str:ymd>/", views.staff_booking_day_view, name="staff_booking_day"),
     path("staff-booking/<int:patient_id>/confirm/", views.staff_booking_confirm_view, name="staff_booking_confirm"),
+    path("staff-booking/<int:patient_id>/<str:ymd>/", views.staff_booking_day_view, name="staff_booking_day"),
 
     path(
         "staff/patients/new/",
