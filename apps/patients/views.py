@@ -1104,7 +1104,7 @@ def staff_booking_confirm_view(request, patient_id):
     )
 
     messages.success(request, "予約を作成しました。")
-    return redirect("staff:appointment_detail", appointment_id=appt.pk)
+    return redirect("staff:patient_detail", patient_id=patient.pk)
 
 # 予約延長
 @login_required(login_url="/patients/login/")
