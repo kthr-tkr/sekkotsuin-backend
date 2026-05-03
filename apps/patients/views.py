@@ -997,6 +997,8 @@ def staff_booking_confirm_view(request, patient_id):
     menu = request.POST.get("menu") or "再診"
     treatment_plan_id = request.POST.get("treatment_plan_id")
 
+    print("POST:", request.POST)
+
     logger.info(
         "staff_booking_confirm params staff_id=%r start_iso=%r treatment_plan_id=%r patient_id=%s clinic_id=%s user_id=%s",
         staff_id,
