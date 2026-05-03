@@ -248,3 +248,40 @@ class PatientInquiryForm(forms.Form):
             "rows": 6,
         }),
     )
+
+class StaffPatientCreateForm(forms.ModelForm):
+    class Meta:
+        model = Patient
+        fields = [
+            "last_name",
+            "first_name",
+            "last_name_kana",
+            "first_name_kana",
+            "birth_date",
+            "phone",
+            "address",
+        ]
+        widgets = {
+            "birth_date": forms.DateInput(attrs={"type": "date"}),
+        }
+        labels = {
+            "last_name": "姓",
+            "first_name": "名",
+            "last_name_kana": "セイ",
+            "first_name_kana": "メイ",
+            "birth_date": "生年月日",
+            "phone": "電話番号",
+            "address": "住所",
+        }
+
+    def clean_phone(self):
+        phone = self.cleaned_data["phone"] or ""
+        normalized = "".join(ch for ch in phone if ch.isdigit())
+
+        if not normalized:
+            raise forms.ValidationError("電話番号を入力してください。")
+
+        if len(normalized) < 10 or len(normalized) > 11:
+            raise forms.ValidationError("正しい電話番号を入力してください。")
+
+        return normalized

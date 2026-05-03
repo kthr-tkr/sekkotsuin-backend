@@ -29,7 +29,7 @@ from apps.intakes.forms import (
     SYMPTOM_TYPE_CHOICES,
     VISIT_TYPE_CHOICES,
 )
-from .forms import PatientProfileForm, PatientRegisterForm
+from .forms import PatientProfileForm, PatientRegisterForm, StaffPatientCreateForm
 from .models import Patient
 
 from django.http import JsonResponse
@@ -1155,3 +1155,43 @@ def patient_inquiry_view(request):
 
 def patient_inquiry_done_view(request):
     return render(request, "patients/inquiry_done.html")
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def staff_patient_create_view(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "スタッフのみ利用できます。")
+        return redirect("patients:login")
+
+    clinic = get_current_clinic(request)
+
+    form = StaffPatientCreateForm(request.POST or None)
+
+    if request.method == "POST":
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    patient = form.save(commit=False)
+                    patient.clinic = clinic
+                    patient.user = None
+
+                    for _ in range(10):
+                        try:
+                            patient.card_no = generate_card_no()
+                            patient.save()
+                            break
+                        except IntegrityError:
+                            patient.pk = None
+                            continue
+                    else:
+                        raise IntegrityError("Failed to generate unique card_no")
+
+                messages.success(request, "患者情報を登録しました。")
+                return redirect("staff:patient_detail", patient_id=patient.pk)
+
+            except IntegrityError:
+                messages.error(request, "登録に失敗しました。もう一度お試しください。")
+
+    return render(request, "patients/staff_patient_create.html", {
+        "form": form,
+    })

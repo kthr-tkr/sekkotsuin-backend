@@ -84,6 +84,17 @@
     transition:.2s ease;
   }
 
+  .primary-tool-btn{
+    background:linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+    color:#fff;
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 16px 36px rgba(29,78,216,.18), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  .primary-tool-btn:hover{
+    box-shadow:0 18px 40px rgba(29,78,216,.24);
+  }
+
   .tool-btn:hover{
     transform:translateY(-1px);
     box-shadow:0 14px 28px rgba(15,23,42,.08);
@@ -690,6 +701,9 @@
     </div>
 
     <div class="page-tools">
+      <a href="{% url 'patients:staff_patient_create' %}" class="tool-btn primary-tool-btn">
+        ＋ 新規患者登録
+      </a>
       <a href="{% url 'staff:dashboard' %}" class="tool-btn">ダッシュボードへ</a>
       <a href="{% url 'staff:appointments' %}" class="tool-btn">予約管理へ</a>
     </div>
@@ -803,7 +817,12 @@
       </div>
     {% else %}
       <div class="empty-box">
-        該当する患者がいません。
+        <div style="font-size:15px; color:#64748b; margin-bottom:14px;">
+          該当する患者がいません。
+        </div>
+        <a href="{% url 'patients:staff_patient_create' %}" class="search-btn" style="text-decoration:none;">
+          ＋ 新規患者として登録する
+        </a>
       </div>
     {% endif %}
   </section>

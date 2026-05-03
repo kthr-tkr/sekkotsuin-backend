@@ -32,6 +32,12 @@ urlpatterns = [
     path("staff-booking/<int:patient_id>/confirm/", views.staff_booking_confirm_view, name="staff_booking_confirm"),
 
     path(
+        "staff/patients/new/",
+        views.staff_patient_create_view,
+        name="staff_patient_create",
+    ),
+
+    path(
         "password-reset/",
         auth_views.PasswordResetView.as_view(
             template_name="patients/auth/password_reset_form.html",
