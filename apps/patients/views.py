@@ -897,7 +897,8 @@ def staff_booking_calendar_view(request, patient_id):
     next_month = (first_day.replace(day=28) + timedelta(days=10)).replace(day=1)
 
     staffs = list(_get_staff_candidates())
-    weeks = calendar.monthcalendar(first_day.year, first_day.month)
+    cal = calendar.Calendar(firstweekday=calendar.SUNDAY)
+    weeks = cal.monthdayscalendar(first_day.year, first_day.month)
 
     day_stats = {}
     for week in weeks:
