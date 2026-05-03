@@ -794,6 +794,28 @@
     }
   }
 
+  .primary-action-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    padding:0 18px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.14);
+    background:linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+    color:#fff;
+    font-size:14px;
+    font-weight:900;
+    text-decoration:none;
+    box-shadow:0 16px 36px rgba(29,78,216,.20), inset 0 1px 0 rgba(255,255,255,.10);
+    transition:.2s ease;
+  }
+
+  .primary-action-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 18px 40px rgba(29,78,216,.25);
+  }
+
 </style>
 {% endblock %}
 
@@ -809,6 +831,9 @@
 
     <div class="page-tools">
       <a href="{% url 'staff:patient_search' %}" class="tool-btn">← 患者検索へ戻る</a>
+      <a href="{% url 'patients:staff_booking_calendar' patient.id %}" class="primary-action-btn">
+        ＋ この患者の予約を作成する
+      </a>
     </div>
   </header>
 
