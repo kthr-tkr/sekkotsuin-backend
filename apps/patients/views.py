@@ -1050,7 +1050,7 @@ def staff_booking_confirm_view(request, patient_id):
         messages.error(request, "過去の日時は選択できません。")
         return redirect("patients:staff_booking_calendar", patient_id=patient.pk)
 
-    is_free = true
+    is_free = True
     logger.info(
         "staff_booking_confirm slot availability is_free=%s clinic_id=%s staff_id=%s start_at=%s end_at=%s",
         is_free,
