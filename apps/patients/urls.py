@@ -74,4 +74,7 @@ urlpatterns = [
     
     path("inquiry/", views.patient_inquiry_view, name="inquiry"),
     path("inquiry/done/", views.patient_inquiry_done_view, name="inquiry_done"),
+    
+    path("link/verify/", views.patient_link_verify_view, name="link_verify"),
+    path("link/account/", views.patient_link_account_view, name="link_account"),
 ]

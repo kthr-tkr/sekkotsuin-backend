@@ -195,8 +195,15 @@
         </div>
 
         <div class="links">
-          <a class="link" href="{% url 'patients:register' %}">はじめての方はこちら（新規登録）</a>
-          <a class="link" href="{% url 'patients:password_reset' %}">パスワードをお忘れの方はこちら</a>
+          <a class="link" href="{% url 'patients:link_verify' %}">
+            院で登録済みの方はこちら
+          </a>
+          <a class="link" href="{% url 'patients:register' %}">
+            はじめての方はこちら（新規登録）
+          </a>
+          <a class="link" href="{% url 'patients:password_reset' %}">
+            パスワードをお忘れの方はこちら
+          </a>
         </div>
       </form>
 

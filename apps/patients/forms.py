@@ -285,3 +285,44 @@ class StaffPatientCreateForm(forms.ModelForm):
             raise forms.ValidationError("正しい電話番号を入力してください。")
 
         return normalized
+    
+class PatientLinkVerifyForm(forms.Form):
+    card_no = forms.CharField(
+        label="診察券番号",
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            "placeholder": "例: P000123",
+        }),
+    )
+    phone = forms.CharField(
+        label="電話番号",
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            "placeholder": "例: 09012345678",
+        }),
+    )
+    birth_date = forms.DateField(
+        label="生年月日",
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    def clean_phone(self):
+        phone = self.cleaned_data["phone"] or ""
+        return "".join(ch for ch in phone if ch.isdigit())
+
+
+class PatientLinkAccountForm(forms.Form):
+    email = forms.EmailField(label="メールアドレス")
+    password = forms.CharField(
+        label="パスワード",
+        widget=forms.PasswordInput,
+        min_length=8,
+    )
+
+    def clean_email(self):
+        email = (self.cleaned_data["email"] or "").strip().lower()
+
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("このメールアドレスは既に使用されています。")
+
+        return email

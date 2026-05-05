@@ -29,7 +29,14 @@ from apps.intakes.forms import (
     SYMPTOM_TYPE_CHOICES,
     VISIT_TYPE_CHOICES,
 )
-from .forms import PatientProfileForm, PatientRegisterForm, StaffPatientCreateForm
+from .forms import (
+    PatientProfileForm,
+    PatientRegisterForm,
+    StaffPatientCreateForm,
+    PatientLinkVerifyForm,
+    PatientLinkAccountForm,
+)
+
 from .models import Patient
 
 from django.http import JsonResponse
@@ -1205,4 +1212,87 @@ def staff_patient_create_view(request):
 
     return render(request, "patients/staff_patient_create.html", {
         "form": form,
+    })
+    
+@require_http_methods(["GET", "POST"])
+def patient_link_verify_view(request):
+    form = PatientLinkVerifyForm(request.POST or None)
+
+    if request.method == "POST":
+        if form.is_valid():
+            card_no = form.cleaned_data["card_no"].strip()
+            phone = form.cleaned_data["phone"]
+            birth_date = form.cleaned_data["birth_date"]
+
+            patient = (
+                Patient.objects
+                .filter(
+                    card_no=card_no,
+                    phone=phone,
+                    birth_date=birth_date,
+                    user__isnull=True,
+                )
+                .select_related("clinic")
+                .first()
+            )
+
+            if patient:
+                request.session["link_patient_id"] = patient.id
+                messages.success(request, "本人確認が完了しました。ログイン情報を設定してください。")
+                return redirect("patients:link_account")
+
+            messages.error(request, "入力内容と一致する患者情報が見つかりませんでした。")
+
+    return render(request, "patients/link_verify.html", {"form": form})
+
+#管理とのリンク
+@require_http_methods(["GET", "POST"])
+def patient_link_account_view(request):
+    patient_id = request.session.get("link_patient_id")
+
+    if not patient_id:
+        messages.error(request, "本人確認からやり直してください。")
+        return redirect("patients:link_verify")
+
+    patient = get_object_or_404(
+        Patient.objects.select_related("clinic"),
+        pk=patient_id,
+        user__isnull=True,
+    )
+
+    form = PatientLinkAccountForm(request.POST or None)
+
+    if request.method == "POST":
+        if form.is_valid():
+            email = form.cleaned_data["email"]
+            password = form.cleaned_data["password"]
+
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    username=generate_patient_username(),
+                    email=email,
+                    password=password,
+                    role=User.Role.PATIENT,
+                    clinic=patient.clinic,
+                )
+                user.is_staff = False
+                user.is_superuser = False
+                user.is_active = True
+                user.save()
+
+                patient_group, _ = Group.objects.get_or_create(name="patient")
+                user.groups.add(patient_group)
+
+                patient.user = user
+                patient.save(update_fields=["user"])
+
+            request.session.pop("link_patient_id", None)
+
+            login(request, user)
+            messages.success(request, "患者アカウントを作成しました。")
+            return redirect("patients:dashboard")
+
+    return render(request, "patients/link_account.html", {
+        "form": form,
+        "patient": patient,
     })

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アカウント作成</title>
+
+<style>
+  body{margin:0;font-family:sans-serif;background:#f6f8fb;}
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{
+    width:100%;max-width:520px;background:#fff;border-radius:18px;
+    padding:28px;border:1px solid #e5e7eb;box-shadow:0 10px 30px rgba(0,0,0,.06);
+  }
+  h1{margin:0 0 6px;font-size:22px;}
+  .sub{color:#64748b;font-size:13px;margin-bottom:16px;}
+  .patient{
+    background:#f1f5f9;padding:12px;border-radius:10px;
+    margin-bottom:16px;font-size:13px;
+  }
+  .field{margin-bottom:16px;}
+  label{font-size:12px;font-weight:600;display:block;margin-bottom:6px;}
+  input{
+    width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;
+  }
+  .btn{
+    width:100%;padding:14px;border:none;border-radius:12px;
+    background:#0b1a33;color:#fff;font-weight:700;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card">
+
+    <h1>アカウント作成</h1>
+    <div class="sub">ログイン用の情報を設定してください</div>
+
+    <div class="patient">
+      {{ patient.last_name }} {{ patient.first_name }} 様
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="field">
+        <label>メールアドレス</label>
+        {{ form.email }}
+      </div>
+
+      <div class="field">
+        <label>パスワード</label>
+        {{ form.password }}
+      </div>
+
+      <button class="btn">登録してログイン →</button>
+    </form>
+
+  </div>
+</div>
+</body>
+</html>

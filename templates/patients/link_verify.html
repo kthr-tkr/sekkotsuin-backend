@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本人確認</title>
+
+<style>
+  body{margin:0;font-family:sans-serif;background:#f6f8fb;}
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{
+    width:100%;max-width:520px;background:#fff;border-radius:18px;
+    padding:28px;border:1px solid #e5e7eb;box-shadow:0 10px 30px rgba(0,0,0,.06);
+  }
+  h1{margin:0 0 6px;font-size:22px;}
+  .sub{color:#64748b;font-size:13px;margin-bottom:16px;}
+  .field{margin-bottom:16px;}
+  label{font-size:12px;font-weight:600;display:block;margin-bottom:6px;}
+  input{
+    width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;
+  }
+  .btn{
+    width:100%;padding:14px;border:none;border-radius:12px;
+    background:#0b1a33;color:#fff;font-weight:700;
+  }
+  .link{
+    display:block;text-align:center;margin-top:12px;font-size:13px;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>本人確認</h1>
+    <div class="sub">診察券情報を入力してください</div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="field">
+        <label>診察券番号</label>
+        {{ form.card_no }}
+      </div>
+
+      <div class="field">
+        <label>電話番号</label>
+        {{ form.phone }}
+      </div>
+
+      <div class="field">
+        <label>生年月日</label>
+        {{ form.birth_date }}
+      </div>
+
+      <button class="btn">次へ →</button>
+    </form>
+
+    <a class="link" href="{% url 'patients:login' %}">← ログインへ戻る</a>
+  </div>
+</div>
+</body>
+</html>
