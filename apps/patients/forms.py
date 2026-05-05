@@ -287,11 +287,18 @@ class StaffPatientCreateForm(forms.ModelForm):
         return normalized
     
 class PatientLinkVerifyForm(forms.Form):
-    card_no = forms.CharField(
-        label="診察券番号",
-        max_length=20,
+    last_name = forms.CharField(
+        label="姓",
+        max_length=50,
         widget=forms.TextInput(attrs={
-            "placeholder": "例: P000123",
+            "placeholder": "例: 山田",
+        }),
+    )
+    first_name = forms.CharField(
+        label="名",
+        max_length=50,
+        widget=forms.TextInput(attrs={
+            "placeholder": "例: 太郎",
         }),
     )
     phone = forms.CharField(
@@ -305,6 +312,12 @@ class PatientLinkVerifyForm(forms.Form):
         label="生年月日",
         widget=forms.DateInput(attrs={"type": "date"}),
     )
+
+    def clean_last_name(self):
+        return (self.cleaned_data["last_name"] or "").strip()
+
+    def clean_first_name(self):
+        return (self.cleaned_data["first_name"] or "").strip()
 
     def clean_phone(self):
         phone = self.cleaned_data["phone"] or ""

@@ -1220,14 +1220,16 @@ def patient_link_verify_view(request):
 
     if request.method == "POST":
         if form.is_valid():
-            card_no = form.cleaned_data["card_no"].strip()
+            last_name = form.cleaned_data["last_name"]
+            first_name = form.cleaned_data["first_name"]
             phone = form.cleaned_data["phone"]
             birth_date = form.cleaned_data["birth_date"]
 
             patient = (
                 Patient.objects
                 .filter(
-                    card_no=card_no,
+                    last_name=last_name,
+                    first_name=first_name,
                     phone=phone,
                     birth_date=birth_date,
                     user__isnull=True,

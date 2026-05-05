@@ -33,25 +33,30 @@
 <div class="wrap">
   <div class="card">
     <h1>本人確認</h1>
-    <div class="sub">診察券情報を入力してください</div>
+    <div class="sub">院で登録済みの情報と照合します</div>
 
     <form method="post">
       {% csrf_token %}
 
-      <div class="field">
-        <label>診察券番号</label>
-        {{ form.card_no }}
-      </div>
+    <div class="field">
+    <label>姓</label>
+    {{ form.last_name }}
+    </div>
 
-      <div class="field">
-        <label>電話番号</label>
-        {{ form.phone }}
-      </div>
+    <div class="field">
+    <label>名</label>
+    {{ form.first_name }}
+    </div>
 
-      <div class="field">
-        <label>生年月日</label>
-        {{ form.birth_date }}
-      </div>
+    <div class="field">
+    <label>電話番号</label>
+    {{ form.phone }}
+    </div>
+
+    <div class="field">
+    <label>生年月日</label>
+    {{ form.birth_date }}
+    </div>
 
       <button class="btn">次へ →</button>
     </form>
