@@ -989,6 +989,110 @@
     }
   }
 
+  .command-card.main{
+    grid-column: span 2;
+    transform: scale(1.02);
+    box-shadow: 0 20px 40px rgba(0,0,0,.08);
+  }
+
+  .status-card.good{
+    background: #ecfdf5;
+    border-color: #bbf7d0;
+  }
+
+  .status-card.bad{
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+
+  .status-card.neutral{
+    background: #f8fafc;
+  }
+
+  .hero{
+    transform: scale(.98);
+  }
+
+  .appointment-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:12px;
+  }
+
+  .appt-card{
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    border-radius:20px;
+    padding:16px;
+    border:1px solid #e8eef7;
+    background:linear-gradient(180deg, rgba(255,255,255,.9) 0%, rgba(248,251,255,.96) 100%);
+    box-shadow:0 10px 22px rgba(15,23,42,.04);
+  }
+
+  .appt-date{
+    font-size:17px;
+    font-weight:900;
+    color:#0f172a;
+    letter-spacing:-.02em;
+  }
+
+  .appt-meta{
+    margin-top:8px;
+    color:#64748b;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.6;
+  }
+
+  .appt-status{
+    display:inline-flex;
+    align-items:center;
+    margin-top:12px;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:900;
+    background:#f1f5f9;
+    color:#475569;
+  }
+
+  .appt-status.booked,
+  .appt-status.pending{
+    background:#dbeafe;
+    color:#1e3a8a;
+  }
+
+  .appt-status.arrived{
+    background:#cffafe;
+    color:#155e75;
+  }
+
+  .appt-status.completed{
+    background:#dcfce7;
+    color:#166534;
+  }
+
+  .appt-status.cancelled,
+  .appt-status.no_show{
+    background:#fee2e2;
+    color:#991b1b;
+  }
+
+  @media (max-width: 1100px){
+    .appointment-grid{
+      grid-template-columns:repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px){
+    .appointment-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
 </style>
 {% endblock %}
 
@@ -1050,7 +1154,7 @@
     {% if command_cards %}
       <div class="command-grid">
         {% for item in command_cards %}
-          <div class="command-card {{ item.level }}">
+          <div class="command-card {{ item.level }} {% if forloop.first %}main{% endif %}">
             <div class="command-label">
               {% if item.level == "danger" %}
                 要対応
@@ -1078,7 +1182,7 @@
   </section>
 
   <section class="status-strip">
-    <div class="status-card">
+    <div class="status-card {% if not next_appointment %}bad{% else %}good{% endif %}">
       <div class="status-label">次回予約</div>
       <div class="status-value">
         {% if next_appointment %}
@@ -1096,7 +1200,7 @@
       </div>
     </div>
 
-    <div class="status-card">
+    <div class="status-card {% if not active_plan %}bad{% else %}good{% endif %}">
       <div class="status-label">有効な施術計画</div>
       <div class="status-value">
         {% if active_plan %}
@@ -1312,6 +1416,55 @@
       </div>
     {% else %}
       <div class="empty-box">まだ確定カルテがありません。</div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="section-row">
+      <div>
+        <h3 class="card-title">予約履歴</h3>
+        <div class="card-sub">この患者の直近予約を確認できます</div>
+      </div>
+
+      <a href="{% url 'patients:staff_booking_calendar' patient.id %}" class="section-btn">
+        ＋ 予約を作成
+      </a>
+    </div>
+
+    {% if appointments %}
+      <div class="appointment-grid">
+        {% for appt in appointments %}
+          <div class="appt-card">
+            <div class="appt-date">
+              {{ appt.start_at|date:"Y-m-d H:i" }}
+            </div>
+
+            <div class="appt-meta">
+              <div>メニュー：{{ appt.menu|default:"-" }}</div>
+              <div>
+                担当：
+                {% if appt.assigned_staff %}
+                  {{ appt.assigned_staff.get_full_name|default:appt.assigned_staff.username }}
+                {% else %}
+                  未割当
+                {% endif %}
+              </div>
+
+              {% if appt.treatment_plan %}
+                <div>施術計画：{{ appt.treatment_plan.title|default:"施術計画" }}</div>
+              {% endif %}
+            </div>
+
+            <span class="appt-status {{ appt.status }}">
+              {{ appt.get_status_display }}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-box">
+        まだ予約履歴がありません。
+      </div>
     {% endif %}
   </section>
 
