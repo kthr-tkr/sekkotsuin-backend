@@ -1098,8 +1098,6 @@ def staff_patient_detail_view(request, patient_id):
     clinic = get_current_clinic(request)
     patient = get_object_or_404(Patient, pk=patient_id, clinic=clinic)
 
-    now = timezone.now()
-
     notes = (
         ClinicalNote.objects
         .filter(patient=patient)
@@ -1126,10 +1124,15 @@ def staff_patient_detail_view(request, patient_id):
 
     appointments = (
         Appointment.objects
-        .filter(patient=patient, clinic=clinic)
+        .filter(patient=patient)
         .select_related("assigned_staff", "treatment_plan")
         .order_by("-start_at")
     )
+
+    now = timezone.now()
+
+    upcoming_appointments = appointments.filter(start_at__gte=now).order_by("start_at")[:4]
+    past_appointments = appointments.filter(start_at__lt=now).order_by("-start_at")[:6]
 
     next_appointment = (
         appointments
@@ -1214,6 +1217,8 @@ def staff_patient_detail_view(request, patient_id):
         "latest_note": latest_note,
         "latest_extract": latest_extract,
         "latest_assessment": latest_assessment,
+        "upcoming_appointments": upcoming_appointments,
+        "past_appointments": past_appointments,
     })
 
 def _as_list(v):

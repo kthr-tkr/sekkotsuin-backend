@@ -1093,6 +1093,11 @@
     }
   }
 
+  .appt-card.upcoming{
+    border:1px solid #6366f1;
+    background:linear-gradient(180deg, #eef2ff 0%, #ffffff 100%);
+  }
+
 </style>
 {% endblock %}
 
@@ -1423,18 +1428,18 @@
     <div class="section-row">
       <div>
         <h3 class="card-title">予約履歴</h3>
-        <div class="card-sub">この患者の直近予約を確認できます</div>
+        <div class="card-sub">この患者の予約状況</div>
       </div>
-
-      <a href="{% url 'patients:staff_booking_calendar' patient.id %}" class="section-btn">
-        ＋ 予約を作成
-      </a>
     </div>
 
-    {% if appointments %}
+    <!-- 次回予約 -->
+    <h4 style="margin-bottom:10px;">次回予定</h4>
+
+    {% if upcoming_appointments %}
       <div class="appointment-grid">
-        {% for appt in appointments %}
-          <div class="appt-card">
+        {% for appt in upcoming_appointments %}
+          <div class="appt-card upcoming">
+
             <div class="appt-date">
               {{ appt.start_at|date:"Y-m-d H:i" }}
             </div>
@@ -1449,23 +1454,54 @@
                   未割当
                 {% endif %}
               </div>
-
-              {% if appt.treatment_plan %}
-                <div>施術計画：{{ appt.treatment_plan.title|default:"施術計画" }}</div>
-              {% endif %}
             </div>
 
             <span class="appt-status {{ appt.status }}">
               {{ appt.get_status_display }}
             </span>
+
           </div>
         {% endfor %}
       </div>
     {% else %}
-      <div class="empty-box">
-        まだ予約履歴がありません。
-      </div>
+      <div class="empty-box">次回予約はありません</div>
     {% endif %}
+
+    <!-- 過去履歴 -->
+    <h4 style="margin-top:20px;">過去の予約</h4>
+
+    {% if past_appointments %}
+      <div class="appointment-grid">
+        {% for appt in past_appointments %}
+          <div class="appt-card">
+
+            <div class="appt-date">
+              {{ appt.start_at|date:"Y-m-d H:i" }}
+            </div>
+
+            <div class="appt-meta">
+              <div>メニュー：{{ appt.menu|default:"-" }}</div>
+              <div>
+                担当：
+                {% if appt.assigned_staff %}
+                  {{ appt.assigned_staff.get_full_name|default:appt.assigned_staff.username }}
+                {% else %}
+                  未割当
+                {% endif %}
+              </div>
+            </div>
+
+            <span class="appt-status {{ appt.status }}">
+              {{ appt.get_status_display }}
+            </span>
+
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-box">過去の予約はありません</div>
+    {% endif %}
+
   </section>
 
   <section class="card">
