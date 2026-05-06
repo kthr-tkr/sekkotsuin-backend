@@ -1098,6 +1098,8 @@ def staff_patient_detail_view(request, patient_id):
     clinic = get_current_clinic(request)
     patient = get_object_or_404(Patient, pk=patient_id, clinic=clinic)
 
+    now = timezone.now()
+
     notes = (
         ClinicalNote.objects
         .filter(patient=patient)
@@ -1122,6 +1124,38 @@ def staff_patient_detail_view(request, patient_id):
         .order_by("status_order", "-created_at")
     )
 
+    appointments = (
+        Appointment.objects
+        .filter(patient=patient, clinic=clinic)
+        .select_related("assigned_staff", "treatment_plan")
+        .order_by("-start_at")
+    )
+
+    next_appointment = (
+        appointments
+        .filter(
+            start_at__gte=now,
+            status__in=[
+                Appointment.Status.PENDING,
+                Appointment.Status.BOOKED,
+                Appointment.Status.ARRIVED,
+            ],
+        )
+        .order_by("start_at")
+        .first()
+    )
+
+    latest_appointment = appointments.first()
+
+    active_plan = treatment_plans.filter(status="active", is_active=True).first()
+    latest_plan = treatment_plans.first()
+
+    progress_count = 0
+    if active_plan:
+        progress_count = active_plan.progress_logs.count()
+    elif latest_plan:
+        progress_count = latest_plan.progress_logs.count()
+
     latest_note = notes.first()
     latest_extract = latest_note.extract_json if latest_note else {}
     latest_soap = latest_note.soap_json if latest_note else {}
@@ -1130,17 +1164,57 @@ def staff_patient_detail_view(request, patient_id):
     if latest_soap and isinstance(latest_soap.get("A"), list) and latest_soap.get("A"):
         latest_assessment = latest_soap.get("A")[0]
 
+    needs_treatment_plan = not treatment_plans.exists()
+    needs_next_appointment = next_appointment is None
+
+    command_cards = []
+
+    if needs_treatment_plan:
+        command_cards.append({
+            "level": "danger",
+            "title": "施術計画が未作成です",
+            "text": "この患者の施術方針・来院目安・生活指導を登録してください。",
+            "button": "施術計画を作成",
+            "url": reverse("treatment_plans:plan_create_for_patient", args=[patient.id]),
+        })
+
+    if needs_next_appointment:
+        command_cards.append({
+            "level": "warning",
+            "title": "次回予約がありません",
+            "text": "継続施術が必要な場合は、次回予約を作成してください。",
+            "button": "予約を作成",
+            "url": reverse("patients:staff_booking_calendar", args=[patient.id]),
+        })
+
+    if latest_note:
+        command_cards.append({
+            "level": "info",
+            "title": "最新カルテを確認できます",
+            "text": "直近の主訴・評価・施術方針を確認できます。",
+            "button": "カルテを見る",
+            "url": reverse("staff:clinical_note_detail", args=[latest_note.id]),
+        })
+
     return render(request, "staff/patients/detail.html", {
         "active": "patient_search",
         "page_title": "患者詳細",
         "patient": patient,
         "notes": notes,
         "treatment_plans": treatment_plans,
+        "appointments": appointments[:8],
+        "next_appointment": next_appointment,
+        "latest_appointment": latest_appointment,
+        "active_plan": active_plan,
+        "latest_plan": latest_plan,
+        "progress_count": progress_count,
+        "needs_treatment_plan": needs_treatment_plan,
+        "needs_next_appointment": needs_next_appointment,
+        "command_cards": command_cards,
         "latest_note": latest_note,
         "latest_extract": latest_extract,
         "latest_assessment": latest_assessment,
     })
-
 
 def _as_list(v):
     if v is None:

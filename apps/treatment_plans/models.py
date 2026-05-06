@@ -163,11 +163,11 @@ class TreatmentProgress(models.Model):
     def __str__(self):
         return f"{self.plan_id} / {self.visit_date}"
 
-def clean(self):
-    errors = {}
+    def clean(self):
+        errors = {}
 
-    if self.pain_level is not None and not (0 <= self.pain_level <= 10):
-        errors["pain_level"] = "痛みレベルは 0〜10 の範囲で入力してください。"
+        if self.pain_level is not None and not (0 <= self.pain_level <= 10):
+            errors["pain_level"] = "痛みレベルは 0〜10 の範囲で入力してください。"
 
-    if errors:
-        raise ValidationError(errors)
+        if errors:
+            raise ValidationError(errors)
