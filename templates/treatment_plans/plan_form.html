@@ -327,6 +327,64 @@
     .tp-section{padding:18px;}
     .tp-actions{position:static;}
   }
+
+.tp-check-grid ul{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+
+.tp-check-grid li{
+  margin:0;
+}
+
+.tp-check-grid label{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:48px;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1px solid #e2e8f0;
+  background:#f8fafc;
+  color:#334155;
+  font-weight:900;
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+.tp-check-grid label:has(input:checked){
+  border-color:#6366f1;
+  background:#eef2ff;
+  color:#1e3a8a;
+  box-shadow:0 10px 22px rgba(79,70,229,.10);
+}
+
+.tp-check-grid input{
+  width:18px;
+  height:18px;
+  accent-color:#2563eb;
+}
+
+.tp-preview-text{
+  padding:16px 18px;
+  border-radius:18px;
+  background:linear-gradient(180deg,#f8fbff 0%,#eef2ff 100%);
+  border:1px solid #dbeafe;
+  color:#0f172a;
+  font-size:15px;
+  font-weight:800;
+  line-height:1.9;
+}
+
+@media(max-width:720px){
+  .tp-check-grid ul{
+    grid-template-columns:1fr;
+  }
+}
 </style>
 
 <div class="tp-wrap">
@@ -485,17 +543,6 @@
             {{ form.visit_guide_unit_note.errors }}
           </div>
 
-          <div class="tp-field">
-            <label>{{ form.expected_recovery_weeks_min.label }}</label>
-            {{ form.expected_recovery_weeks_min }}
-            {{ form.expected_recovery_weeks_min.errors }}
-          </div>
-
-          <div class="tp-field">
-            <label>{{ form.expected_recovery_weeks_max.label }}</label>
-            {{ form.expected_recovery_weeks_max }}
-            {{ form.expected_recovery_weeks_max.errors }}
-          </div>
         </div>
       </section>
 
@@ -513,35 +560,40 @@
         <div class="tp-grid">
           <div class="tp-field wide">
             <label>{{ form.bath_instruction.label }}</label>
-            {{ form.bath_instruction }}
-            <div class="tp-help">例：長湯は避け、痛みが強い日はシャワー程度にしてください。</div>
+            <div class="tp-check-grid">
+              {{ form.bath_instruction }}
+            </div>
             {{ form.bath_instruction.errors }}
           </div>
 
           <div class="tp-field wide">
             <label>{{ form.walking_instruction.label }}</label>
-            {{ form.walking_instruction }}
-            <div class="tp-help">例：痛みが強い間は長距離歩行を避けてください。</div>
+            <div class="tp-check-grid">
+              {{ form.walking_instruction }}
+            </div>
             {{ form.walking_instruction.errors }}
           </div>
 
           <div class="tp-field wide">
             <label>{{ form.exercise_instruction.label }}</label>
-            {{ form.exercise_instruction }}
-            <div class="tp-help">例：痛みが出ない範囲で軽いストレッチから開始してください。</div>
+            <div class="tp-check-grid">
+              {{ form.exercise_instruction }}
+            </div>
             {{ form.exercise_instruction.errors }}
           </div>
 
           <div class="tp-field wide">
             <label>{{ form.work_instruction.label }}</label>
-            {{ form.work_instruction }}
-            <div class="tp-help">例：長時間同じ姿勢を避け、こまめに休憩してください。</div>
+            <div class="tp-check-grid">
+              {{ form.work_instruction }}
+            </div>
             {{ form.work_instruction.errors }}
           </div>
 
           <div class="tp-field wide">
             <label>{{ form.lifestyle_other_instruction.label }}</label>
             {{ form.lifestyle_other_instruction }}
+            <div class="tp-help">その他、個別に伝えたい生活上の注意があれば入力してください。</div>
             {{ form.lifestyle_other_instruction.errors }}
           </div>
         </div>
@@ -561,15 +613,16 @@
         <div class="tp-grid">
           <div class="tp-field wide">
             <label>{{ form.caution_notes.label }}</label>
-            {{ form.caution_notes }}
-            <div class="tp-help">例：同じ姿勢を続けない、重い物を持たない、睡眠を十分に取る など</div>
+            <div class="tp-check-grid">
+              {{ form.caution_notes }}
+            </div>
             {{ form.caution_notes.errors }}
           </div>
 
           <div class="tp-field wide">
             <label>{{ form.rebound_reaction_note.label }}</label>
             {{ form.rebound_reaction_note }}
-            <div class="tp-help">例：だるさ・眠気・ほてりなどが出る場合があります。</div>
+            <div class="tp-help">好転反応について、患者へ説明する内容を入力してください。</div>
             {{ form.rebound_reaction_note.errors }}
           </div>
         </div>
@@ -582,6 +635,31 @@
             <h2 class="tp-section-title">説明・保存設定</h2>
             <div class="tp-section-sub">
               患者へ説明済みか、この計画を有効な計画として扱うかを設定します。
+            </div>
+          </div>
+        </div>
+
+        <div class="tp-grid" style="margin-bottom:18px;">
+          <div class="tp-field">
+            <label>改善目安（最短週）</label>
+            {{ form.expected_recovery_weeks_min }}
+            {{ form.expected_recovery_weeks_min.errors }}
+          </div>
+
+          <div class="tp-field">
+            <label>改善目安（最長週）</label>
+            {{ form.expected_recovery_weeks_max }}
+            {{ form.expected_recovery_weeks_max.errors }}
+          </div>
+
+          <div class="tp-field wide">
+            <div class="tp-preview-text">
+              おおよそ　
+              <b>{{ form.expected_recovery_weeks_min.value|default:"　" }}</b>
+              ～
+              <b>{{ form.expected_recovery_weeks_max.value|default:"　" }}</b>
+              　週で症状の改善がみられます。<br>
+              痛みが再発しないよう、症状の改善後も管理させていただきます。
             </div>
           </div>
         </div>

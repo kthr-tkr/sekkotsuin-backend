@@ -1,8 +1,64 @@
 from django import forms
 from .models import TreatmentPlan, TreatmentProgress
 
+LIFESTYLE_BATH_CHOICES = [
+    ("制限なし", "制限なし"),
+    ("患部をお湯につけない", "患部をお湯につけない"),
+    ("長湯はしないでください", "長湯はしないでください"),
+    ("半身浴にしてください", "半身浴にしてください"),
+]
+
+LIFESTYLE_COMMON_CHOICES = [
+    ("制限なし", "制限なし"),
+    ("本日から一定期間は中止", "本日から一定期間は中止"),
+    ("痛みが出たら中止", "痛みが出たら中止"),
+    ("痛みが出ない範囲で許可", "痛みが出ない範囲で許可"),
+]
+
+CAUTION_CHOICES = [
+    ("同じ姿勢を続けないように注意してください。", "同じ姿勢を続けないように注意してください。"),
+    ("立ったり、座ったりの繰り返し動作は控えてください。", "立ったり、座ったりの繰り返し動作は控えてください。"),
+    ("重い物を持ったり、運んだりする動作は控えてください。", "重い物を持ったり、運んだりする動作は控えてください。"),
+    ("睡眠は十分にとってください。", "睡眠は十分にとってください。"),
+    ("痛みが強い場合や炎症症状に対しては、ご自宅でもアイシングを行ってください。", "痛みが強い場合や炎症症状に対しては、ご自宅でもアイシングを行ってください。"),
+    ("痛みのでる動作はなるべく控えてください。", "痛みのでる動作はなるべく控えてください。"),
+]
 
 class TreatmentPlanForm(forms.ModelForm):
+    bath_instruction = forms.MultipleChoiceField(
+        label="入浴について",
+        choices=LIFESTYLE_BATH_CHOICES,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "tp-check-input"}),
+        required=False,
+    )
+
+    walking_instruction = forms.MultipleChoiceField(
+        label="歩行について",
+        choices=LIFESTYLE_COMMON_CHOICES,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "tp-check-input"}),
+        required=False,
+    )
+
+    exercise_instruction = forms.MultipleChoiceField(
+        label="運動について",
+        choices=LIFESTYLE_COMMON_CHOICES,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "tp-check-input"}),
+        required=False,
+    )
+
+    work_instruction = forms.MultipleChoiceField(
+        label="就労について",
+        choices=LIFESTYLE_COMMON_CHOICES,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "tp-check-input"}),
+        required=False,
+    )
+
+    caution_notes = forms.MultipleChoiceField(
+        label="その他注意事項",
+        choices=CAUTION_CHOICES,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "tp-check-input"}),
+        required=False,
+    )
     class Meta:
         model = TreatmentPlan
         fields = [
@@ -72,6 +128,37 @@ class TreatmentPlanForm(forms.ModelForm):
             "status": "計画ステータス",
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk:
+            for field_name in [
+                "bath_instruction",
+                "walking_instruction",
+                "exercise_instruction",
+                "work_instruction",
+                "caution_notes",
+            ]:
+                value = getattr(self.instance, field_name, "")
+                if value:
+                    self.initial[field_name] = [
+                        v.strip() for v in value.split("\n") if v.strip()
+                    ]
+
+    def clean_bath_instruction(self):
+        return "\n".join(self.cleaned_data.get("bath_instruction") or [])
+
+    def clean_walking_instruction(self):
+        return "\n".join(self.cleaned_data.get("walking_instruction") or [])
+
+    def clean_exercise_instruction(self):
+        return "\n".join(self.cleaned_data.get("exercise_instruction") or [])
+
+    def clean_work_instruction(self):
+        return "\n".join(self.cleaned_data.get("work_instruction") or [])
+
+    def clean_caution_notes(self):
+        return "\n".join(self.cleaned_data.get("caution_notes") or [])
 
 class TreatmentProgressForm(forms.ModelForm):
     class Meta:
