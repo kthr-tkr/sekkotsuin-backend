@@ -494,6 +494,47 @@
       grid-column:auto;
     }
   }
+
+.instruction-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.instruction-box{
+  border-radius:18px;
+  padding:15px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+}
+
+.instruction-box.wide{
+  grid-column:1 / -1;
+}
+
+.instruction-label{
+  font-size:12px;
+  font-weight:900;
+  color:#64748b;
+  margin-bottom:8px;
+}
+
+.instruction-value{
+  color:#0f172a;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.8;
+}
+
+@media(max-width:760px){
+  .instruction-grid{
+    grid-template-columns:1fr;
+  }
+
+  .instruction-box.wide{
+    grid-column:auto;
+  }
+}
 </style>
 
 <div class="tpd-wrap">
@@ -670,15 +711,32 @@
 
       <div class="info-box wide">
         <div class="info-label">日常生活で注意していただくこと</div>
-        <div class="pill-list">
-          {% if plan.bath_instruction %}<span class="pill">入浴：{{ plan.bath_instruction|linebreaksbr }}</span>{% endif %}
-          {% if plan.walking_instruction %}<span class="pill">歩行：{{ plan.walking_instruction|linebreaksbr }}</span>{% endif %}
-          {% if plan.exercise_instruction %}<span class="pill">運動：{{ plan.exercise_instruction|linebreaksbr }}</span>{% endif %}
-          {% if plan.work_instruction %}<span class="pill">就労：{{ plan.work_instruction|linebreaksbr }}</span>{% endif %}
-          {% if plan.lifestyle_other_instruction %}<span class="pill">その他：{{ plan.lifestyle_other_instruction|linebreaksbr }}</span>{% endif %}
-          {% if not plan.bath_instruction and not plan.walking_instruction and not plan.exercise_instruction and not plan.work_instruction and not plan.lifestyle_other_instruction %}
-            <span class="pill">-</span>
-          {% endif %}
+
+        <div class="instruction-grid">
+          <div class="instruction-box">
+            <div class="instruction-label">入浴について</div>
+            <div class="instruction-value">{{ plan.bath_instruction|default:"-"|linebreaksbr }}</div>
+          </div>
+
+          <div class="instruction-box">
+            <div class="instruction-label">歩行について</div>
+            <div class="instruction-value">{{ plan.walking_instruction|default:"-"|linebreaksbr }}</div>
+          </div>
+
+          <div class="instruction-box">
+            <div class="instruction-label">運動について</div>
+            <div class="instruction-value">{{ plan.exercise_instruction|default:"-"|linebreaksbr }}</div>
+          </div>
+
+          <div class="instruction-box">
+            <div class="instruction-label">就労について</div>
+            <div class="instruction-value">{{ plan.work_instruction|default:"-"|linebreaksbr }}</div>
+          </div>
+
+          <div class="instruction-box wide">
+            <div class="instruction-label">その他</div>
+            <div class="instruction-value">{{ plan.lifestyle_other_instruction|default:"-"|linebreaksbr }}</div>
+          </div>
         </div>
       </div>
 
