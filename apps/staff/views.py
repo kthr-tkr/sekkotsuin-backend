@@ -1098,6 +1098,13 @@ def staff_patient_detail_view(request, patient_id):
     clinic = get_current_clinic(request)
     patient = get_object_or_404(Patient, pk=patient_id, clinic=clinic)
 
+    active_tab = request.GET.get("tab", "overview")
+    valid_tabs = ["overview", "appointments", "clinical_notes", "treatment_plans", "files"]
+    if active_tab not in valid_tabs:
+        active_tab = "overview"
+
+    now = timezone.now()
+
     notes = (
         ClinicalNote.objects
         .filter(patient=patient)
@@ -1124,15 +1131,13 @@ def staff_patient_detail_view(request, patient_id):
 
     appointments = (
         Appointment.objects
-        .filter(patient=patient)
+        .filter(patient=patient, clinic=clinic)
         .select_related("assigned_staff", "treatment_plan")
         .order_by("-start_at")
     )
 
-    now = timezone.now()
-
     upcoming_appointments = appointments.filter(start_at__gte=now).order_by("start_at")[:4]
-    past_appointments = appointments.filter(start_at__lt=now).order_by("-start_at")[:6]
+    past_appointments = appointments.filter(start_at__lt=now).order_by("-start_at")[:8]
 
     next_appointment = (
         appointments
@@ -1202,23 +1207,36 @@ def staff_patient_detail_view(request, patient_id):
     return render(request, "staff/patients/detail.html", {
         "active": "patient_search",
         "page_title": "患者詳細",
+        "active_tab": active_tab,
+
         "patient": patient,
+
         "notes": notes,
+        "note_count": notes.count(),
+
         "treatment_plans": treatment_plans,
+        "plan_count": treatment_plans.count(),
+
         "appointments": appointments[:8],
+        "appointment_count": appointments.count(),
+        "upcoming_appointments": upcoming_appointments,
+        "past_appointments": past_appointments,
         "next_appointment": next_appointment,
         "latest_appointment": latest_appointment,
+
         "active_plan": active_plan,
         "latest_plan": latest_plan,
         "progress_count": progress_count,
+
         "needs_treatment_plan": needs_treatment_plan,
         "needs_next_appointment": needs_next_appointment,
         "command_cards": command_cards,
+
         "latest_note": latest_note,
         "latest_extract": latest_extract,
         "latest_assessment": latest_assessment,
-        "upcoming_appointments": upcoming_appointments,
-        "past_appointments": past_appointments,
+
+        "file_count": 0,
     })
 
 def _as_list(v):
