@@ -8,7 +8,7 @@
     margin:0 auto;
     display:flex;
     flex-direction:column;
-    gap:20px;
+    gap:18px;
   }
 
   .tpd-head{
@@ -29,7 +29,7 @@
     color:#3730a3;
     font-size:12px;
     font-weight:900;
-    margin-bottom:12px;
+    margin-bottom:10px;
   }
 
   .tpd-eyebrow::before{
@@ -42,7 +42,7 @@
 
   .tpd-title{
     margin:0;
-    font-size:42px;
+    font-size:44px;
     line-height:1.08;
     font-weight:900;
     letter-spacing:-.05em;
@@ -50,7 +50,7 @@
   }
 
   .tpd-lead{
-    margin-top:10px;
+    margin-top:9px;
     color:#64748b;
     font-size:14px;
     font-weight:700;
@@ -82,8 +82,8 @@
   .tpd-btn.primary{
     color:#fff;
     border-color:transparent;
-    background:linear-gradient(135deg,#0b1220 0%,#1d4ed8 100%);
-    box-shadow:0 16px 34px rgba(29,78,216,.22);
+    background:linear-gradient(135deg,#0b1220 0%,#2563eb 100%);
+    box-shadow:0 16px 34px rgba(37,99,235,.22);
   }
 
   .tpd-btn.danger{
@@ -92,31 +92,32 @@
     color:#be123c;
   }
 
-  .hero{
+  .plan-hero{
     border-radius:30px;
-    padding:26px;
+    padding:24px;
     background:
-      radial-gradient(circle at 88% 18%, rgba(96,165,250,.24), transparent 28%),
-      linear-gradient(135deg,#060c19 0%,#111b36 42%,#1d4ed8 100%);
+      radial-gradient(circle at 86% 20%, rgba(96,165,250,.24), transparent 28%),
+      linear-gradient(135deg,#060c19 0%,#111b36 45%,#2563eb 100%);
     color:#fff;
-    box-shadow:0 26px 70px rgba(15,23,42,.16);
+    box-shadow:0 24px 64px rgba(15,23,42,.16);
   }
 
-  .hero-grid{
+  .plan-hero-grid{
     display:grid;
     grid-template-columns:1.1fr .9fr;
     gap:18px;
     align-items:stretch;
   }
 
-  .hero-title{
-    font-size:26px;
+  .plan-name{
+    margin:0;
+    font-size:34px;
     font-weight:900;
     letter-spacing:-.04em;
-    margin:0 0 10px;
   }
 
-  .hero-sub{
+  .plan-sub{
+    margin-top:10px;
     color:rgba(255,255,255,.76);
     font-size:14px;
     font-weight:700;
@@ -125,28 +126,81 @@
 
   .hero-stats{
     display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:12px;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
   }
 
   .hero-stat{
     border-radius:20px;
-    padding:16px;
+    padding:15px;
     background:rgba(255,255,255,.12);
     border:1px solid rgba(255,255,255,.12);
   }
 
-  .hero-stat-label{
+  .hero-label{
     color:rgba(255,255,255,.66);
     font-size:11px;
     font-weight:900;
     margin-bottom:8px;
   }
 
-  .hero-stat-value{
-    font-size:24px;
+  .hero-value{
+    font-size:22px;
     font-weight:900;
     line-height:1.3;
+  }
+
+  .plan-tabs{
+    position:sticky;
+    top:0;
+    z-index:20;
+    display:flex;
+    gap:8px;
+    padding:10px;
+    border-radius:22px;
+    background:rgba(255,255,255,.88);
+    border:1px solid rgba(226,232,240,.9);
+    box-shadow:0 14px 32px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+    overflow-x:auto;
+  }
+
+  .plan-tab{
+    white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    min-height:42px;
+    padding:0 16px;
+    border-radius:15px;
+    color:#475569;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:900;
+    border:1px solid transparent;
+  }
+
+  .plan-tab span{
+    display:inline-flex;
+    min-width:22px;
+    height:22px;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    background:#f1f5f9;
+    color:#475569;
+    font-size:12px;
+  }
+
+  .plan-tab.active{
+    color:#fff;
+    background:linear-gradient(135deg,#0b1220,#2563eb);
+    box-shadow:0 14px 26px rgba(37,99,235,.20);
+  }
+
+  .plan-tab.active span{
+    background:rgba(255,255,255,.18);
+    color:#fff;
   }
 
   .summary-grid{
@@ -161,10 +215,20 @@
     overflow:hidden;
     border-radius:26px;
     padding:22px;
-    background:rgba(255,255,255,.82);
-    border:1px solid rgba(255,255,255,.78);
+    background:rgba(255,255,255,.84);
+    border:1px solid rgba(255,255,255,.82);
     box-shadow:0 18px 42px rgba(15,23,42,.06);
     backdrop-filter:blur(16px);
+  }
+
+  .summary-card.good{
+    background:#ecfdf5;
+    border-color:#bbf7d0;
+  }
+
+  .summary-card.bad{
+    background:#fef2f2;
+    border-color:#fecaca;
   }
 
   .summary-label{
@@ -288,6 +352,37 @@
     font-size:16px;
     font-weight:900;
     line-height:2;
+  }
+
+  .instruction-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .instruction-box{
+    border-radius:18px;
+    padding:15px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+  }
+
+  .instruction-box.wide{
+    grid-column:1 / -1;
+  }
+
+  .instruction-label{
+    font-size:12px;
+    font-weight:900;
+    color:#64748b;
+    margin-bottom:8px;
+  }
+
+  .instruction-value{
+    color:#0f172a;
+    font-size:14px;
+    font-weight:800;
+    line-height:1.8;
   }
 
   .pain-row{
@@ -451,6 +546,16 @@
     flex-wrap:wrap;
   }
 
+  .status-forms{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .status-forms form{
+    display:inline;
+  }
+
   .empty-box{
     border:1px dashed #d6dfeb;
     border-radius:20px;
@@ -462,92 +567,45 @@
     font-weight:800;
   }
 
-  .status-forms{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-  }
-
-  .status-forms form{
-    display:inline;
-  }
-
   @media(max-width:1000px){
-    .hero-grid,
-    .summary-grid{
+    .plan-hero-grid,
+    .summary-grid,
+    .hero-stats{
       grid-template-columns:1fr 1fr;
     }
   }
 
   @media(max-width:760px){
     .tpd-title{font-size:32px;}
-    .hero-grid,
+
+    .plan-hero-grid,
     .hero-stats,
     .summary-grid,
     .info-grid,
-    .progress-form-grid{
+    .progress-form-grid,
+    .instruction-grid{
       grid-template-columns:1fr;
     }
 
     .info-box.wide,
-    .pf-field.wide{
+    .pf-field.wide,
+    .instruction-box.wide{
       grid-column:auto;
     }
   }
-
-.instruction-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
-}
-
-.instruction-box{
-  border-radius:18px;
-  padding:15px;
-  background:#f8fafc;
-  border:1px solid #e2e8f0;
-}
-
-.instruction-box.wide{
-  grid-column:1 / -1;
-}
-
-.instruction-label{
-  font-size:12px;
-  font-weight:900;
-  color:#64748b;
-  margin-bottom:8px;
-}
-
-.instruction-value{
-  color:#0f172a;
-  font-size:14px;
-  font-weight:800;
-  line-height:1.8;
-}
-
-@media(max-width:760px){
-  .instruction-grid{
-    grid-template-columns:1fr;
-  }
-
-  .instruction-box.wide{
-    grid-column:auto;
-  }
-}
 </style>
 
 <div class="tpd-wrap">
 
   <header class="tpd-head">
     <div>
-      <div class="tpd-eyebrow">Treatment Plan Detail</div>
+      <div class="tpd-eyebrow">Treatment Plan Management</div>
       <h1 class="tpd-title">施術計画詳細</h1>
-      <div class="tpd-lead">施術計画・生活指導・施術経過を一画面で確認できます</div>
+      <div class="tpd-lead">計画概要・施術経過・患者説明・予約をタブで管理します</div>
     </div>
 
     <div class="tpd-tools">
-      <a href="javascript:history.back()" class="tpd-btn">← 戻る</a>
+      <a href="{% url 'staff:patient_detail' plan.patient.pk %}?tab=treatment_plans" class="tpd-btn">← 患者詳細へ戻る</a>
       <a href="{% url 'treatment_plans:plan_edit' plan.pk %}" class="tpd-btn">編集</a>
 
       {% if plan.next_visit_date %}
@@ -562,11 +620,11 @@
     </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-grid">
+  <section class="plan-hero">
+    <div class="plan-hero-grid">
       <div>
-        <h2 class="hero-title">{{ plan.title|default:"施術計画" }}</h2>
-        <div class="hero-sub">
+        <h2 class="plan-name">{{ plan.title|default:"施術計画" }}</h2>
+        <div class="plan-sub">
           {{ plan.patient.last_name }} {{ plan.patient.first_name }} 様の施術方針です。<br>
           主訴：{{ plan.chief_complaint|default:"-" }}
         </div>
@@ -574,362 +632,491 @@
 
       <div class="hero-stats">
         <div class="hero-stat">
-          <div class="hero-stat-label">STATUS</div>
-          <div class="hero-stat-value">{{ plan.get_status_display }}</div>
+          <div class="hero-label">STATUS</div>
+          <div class="hero-value">{{ plan.get_status_display }}</div>
         </div>
+
         <div class="hero-stat">
-          <div class="hero-stat-label">PROGRESS</div>
-          <div class="hero-stat-value">{{ progress_count }}回</div>
+          <div class="hero-label">PROGRESS</div>
+          <div class="hero-value">{{ progress_count }}回</div>
+        </div>
+
+        <div class="hero-stat">
+          <div class="hero-label">予約</div>
+          <div class="hero-value">{{ appointment_count }}</div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="summary-grid">
-    <div class="summary-card">
-      <div class="summary-label">現在ステータス</div>
-      <div class="summary-value">{{ plan.get_status_display }}</div>
-      <div class="summary-sub">{% if plan.is_active %}有効な計画です{% else %}現在は非アクティブです{% endif %}</div>
-    </div>
+  <nav class="plan-tabs">
+    <a class="plan-tab {% if active_tab == 'overview' %}active{% endif %}"
+       href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=overview">
+      計画概要
+    </a>
 
-    <div class="summary-card">
-      <div class="summary-label">総施術回数</div>
-      <div class="summary-value">{{ progress_count }}回</div>
-      <div class="summary-sub">
-        {% if latest_progress %}直近施術日：{{ latest_progress.visit_date }}{% else %}まだ記録がありません{% endif %}
-      </div>
-    </div>
+    <a class="plan-tab {% if active_tab == 'progress' %}active{% endif %}"
+       href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=progress">
+      施術経過 <span>{{ progress_tab_count }}</span>
+    </a>
 
-    <div class="summary-card">
-      <div class="summary-label">次回来院日</div>
-      <div class="summary-value">{{ plan.next_visit_date|default:"-" }}</div>
-      <div class="summary-sub">
-        {% if latest_progress %}最終更新：{{ latest_progress.updated_at|date:"Y-m-d H:i" }}{% else %}次回予定を設定できます{% endif %}
-      </div>
-    </div>
+    <a class="plan-tab {% if active_tab == 'patient_explanation' %}active{% endif %}"
+       href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=patient_explanation">
+      患者説明
+    </a>
 
-    <div class="summary-card">
-      <div class="summary-label">痛み推移</div>
-      <div class="summary-value
-        {% if pain_trend_label == '大きく改善' or pain_trend_label == '改善傾向' %}trend-good{% elif pain_trend_label == '横ばい' %}trend-mid{% elif pain_trend_label == '再評価候補' %}trend-bad{% endif %}
-      ">
-        {{ pain_trend_label }}
+    <a class="plan-tab {% if active_tab == 'appointments' %}active{% endif %}"
+       href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=appointments">
+      予約 <span>{{ appointment_count }}</span>
+    </a>
+  </nav>
+
+  {% if active_tab == "overview" %}
+
+    <section class="summary-grid">
+      <div class="summary-card {% if plan.is_active %}good{% else %}bad{% endif %}">
+        <div class="summary-label">現在ステータス</div>
+        <div class="summary-value">{{ plan.get_status_display }}</div>
+        <div class="summary-sub">{% if plan.is_active %}有効な計画です{% else %}現在は非アクティブです{% endif %}</div>
       </div>
-      <div class="summary-sub">
-        {% if first_pain_level is not None and latest_pain_level is not None %}
-          初回 {{ first_pain_level }} → 直近 {{ latest_pain_level }}
-        {% else %}
-          痛みレベルの記録待ち
+
+      <div class="summary-card">
+        <div class="summary-label">総施術回数</div>
+        <div class="summary-value">{{ progress_count }}回</div>
+        <div class="summary-sub">
+          {% if latest_progress %}直近施術日：{{ latest_progress.visit_date }}{% else %}まだ記録がありません{% endif %}
+        </div>
+      </div>
+
+      <div class="summary-card {% if plan.next_visit_date %}good{% else %}bad{% endif %}">
+        <div class="summary-label">次回来院日</div>
+        <div class="summary-value">{{ plan.next_visit_date|default:"未設定" }}</div>
+        <div class="summary-sub">予約タブから関連予約を確認できます</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">痛み推移</div>
+        <div class="summary-value
+          {% if pain_trend_label == '大きく改善' or pain_trend_label == '改善傾向' %}trend-good{% elif pain_trend_label == '横ばい' %}trend-mid{% elif pain_trend_label == '再評価候補' %}trend-bad{% endif %}
+        ">
+          {{ pain_trend_label }}
+        </div>
+        <div class="summary-sub">
+          {% if first_pain_level is not None and latest_pain_level is not None %}
+            初回 {{ first_pain_level }} → 直近 {{ latest_pain_level }}
+          {% else %}
+            痛みレベルの記録待ち
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">患者説明用サマリー</h2>
+          <div class="section-sub">患者さんへ説明しやすい文章として確認します</div>
+        </div>
+      </div>
+
+      <div class="plan-message">
+        {% if plan.expected_recovery_weeks_min or plan.expected_recovery_weeks_max %}
+          おおよそ
+          {{ plan.expected_recovery_weeks_min|default:"-" }}
+          ～
+          {{ plan.expected_recovery_weeks_max|default:"-" }}
+          週で症状の改善がみられます。<br>
         {% endif %}
+        痛みが再発しないよう、症状の改善後も管理させていただきます。
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="tpd-card">
-    <div class="section-head">
-      <div>
-        <h2 class="section-title">患者説明用サマリー</h2>
-        <div class="section-sub">紙の施術計画書に相当する、患者へ説明しやすい表示です</div>
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">計画基本情報</h2>
+          <div class="section-sub">主訴・来院目安・説明状態を確認します</div>
+        </div>
+
+        <div class="status-forms">
+          <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="active">
+            <button type="submit" class="tpd-btn">進行中</button>
+          </form>
+
+          <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="paused">
+            <button type="submit" class="tpd-btn">中断</button>
+          </form>
+
+          <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="completed">
+            <button type="submit" class="tpd-btn primary">完了</button>
+          </form>
+        </div>
       </div>
-    </div>
 
-    <div class="plan-message">
-      {% if plan.expected_recovery_weeks_min or plan.expected_recovery_weeks_max %}
-        おおよそ
-        {{ plan.expected_recovery_weeks_min|default:"-" }}
-        ～
-        {{ plan.expected_recovery_weeks_max|default:"-" }}
-        週で症状の改善がみられます。<br>
+      <div class="info-grid">
+        <div class="info-box">
+          <div class="info-label">患者名</div>
+          <div class="info-value">{{ plan.patient.last_name }} {{ plan.patient.first_name }}</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-label">主訴</div>
+          <div class="info-value">{{ plan.chief_complaint|default:"-" }}</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-label">来院目安</div>
+          <div class="info-value">
+            {{ plan.get_visit_guide_type_display|default:"-" }}
+            {% if plan.visit_guide_count %} {{ plan.visit_guide_count }}回{% endif %}
+            {% if plan.visit_guide_unit_note %}<br>{{ plan.visit_guide_unit_note }}{% endif %}
+          </div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-label">説明状態</div>
+          <div class="pill-list">
+            {% if plan.explained_to_patient %}
+              <span class="pill good">患者へ説明済み</span>
+            {% else %}
+              <span class="pill warn">未説明</span>
+            {% endif %}
+
+            {% if plan.is_active %}
+              <span class="pill good">有効な計画</span>
+            {% else %}
+              <span class="pill warn">非アクティブ</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+  {% elif active_tab == "progress" %}
+
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">痛みレベル履歴</h2>
+          <div class="section-sub">施術ごとの痛みレベルを確認します</div>
+        </div>
+      </div>
+
+      {% if pain_history %}
+        <div class="pain-row">
+          {% for item in pain_history %}
+            <div class="pain-chip">
+              <div class="pain-chip-top">第{{ item.visit_number }}回</div>
+              <div class="pain-chip-value">{{ item.pain_level }}</div>
+              <div class="pain-chip-date">{{ item.visit_date }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-box">まだ痛みレベルの記録がありません。</div>
       {% endif %}
-      痛みが再発しないよう、症状の改善後も管理させていただきます。
-    </div>
-  </section>
+    </section>
 
-  <section class="tpd-card">
-    <div class="section-head">
-      <div>
-        <h2 class="section-title">施術計画</h2>
-        <div class="section-sub">来院目安・生活指導・注意事項を確認します</div>
-      </div>
-
-      <div class="status-forms">
-        <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
-          {% csrf_token %}
-          <input type="hidden" name="status" value="active">
-          <button type="submit" class="tpd-btn">進行中</button>
-        </form>
-
-        <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
-          {% csrf_token %}
-          <input type="hidden" name="status" value="paused">
-          <button type="submit" class="tpd-btn">中断</button>
-        </form>
-
-        <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
-          {% csrf_token %}
-          <input type="hidden" name="status" value="completed">
-          <button type="submit" class="tpd-btn primary">完了</button>
-        </form>
-      </div>
-    </div>
-
-    <div class="info-grid">
-      <div class="info-box">
-        <div class="info-label">患者名</div>
-        <div class="info-value">{{ plan.patient.last_name }} {{ plan.patient.first_name }}</div>
-      </div>
-
-      <div class="info-box">
-        <div class="info-label">主訴</div>
-        <div class="info-value">{{ plan.chief_complaint|default:"-" }}</div>
-      </div>
-
-      <div class="info-box">
-        <div class="info-label">来院目安</div>
-        <div class="info-value">
-          {{ plan.get_visit_guide_type_display|default:"-" }}
-          {% if plan.visit_guide_count %} {{ plan.visit_guide_count }}回{% endif %}
-          {% if plan.visit_guide_unit_note %}<br>{{ plan.visit_guide_unit_note }}{% endif %}
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">経過判定・次アクション</h2>
+          <div class="section-sub">施術経過から判断材料を表示します</div>
         </div>
       </div>
 
-      <div class="info-box">
-        <div class="info-label">説明状態</div>
-        <div class="pill-list">
-          {% if plan.explained_to_patient %}
-            <span class="pill good">患者へ説明済み</span>
-          {% else %}
-            <span class="pill warn">未説明</span>
-          {% endif %}
-          {% if plan.is_active %}
-            <span class="pill good">有効な計画</span>
-          {% else %}
-            <span class="pill warn">非アクティブ</span>
-          {% endif %}
+      <div class="info-grid">
+        <div class="info-box wide">
+          <div class="info-label">経過判定コメント</div>
+          <div class="judge-box {{ progress_comment_level }}">{{ progress_comment }}</div>
         </div>
-      </div>
 
-      <div class="info-box wide">
-        <div class="info-label">日常生活で注意していただくこと</div>
-
-        <div class="instruction-grid">
-          <div class="instruction-box">
-            <div class="instruction-label">入浴について</div>
-            <div class="instruction-value">{{ plan.bath_instruction|default:"-"|linebreaksbr }}</div>
-          </div>
-
-          <div class="instruction-box">
-            <div class="instruction-label">歩行について</div>
-            <div class="instruction-value">{{ plan.walking_instruction|default:"-"|linebreaksbr }}</div>
-          </div>
-
-          <div class="instruction-box">
-            <div class="instruction-label">運動について</div>
-            <div class="instruction-value">{{ plan.exercise_instruction|default:"-"|linebreaksbr }}</div>
-          </div>
-
-          <div class="instruction-box">
-            <div class="instruction-label">就労について</div>
-            <div class="instruction-value">{{ plan.work_instruction|default:"-"|linebreaksbr }}</div>
-          </div>
-
-          <div class="instruction-box wide">
-            <div class="instruction-label">その他</div>
-            <div class="instruction-value">{{ plan.lifestyle_other_instruction|default:"-"|linebreaksbr }}</div>
+        <div class="info-box wide">
+          <div class="info-label">次アクション提案</div>
+          <div class="action-box {{ next_action_level }}">
+            <ul class="action-list">
+              {% for action in next_actions %}
+                <li>{{ action }}</li>
+              {% endfor %}
+            </ul>
           </div>
         </div>
       </div>
+    </section>
 
-      <div class="info-box wide">
-        <div class="info-label">その他注意事項</div>
-        <div class="info-value">{{ plan.caution_notes|default:"-"|linebreaksbr }}</div>
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">施術経過を追加</h2>
+          <div class="section-sub">今回の施術内容・症状変化・次回指示を記録します</div>
+        </div>
       </div>
 
-      <div class="info-box wide">
-        <div class="info-label">好転反応の説明</div>
-        <div class="info-value">{{ plan.rebound_reaction_note|default:"-"|linebreaksbr }}</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="tpd-card">
-    <div class="section-head">
-      <div>
-        <h2 class="section-title">痛みレベル履歴</h2>
-        <div class="section-sub">施術ごとの痛みレベルを確認します</div>
-      </div>
-    </div>
-
-    {% if pain_history %}
-      <div class="pain-row">
-        {% for item in pain_history %}
-          <div class="pain-chip">
-            <div class="pain-chip-top">第{{ item.visit_number }}回</div>
-            <div class="pain-chip-value">{{ item.pain_level }}</div>
-            <div class="pain-chip-date">{{ item.visit_date }}</div>
+      <form method="post" action="{% url 'treatment_plans:progress_create' plan.pk %}">
+        {% csrf_token %}
+        <div class="progress-form-grid">
+          <div class="pf-field">
+            <div class="pf-label">{{ progress_form.visit_date.label }}</div>
+            {{ progress_form.visit_date }}
           </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="empty-box">まだ痛みレベルの記録がありません。</div>
-    {% endif %}
-  </section>
 
-  <section class="tpd-card">
-    <div class="section-head">
-      <div>
-        <h2 class="section-title">経過判定・次アクション</h2>
-        <div class="section-sub">施術経過から判断材料を表示します</div>
-      </div>
-    </div>
+          <div class="pf-field">
+            <div class="pf-label">{{ progress_form.pain_level.label }}</div>
+            {{ progress_form.pain_level }}
+          </div>
 
-    <div class="info-grid">
-      <div class="info-box wide">
-        <div class="info-label">経過判定コメント</div>
-        <div class="judge-box {{ progress_comment_level }}">{{ progress_comment }}</div>
-      </div>
+          <div class="pf-field wide">
+            <div class="pf-label">{{ progress_form.symptom_change.label }}</div>
+            {{ progress_form.symptom_change }}
+          </div>
 
-      <div class="info-box wide">
-        <div class="info-label">次アクション提案</div>
-        <div class="action-box {{ next_action_level }}">
-          <ul class="action-list">
-            {% for action in next_actions %}
-              <li>{{ action }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
+          <div class="pf-field wide">
+            <div class="pf-label">{{ progress_form.adl_status.label }}</div>
+            {{ progress_form.adl_status }}
+          </div>
 
-  <section class="tpd-card">
-    <div class="section-head">
-      <div>
-        <h2 class="section-title">施術経過を追加</h2>
-        <div class="section-sub">今回の施術内容・症状変化・次回指示を記録します</div>
-      </div>
-    </div>
+          <div class="pf-field wide">
+            <div class="pf-label">{{ progress_form.treatment_detail.label }}</div>
+            {{ progress_form.treatment_detail }}
+          </div>
 
-    <form method="post" action="{% url 'treatment_plans:progress_create' plan.pk %}">
-      {% csrf_token %}
-      <div class="progress-form-grid">
-        <div class="pf-field">
-          <div class="pf-label">{{ progress_form.visit_date.label }}</div>
-          {{ progress_form.visit_date }}
+          <div class="pf-field wide">
+            <div class="pf-label">{{ progress_form.post_treatment_response.label }}</div>
+            {{ progress_form.post_treatment_response }}
+          </div>
+
+          <div class="pf-field wide">
+            <div class="pf-label">{{ progress_form.next_instruction.label }}</div>
+            {{ progress_form.next_instruction }}
+          </div>
+
+          <div class="pf-field wide">
+            <div class="pf-label">{{ progress_form.memo.label }}</div>
+            {{ progress_form.memo }}
+          </div>
         </div>
 
-        <div class="pf-field">
-          <div class="pf-label">{{ progress_form.pain_level.label }}</div>
-          {{ progress_form.pain_level }}
+        <div style="margin-top:16px;">
+          <button type="submit" class="tpd-btn primary">施術経過を追加</button>
         </div>
+      </form>
+    </section>
 
-        <div class="pf-field wide">
-          <div class="pf-label">{{ progress_form.symptom_change.label }}</div>
-          {{ progress_form.symptom_change }}
-        </div>
-
-        <div class="pf-field wide">
-          <div class="pf-label">{{ progress_form.adl_status.label }}</div>
-          {{ progress_form.adl_status }}
-        </div>
-
-        <div class="pf-field wide">
-          <div class="pf-label">{{ progress_form.treatment_detail.label }}</div>
-          {{ progress_form.treatment_detail }}
-        </div>
-
-        <div class="pf-field wide">
-          <div class="pf-label">{{ progress_form.post_treatment_response.label }}</div>
-          {{ progress_form.post_treatment_response }}
-        </div>
-
-        <div class="pf-field wide">
-          <div class="pf-label">{{ progress_form.next_instruction.label }}</div>
-          {{ progress_form.next_instruction }}
-        </div>
-
-        <div class="pf-field wide">
-          <div class="pf-label">{{ progress_form.memo.label }}</div>
-          {{ progress_form.memo }}
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">施術経過一覧（全{{ progress_count }}回）</h2>
+          <div class="section-sub">登録済みの施術経過を時系列で確認します</div>
         </div>
       </div>
 
-      <div style="margin-top:16px;">
-        <button type="submit" class="tpd-btn primary">施術経過を追加</button>
-      </div>
-    </form>
-  </section>
+      {% if progress_logs %}
+        <div class="log-list">
+          {% for log in progress_logs %}
+            <div class="log-card">
+              <div class="log-head">
+                <div>
+                  <div class="visit-badge">第{{ log.visit_number }}回</div>
+                  <div class="log-meta">
+                    施術日：{{ log.visit_date }}<br>
+                    作成日時：{{ log.created_at|date:"Y-m-d H:i" }} / 更新日時：{{ log.updated_at|date:"Y-m-d H:i" }}
+                  </div>
+                </div>
 
-  <section class="tpd-card">
-    <div class="section-head">
-      <div>
-        <h2 class="section-title">施術経過一覧（全{{ progress_count }}回）</h2>
-        <div class="section-sub">登録済みの施術経過を時系列で確認します</div>
-      </div>
-    </div>
-
-    {% if progress_logs %}
-      <div class="log-list">
-        {% for log in progress_logs %}
-          <div class="log-card">
-            <div class="log-head">
-              <div>
-                <div class="visit-badge">第{{ log.visit_number }}回</div>
-                <div class="log-meta">
-                  施術日：{{ log.visit_date }}<br>
-                  作成日時：{{ log.created_at|date:"Y-m-d H:i" }} / 更新日時：{{ log.updated_at|date:"Y-m-d H:i" }}
+                <div class="log-actions">
+                  <a href="{% url 'treatment_plans:progress_edit' log.pk %}" class="tpd-btn">編集</a>
+                  <a href="{% url 'treatment_plans:progress_delete' log.pk %}" class="tpd-btn danger">削除</a>
                 </div>
               </div>
 
-              <div class="log-actions">
-                <a href="{% url 'treatment_plans:progress_edit' log.pk %}" class="tpd-btn">編集</a>
-                <a href="{% url 'treatment_plans:progress_delete' log.pk %}" class="tpd-btn danger">削除</a>
+              <div class="info-grid">
+                <div class="info-box">
+                  <div class="info-label">痛みレベル</div>
+                  <div class="info-value">{{ log.pain_level|default:"-" }}</div>
+                </div>
+
+                <div class="info-box wide">
+                  <div class="info-label">症状変化</div>
+                  <div class="info-value">{{ log.symptom_change|default:"-"|linebreaksbr }}</div>
+                </div>
+
+                <div class="info-box wide">
+                  <div class="info-label">ADL・生活状況</div>
+                  <div class="info-value">{{ log.adl_status|default:"-"|linebreaksbr }}</div>
+                </div>
+
+                <div class="info-box wide">
+                  <div class="info-label">施術内容</div>
+                  <div class="info-value">{{ log.treatment_detail|default:"-"|linebreaksbr }}</div>
+                </div>
+
+                <div class="info-box wide">
+                  <div class="info-label">施術後の反応</div>
+                  <div class="info-value">{{ log.post_treatment_response|default:"-"|linebreaksbr }}</div>
+                </div>
+
+                <div class="info-box wide">
+                  <div class="info-label">次回までの指示</div>
+                  <div class="info-value">{{ log.next_instruction|default:"-"|linebreaksbr }}</div>
+                </div>
+
+                <div class="info-box wide">
+                  <div class="info-label">備考</div>
+                  <div class="info-value">{{ log.memo|default:"-"|linebreaksbr }}</div>
+                </div>
               </div>
             </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-box">まだ施術経過は登録されていません。</div>
+      {% endif %}
+    </section>
 
-            <div class="info-grid">
-              <div class="info-box">
-                <div class="info-label">痛みレベル</div>
-                <div class="info-value">{{ log.pain_level|default:"-" }}</div>
-              </div>
+  {% elif active_tab == "patient_explanation" %}
 
-              <div class="info-box wide">
-                <div class="info-label">症状変化</div>
-                <div class="info-value">{{ log.symptom_change|default:"-"|linebreaksbr }}</div>
-              </div>
-
-              <div class="info-box wide">
-                <div class="info-label">ADL・生活状況</div>
-                <div class="info-value">{{ log.adl_status|default:"-"|linebreaksbr }}</div>
-              </div>
-
-              <div class="info-box wide">
-                <div class="info-label">施術内容</div>
-                <div class="info-value">{{ log.treatment_detail|default:"-"|linebreaksbr }}</div>
-              </div>
-
-              <div class="info-box wide">
-                <div class="info-label">施術後の反応</div>
-                <div class="info-value">{{ log.post_treatment_response|default:"-"|linebreaksbr }}</div>
-              </div>
-
-              <div class="info-box wide">
-                <div class="info-label">次回までの指示</div>
-                <div class="info-value">{{ log.next_instruction|default:"-"|linebreaksbr }}</div>
-              </div>
-
-              <div class="info-box wide">
-                <div class="info-label">備考</div>
-                <div class="info-value">{{ log.memo|default:"-"|linebreaksbr }}</div>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">患者説明</h2>
+          <div class="section-sub">紙の施術計画書に近い形で、患者さんへ伝える内容を確認します</div>
+        </div>
       </div>
-    {% else %}
-      <div class="empty-box">まだ施術経過は登録されていません。</div>
-    {% endif %}
-  </section>
+
+      <div class="plan-message">
+        {% if plan.expected_recovery_weeks_min or plan.expected_recovery_weeks_max %}
+          おおよそ
+          {{ plan.expected_recovery_weeks_min|default:"-" }}
+          ～
+          {{ plan.expected_recovery_weeks_max|default:"-" }}
+          週で症状の改善がみられます。<br>
+        {% endif %}
+        痛みが再発しないよう、症状の改善後も管理させていただきます。
+      </div>
+    </section>
+
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">日常生活で注意していただくこと</h2>
+          <div class="section-sub">入浴・歩行・運動・就労などの生活指導です</div>
+        </div>
+      </div>
+
+      <div class="instruction-grid">
+        <div class="instruction-box">
+          <div class="instruction-label">入浴について</div>
+          <div class="instruction-value">{{ plan.bath_instruction|default:"-"|linebreaksbr }}</div>
+        </div>
+
+        <div class="instruction-box">
+          <div class="instruction-label">歩行について</div>
+          <div class="instruction-value">{{ plan.walking_instruction|default:"-"|linebreaksbr }}</div>
+        </div>
+
+        <div class="instruction-box">
+          <div class="instruction-label">運動について</div>
+          <div class="instruction-value">{{ plan.exercise_instruction|default:"-"|linebreaksbr }}</div>
+        </div>
+
+        <div class="instruction-box">
+          <div class="instruction-label">就労について</div>
+          <div class="instruction-value">{{ plan.work_instruction|default:"-"|linebreaksbr }}</div>
+        </div>
+
+        <div class="instruction-box wide">
+          <div class="instruction-label">その他</div>
+          <div class="instruction-value">{{ plan.lifestyle_other_instruction|default:"-"|linebreaksbr }}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">その他注意事項・好転反応</h2>
+          <div class="section-sub">患者さんに事前説明しておきたい注意点です</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box wide">
+          <div class="info-label">その他注意事項</div>
+          <div class="info-value">{{ plan.caution_notes|default:"-"|linebreaksbr }}</div>
+        </div>
+
+        <div class="info-box wide">
+          <div class="info-label">好転反応の説明</div>
+          <div class="info-value">{{ plan.rebound_reaction_note|default:"-"|linebreaksbr }}</div>
+        </div>
+
+        <div class="info-box wide">
+          <div class="info-label">説明状態</div>
+          <div class="pill-list">
+            {% if plan.explained_to_patient %}
+              <span class="pill good">患者へ説明済み</span>
+            {% else %}
+              <span class="pill warn">未説明</span>
+            {% endif %}
+
+            {% if plan.is_active %}
+              <span class="pill good">有効な計画</span>
+            {% else %}
+              <span class="pill warn">非アクティブ</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+  {% elif active_tab == "appointments" %}
+
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">関連予約</h2>
+          <div class="section-sub">この施術計画に紐づく予約を確認します</div>
+        </div>
+
+        <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?treatment_plan_id={{ plan.pk }}" class="tpd-btn primary">
+          ＋ 予約を作成
+        </a>
+      </div>
+
+      {% if plan_appointments %}
+        <div class="log-list">
+          {% for appt in plan_appointments %}
+            <div class="log-card">
+              <div class="log-head">
+                <div>
+                  <div class="visit-badge">{{ appt.get_status_display }}</div>
+                  <div class="log-meta">
+                    予約日時：{{ appt.start_at|date:"Y-m-d H:i" }}<br>
+                    メニュー：{{ appt.menu|default:"-" }}<br>
+                    担当：
+                    {% if appt.assigned_staff %}
+                      {{ appt.assigned_staff.get_full_name|default:appt.assigned_staff.username }}
+                    {% else %}
+                      未割当
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-box">この施術計画に紐づく予約はまだありません。</div>
+      {% endif %}
+    </section>
+
+  {% endif %}
 
 </div>
 

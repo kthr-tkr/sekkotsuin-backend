@@ -81,14 +81,17 @@ def plan_detail_view(request, pk):
         pk=pk
     )
 
+    active_tab = request.GET.get("tab", "overview")
+    valid_tabs = ["overview", "progress", "patient_explanation", "appointments"]
+    if active_tab not in valid_tabs:
+        active_tab = "overview"
+
     progress_qs = plan.progress_logs.all()
 
-    # 古い順で回数を振る
     progress_logs_asc = list(progress_qs.order_by("visit_date", "created_at"))
     for idx, log in enumerate(progress_logs_asc, start=1):
         log.visit_number = idx
 
-    # 表示は新しい順
     progress_logs = sorted(
         progress_logs_asc,
         key=lambda x: (x.visit_date, x.created_at),
@@ -126,7 +129,6 @@ def plan_detail_view(request, pk):
         for log in pain_logs
     ]
 
-    # 経過判定コメント
     progress_comment = ""
     progress_comment_level = "muted"
 
@@ -150,7 +152,6 @@ def plan_detail_view(request, pk):
             progress_comment = "痛みレベルが悪化傾向です。主訴の再確認、誘発動作の見直し、施術方針の再評価を検討してください。"
             progress_comment_level = "bad"
 
-    # 次アクション提案
     next_actions = []
     next_action_level = "muted"
 
@@ -198,21 +199,37 @@ def plan_detail_view(request, pk):
             ]
             next_action_level = "bad"
 
+    plan_appointments = (
+        Appointment.objects
+        .filter(treatment_plan=plan)
+        .select_related("assigned_staff")
+        .order_by("-start_at")
+    )
+
     return render(request, "treatment_plans/plan_detail.html", {
         "plan": plan,
+        "active_tab": active_tab,
+
         "progress_logs": progress_logs,
         "progress_count": progress_count,
+        "progress_tab_count": progress_count,
         "latest_progress": latest_progress,
+
         "first_pain_level": first_pain_level,
         "latest_pain_level": latest_pain_level,
         "pain_diff": pain_diff,
         "pain_trend_label": pain_trend_label,
         "pain_history": pain_history,
+
         "progress_comment": progress_comment,
         "progress_comment_level": progress_comment_level,
         "next_actions": next_actions,
         "next_action_level": next_action_level,
         "progress_form": TreatmentProgressForm(),
+
+        "plan_appointments": plan_appointments,
+        "appointment_count": plan_appointments.count(),
+
         "page_title": "施術計画詳細",
     })
 
