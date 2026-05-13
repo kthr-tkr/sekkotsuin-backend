@@ -233,6 +233,24 @@ def plan_detail_view(request, pk):
         "page_title": "施術計画詳細",
     })
 
+    todo_cards = []
+
+    if not next_appointment:
+        todo_cards.append({
+            "type": "reservation",
+            "title": "次回予約がありません",
+            "message": "継続施術が必要な場合は予約を作成してください。",
+            "button": "予約を作成",
+        })
+
+    if progress_count == 0:
+        todo_cards.append({
+            "type": "progress",
+            "title": "施術経過を記録してください",
+            "message": "初回施術後の状態変化を記録しましょう。",
+            "button": "経過を追加",
+        })
+
 @login_required
 def progress_create_view(request, pk):
     plan = get_object_or_404(TreatmentPlan, pk=pk)

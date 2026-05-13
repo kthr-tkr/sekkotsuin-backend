@@ -593,6 +593,122 @@
       grid-column:auto;
     }
   }
+
+.tpd-tabs{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:12px;
+  border-radius:26px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(255,255,255,.8);
+  backdrop-filter:blur(14px);
+  box-shadow:0 18px 40px rgba(15,23,42,.05);
+}
+
+.tpd-tab{
+  border:none;
+  background:transparent;
+  min-height:48px;
+  padding:0 18px;
+  border-radius:16px;
+  font-size:14px;
+  font-weight:900;
+  color:#475569;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.tpd-tab:hover{
+  background:#eef2ff;
+  color:#1d4ed8;
+}
+
+.tpd-tab.active{
+  background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);
+  color:#fff;
+  box-shadow:0 10px 24px rgba(29,78,216,.25);
+}
+
+.tpd-tab span{
+  margin-left:6px;
+  font-size:11px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+}
+
+.todo-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+
+.todo-card{
+  border-radius:22px;
+  padding:18px;
+  background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+  border:1px solid #e8eef7;
+  box-shadow:0 12px 26px rgba(15,23,42,.05);
+}
+
+.todo-card.todo-warn{
+  background:linear-gradient(180deg,#fff 0%,#fffbeb 100%);
+  border-color:#fde68a;
+}
+
+.todo-card.todo-info{
+  background:linear-gradient(180deg,#fff 0%,#eff6ff 100%);
+  border-color:#bfdbfe;
+}
+
+.todo-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#eef2ff;
+  color:#3730a3;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:10px;
+}
+
+.todo-card.todo-warn .todo-badge{
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.todo-card.todo-info .todo-badge{
+  background:#dbeafe;
+  color:#1e3a8a;
+}
+
+.todo-card h3{
+  margin:0 0 8px;
+  color:#0f172a;
+  font-size:17px;
+  font-weight:900;
+  letter-spacing:-.02em;
+}
+
+.todo-card p{
+  margin:0;
+  color:#64748b;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.7;
+}
+
+.todo-card .tpd-btn{
+  margin-top:14px;
+}
+
+@media(max-width:1000px){
+  .todo-grid{
+    grid-template-columns:1fr;
+  }
+}
 </style>
 
 <div class="tpd-wrap">
@@ -649,6 +765,54 @@
     </div>
   </section>
 
+  {% if active_tab == "overview" %}
+    <section class="todo-grid">
+
+      {% if appointment_count == 0 %}
+        <div class="todo-card todo-warn">
+          <div class="todo-badge">予約</div>
+          <h3>関連予約がありません</h3>
+          <p>この施術計画に紐づく次回予約を作成できます。</p>
+
+          {% if plan.next_visit_date %}
+            <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?suggest_date={{ plan.next_visit_date|date:'Y-m-d' }}&treatment_plan_id={{ plan.pk }}" class="tpd-btn primary">
+              予約を作成
+            </a>
+          {% else %}
+            <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?treatment_plan_id={{ plan.pk }}" class="tpd-btn primary">
+              予約を作成
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if progress_count == 0 %}
+        <div class="todo-card todo-info">
+          <div class="todo-badge">経過</div>
+          <h3>施術経過を追加できます</h3>
+          <p>初回施術後の症状変化・痛みレベルを記録しましょう。</p>
+
+          <a href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=progress#progress-form" class="tpd-btn">
+            経過を入力
+          </a>
+        </div>
+      {% endif %}
+
+      {% if not plan.explained_to_patient %}
+        <div class="todo-card">
+          <div class="todo-badge">説明</div>
+          <h3>患者説明が未完了です</h3>
+          <p>患者さんへ施術計画を説明したら、編集画面で説明済みに更新できます。</p>
+
+          <a href="{% url 'treatment_plans:plan_edit' plan.pk %}" class="tpd-btn">
+            説明状態を更新
+          </a>
+        </div>
+      {% endif %}
+
+    </section>
+  {% endif %}
+
   <nav class="plan-tabs">
     <a class="plan-tab {% if active_tab == 'overview' %}active{% endif %}"
        href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=overview">
@@ -677,7 +841,9 @@
       <div class="summary-card {% if plan.is_active %}good{% else %}bad{% endif %}">
         <div class="summary-label">現在ステータス</div>
         <div class="summary-value">{{ plan.get_status_display }}</div>
-        <div class="summary-sub">{% if plan.is_active %}有効な計画です{% else %}現在は非アクティブです{% endif %}</div>
+        <div class="summary-sub">
+          {% if plan.is_active %}有効な計画です{% else %}現在は非アクティブです{% endif %}
+        </div>
       </div>
 
       <div class="summary-card">
@@ -850,7 +1016,7 @@
       </div>
     </section>
 
-    <section class="tpd-card">
+    <section class="tpd-card" id="progress-form">
       <div class="section-head">
         <div>
           <h2 class="section-title">施術経過を追加</h2>
