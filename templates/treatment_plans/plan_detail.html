@@ -1103,6 +1103,82 @@
     border-radius:20px;
   }
 }
+
+.quick-main-card{
+  border-radius:24px;
+  padding:20px;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  border:1px solid #e8eef7;
+}
+
+.quick-main-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+
+.quick-main-title{
+  font-size:17px;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.quick-main-sub{
+  margin-top:5px;
+  color:#64748b;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.6;
+}
+
+.quick-toggle-btn{
+  min-height:40px;
+  padding:0 14px;
+  border-radius:14px;
+  border:1px solid #e2e8f0;
+  background:#fff;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 10px 22px rgba(15,23,42,.04);
+}
+
+.quick-summary-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-top:16px;
+}
+
+.quick-detail-fields{
+  display:none;
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid #e8eef7;
+}
+
+.quick-detail-fields.open{
+  display:block;
+}
+
+.memo-always{
+  margin-top:16px;
+}
+
+@media(max-width:760px){
+  .quick-summary-grid{
+    grid-template-columns:1fr;
+  }
+
+  .quick-main-card{
+    padding:16px;
+    border-radius:20px;
+  }
+}
 </style>
 
 <div class="tpd-wrap">
@@ -1418,137 +1494,147 @@
       <div class="section-head">
         <div>
           <h2 class="section-title">施術経過を追加</h2>
-          <div class="section-sub">今回の施術内容・症状変化・次回指示を記録します</div>
+          <div class="section-sub">クイック入力を中心に、必要な内容だけ手入力できます</div>
         </div>
       </div>
 
       <form method="post" action="{% url 'treatment_plans:progress_create' plan.pk %}">
         {% csrf_token %}
-        <div class="quick-panel">
-          <div class="quick-title">クイック入力</div>
-          <div class="quick-sub">
-            よく使う内容を選ぶだけで、施術経過に反映できます。必要に応じて下の入力欄で調整してください。
-          </div>
 
-          <div class="quick-group">
-            <div class="quick-label">痛みレベル</div>
-            <div class="pain-scale" data-target="id_pain_level">
-              <button type="button" class="pain-btn" data-pain="0">0</button>
-              <button type="button" class="pain-btn" data-pain="1">1</button>
-              <button type="button" class="pain-btn" data-pain="2">2</button>
-              <button type="button" class="pain-btn" data-pain="3">3</button>
-              <button type="button" class="pain-btn" data-pain="4">4</button>
-              <button type="button" class="pain-btn" data-pain="5">5</button>
-              <button type="button" class="pain-btn" data-pain="6">6</button>
-              <button type="button" class="pain-btn" data-pain="7">7</button>
-              <button type="button" class="pain-btn" data-pain="8">8</button>
-              <button type="button" class="pain-btn" data-pain="9">9</button>
-              <button type="button" class="pain-btn" data-pain="10">10</button>
+        <div class="quick-main-card">
+          <div class="quick-main-head">
+            <div>
+              <div class="quick-main-title">クイック入力</div>
+              <div class="quick-main-sub">
+                よく使う内容を選ぶだけで、施術経過に反映できます。再クリックで削除できます。
+              </div>
             </div>
-            <div class="progress-help">0 = 痛みなし / 10 = 最も強い痛み</div>
+
+            <button type="button" class="quick-toggle-btn" id="toggleProgressDetails">
+              詳細入力を開く
+            </button>
           </div>
 
-          <div class="quick-group">
-            <div class="quick-label">症状変化</div>
-            <div class="quick-buttons">
-              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="痛みは改善傾向です。">改善傾向</button>
-              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="痛みは少し改善しています。">少し改善</button>
-              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="前回から大きな変化はありません。">変化なし</button>
-              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="前回より痛みが強くなっています。">悪化傾向</button>
-              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="可動域の改善がみられます。">可動域改善</button>
-              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="しびれ感が残っています。">しびれあり</button>
+          <div class="quick-panel">
+            <div class="quick-group">
+              <div class="quick-label">痛みレベル</div>
+              <div class="pain-scale" data-target="id_pain_level">
+                {% for n in "0123456789" %}
+                  <button type="button" class="pain-btn" data-pain="{{ n }}">{{ n }}</button>
+                {% endfor %}
+                <button type="button" class="pain-btn" data-pain="10">10</button>
+              </div>
+              <div class="quick-help">0 = 痛みなし / 10 = 最も強い痛み</div>
+            </div>
+
+            <div class="quick-group">
+              <div class="quick-label">症状変化</div>
+              <div class="quick-buttons">
+                <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="痛みの改善がみられます。">改善傾向</button>
+                <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="痛みは少し改善しています。">少し改善</button>
+                <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="前回から大きな変化はありません。">変化なし</button>
+                <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="痛みが強くなっています。">悪化傾向</button>
+                <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="可動域の改善がみられます。">可動域改善</button>
+                <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="しびれがあります。">しびれあり</button>
+              </div>
+            </div>
+
+            <div class="quick-group">
+              <div class="quick-label">ADL・生活状況</div>
+              <div class="quick-buttons">
+                <button type="button" class="quick-btn" data-target="id_adl_status" data-text="日常生活に大きな支障はありません。">日常生活問題なし</button>
+                <button type="button" class="quick-btn" data-target="id_adl_status" data-text="歩行時に痛みがあります。">歩行時痛あり</button>
+                <button type="button" class="quick-btn" data-target="id_adl_status" data-text="起床時に痛みがあります。">起床時痛あり</button>
+                <button type="button" class="quick-btn" data-target="id_adl_status" data-text="仕事中の動作で痛みが出ます。">仕事中に痛み</button>
+                <button type="button" class="quick-btn" data-target="id_adl_status" data-text="同じ姿勢を続けると症状が悪化します。">同姿勢で悪化</button>
+              </div>
+            </div>
+
+            <div class="quick-group">
+              <div class="quick-label">施術内容</div>
+              <div class="quick-buttons">
+                <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="手技療法を行いました。">手技療法</button>
+                <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="可動域の調整を行いました。">可動域調整</button>
+                <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="患部周辺の筋緊張を緩和する施術を行いました。">筋緊張緩和</button>
+                <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="ストレッチ指導を行いました。">ストレッチ指導</button>
+                <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="姿勢や日常動作について指導しました。">姿勢指導</button>
+                <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="自宅でのセルフケアについて指導しました。">セルフケア指導</button>
+              </div>
+            </div>
+
+            <div class="quick-group">
+              <div class="quick-label">施術後の反応</div>
+              <div class="quick-buttons">
+                <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、痛みの軽減がみられました。">痛み軽減</button>
+                <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、可動域の改善がみられました。">可動域改善</button>
+                <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、大きな変化はありませんでした。">大きな変化なし</button>
+                <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、違和感が残っています。">違和感あり</button>
+              </div>
+            </div>
+
+            <div class="quick-group">
+              <div class="quick-label">次回までの指示</div>
+              <div class="quick-buttons">
+                <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="痛みが出る動作は無理に行わないよう指導しました。">痛み動作を避ける</button>
+                <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="長時間同じ姿勢を避け、こまめに姿勢を変えるよう指導しました。">同姿勢を避ける</button>
+                <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="自宅でのセルフケアを継続するよう指導しました。">セルフケア継続</button>
+                <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="痛みが強い時は安静にするよう指導しました。">痛みが強い時は安静</button>
+                <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="次回、症状の経過を確認します。">次回経過確認</button>
+              </div>
             </div>
           </div>
 
-          <div class="quick-group">
-            <div class="quick-label">ADL・生活状況</div>
-            <div class="quick-buttons">
-              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="日常生活動作は概ね問題ありません。">日常生活問題なし</button>
-              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="歩行時に痛みがあります。">歩行時痛あり</button>
-              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="起床時に痛みがあります。">起床時痛あり</button>
-              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="仕事中の動作で痛みが出ます。">仕事中に痛み</button>
-              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="長時間同じ姿勢が続くと症状が強くなります。">同姿勢で悪化</button>
+          <div class="quick-summary-grid">
+            <div class="pf-field">
+              <div class="pf-label">{{ progress_form.visit_date.label }}</div>
+              {{ progress_form.visit_date }}
+            </div>
+
+            <div class="pf-field">
+              <div class="pf-label">{{ progress_form.pain_level.label }}</div>
+              {{ progress_form.pain_level }}
             </div>
           </div>
 
-          <div class="quick-group">
-            <div class="quick-label">施術内容</div>
-            <div class="quick-buttons">
-              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="筋緊張の緩和を目的に手技療法を行いました。">手技療法</button>
-              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="可動域改善を目的に調整を行いました。">可動域調整</button>
-              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="患部周辺の筋緊張を緩和する施術を行いました。">筋緊張緩和</button>
-              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="ストレッチ指導を行いました。">ストレッチ指導</button>
-              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="姿勢や日常動作について指導しました。">姿勢指導</button>
-              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="自宅で行えるセルフケアを説明しました。">セルフケア指導</button>
+          <div class="quick-detail-fields" id="progressDetailFields">
+            <div class="progress-form-grid">
+              <div class="pf-field wide">
+                <div class="pf-label">{{ progress_form.symptom_change.label }}</div>
+                {{ progress_form.symptom_change }}
+              </div>
+
+              <div class="pf-field wide">
+                <div class="pf-label">{{ progress_form.adl_status.label }}</div>
+                {{ progress_form.adl_status }}
+              </div>
+
+              <div class="pf-field wide">
+                <div class="pf-label">{{ progress_form.treatment_detail.label }}</div>
+                {{ progress_form.treatment_detail }}
+              </div>
+
+              <div class="pf-field wide">
+                <div class="pf-label">{{ progress_form.post_treatment_response.label }}</div>
+                {{ progress_form.post_treatment_response }}
+              </div>
+
+              <div class="pf-field wide">
+                <div class="pf-label">{{ progress_form.next_instruction.label }}</div>
+                {{ progress_form.next_instruction }}
+              </div>
             </div>
           </div>
 
-          <div class="quick-group">
-            <div class="quick-label">施術後の反応</div>
-            <div class="quick-buttons">
-              <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、痛みの軽減がみられました。">痛み軽減</button>
-              <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、可動域の改善がみられました。">可動域改善</button>
-              <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、大きな変化はありませんでした。">大きな変化なし</button>
-              <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、違和感が残っています。">違和感あり</button>
+          <div class="memo-always">
+            <div class="pf-field wide">
+              <div class="pf-label">{{ progress_form.memo.label }}</div>
+              {{ progress_form.memo }}
             </div>
           </div>
 
-          <div class="quick-group">
-            <div class="quick-label">次回までの指示</div>
-            <div class="quick-buttons">
-              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="痛みが出る動作は無理に行わないよう指導しました。">痛み動作を避ける</button>
-              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="長時間同じ姿勢を避け、こまめに姿勢を変えるよう指導しました。">同姿勢を避ける</button>
-              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="自宅でのセルフケアを継続するよう指導しました。">セルフケア継続</button>
-              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="痛みが強い場合は無理をせず安静にするよう指導しました。">痛みが強い時は安静</button>
-              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="次回来院時に症状の変化を確認します。">次回経過確認</button>
-            </div>
+          <div style="margin-top:16px;">
+            <button type="submit" class="tpd-btn primary">施術経過を追加</button>
           </div>
-        </div>
-
-        <div class="progress-form-grid">
-          <div class="pf-field">
-            <div class="pf-label">{{ progress_form.visit_date.label }}</div>
-            {{ progress_form.visit_date }}
-          </div>
-
-          <div class="pf-field">
-            <div class="pf-label">{{ progress_form.pain_level.label }}</div>
-            {{ progress_form.pain_level }}
-          </div>
-
-          <div class="pf-field wide">
-            <div class="pf-label">{{ progress_form.symptom_change.label }}</div>
-            {{ progress_form.symptom_change }}
-          </div>
-
-          <div class="pf-field wide">
-            <div class="pf-label">{{ progress_form.adl_status.label }}</div>
-            {{ progress_form.adl_status }}
-          </div>
-
-          <div class="pf-field wide">
-            <div class="pf-label">{{ progress_form.treatment_detail.label }}</div>
-            {{ progress_form.treatment_detail }}
-          </div>
-
-          <div class="pf-field wide">
-            <div class="pf-label">{{ progress_form.post_treatment_response.label }}</div>
-            {{ progress_form.post_treatment_response }}
-          </div>
-
-          <div class="pf-field wide">
-            <div class="pf-label">{{ progress_form.next_instruction.label }}</div>
-            {{ progress_form.next_instruction }}
-          </div>
-
-          <div class="pf-field wide">
-            <div class="pf-label">{{ progress_form.memo.label }}</div>
-            {{ progress_form.memo }}
-          </div>
-        </div>
-
-        <div style="margin-top:16px;">
-          <button type="submit" class="tpd-btn primary">施術経過を追加</button>
         </div>
       </form>
     </section>
@@ -2005,6 +2091,23 @@ document.addEventListener("DOMContentLoaded", () => {
         targetPanel.classList.add("active");
       }
     });
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const toggleButton = document.getElementById("toggleProgressDetails");
+  const detailFields = document.getElementById("progressDetailFields");
+
+  if (!toggleButton || !detailFields) return;
+
+  toggleButton.addEventListener("click", () => {
+    const isOpen = detailFields.classList.toggle("open");
+
+    toggleButton.textContent = isOpen
+      ? "詳細入力を閉じる"
+      : "詳細入力を開く";
   });
 });
 </script>
