@@ -1487,6 +1487,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const painButtons = document.querySelectorAll(".pain-btn");
   const quickButtons = document.querySelectorAll(".quick-btn");
 
+  // -----------------------------
+  // 痛みレベル：単一選択
+  // -----------------------------
   painButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const targetId = button.closest(".pain-scale")?.dataset.target;
@@ -1501,24 +1504,85 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // -----------------------------
+  // テキスト追加/削除用
+  // -----------------------------
+  function normalizeLine(line) {
+    return line.trim();
+  }
+
+  function getLines(value) {
+    return value
+      .split("\n")
+      .map(normalizeLine)
+      .filter(Boolean);
+  }
+
+  function setLines(target, lines) {
+    target.value = lines.join("\n");
+  }
+
+  function hasLine(lines, text) {
+    return lines.includes(text.trim());
+  }
+
+  function removeLine(lines, text) {
+    const normalizedText = text.trim();
+    return lines.filter((line) => line !== normalizedText);
+  }
+
+  // -----------------------------
+  // クイック入力：再クリックで削除
+  // -----------------------------
   quickButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const target = document.getElementById(button.dataset.target);
-      const text = button.dataset.text || "";
+      const text = (button.dataset.text || "").trim();
 
       if (!target || !text) return;
 
-      const currentValue = target.value.trim();
+      const lines = getLines(target.value);
 
-      if (currentValue) {
-        target.value = currentValue + "\n" + text;
+      if (hasLine(lines, text)) {
+        const newLines = removeLine(lines, text);
+        setLines(target, newLines);
+        button.classList.remove("active");
       } else {
-        target.value = text;
+        lines.push(text);
+        setLines(target, lines);
+        button.classList.add("active");
       }
 
-      button.classList.toggle("active");
       target.focus();
     });
+  });
+
+  // -----------------------------
+  // 画面表示時：既に入力済みの内容があればボタンをactiveにする
+  // 編集画面や戻る操作時にも見た目がズレにくくなる
+  // -----------------------------
+  quickButtons.forEach((button) => {
+    const target = document.getElementById(button.dataset.target);
+    const text = (button.dataset.text || "").trim();
+
+    if (!target || !text) return;
+
+    const lines = getLines(target.value);
+
+    if (hasLine(lines, text)) {
+      button.classList.add("active");
+    }
+  });
+
+  painButtons.forEach((button) => {
+    const targetId = button.closest(".pain-scale")?.dataset.target;
+    const target = document.getElementById(targetId);
+
+    if (!target) return;
+
+    if (target.value === button.dataset.pain) {
+      button.classList.add("active");
+    }
   });
 });
 </script>
