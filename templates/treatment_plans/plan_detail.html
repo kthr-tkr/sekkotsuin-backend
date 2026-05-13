@@ -897,6 +897,22 @@
     flex:1 1 100%;
   }
 }
+
+.progress-mini-comment{
+  margin-top:14px;
+  border-radius:16px;
+  padding:12px 14px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  color:#334155;
+  font-size:13px;
+  font-weight:800;
+}
+
+.progress-mini-comment strong{
+  color:#1d4ed8;
+  font-weight:900;
+}
 </style>
 
 <div class="tpd-wrap">
@@ -1192,6 +1208,11 @@
                 </div>
               </div>
             </div>
+            {% if pain_trend_label != "データなし" %}
+              <div class="progress-mini-comment">
+                現在の推移：<strong>{{ pain_trend_label }}</strong>
+              </div>
+            {% endif %}
           </div>
 
           <div class="chart-box">
@@ -1201,56 +1222,6 @@
       {% else %}
         <div class="empty-box">痛みレベルを記録すると、ここに推移グラフが表示されます。</div>
       {% endif %}
-    </section>
-
-    <section class="tpd-card">
-      <div class="section-head">
-        <div>
-          <h2 class="section-title">痛みレベル履歴</h2>
-          <div class="section-sub">施術ごとの痛みレベルを確認します</div>
-        </div>
-      </div>
-
-      {% if pain_history %}
-        <div class="pain-row">
-          {% for item in pain_history %}
-            <div class="pain-chip">
-              <div class="pain-chip-top">第{{ item.visit_number }}回</div>
-              <div class="pain-chip-value">{{ item.pain_level }}</div>
-              <div class="pain-chip-date">{{ item.visit_date }}</div>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-box">まだ痛みレベルの記録がありません。</div>
-      {% endif %}
-    </section>
-
-    <section class="tpd-card">
-      <div class="section-head">
-        <div>
-          <h2 class="section-title">経過判定・次アクション</h2>
-          <div class="section-sub">施術経過から判断材料を表示します</div>
-        </div>
-      </div>
-
-      <div class="info-grid">
-        <div class="info-box wide">
-          <div class="info-label">経過判定コメント</div>
-          <div class="judge-box {{ progress_comment_level }}">{{ progress_comment }}</div>
-        </div>
-
-        <div class="info-box wide">
-          <div class="info-label">次アクション提案</div>
-          <div class="action-box {{ next_action_level }}">
-            <ul class="action-list">
-              {% for action in next_actions %}
-                <li>{{ action }}</li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
-      </div>
     </section>
 
     <section class="tpd-card" id="progress-form">
