@@ -913,6 +913,196 @@
   color:#1d4ed8;
   font-weight:900;
 }
+
+.progress-tabs-wrap{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.progress-round-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  padding:12px;
+  border-radius:22px;
+  background:#f8fafc;
+  border:1px solid #e8eef7;
+}
+
+.progress-round-tab{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:42px;
+  padding:0 14px;
+  border-radius:999px;
+  border:1px solid #e2e8f0;
+  background:#fff;
+  color:#334155;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+.progress-round-tab:hover{
+  transform:translateY(-1px);
+  border-color:#bfdbfe;
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+
+.progress-round-tab.active{
+  color:#fff;
+  border-color:transparent;
+  background:linear-gradient(135deg,#0b1220 0%,#1d4ed8 100%);
+  box-shadow:0 12px 26px rgba(29,78,216,.2);
+}
+
+.progress-round-tab .latest-mark{
+  display:inline-flex;
+  align-items:center;
+  padding:4px 7px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+}
+
+.progress-detail-panel{
+  display:none;
+}
+
+.progress-detail-panel.active{
+  display:block;
+}
+
+.progress-detail-card{
+  border-radius:24px;
+  padding:20px;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  border:1px solid #e8eef7;
+  box-shadow:0 14px 32px rgba(15,23,42,.05);
+}
+
+.progress-detail-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+
+.progress-detail-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.progress-round-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  color:#1d4ed8;
+  font-size:13px;
+  font-weight:900;
+}
+
+.progress-latest-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#ecfdf5;
+  border:1px solid #bbf7d0;
+  color:#166534;
+  font-size:12px;
+  font-weight:900;
+}
+
+.progress-detail-meta{
+  margin-top:8px;
+  color:#64748b;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.7;
+}
+
+.progress-detail-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.progress-detail-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.progress-detail-box{
+  border-radius:18px;
+  padding:16px;
+  background:#fff;
+  border:1px solid #e8eef7;
+}
+
+.progress-detail-box.wide{
+  grid-column:1 / -1;
+}
+
+.progress-detail-label{
+  color:#64748b;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.progress-detail-value{
+  color:#0f172a;
+  font-size:15px;
+  font-weight:800;
+  line-height:1.8;
+  word-break:break-word;
+}
+
+.progress-pain-value{
+  font-size:28px;
+  font-weight:900;
+  line-height:1;
+}
+
+@media(max-width:760px){
+  .progress-round-tabs{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    padding:10px;
+  }
+
+  .progress-round-tab{
+    flex:0 0 auto;
+  }
+
+  .progress-detail-grid{
+    grid-template-columns:1fr;
+  }
+
+  .progress-detail-box.wide{
+    grid-column:auto;
+  }
+
+  .progress-detail-card{
+    padding:16px;
+    border-radius:20px;
+  }
+}
 </style>
 
 <div class="tpd-wrap">
@@ -1367,67 +1557,119 @@
       <div class="section-head">
         <div>
           <h2 class="section-title">施術経過一覧（全{{ progress_count }}回）</h2>
-          <div class="section-sub">登録済みの施術経過を時系列で確認します</div>
+          <div class="section-sub">回数を選択して、必要な経過だけ確認できます</div>
         </div>
       </div>
 
       {% if progress_logs %}
-        <div class="log-list">
+        <div class="progress-tabs-wrap">
+
+          <div class="progress-round-tabs" role="tablist" aria-label="施術経過の回数選択">
+            {% for log in progress_logs %}
+              <button
+                type="button"
+                class="progress-round-tab {% if forloop.first %}active{% endif %}"
+                data-progress-tab="progress-log-{{ log.pk }}"
+                role="tab"
+                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+              >
+                第{{ log.visit_number }}回
+                {% if forloop.first %}
+                  <span class="latest-mark">最新</span>
+                {% endif %}
+              </button>
+            {% endfor %}
+          </div>
+
           {% for log in progress_logs %}
-            <div class="log-card">
-              <div class="log-head">
-                <div>
-                  <div class="visit-badge">第{{ log.visit_number }}回</div>
-                  <div class="log-meta">
-                    施術日：{{ log.visit_date }}<br>
-                    作成日時：{{ log.created_at|date:"Y-m-d H:i" }} / 更新日時：{{ log.updated_at|date:"Y-m-d H:i" }}
+            <div
+              id="progress-log-{{ log.pk }}"
+              class="progress-detail-panel {% if forloop.first %}active{% endif %}"
+              role="tabpanel"
+            >
+              <div class="progress-detail-card">
+                <div class="progress-detail-head">
+                  <div>
+                    <div class="progress-detail-title">
+                      <span class="progress-round-badge">第{{ log.visit_number }}回</span>
+                      {% if forloop.first %}
+                        <span class="progress-latest-badge">最新の経過</span>
+                      {% endif %}
+                    </div>
+
+                    <div class="progress-detail-meta">
+                      施術日：{{ log.visit_date }}<br>
+                      作成日時：{{ log.created_at|date:"Y-m-d H:i" }} / 更新日時：{{ log.updated_at|date:"Y-m-d H:i" }}
+                    </div>
+                  </div>
+
+                  <div class="progress-detail-actions">
+                    <a href="{% url 'treatment_plans:progress_edit' log.pk %}" class="tpd-btn">編集</a>
+                    <a href="{% url 'treatment_plans:progress_delete' log.pk %}" class="tpd-btn danger">削除</a>
                   </div>
                 </div>
 
-                <div class="log-actions">
-                  <a href="{% url 'treatment_plans:progress_edit' log.pk %}" class="tpd-btn">編集</a>
-                  <a href="{% url 'treatment_plans:progress_delete' log.pk %}" class="tpd-btn danger">削除</a>
-                </div>
-              </div>
+                <div class="progress-detail-grid">
+                  <div class="progress-detail-box">
+                    <div class="progress-detail-label">痛みレベル</div>
+                    <div class="progress-detail-value progress-pain-value">
+                      {{ log.pain_level|default:"-" }}
+                    </div>
+                  </div>
 
-              <div class="info-grid">
-                <div class="info-box">
-                  <div class="info-label">痛みレベル</div>
-                  <div class="info-value">{{ log.pain_level|default:"-" }}</div>
-                </div>
+                  <div class="progress-detail-box">
+                    <div class="progress-detail-label">施術日</div>
+                    <div class="progress-detail-value">
+                      {{ log.visit_date|default:"-" }}
+                    </div>
+                  </div>
 
-                <div class="info-box wide">
-                  <div class="info-label">症状変化</div>
-                  <div class="info-value">{{ log.symptom_change|default:"-"|linebreaksbr }}</div>
-                </div>
+                  <div class="progress-detail-box wide">
+                    <div class="progress-detail-label">症状変化</div>
+                    <div class="progress-detail-value">
+                      {{ log.symptom_change|default:"-"|linebreaksbr }}
+                    </div>
+                  </div>
 
-                <div class="info-box wide">
-                  <div class="info-label">ADL・生活状況</div>
-                  <div class="info-value">{{ log.adl_status|default:"-"|linebreaksbr }}</div>
-                </div>
+                  <div class="progress-detail-box wide">
+                    <div class="progress-detail-label">ADL・生活状況</div>
+                    <div class="progress-detail-value">
+                      {{ log.adl_status|default:"-"|linebreaksbr }}
+                    </div>
+                  </div>
 
-                <div class="info-box wide">
-                  <div class="info-label">施術内容</div>
-                  <div class="info-value">{{ log.treatment_detail|default:"-"|linebreaksbr }}</div>
-                </div>
+                  <div class="progress-detail-box wide">
+                    <div class="progress-detail-label">施術内容</div>
+                    <div class="progress-detail-value">
+                      {{ log.treatment_detail|default:"-"|linebreaksbr }}
+                    </div>
+                  </div>
 
-                <div class="info-box wide">
-                  <div class="info-label">施術後の反応</div>
-                  <div class="info-value">{{ log.post_treatment_response|default:"-"|linebreaksbr }}</div>
-                </div>
+                  <div class="progress-detail-box wide">
+                    <div class="progress-detail-label">施術後の反応</div>
+                    <div class="progress-detail-value">
+                      {{ log.post_treatment_response|default:"-"|linebreaksbr }}
+                    </div>
+                  </div>
 
-                <div class="info-box wide">
-                  <div class="info-label">次回までの指示</div>
-                  <div class="info-value">{{ log.next_instruction|default:"-"|linebreaksbr }}</div>
-                </div>
+                  <div class="progress-detail-box wide">
+                    <div class="progress-detail-label">次回までの指示</div>
+                    <div class="progress-detail-value">
+                      {{ log.next_instruction|default:"-"|linebreaksbr }}
+                    </div>
+                  </div>
 
-                <div class="info-box wide">
-                  <div class="info-label">備考</div>
-                  <div class="info-value">{{ log.memo|default:"-"|linebreaksbr }}</div>
+                  <div class="progress-detail-box wide">
+                    <div class="progress-detail-label">備考</div>
+                    <div class="progress-detail-value">
+                      {{ log.memo|default:"-"|linebreaksbr }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           {% endfor %}
+
         </div>
       {% else %}
         <div class="empty-box">まだ施術経過は登録されていません。</div>
@@ -1731,6 +1973,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     }
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const tabs = document.querySelectorAll(".progress-round-tab");
+  const panels = document.querySelectorAll(".progress-detail-panel");
+
+  if (!tabs.length || !panels.length) return;
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const targetId = tab.dataset.progressTab;
+
+      tabs.forEach((item) => {
+        item.classList.remove("active");
+        item.setAttribute("aria-selected", "false");
+      });
+
+      panels.forEach((panel) => {
+        panel.classList.remove("active");
+      });
+
+      tab.classList.add("active");
+      tab.setAttribute("aria-selected", "true");
+
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) {
+        targetPanel.classList.add("active");
+      }
+    });
   });
 });
 </script>
