@@ -709,6 +709,121 @@
     grid-template-columns:1fr;
   }
 }
+
+.quick-panel{
+  margin-bottom:18px;
+  border-radius:22px;
+  padding:18px;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  border:1px solid #e8eef7;
+}
+
+.quick-title{
+  font-size:15px;
+  font-weight:900;
+  color:#0f172a;
+  margin-bottom:6px;
+}
+
+.quick-sub{
+  font-size:12px;
+  color:#64748b;
+  font-weight:700;
+  margin-bottom:14px;
+}
+
+.quick-group{
+  margin-top:14px;
+}
+
+.quick-label{
+  font-size:12px;
+  color:#64748b;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.quick-buttons{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.quick-btn{
+  border:1px solid #e2e8f0;
+  background:#fff;
+  color:#334155;
+  border-radius:999px;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+.quick-btn:hover{
+  transform:translateY(-1px);
+  border-color:#bfdbfe;
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+
+.quick-btn.active{
+  background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);
+  border-color:transparent;
+  color:#fff;
+  box-shadow:0 10px 22px rgba(29,78,216,.18);
+}
+
+.pain-scale{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.pain-btn{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  border:1px solid #e2e8f0;
+  background:#fff;
+  color:#0f172a;
+  font-weight:900;
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+.pain-btn:hover{
+  transform:translateY(-1px);
+  background:#eef2ff;
+  border-color:#c7d2fe;
+}
+
+.pain-btn.active{
+  background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 10px 22px rgba(29,78,216,.2);
+}
+
+.progress-help{
+  margin-top:8px;
+  color:#94a3b8;
+  font-size:12px;
+  font-weight:700;
+}
+
+@media(max-width:760px){
+  .pain-btn{
+    width:38px;
+    height:38px;
+    border-radius:12px;
+  }
+
+  .quick-panel{
+    padding:15px;
+  }
+}
 </style>
 
 <div class="tpd-wrap">
@@ -1026,6 +1141,87 @@
 
       <form method="post" action="{% url 'treatment_plans:progress_create' plan.pk %}">
         {% csrf_token %}
+        <div class="quick-panel">
+          <div class="quick-title">クイック入力</div>
+          <div class="quick-sub">
+            よく使う内容を選ぶだけで、施術経過に反映できます。必要に応じて下の入力欄で調整してください。
+          </div>
+
+          <div class="quick-group">
+            <div class="quick-label">痛みレベル</div>
+            <div class="pain-scale" data-target="id_pain_level">
+              <button type="button" class="pain-btn" data-pain="0">0</button>
+              <button type="button" class="pain-btn" data-pain="1">1</button>
+              <button type="button" class="pain-btn" data-pain="2">2</button>
+              <button type="button" class="pain-btn" data-pain="3">3</button>
+              <button type="button" class="pain-btn" data-pain="4">4</button>
+              <button type="button" class="pain-btn" data-pain="5">5</button>
+              <button type="button" class="pain-btn" data-pain="6">6</button>
+              <button type="button" class="pain-btn" data-pain="7">7</button>
+              <button type="button" class="pain-btn" data-pain="8">8</button>
+              <button type="button" class="pain-btn" data-pain="9">9</button>
+              <button type="button" class="pain-btn" data-pain="10">10</button>
+            </div>
+            <div class="progress-help">0 = 痛みなし / 10 = 最も強い痛み</div>
+          </div>
+
+          <div class="quick-group">
+            <div class="quick-label">症状変化</div>
+            <div class="quick-buttons">
+              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="痛みは改善傾向です。">改善傾向</button>
+              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="痛みは少し改善しています。">少し改善</button>
+              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="前回から大きな変化はありません。">変化なし</button>
+              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="前回より痛みが強くなっています。">悪化傾向</button>
+              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="可動域の改善がみられます。">可動域改善</button>
+              <button type="button" class="quick-btn" data-target="id_symptom_change" data-text="しびれ感が残っています。">しびれあり</button>
+            </div>
+          </div>
+
+          <div class="quick-group">
+            <div class="quick-label">ADL・生活状況</div>
+            <div class="quick-buttons">
+              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="日常生活動作は概ね問題ありません。">日常生活問題なし</button>
+              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="歩行時に痛みがあります。">歩行時痛あり</button>
+              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="起床時に痛みがあります。">起床時痛あり</button>
+              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="仕事中の動作で痛みが出ます。">仕事中に痛み</button>
+              <button type="button" class="quick-btn" data-target="id_adl_status" data-text="長時間同じ姿勢が続くと症状が強くなります。">同姿勢で悪化</button>
+            </div>
+          </div>
+
+          <div class="quick-group">
+            <div class="quick-label">施術内容</div>
+            <div class="quick-buttons">
+              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="筋緊張の緩和を目的に手技療法を行いました。">手技療法</button>
+              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="可動域改善を目的に調整を行いました。">可動域調整</button>
+              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="患部周辺の筋緊張を緩和する施術を行いました。">筋緊張緩和</button>
+              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="ストレッチ指導を行いました。">ストレッチ指導</button>
+              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="姿勢や日常動作について指導しました。">姿勢指導</button>
+              <button type="button" class="quick-btn" data-target="id_treatment_detail" data-text="自宅で行えるセルフケアを説明しました。">セルフケア指導</button>
+            </div>
+          </div>
+
+          <div class="quick-group">
+            <div class="quick-label">施術後の反応</div>
+            <div class="quick-buttons">
+              <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、痛みの軽減がみられました。">痛み軽減</button>
+              <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、可動域の改善がみられました。">可動域改善</button>
+              <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、大きな変化はありませんでした。">大きな変化なし</button>
+              <button type="button" class="quick-btn" data-target="id_post_treatment_response" data-text="施術後、違和感が残っています。">違和感あり</button>
+            </div>
+          </div>
+
+          <div class="quick-group">
+            <div class="quick-label">次回までの指示</div>
+            <div class="quick-buttons">
+              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="痛みが出る動作は無理に行わないよう指導しました。">痛み動作を避ける</button>
+              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="長時間同じ姿勢を避け、こまめに姿勢を変えるよう指導しました。">同姿勢を避ける</button>
+              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="自宅でのセルフケアを継続するよう指導しました。">セルフケア継続</button>
+              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="痛みが強い場合は無理をせず安静にするよう指導しました。">痛みが強い時は安静</button>
+              <button type="button" class="quick-btn" data-target="id_next_instruction" data-text="次回来院時に症状の変化を確認します。">次回経過確認</button>
+            </div>
+          </div>
+        </div>
+
         <div class="progress-form-grid">
           <div class="pf-field">
             <div class="pf-label">{{ progress_form.visit_date.label }}</div>
@@ -1285,5 +1481,46 @@
   {% endif %}
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const painButtons = document.querySelectorAll(".pain-btn");
+  const quickButtons = document.querySelectorAll(".quick-btn");
+
+  painButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const targetId = button.closest(".pain-scale")?.dataset.target;
+      const target = document.getElementById(targetId);
+
+      if (!target) return;
+
+      target.value = button.dataset.pain;
+
+      painButtons.forEach((btn) => btn.classList.remove("active"));
+      button.classList.add("active");
+    });
+  });
+
+  quickButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = document.getElementById(button.dataset.target);
+      const text = button.dataset.text || "";
+
+      if (!target || !text) return;
+
+      const currentValue = target.value.trim();
+
+      if (currentValue) {
+        target.value = currentValue + "\n" + text;
+      } else {
+        target.value = text;
+      }
+
+      button.classList.toggle("active");
+      target.focus();
+    });
+  });
+});
+</script>
 
 {% endblock %}
