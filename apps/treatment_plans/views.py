@@ -10,6 +10,7 @@ from apps.clinical_notes.models import ClinicalNote
 from .forms import TreatmentPlanForm, TreatmentProgressForm
 from .models import TreatmentPlan, TreatmentProgress
 from django.views.decorators.http import require_POST
+import json
 
 @login_required
 def plan_create_view(request, patient_id=None, appointment_id=None):
@@ -129,6 +130,20 @@ def plan_detail_view(request, pk):
         for log in pain_logs
     ]
 
+    pain_chart_labels = [
+        f"第{log.visit_number}回"
+        for log in pain_logs
+    ]
+
+    pain_chart_values = [
+        log.pain_level
+        for log in pain_logs
+    ]
+
+    improvement_rate = None
+    if first_pain_level is not None and latest_pain_level is not None and first_pain_level > 0:
+        improvement_rate = round(((first_pain_level - latest_pain_level) / first_pain_level) * 100)
+
     progress_comment = ""
     progress_comment_level = "muted"
 
@@ -231,6 +246,10 @@ def plan_detail_view(request, pk):
         "appointment_count": plan_appointments.count(),
 
         "page_title": "施術計画詳細",
+        
+        "pain_chart_labels_json": json.dumps(pain_chart_labels, ensure_ascii=False),
+        "pain_chart_values_json": json.dumps(pain_chart_values, ensure_ascii=False),
+        "improvement_rate": improvement_rate,
     })
 
     todo_cards = []

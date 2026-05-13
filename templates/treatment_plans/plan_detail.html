@@ -824,6 +824,79 @@
     padding:15px;
   }
 }
+
+.chart-card{
+  border-radius:22px;
+  padding:18px;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  border:1px solid #e8eef7;
+}
+
+.chart-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+
+.chart-title{
+  font-size:16px;
+  font-weight:900;
+  color:#0f172a;
+  margin:0;
+}
+
+.chart-sub{
+  margin-top:5px;
+  font-size:12px;
+  color:#64748b;
+  font-weight:700;
+}
+
+.chart-kpis{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.chart-kpi{
+  min-width:120px;
+  border-radius:16px;
+  padding:12px 14px;
+  background:#fff;
+  border:1px solid #e2e8f0;
+}
+
+.chart-kpi-label{
+  font-size:11px;
+  color:#64748b;
+  font-weight:900;
+  margin-bottom:5px;
+}
+
+.chart-kpi-value{
+  font-size:22px;
+  color:#0f172a;
+  font-weight:900;
+  line-height:1.2;
+}
+
+.chart-box{
+  position:relative;
+  height:280px;
+}
+
+@media(max-width:760px){
+  .chart-box{
+    height:240px;
+  }
+
+  .chart-kpi{
+    flex:1 1 100%;
+  }
+}
 </style>
 
 <div class="tpd-wrap">
@@ -1080,6 +1153,55 @@
     </section>
 
   {% elif active_tab == "progress" %}
+
+    <section class="tpd-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">痛みレベル推移</h2>
+          <div class="section-sub">施術ごとの痛みレベルをグラフで確認します</div>
+        </div>
+      </div>
+
+      {% if pain_chart_values_json != "[]" %}
+        <div class="chart-card">
+          <div class="chart-head">
+            <div>
+              <h3 class="chart-title">痛みレベルの変化</h3>
+              <div class="chart-sub">0 = 痛みなし / 10 = 最も強い痛み</div>
+            </div>
+
+            <div class="chart-kpis">
+              <div class="chart-kpi">
+                <div class="chart-kpi-label">初回</div>
+                <div class="chart-kpi-value">{{ first_pain_level|default:"-" }}</div>
+              </div>
+
+              <div class="chart-kpi">
+                <div class="chart-kpi-label">直近</div>
+                <div class="chart-kpi-value">{{ latest_pain_level|default:"-" }}</div>
+              </div>
+
+              <div class="chart-kpi">
+                <div class="chart-kpi-label">改善率</div>
+                <div class="chart-kpi-value">
+                  {% if improvement_rate is not None %}
+                    {{ improvement_rate }}%
+                  {% else %}
+                    -
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-box">
+            <canvas id="painTrendChart"></canvas>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty-box">痛みレベルを記録すると、ここに推移グラフが表示されます。</div>
+      {% endif %}
+    </section>
 
     <section class="tpd-card">
       <div class="section-head">
@@ -1482,6 +1604,8 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const painButtons = document.querySelectorAll(".pain-btn");
@@ -1582,6 +1706,59 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (target.value === button.dataset.pain) {
       button.classList.add("active");
+    }
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById("painTrendChart");
+
+  if (!canvas) return;
+
+  const labels = {{ pain_chart_labels_json|safe }};
+  const values = {{ pain_chart_values_json|safe }};
+
+  if (!labels.length || !values.length) return;
+
+  new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "痛みレベル",
+        data: values,
+        tension: 0.35,
+        fill: true,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0,
+          max: 10,
+          ticks: {
+            stepSize: 1
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return "痛みレベル：" + context.raw;
+            }
+          }
+        }
+      }
     }
   });
 });
