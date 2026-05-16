@@ -806,6 +806,207 @@
     width:100%;
   }
 }
+
+.note-focus-card{
+  border-radius:26px;
+  padding:22px;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(59,130,246,.14), transparent 32%),
+    linear-gradient(180deg,#ffffff 0%,#eff6ff 100%);
+  border:1px solid #bfdbfe;
+  box-shadow:0 16px 36px rgba(15,23,42,.06);
+}
+
+.note-focus-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+
+.note-focus-title{
+  margin:0;
+  font-size:24px;
+  font-weight:900;
+  color:#0f172a;
+  letter-spacing:-.04em;
+}
+
+.note-focus-sub{
+  margin-top:6px;
+  color:#64748b;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.6;
+}
+
+.note-focus-date{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#dbeafe;
+  color:#1e3a8a;
+  font-size:12px;
+  font-weight:900;
+}
+
+.note-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+
+.note-summary-box{
+  border-radius:18px;
+  padding:15px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(226,232,240,.9);
+}
+
+.note-summary-box.wide{
+  grid-column:1 / -1;
+}
+
+.note-summary-label{
+  font-size:12px;
+  color:#64748b;
+  font-weight:900;
+  margin-bottom:7px;
+}
+
+.note-summary-value{
+  color:#0f172a;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.8;
+  word-break:break-word;
+}
+
+.note-list-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+}
+
+.patient-note-card{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  border-radius:22px;
+  padding:18px 20px;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  border:1px solid #e8eef7;
+  box-shadow:0 12px 28px rgba(15,23,42,.04);
+  transition:.18s ease;
+}
+
+.patient-note-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 38px rgba(15,23,42,.08);
+  border-color:#cbd5e1;
+  color:inherit;
+}
+
+.note-card-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.note-card-date{
+  color:#0f172a;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:-.03em;
+}
+
+.note-card-meta{
+  margin-top:5px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.6;
+}
+
+.note-card-link{
+  color:#1d4ed8;
+  font-size:13px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.note-card-preview{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  margin-top:12px;
+}
+
+.note-preview-row{
+  border-radius:16px;
+  padding:12px 14px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+}
+
+.note-preview-label{
+  color:#64748b;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:5px;
+}
+
+.note-preview-value{
+  color:#0f172a;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.7;
+}
+
+.note-tag-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+.note-tag{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  color:#475569;
+  font-size:12px;
+  font-weight:900;
+}
+
+.note-tag.latest{
+  background:#eef2ff;
+  color:#3730a3;
+  border-color:#c7d2fe;
+}
+
+@media(max-width:980px){
+  .note-summary-grid{
+    grid-template-columns:1fr;
+  }
+
+  .note-summary-box.wide{
+    grid-column:auto;
+  }
+
+  .note-card-date{
+    font-size:17px;
+  }
+}
 </style>
 {% endblock %}
 
@@ -1129,53 +1330,169 @@
 
   {% elif active_tab == "clinical_notes" %}
 
-    <section class="pd-card">
-      <div class="pd-section-head">
+    <section class="card">
+      <div class="section-row">
         <div>
-          <h3 class="pd-section-title">カルテ</h3>
-          <div class="pd-section-sub">確定済みClinicalNoteを時系列で確認します</div>
+          <h3 class="card-title">カルテ</h3>
+          <div class="card-sub">確定済みカルテの要点と履歴を確認できます</div>
+        </div>
+      </div>
+
+      {% if latest_note %}
+        <div class="note-focus-card">
+          <div class="note-focus-head">
+            <div>
+              <h3 class="note-focus-title">最新カルテサマリー</h3>
+              <div class="note-focus-sub">
+                直近の主訴・評価・施術方針を確認できます
+              </div>
+            </div>
+
+            <div class="note-focus-date">
+              {{ latest_note.created_at|date:"Y-m-d H:i" }}
+            </div>
+          </div>
+
+          <div class="note-summary-grid">
+            <div class="note-summary-box">
+              <div class="note-summary-label">主訴</div>
+              <div class="note-summary-value">
+                {{ latest_extract.chief_complaint|default:"-" }}
+              </div>
+            </div>
+
+            <div class="note-summary-box">
+              <div class="note-summary-label">発症</div>
+              <div class="note-summary-value">
+                {{ latest_extract.onset|default:"-" }}
+              </div>
+            </div>
+
+            <div class="note-summary-box">
+              <div class="note-summary-label">急性 / 慢性</div>
+              <div class="note-summary-value">
+                {% if latest_extract.symptom_type == "acute" %}
+                  急性
+                {% elif latest_extract.symptom_type == "chronic" %}
+                  慢性
+                {% elif latest_extract.symptom_type == "unknown" %}
+                  不明
+                {% else %}
+                  {{ latest_extract.symptom_type|default:"-" }}
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="note-summary-box wide">
+              <div class="note-summary-label">部位</div>
+              <div class="note-summary-value">
+                {% if latest_extract.locations %}
+                  {{ latest_extract.locations|join:" / " }}
+                {% else %}
+                  -
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="note-summary-box wide">
+              <div class="note-summary-label">評価</div>
+              <div class="note-summary-value">
+                {{ latest_assessment|default:"-" }}
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <a href="{% url 'staff:clinical_note_detail' latest_note.id %}" class="section-btn">
+              最新カルテを見る →
+            </a>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty-box">まだ確定カルテがありません。</div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="section-row">
+        <div>
+          <h3 class="card-title">カルテ履歴</h3>
+          <div class="card-sub">過去の確定カルテを時系列で確認できます</div>
         </div>
       </div>
 
       {% if notes %}
-        <div class="timeline">
+        <div class="note-list-grid">
           {% for note in notes %}
-            <a href="{% url 'staff:clinical_note_detail' note.id %}" class="tl-card">
-              <div class="tl-head">
+            <a href="{% url 'staff:clinical_note_detail' note.id %}" class="patient-note-card">
+              <div class="note-card-head">
                 <div>
-                  <div class="tl-date">{{ note.created_at|date:"Y-m-d H:i" }}</div>
-                  <div class="tl-sub">
-                    予約ID：{{ note.appointment_id }}
+                  <div class="note-card-date">
+                    {{ note.created_at|date:"Y-m-d H:i" }}
+                  </div>
+
+                  <div class="note-card-meta">
+                    予約ID：{{ note.appointment_id|default:"-" }}
                     {% if note.recording_id %} / 録音ID：{{ note.recording_id }}{% endif %}
                     {% if note.intake_id %} / 問診ID：{{ note.intake_id }}{% endif %}
                   </div>
                 </div>
-                <div class="tl-badge">詳細 →</div>
+
+                <div class="note-card-link">詳細を見る →</div>
               </div>
 
-              <div class="tl-preview">
+              <div class="note-card-preview">
                 {% if note.extract_json.chief_complaint %}
-                  <div><b>主訴</b>：{{ note.extract_json.chief_complaint }}</div>
+                  <div class="note-preview-row">
+                    <div class="note-preview-label">主訴</div>
+                    <div class="note-preview-value">
+                      {{ note.extract_json.chief_complaint }}
+                    </div>
+                  </div>
                 {% endif %}
+
                 {% if note.soap_json.A %}
-                  <div><b>評価</b>：{{ note.soap_json.A.0 }}</div>
+                  <div class="note-preview-row">
+                    <div class="note-preview-label">評価</div>
+                    <div class="note-preview-value">
+                      {{ note.soap_json.A.0 }}
+                    </div>
+                  </div>
                 {% endif %}
+
                 {% if note.soap_json.P %}
-                  <div><b>Plan</b>：{{ note.soap_json.P.0 }}</div>
+                  <div class="note-preview-row">
+                    <div class="note-preview-label">施術方針</div>
+                    <div class="note-preview-value">
+                      {{ note.soap_json.P.0 }}
+                    </div>
+                  </div>
                 {% endif %}
               </div>
 
-              <div class="tl-tags">
-                {% if note.extract_json.symptom_type %}
-                  <span class="tl-tag">{{ note.extract_json.symptom_type }}</span>
-                {% endif %}
-                {% if note.extract_json.locations %}
-                  {% for loc in note.extract_json.locations|slice:":2" %}
-                    <span class="tl-tag">{{ loc }}</span>
-                  {% endfor %}
-                {% endif %}
+              <div class="note-tag-row">
                 {% if forloop.first %}
-                  <span class="tl-badge">最新</span>
+                  <span class="note-tag latest">最新</span>
+                {% endif %}
+
+                {% if note.extract_json.symptom_type %}
+                  <span class="note-tag">
+                    {% if note.extract_json.symptom_type == "acute" %}
+                      急性
+                    {% elif note.extract_json.symptom_type == "chronic" %}
+                      慢性
+                    {% elif note.extract_json.symptom_type == "unknown" %}
+                      不明
+                    {% else %}
+                      {{ note.extract_json.symptom_type }}
+                    {% endif %}
+                  </span>
+                {% endif %}
+
+                {% if note.extract_json.locations %}
+                  {% for loc in note.extract_json.locations|slice:":3" %}
+                    <span class="note-tag">{{ loc }}</span>
+                  {% endfor %}
                 {% endif %}
               </div>
             </a>
