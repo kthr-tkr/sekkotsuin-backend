@@ -12,6 +12,7 @@ from .forms import TreatmentPlanForm, TreatmentProgressForm
 from .models import TreatmentPlan, TreatmentProgress
 from django.views.decorators.http import require_POST
 import json
+from django.utils import timezone
 
 @login_required
 def plan_create_view(request, patient_id=None, appointment_id=None):
@@ -106,6 +107,31 @@ def plan_detail_view(request, pk):
     pain_logs = [log for log in progress_logs_asc if log.pain_level is not None]
     first_pain_level = pain_logs[0].pain_level if pain_logs else None
     latest_pain_level = pain_logs[-1].pain_level if pain_logs else None
+
+    now = timezone.now()
+
+    plan_appointments = (
+        Appointment.objects
+        .filter(treatment_plan=plan)
+        .select_related("assigned_staff")
+        .order_by("-start_at")
+    )
+
+    next_plan_appointment = (
+        plan_appointments
+        .filter(
+            start_at__gte=now,
+            status__in=[
+                Appointment.Status.PENDING,
+                Appointment.Status.BOOKED,
+                Appointment.Status.ARRIVED,
+            ],
+        )
+        .order_by("start_at")
+        .first()
+    )
+
+    appointment_count = plan_appointments.count()
 
     pain_diff = None
     pain_trend_label = "データなし"
@@ -251,6 +277,9 @@ def plan_detail_view(request, pk):
         "pain_chart_labels_json": json.dumps(pain_chart_labels, ensure_ascii=False),
         "pain_chart_values_json": json.dumps(pain_chart_values, ensure_ascii=False),
         "improvement_rate": improvement_rate,
+        "plan_appointments": plan_appointments,
+        "next_plan_appointment": next_plan_appointment,
+        "appointment_count": appointment_count,
     })
 
     todo_cards = []

@@ -1534,6 +1534,213 @@
   }
 }
 
+.booking-summary-grid{
+  display:grid;
+  grid-template-columns:1.1fr .9fr;
+  gap:14px;
+  align-items:stretch;
+}
+
+.booking-main-card{
+  border-radius:26px;
+  padding:24px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(59,130,246,.14), transparent 30%),
+    linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  border:1px solid #dbeafe;
+  box-shadow:0 18px 42px rgba(15,23,42,.06);
+}
+
+.booking-main-card.empty{
+  background:
+    radial-gradient(circle at 90% 10%, rgba(245,158,11,.18), transparent 30%),
+    linear-gradient(180deg,#ffffff 0%,#fffbeb 100%);
+  border-color:#fde68a;
+}
+
+.booking-kicker{
+  display:inline-flex;
+  align-items:center;
+  padding:7px 11px;
+  border-radius:999px;
+  background:#eef2ff;
+  color:#1e3a8a;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:14px;
+}
+
+.booking-main-card.empty .booking-kicker{
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.booking-title{
+  margin:0;
+  color:#0f172a;
+  font-size:28px;
+  font-weight:900;
+  letter-spacing:-.04em;
+}
+
+.booking-sub{
+  margin-top:8px;
+  color:#64748b;
+  font-size:14px;
+  font-weight:700;
+  line-height:1.8;
+}
+
+.booking-action-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:18px;
+}
+
+.booking-mini-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.booking-mini-card{
+  border-radius:22px;
+  padding:18px;
+  background:#fff;
+  border:1px solid #e8eef7;
+  box-shadow:0 12px 28px rgba(15,23,42,.04);
+}
+
+.booking-mini-label{
+  color:#64748b;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.booking-mini-value{
+  color:#0f172a;
+  font-size:20px;
+  font-weight:900;
+  line-height:1.4;
+}
+
+.booking-mini-sub{
+  margin-top:6px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.6;
+}
+
+.booking-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.booking-row{
+  display:grid;
+  grid-template-columns:160px 1fr auto;
+  gap:14px;
+  align-items:center;
+  border-radius:22px;
+  padding:16px;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  border:1px solid #e8eef7;
+}
+
+.booking-row-date{
+  color:#0f172a;
+  font-size:17px;
+  font-weight:900;
+  line-height:1.4;
+}
+
+.booking-row-meta{
+  color:#64748b;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.7;
+}
+
+.booking-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:92px;
+  padding:8px 11px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+  background:#f1f5f9;
+  color:#475569;
+}
+
+.booking-status.pending,
+.booking-status.booked{
+  background:#dbeafe;
+  color:#1e3a8a;
+}
+
+.booking-status.arrived{
+  background:#cffafe;
+  color:#155e75;
+}
+
+.booking-status.completed{
+  background:#dcfce7;
+  color:#166534;
+}
+
+.booking-status.cancelled,
+.booking-status.no_show{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+.booking-section-title{
+  margin:0;
+  color:#0f172a;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:-.03em;
+}
+
+.booking-section-sub{
+  margin-top:5px;
+  color:#64748b;
+  font-size:13px;
+  font-weight:700;
+}
+
+@media(max-width:900px){
+  .booking-summary-grid{
+    grid-template-columns:1fr;
+  }
+
+  .booking-row{
+    grid-template-columns:1fr;
+    align-items:flex-start;
+  }
+
+  .booking-status{
+    width:fit-content;
+  }
+}
+
+@media(max-width:640px){
+  .booking-mini-grid{
+    grid-template-columns:1fr;
+  }
+
+  .booking-title{
+    font-size:24px;
+  }
+}
+
 </style>
 
 <div class="tpd-wrap">
@@ -1662,6 +1869,52 @@
 
   {% if active_tab == "overview" %}
 
+    <section class="todo-grid">
+
+      {% if appointment_count == 0 %}
+        <div class="todo-card todo-warn">
+          <div class="todo-badge">予約</div>
+          <h3>関連予約がありません</h3>
+          <p>この施術計画に紐づく次回予約を作成できます。</p>
+
+          {% if plan.next_visit_date %}
+            <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?suggest_date={{ plan.next_visit_date|date:'Y-m-d' }}&treatment_plan_id={{ plan.pk }}" class="tpd-btn primary">
+              予約を作成
+            </a>
+          {% else %}
+            <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?treatment_plan_id={{ plan.pk }}" class="tpd-btn primary">
+              予約を作成
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if progress_count == 0 %}
+        <div class="todo-card todo-info">
+          <div class="todo-badge">経過</div>
+          <h3>施術経過を追加できます</h3>
+          <p>初回施術後の症状変化・痛みレベルを記録しましょう。</p>
+
+          <a href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=progress#progress-form" class="tpd-btn">
+            経過を入力
+          </a>
+        </div>
+      {% endif %}
+
+      {% if not plan.explained_to_patient %}
+        <div class="todo-card">
+          <div class="todo-badge">説明</div>
+          <h3>患者説明が未完了です</h3>
+          <p>患者さんへ施術計画を説明したら、編集画面で説明済みに更新できます。</p>
+
+          <a href="{% url 'treatment_plans:plan_edit' plan.pk %}" class="tpd-btn">
+            説明状態を更新
+          </a>
+        </div>
+      {% endif %}
+
+    </section>
+
     <section class="summary-grid">
       <div class="summary-card {% if plan.is_active %}good{% else %}bad{% endif %}">
         <div class="summary-label">現在ステータス</div>
@@ -1675,7 +1928,11 @@
         <div class="summary-label">総施術回数</div>
         <div class="summary-value">{{ progress_count }}回</div>
         <div class="summary-sub">
-          {% if latest_progress %}直近施術日：{{ latest_progress.visit_date }}{% else %}まだ記録がありません{% endif %}
+          {% if latest_progress %}
+            直近施術日：{{ latest_progress.visit_date }}
+          {% else %}
+            まだ記録がありません
+          {% endif %}
         </div>
       </div>
 
@@ -1702,91 +1959,101 @@
       </div>
     </section>
 
-    <section class="tpd-card">
-      <div class="section-head">
-        <div>
-          <h2 class="section-title">患者説明用サマリー</h2>
-          <div class="section-sub">患者さんへ説明しやすい文章として確認します</div>
+    <section class="overview-main-grid">
+
+      <div class="overview-focus-card">
+        <h2 class="overview-focus-title">計画の要点</h2>
+        <div class="overview-focus-sub">
+          施術計画の中心となる情報だけを確認します。
+        </div>
+
+        <div class="overview-plan-title">
+          {{ plan.title|default:"施術計画" }}
+        </div>
+
+        <div class="overview-plan-chief">
+          主訴：{{ plan.chief_complaint|default:"-" }}
+        </div>
+
+        <div class="overview-mini-grid">
+          <div class="overview-mini-box">
+            <div class="overview-mini-label">患者名</div>
+            <div class="overview-mini-value">
+              {{ plan.patient.last_name }} {{ plan.patient.first_name }}
+            </div>
+          </div>
+
+          <div class="overview-mini-box">
+            <div class="overview-mini-label">来院目安</div>
+            <div class="overview-mini-value">
+              {{ plan.get_visit_guide_type_display|default:"-" }}
+              {% if plan.visit_guide_count %} {{ plan.visit_guide_count }}回{% endif %}
+            </div>
+          </div>
+
+          <div class="overview-mini-box">
+            <div class="overview-mini-label">来院補足</div>
+            <div class="overview-mini-value">
+              {{ plan.visit_guide_unit_note|default:"-" }}
+            </div>
+          </div>
+
+          <div class="overview-mini-box">
+            <div class="overview-mini-label">改善目安</div>
+            <div class="overview-mini-value">
+              {% if plan.expected_recovery_weeks_min or plan.expected_recovery_weeks_max %}
+                {{ plan.expected_recovery_weeks_min|default:"-" }}〜{{ plan.expected_recovery_weeks_max|default:"-" }}週
+              {% else %}
+                -
+              {% endif %}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="plan-message">
-        {% if plan.expected_recovery_weeks_min or plan.expected_recovery_weeks_max %}
-          おおよそ
-          {{ plan.expected_recovery_weeks_min|default:"-" }}
-          ～
-          {{ plan.expected_recovery_weeks_max|default:"-" }}
-          週で症状の改善がみられます。<br>
-        {% endif %}
-        痛みが再発しないよう、症状の改善後も管理させていただきます。
-      </div>
-    </section>
-
-    <section class="tpd-card">
-      <div class="section-head">
-        <div>
-          <h2 class="section-title">計画基本情報</h2>
-          <div class="section-sub">主訴・来院目安・説明状態を確認します</div>
+      <aside class="overview-side-card">
+        <div class="section-head" style="margin-bottom:10px;">
+          <div>
+            <h2 class="section-title">計画状態</h2>
+            <div class="section-sub">説明状態とステータスを管理します</div>
+          </div>
         </div>
 
-        <div class="status-forms">
+        <div class="pill-list">
+          {% if plan.explained_to_patient %}
+            <span class="overview-status-chip good">患者へ説明済み</span>
+          {% else %}
+            <span class="overview-status-chip warn">未説明</span>
+          {% endif %}
+
+          {% if plan.is_active %}
+            <span class="overview-status-chip good">有効な計画</span>
+          {% else %}
+            <span class="overview-status-chip warn">非アクティブ</span>
+          {% endif %}
+        </div>
+
+        <div class="overview-status-actions">
           <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
             {% csrf_token %}
             <input type="hidden" name="status" value="active">
-            <button type="submit" class="tpd-btn">進行中</button>
+            <button type="submit" class="tpd-btn">進行中にする</button>
           </form>
 
           <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
             {% csrf_token %}
             <input type="hidden" name="status" value="paused">
-            <button type="submit" class="tpd-btn">中断</button>
+            <button type="submit" class="tpd-btn">中断にする</button>
           </form>
 
           <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
             {% csrf_token %}
             <input type="hidden" name="status" value="completed">
-            <button type="submit" class="tpd-btn primary">完了</button>
+            <button type="submit" class="tpd-btn primary">完了にする</button>
           </form>
         </div>
-      </div>
+      </aside>
 
-      <div class="info-grid">
-        <div class="info-box">
-          <div class="info-label">患者名</div>
-          <div class="info-value">{{ plan.patient.last_name }} {{ plan.patient.first_name }}</div>
-        </div>
-
-        <div class="info-box">
-          <div class="info-label">主訴</div>
-          <div class="info-value">{{ plan.chief_complaint|default:"-" }}</div>
-        </div>
-
-        <div class="info-box">
-          <div class="info-label">来院目安</div>
-          <div class="info-value">
-            {{ plan.get_visit_guide_type_display|default:"-" }}
-            {% if plan.visit_guide_count %} {{ plan.visit_guide_count }}回{% endif %}
-            {% if plan.visit_guide_unit_note %}<br>{{ plan.visit_guide_unit_note }}{% endif %}
-          </div>
-        </div>
-
-        <div class="info-box">
-          <div class="info-label">説明状態</div>
-          <div class="pill-list">
-            {% if plan.explained_to_patient %}
-              <span class="pill good">患者へ説明済み</span>
-            {% else %}
-              <span class="pill warn">未説明</span>
-            {% endif %}
-
-            {% if plan.is_active %}
-              <span class="pill good">有効な計画</span>
-            {% else %}
-              <span class="pill warn">非アクティブ</span>
-            {% endif %}
-          </div>
-        </div>
-      </div>
     </section>
 
   {% elif active_tab == "progress" %}
@@ -2249,48 +2516,142 @@
         </div>
       </section>
 
-    {% elif active_tab == "appointments" %}
+{% elif active_tab == "appointments" %}
 
-    <section class="tpd-card">
-      <div class="section-head">
-        <div>
-          <h2 class="section-title">関連予約</h2>
-          <div class="section-sub">この施術計画に紐づく予約を確認します</div>
+  <section class="booking-summary-grid">
+
+    {% if next_plan_appointment %}
+      <div class="booking-main-card">
+        <div class="booking-kicker">次回予約</div>
+
+        <h2 class="booking-title">
+          {{ next_plan_appointment.start_at|date:"Y年n月j日 H:i" }}
+        </h2>
+
+        <div class="booking-sub">
+          この施術計画に紐づく次回予約があります。<br>
+          来院時は施術経過タブから、症状変化・痛みレベルを記録できます。
         </div>
 
-        <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?treatment_plan_id={{ plan.pk }}" class="tpd-btn primary">
-          ＋ 予約を作成
-        </a>
+        <div class="booking-action-row">
+          <a href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=progress#progress-form" class="tpd-btn primary">
+            施術経過を入力
+          </a>
+
+          <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?treatment_plan_id={{ plan.pk }}" class="tpd-btn">
+            追加予約を作成
+          </a>
+        </div>
+      </div>
+    {% else %}
+      <div class="booking-main-card empty">
+        <div class="booking-kicker">要確認</div>
+
+        <h2 class="booking-title">
+          関連予約がありません
+        </h2>
+
+        <div class="booking-sub">
+          この施術計画に紐づく次回予約がまだありません。<br>
+          継続施術が必要な場合は、次回予約を作成してください。
+        </div>
+
+        <div class="booking-action-row">
+          {% if plan.next_visit_date %}
+            <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?suggest_date={{ plan.next_visit_date|date:'Y-m-d' }}&treatment_plan_id={{ plan.pk }}" class="tpd-btn primary">
+              次回来院日で予約作成
+            </a>
+          {% endif %}
+
+          <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?treatment_plan_id={{ plan.pk }}" class="tpd-btn">
+            予約を作成
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="booking-mini-grid">
+      <div class="booking-mini-card">
+        <div class="booking-mini-label">関連予約数</div>
+        <div class="booking-mini-value">{{ appointment_count }}件</div>
+        <div class="booking-mini-sub">この施術計画に紐づく予約数</div>
       </div>
 
-      {% if plan_appointments %}
-        <div class="log-list">
-          {% for appt in plan_appointments %}
-            <div class="log-card">
-              <div class="log-head">
-                <div>
-                  <div class="visit-badge">{{ appt.get_status_display }}</div>
-                  <div class="log-meta">
-                    予約日時：{{ appt.start_at|date:"Y-m-d H:i" }}<br>
-                    メニュー：{{ appt.menu|default:"-" }}<br>
-                    担当：
-                    {% if appt.assigned_staff %}
-                      {{ appt.assigned_staff.get_full_name|default:appt.assigned_staff.username }}
-                    {% else %}
-                      未割当
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
+      <div class="booking-mini-card">
+        <div class="booking-mini-label">次回来院日目安</div>
+        <div class="booking-mini-value">
+          {{ plan.next_visit_date|default:"未設定" }}
         </div>
-      {% else %}
-        <div class="empty-box">この施術計画に紐づく予約はまだありません。</div>
-      {% endif %}
-    </section>
+        <div class="booking-mini-sub">施術計画で設定した来院目安日</div>
+      </div>
 
-  {% endif %}
+      <div class="booking-mini-card">
+        <div class="booking-mini-label">総施術回数</div>
+        <div class="booking-mini-value">{{ progress_count }}回</div>
+        <div class="booking-mini-sub">施術経過として登録済みの回数</div>
+      </div>
+
+      <div class="booking-mini-card">
+        <div class="booking-mini-label">計画ステータス</div>
+        <div class="booking-mini-value">{{ plan.get_status_display }}</div>
+        <div class="booking-mini-sub">
+          {% if plan.is_active %}現在有効な計画です{% else %}現在は非アクティブです{% endif %}
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="tpd-card">
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">関連予約一覧</h2>
+        <div class="section-sub">この施術計画に紐づく予約を確認します</div>
+      </div>
+
+      <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?treatment_plan_id={{ plan.pk }}" class="tpd-btn primary">
+        ＋ 予約を作成
+      </a>
+    </div>
+
+    {% if plan_appointments %}
+      <div class="booking-list">
+        {% for appt in plan_appointments %}
+          <div class="booking-row">
+            <div class="booking-row-date">
+              {{ appt.start_at|date:"Y-m-d" }}<br>
+              {{ appt.start_at|date:"H:i" }}
+            </div>
+
+            <div class="booking-row-meta">
+              <div>メニュー：{{ appt.menu|default:"-" }}</div>
+              <div>
+                担当：
+                {% if appt.assigned_staff %}
+                  {{ appt.assigned_staff.get_full_name|default:appt.assigned_staff.username }}
+                {% else %}
+                  未割当
+                {% endif %}
+              </div>
+              {% if appt.notes %}
+                <div>メモ：{{ appt.notes }}</div>
+              {% endif %}
+            </div>
+
+            <span class="booking-status {{ appt.status }}">
+              {{ appt.get_status_display }}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-box">
+        この施術計画に紐づく予約はまだありません。
+      </div>
+    {% endif %}
+  </section>
+
+{% endif %}
 
 </div>
 
