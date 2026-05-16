@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from apps.patients.models import Patient
 from apps.appointments.models import Appointment
@@ -275,7 +276,7 @@ def progress_create_view(request, pk):
     plan = get_object_or_404(TreatmentPlan, pk=pk)
 
     if request.method != "POST":
-        return redirect("treatment_plans:plan_detail", pk=plan.pk)
+        return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=progress")
 
     form = TreatmentProgressForm(request.POST)
     if form.is_valid():
@@ -287,7 +288,7 @@ def progress_create_view(request, pk):
     else:
         messages.error(request, "施術経過の入力内容を確認してください。")
 
-    return redirect("treatment_plans:plan_detail", pk=plan.pk)
+    return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=progress")
 
 @login_required
 def plan_edit_view(request, pk):
@@ -325,7 +326,7 @@ def progress_edit_view(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, "施術経過記録を更新しました。")
-            return redirect("treatment_plans:plan_detail", pk=plan.pk)
+            return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=progress")
         messages.error(request, "入力内容を確認してください。")
     else:
         form = TreatmentProgressForm(instance=progress)
@@ -350,7 +351,7 @@ def progress_delete_view(request, pk):
     if request.method == "POST":
         progress.delete()
         messages.success(request, "施術経過記録を削除しました。")
-        return redirect("treatment_plans:plan_detail", pk=plan.pk)
+        return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=progress")
 
     return render(request, "treatment_plans/progress_confirm_delete.html", {
         "progress": progress,
@@ -381,4 +382,4 @@ def plan_status_update_view(request, pk):
     plan.save(update_fields=["status", "is_active", "updated_at"])
 
     messages.success(request, f"施術計画を「{plan.get_status_display()}」に更新しました。")
-    return redirect("treatment_plans:plan_detail", pk=plan.pk)
+    return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=overview")
