@@ -1394,6 +1394,146 @@
   }
 }
 
+.overview-main-grid{
+  display:grid;
+  grid-template-columns:1fr 360px;
+  gap:14px;
+  align-items:start;
+}
+
+.overview-focus-card{
+  border-radius:26px;
+  padding:22px;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  border:1px solid #e8eef7;
+  box-shadow:0 18px 42px rgba(15,23,42,.06);
+}
+
+.overview-focus-title{
+  margin:0;
+  color:#0f172a;
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:-.03em;
+}
+
+.overview-focus-sub{
+  margin-top:6px;
+  color:#64748b;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.7;
+}
+
+.overview-plan-title{
+  margin-top:18px;
+  color:#0f172a;
+  font-size:28px;
+  font-weight:900;
+  letter-spacing:-.04em;
+  line-height:1.25;
+}
+
+.overview-plan-chief{
+  margin-top:10px;
+  border-radius:18px;
+  padding:16px;
+  background:#eef2ff;
+  border:1px solid #c7d2fe;
+  color:#1e3a8a;
+  font-size:15px;
+  font-weight:900;
+  line-height:1.8;
+}
+
+.overview-mini-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:16px;
+}
+
+.overview-mini-box{
+  border-radius:18px;
+  padding:15px;
+  background:#fff;
+  border:1px solid #e8eef7;
+}
+
+.overview-mini-label{
+  color:#64748b;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:7px;
+}
+
+.overview-mini-value{
+  color:#0f172a;
+  font-size:15px;
+  font-weight:900;
+  line-height:1.7;
+}
+
+.overview-side-card{
+  border-radius:26px;
+  padding:22px;
+  background:rgba(255,255,255,.84);
+  border:1px solid rgba(255,255,255,.82);
+  box-shadow:0 18px 42px rgba(15,23,42,.06);
+}
+
+.overview-status-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:14px;
+}
+
+.overview-status-actions form{
+  width:100%;
+}
+
+.overview-status-actions .tpd-btn{
+  width:100%;
+}
+
+.overview-status-chip{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.overview-status-chip.good{
+  background:#ecfdf5;
+  border:1px solid #bbf7d0;
+  color:#166534;
+}
+
+.overview-status-chip.warn{
+  background:#fffbeb;
+  border:1px solid #fde68a;
+  color:#92400e;
+}
+
+@media(max-width:1000px){
+  .overview-main-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:760px){
+  .overview-mini-grid{
+    grid-template-columns:1fr;
+  }
+
+  .overview-plan-title{
+    font-size:24px;
+  }
+}
+
 </style>
 
 <div class="tpd-wrap">
