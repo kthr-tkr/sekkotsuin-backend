@@ -1007,6 +1007,148 @@
     font-size:17px;
   }
 }
+
+.overview-plan-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:26px;
+  padding:22px;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(34,197,94,.16), transparent 30%),
+    linear-gradient(180deg,#ffffff 0%,#ecfdf5 100%);
+  border:1px solid #bbf7d0;
+  box-shadow:0 16px 36px rgba(15,23,42,.06);
+}
+
+.overview-plan-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+
+.overview-plan-title{
+  margin:0;
+  font-size:24px;
+  font-weight:900;
+  color:#0f172a;
+  letter-spacing:-.04em;
+}
+
+.overview-plan-sub{
+  margin-top:6px;
+  color:#64748b;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.6;
+}
+
+.overview-plan-status{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 12px;
+  border-radius:999px;
+  background:#dcfce7;
+  color:#166534;
+  font-size:12px;
+  font-weight:900;
+}
+
+.overview-plan-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+
+.overview-plan-box{
+  border-radius:18px;
+  padding:15px;
+  background:rgba(255,255,255,.82);
+  border:1px solid rgba(226,232,240,.9);
+}
+
+.overview-plan-label{
+  font-size:12px;
+  color:#64748b;
+  font-weight:900;
+  margin-bottom:7px;
+}
+
+.overview-plan-value{
+  color:#0f172a;
+  font-size:16px;
+  font-weight:900;
+  line-height:1.6;
+  word-break:break-word;
+}
+
+.overview-plan-message{
+  margin-top:14px;
+  border-radius:18px;
+  padding:15px;
+  background:#fff;
+  border:1px solid #dbeafe;
+  color:#0f172a;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.8;
+}
+
+.overview-action-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:16px;
+}
+
+.overview-mini-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  padding:0 15px;
+  border-radius:14px;
+  border:1px solid #e2e8f0;
+  background:#fff;
+  color:#0f172a;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:900;
+  box-shadow:0 10px 22px rgba(15,23,42,.04);
+}
+
+.overview-mini-btn.primary{
+  color:#fff;
+  border-color:transparent;
+  background:linear-gradient(135deg,#0b1220 0%,#1d4ed8 100%);
+  box-shadow:0 14px 28px rgba(29,78,216,.20);
+}
+
+.overview-mini-btn:hover{
+  transform:translateY(-1px);
+  color:inherit;
+}
+
+.overview-mini-btn.primary:hover{
+  color:#fff;
+}
+
+@media(max-width:980px){
+  .overview-plan-grid{
+    grid-template-columns:1fr;
+  }
+
+  .overview-plan-card{
+    border-radius:20px;
+    padding:18px 14px;
+  }
+
+  .overview-plan-title{
+    font-size:20px;
+  }
+}
 </style>
 {% endblock %}
 
@@ -1264,6 +1406,128 @@
         {% endif %}
       </section>
     </div>
+
+    <section class="pd-card">
+      <div class="pd-section-head">
+        <div>
+          <h3 class="pd-section-title">直近の施術計画</h3>
+          <div class="pd-section-sub">現在進行中の施術方針と次の対応を確認できます</div>
+        </div>
+
+        <a href="{% url 'treatment_plans:plan_create_for_patient' patient.id %}" class="section-btn">
+          ＋ 施術計画を作成
+        </a>
+      </div>
+
+      {% if active_plan %}
+        <div class="overview-plan-card">
+          <div class="overview-plan-head">
+            <div>
+              <h3 class="overview-plan-title">
+                {{ active_plan.title|default:"施術計画" }}
+              </h3>
+              <div class="overview-plan-sub">
+                主訴：{{ active_plan.chief_complaint|default:"-" }}
+              </div>
+            </div>
+
+            <div class="overview-plan-status">
+              {{ active_plan.get_status_display }}
+            </div>
+          </div>
+
+          <div class="overview-plan-grid">
+            <div class="overview-plan-box">
+              <div class="overview-plan-label">次回来院日</div>
+              <div class="overview-plan-value">
+                {{ active_plan.next_visit_date|default:"未設定" }}
+              </div>
+            </div>
+
+            <div class="overview-plan-box">
+              <div class="overview-plan-label">来院目安</div>
+              <div class="overview-plan-value">
+                {{ active_plan.get_visit_guide_type_display|default:"-" }}
+                {% if active_plan.visit_guide_count %}
+                  {{ active_plan.visit_guide_count }}回
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="overview-plan-box">
+              <div class="overview-plan-label">施術経過</div>
+              <div class="overview-plan-value">
+                {{ progress_count }}回
+              </div>
+            </div>
+          </div>
+
+          <div class="overview-plan-message">
+            {% if active_plan.expected_recovery_weeks_min or active_plan.expected_recovery_weeks_max %}
+              おおよそ
+              {{ active_plan.expected_recovery_weeks_min|default:"-" }}
+              ～
+              {{ active_plan.expected_recovery_weeks_max|default:"-" }}
+              週で症状の改善がみられます。<br>
+            {% endif %}
+            痛みが再発しないよう、症状の改善後も管理させていただきます。
+          </div>
+
+          <div class="overview-action-row">
+            <a href="{% url 'treatment_plans:plan_detail' active_plan.id %}" class="overview-mini-btn primary">
+              施術計画を見る →
+            </a>
+
+            <a href="{% url 'treatment_plans:plan_detail' active_plan.id %}?tab=progress" class="overview-mini-btn">
+              経過を記録
+            </a>
+
+            {% if active_plan.next_visit_date %}
+              <a href="{% url 'patients:staff_booking_calendar' patient.id %}?suggest_date={{ active_plan.next_visit_date|date:'Y-m-d' }}&treatment_plan_id={{ active_plan.id }}" class="overview-mini-btn">
+                次回予約を作成
+              </a>
+            {% else %}
+              <a href="{% url 'patients:staff_booking_calendar' patient.id %}?treatment_plan_id={{ active_plan.id }}" class="overview-mini-btn">
+                予約を作成
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+      {% elif latest_plan %}
+        <div class="overview-plan-card">
+          <div class="overview-plan-head">
+            <div>
+              <h3 class="overview-plan-title">
+                {{ latest_plan.title|default:"施術計画" }}
+              </h3>
+              <div class="overview-plan-sub">
+                現在は有効な計画ではありません。必要に応じて編集または新規作成してください。
+              </div>
+            </div>
+
+            <div class="overview-plan-status">
+              {{ latest_plan.get_status_display }}
+            </div>
+          </div>
+
+          <div class="overview-action-row">
+            <a href="{% url 'treatment_plans:plan_detail' latest_plan.id %}" class="overview-mini-btn primary">
+              施術計画を見る →
+            </a>
+
+            <a href="{% url 'treatment_plans:plan_create_for_patient' patient.id %}" class="overview-mini-btn">
+              新しい計画を作成
+            </a>
+          </div>
+        </div>
+
+      {% else %}
+        <div class="empty-box">
+          まだ施術計画がありません。患者さんの状態に合わせて施術計画を作成してください。
+        </div>
+      {% endif %}
+    </section>
 
   {% elif active_tab == "appointments" %}
 
