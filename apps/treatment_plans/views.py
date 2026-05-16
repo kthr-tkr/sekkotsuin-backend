@@ -280,6 +280,7 @@ def plan_detail_view(request, pk):
         "plan_appointments": plan_appointments,
         "next_plan_appointment": next_plan_appointment,
         "appointment_count": appointment_count,
+        "current_path": request.get_full_path(),
     })
 
     todo_cards = []
@@ -305,7 +306,7 @@ def progress_create_view(request, pk):
     plan = get_object_or_404(TreatmentPlan, pk=pk)
 
     if request.method != "POST":
-        return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=progress")
+        return redirect(f"{reverse('treatment_plans:plan_detail', kwargs={'pk': plan.pk})}?tab=progress#progress-form")
 
     form = TreatmentProgressForm(request.POST)
     if form.is_valid():
@@ -316,8 +317,9 @@ def progress_create_view(request, pk):
         messages.success(request, "施術経過を追加しました。")
     else:
         messages.error(request, "施術経過の入力内容を確認してください。")
+        return redirect(f"{reverse('treatment_plans:plan_detail', kwargs={'pk': plan.pk})}?tab=progress#progress-form")
 
-    return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=progress")
+    return redirect(f"{reverse('treatment_plans:plan_detail', kwargs={'pk': plan.pk})}?tab=progress#progress-list")
 
 @login_required
 def plan_edit_view(request, pk):
@@ -380,7 +382,7 @@ def progress_delete_view(request, pk):
     if request.method == "POST":
         progress.delete()
         messages.success(request, "施術経過記録を削除しました。")
-        return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=progress")
+        return redirect(f"{reverse('treatment_plans:plan_detail', kwargs={'pk': plan.pk})}?tab=progress#progress-list")
 
     return render(request, "treatment_plans/progress_confirm_delete.html", {
         "progress": progress,
@@ -398,7 +400,8 @@ def plan_status_update_view(request, pk):
 
     if new_status not in valid_statuses:
         messages.error(request, "不正なステータスです。")
-        return redirect("treatment_plans:plan_detail", pk=plan.pk)
+        next_url = request.POST.get("next") or f"{reverse('treatment_plans:plan_detail', kwargs={'pk': plan.pk})}?tab=overview"
+        return redirect(next_url)
 
     plan.status = new_status
 

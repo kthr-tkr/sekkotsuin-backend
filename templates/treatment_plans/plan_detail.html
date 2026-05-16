@@ -2037,18 +2037,21 @@
           <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
             {% csrf_token %}
             <input type="hidden" name="status" value="active">
+            <input type="hidden" name="next" value="{{ current_path }}">
             <button type="submit" class="tpd-btn">進行中にする</button>
           </form>
 
           <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
             {% csrf_token %}
             <input type="hidden" name="status" value="paused">
+            <input type="hidden" name="next" value="{{ current_path }}">
             <button type="submit" class="tpd-btn">中断にする</button>
           </form>
 
           <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
             {% csrf_token %}
             <input type="hidden" name="status" value="completed">
+            <input type="hidden" name="next" value="{{ current_path }}">
             <button type="submit" class="tpd-btn primary">完了にする</button>
           </form>
         </div>
