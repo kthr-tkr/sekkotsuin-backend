@@ -129,9 +129,10 @@
       margin:0 auto;
       padding:68px 36px 44px;
       display:grid;
-      grid-template-columns:1.12fr .88fr;
-      gap:54px;
+      grid-template-columns:1.08fr .92fr;
+      gap:76px;
       align-items:center;
+      transform:translateX(34px);
     }
 
     .hero{
@@ -202,7 +203,7 @@
     .hero-with-image h1,
     .hero-with-image .hero-lead,
     .hero-with-image .hero-points{
-      margin-left:150px;
+      margin-left:190px;
     }
 
     .hero-with-image .eyebrow{
@@ -268,12 +269,34 @@
     }
 
     .point{
-      background:rgba(255,255,255,.80);
+      display:grid;
+      grid-template-columns:auto 1fr;
+      align-items:center;
+      gap:12px;
+      background:rgba(255,255,255,.82);
       border:1px solid rgba(226,232,240,.72);
       border-radius:18px;
       padding:16px 15px;
       box-shadow:0 16px 36px rgba(15,39,71,.075);
       backdrop-filter:blur(14px);
+    }
+
+    .point-icon{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#eff6ff;
+      border:1px solid #dbeafe;
+      color:var(--blue);
+      flex-shrink:0;
+    }
+
+    .point-icon svg{
+      width:23px;
+      height:23px;
     }
 
     .point-num{
@@ -484,6 +507,28 @@
       color:var(--blue);
     }
 
+    .hero-policy{
+      position:absolute;
+      left:-260px;
+      bottom:-42px;
+      display:flex;
+      align-items:center;
+      gap:18px;
+      color:#94a3b8;
+      font-size:12px;
+      z-index:2;
+    }
+
+    .hero-policy a{
+      color:var(--blue);
+      font-weight:800;
+      text-decoration:none;
+    }
+
+    .hero-policy a:hover{
+      text-decoration:underline;
+    }
+
     @media (max-width:980px){
       .topbar{
         padding:0 20px;
@@ -537,6 +582,21 @@
 
       .footer{
         flex-direction:column;
+      }
+
+      .main{
+        transform:none;
+      }
+
+      .login-panel{
+        transform:none;
+      }
+
+      .hero-policy{
+        position:static;
+        margin-top:24px;
+        margin-left:0;
+        flex-wrap:wrap;
       }
     }
 
@@ -639,17 +699,49 @@
 
         <div class="hero-points">
           <div class="point">
-            <div class="point-num">01</div>
-            <div class="point-text">患者様はスマホから簡単予約</div>
+            <div class="point-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="7" y="2.5" width="10" height="19" rx="2.5" stroke="currentColor" stroke-width="2"/>
+                <path d="M10 6h4M11 18h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <div class="point-num">01</div>
+              <div class="point-text">患者様はスマホから簡単予約</div>
+            </div>
           </div>
+
           <div class="point">
-            <div class="point-num">02</div>
-            <div class="point-text">スタッフは予約と問診を一括確認</div>
+            <div class="point-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 7.5A3.5 3.5 0 0 1 7.5 4h9A3.5 3.5 0 0 1 20 7.5v5A3.5 3.5 0 0 1 16.5 16H10l-4 3v-3.3A3.5 3.5 0 0 1 4 12.5v-5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <div class="point-num">02</div>
+              <div class="point-text">スタッフは予約と問診を一括確認</div>
+            </div>
           </div>
+
           <div class="point">
-            <div class="point-num">03</div>
-            <div class="point-text">施術計画・経過管理まで対応</div>
+            <div class="point-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 15l3-3 3 2 5-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M17 7h2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <div class="point-num">03</div>
+              <div class="point-text">施術計画・経過管理まで対応</div>
+            </div>
           </div>
+        </div>
+        <div class="hero-policy">
+          <span>© Medical Clinic System</span>
+          <a href="#">プライバシーポリシー</a>
         </div>
       </section>
 
@@ -715,10 +807,7 @@
     </main>
 
     <footer class="footer">
-      <div class="footer-left">
-        <span>© Medical Clinic System</span>
-        <a href="#" class="footer-link">プライバシーポリシー</a>
-      </div>
+      <div></div>
       <div>Secure reservation and clinical support platform.</div>
     </footer>
 
