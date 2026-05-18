@@ -5,58 +5,105 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI診療支援 | スタッフログイン</title>
+  <title>スタッフログイン | MEDICAL CLINIC SYSTEM</title>
   <link rel="stylesheet" href="{% static 'staff/css/staff_login.css' %}">
 </head>
+
 <body>
-  <a class="back" href="{% url 'home' %}">← 選択画面に戻る</a>
+  <div class="login-page">
 
-  <div class="wrap">
-    <div class="left">
-      <div class="brand">
-        <div class="brand-title">AI診療支援</div>
-        <div class="brand-sub">整形外科・カイロプラクティック治療補助システム</div>
-      </div>
-      <div class="dots">
-        <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-      </div>
-    </div>
+    <header class="login-header">
+      <a class="brand" href="{% url 'home' %}">
+        <div class="brand-mark">M</div>
+        <div class="brand-text">
+          <div class="brand-name">MEDICAL CLINIC SYSTEM</div>
+          <div class="brand-sub">Reservation / Intake / Chart Support</div>
+        </div>
+      </a>
 
-    <div class="right">
-      <div class="card">
-        <div class="card-title">AI診療支援</div>
-        <div class="card-sub">CLINICAL SUPPORT SYSTEM</div>
-        <div class="line"></div>
+      <a class="back-link" href="{% url 'home' %}">選択画面に戻る</a>
+    </header>
 
-        {% if messages %}
-          <div class="messages">
-            {% for m in messages %}
-              <div class="msg">{{ m }}</div>
-            {% endfor %}
+    <main class="login-main">
+      <section class="login-hero">
+        <div class="hero-badge">
+          <span></span>
+          STAFF LOGIN
+        </div>
+
+        <h1>
+          予約確認から<br>
+          問診・施術計画まで<br>
+          スタッフ業務をひとつに。
+        </h1>
+
+        <p class="hero-lead">
+          管理者・スタッフ専用画面です。予約確認、問診内容確認、患者管理、
+          施術計画・経過管理などの業務にアクセスできます。
+        </p>
+
+        <div class="hero-cards">
+          <div class="hero-card">
+            <div class="hero-card-num">01</div>
+            <div class="hero-card-text">予約・問診を一括確認</div>
           </div>
-        {% endif %}
-
-        <form method="post" class="form" autocomplete="on">
-          {% csrf_token %}
-
-          <label class="label" for="id_username">LOGIN ID</label>
-          <input id="id_username" name="username" class="input" type="text"
-                 placeholder="user001" required />
-
-          <label class="label" for="id_password">PASSWORD</label>
-          <input id="id_password" name="password" class="input" type="password"
-                 placeholder="••••••••" required />
-
-          <button class="btn" type="submit">ログイン</button>
-
-          <p class="hint">初回ログイン情報は付与された職員ID・パスワードを使用してください</p>
-          <div class="foot">
-            <span>© 2026 AI診療支援システム</span>
-            <span>Version 0.9.0</span>
+          <div class="hero-card">
+            <div class="hero-card-num">02</div>
+            <div class="hero-card-text">患者情報を安全に管理</div>
           </div>
-        </form>
-      </div>
-    </div>
+          <div class="hero-card">
+            <div class="hero-card-num">03</div>
+            <div class="hero-card-text">施術計画・経過を記録</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="login-card-wrap">
+        <div class="card">
+          <div class="card-label">CLINICAL SUPPORT SYSTEM</div>
+          <h2 class="card-title">スタッフログイン</h2>
+          <p class="card-desc">
+            職員IDとパスワードを入力してください。
+          </p>
+
+          {% if messages %}
+            <div class="messages">
+              {% for m in messages %}
+                <div class="msg">{{ m }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <form method="post" class="form" autocomplete="on">
+            {% csrf_token %}
+
+            <label class="label" for="id_username">LOGIN ID</label>
+            <input id="id_username" name="username" class="input" type="text"
+                   placeholder="職員IDを入力" required autocomplete="username" />
+
+            <label class="label" for="id_password">PASSWORD</label>
+            <input id="id_password" name="password" class="input" type="password"
+                   placeholder="パスワードを入力" required autocomplete="current-password" />
+
+            <button class="btn" type="submit">ログイン</button>
+
+            <p class="hint">
+              初回ログイン情報は、管理者から付与された職員ID・パスワードを使用してください。
+            </p>
+
+            <div class="security-box">
+              <strong>セキュリティについて</strong>
+              <span>共有端末をご利用の場合は、操作後に必ずログアウトしてください。</span>
+            </div>
+
+            <div class="foot">
+              <span>© 2026 Medical Clinic System</span>
+              <span>Version 0.9.0</span>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
   </div>
 </body>
 </html>
