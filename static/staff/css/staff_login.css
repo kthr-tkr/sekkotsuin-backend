@@ -1,3 +1,5 @@
+/* static/staff/css/staff_login.css */
+
 :root{
   --bg:#f4f8fc;
   --card:#ffffff;
@@ -5,6 +7,7 @@
   --muted:#64748b;
   --line:#e5e7eb;
   --blue:#2563eb;
+  --blue2:#1d4ed8;
   --navy:#0f2747;
   --sky:#dbeafe;
   --danger:#dc2626;
@@ -40,6 +43,10 @@ a{
   flex-direction:column;
 }
 
+/* =========================
+   Header
+========================= */
+
 .login-header{
   height:76px;
   padding:0 42px;
@@ -50,6 +57,8 @@ a{
   -webkit-backdrop-filter:blur(16px);
   backdrop-filter:blur(16px);
   border-bottom:1px solid rgba(226,232,240,.78);
+  position:relative;
+  z-index:10;
 }
 
 .brand{
@@ -107,6 +116,10 @@ a{
   box-shadow:0 12px 26px rgba(37,99,235,.13);
 }
 
+/* =========================
+   Layout
+========================= */
+
 .login-main{
   flex:1;
   width:min(1180px, 100%);
@@ -118,28 +131,71 @@ a{
   align-items:center;
 }
 
-.login-hero{
+/* =========================
+   Left Visual
+========================= */
+
+.login-visual{
   position:relative;
-  padding:20px 0;
+  min-height:560px;
+  border-radius:34px;
+  overflow:hidden;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(248,251,255,.04) 0%,
+      rgba(248,251,255,.15) 38%,
+      rgba(248,251,255,.80) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(248,251,255,.00) 0%,
+      rgba(248,251,255,.12) 50%,
+      rgba(248,251,255,.86) 100%
+    ),
+    url("/static/img/staff-hero.png") center left / cover no-repeat;
+  box-shadow:0 24px 60px rgba(15,39,71,.10);
+  border:1px solid rgba(226,232,240,.78);
 }
 
-.hero-badge{
+.visual-overlay{
+  position:absolute;
+  inset:0;
+  padding:38px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.00) 0%,
+      rgba(255,255,255,.12) 42%,
+      rgba(255,255,255,.78) 100%
+    );
+}
+
+.visual-badge{
+  position:absolute;
+  top:32px;
+  left:32px;
   display:inline-flex;
   align-items:center;
   gap:8px;
+  width:max-content;
   padding:9px 16px;
   border-radius:999px;
-  background:rgba(255,255,255,.78);
+  background:rgba(255,255,255,.82);
   border:1px solid #dbeafe;
   color:var(--blue);
   font-size:12px;
   font-weight:900;
   letter-spacing:.14em;
   box-shadow:var(--shadow-soft);
-  margin-bottom:24px;
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
 }
 
-.hero-badge span{
+.visual-badge span{
   width:8px;
   height:8px;
   border-radius:50%;
@@ -147,53 +203,30 @@ a{
   box-shadow:0 0 0 5px rgba(34,197,94,.12);
 }
 
-.login-hero h1{
+.visual-copy{
+  max-width:520px;
+}
+
+.visual-copy h1{
   margin:0;
   color:#081629;
-  font-size:44px;
-  line-height:1.32;
-  letter-spacing:.02em;
+  font-size:38px;
+  line-height:1.25;
   font-weight:950;
+  letter-spacing:.02em;
 }
 
-.hero-lead{
-  margin:22px 0 0;
-  max-width:620px;
+.visual-copy p{
+  margin:14px 0 0;
   color:#475569;
-  font-size:15px;
-  line-height:2;
-  font-weight:600;
+  font-size:14px;
+  line-height:1.9;
+  font-weight:700;
 }
 
-.hero-cards{
-  margin-top:34px;
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:14px;
-  max-width:650px;
-}
-
-.hero-card{
-  background:rgba(255,255,255,.82);
-  border:1px solid rgba(226,232,240,.75);
-  -webkit-backdrop-filter:blur(14px);
-  backdrop-filter:blur(14px);
-}
-
-.hero-card-num{
-  color:var(--blue);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.08em;
-}
-
-.hero-card-text{
-  margin-top:7px;
-  color:#1e293b;
-  font-size:13px;
-  line-height:1.6;
-  font-weight:850;
-}
+/* =========================
+   Login Card
+========================= */
 
 .login-card-wrap{
   display:flex;
@@ -201,8 +234,12 @@ a{
 }
 
 .card{
-  background:rgba(255,255,255,.86);
+  width:min(430px, 100%);
+  background:rgba(255,255,255,.88);
   border:1px solid rgba(226,232,240,.95);
+  border-radius:32px;
+  padding:32px;
+  box-shadow:var(--shadow);
   -webkit-backdrop-filter:blur(18px);
   backdrop-filter:blur(18px);
 }
@@ -339,6 +376,10 @@ a{
   font-size:11px;
 }
 
+/* =========================
+   Responsive
+========================= */
+
 @media (max-width:980px){
   .login-header{
     padding:0 20px;
@@ -346,16 +387,25 @@ a{
 
   .login-main{
     grid-template-columns:1fr;
-    padding:42px 18px 34px;
-    gap:28px;
+    padding:32px 18px 34px;
+    gap:24px;
   }
 
-  .login-hero h1{
-    font-size:34px;
+  .login-visual{
+    min-height:280px;
+    border-radius:26px;
   }
 
-  .hero-cards{
-    grid-template-columns:1fr;
+  .visual-overlay{
+    padding:24px;
+  }
+
+  .visual-copy h1{
+    font-size:28px;
+  }
+
+  .visual-copy p{
+    font-size:13px;
   }
 
   .card{
@@ -389,15 +439,25 @@ a{
   }
 
   .login-main{
-    padding:32px 16px;
+    padding:24px 16px 32px;
   }
 
-  .login-hero h1{
-    font-size:29px;
+  .login-visual{
+    min-height:230px;
   }
 
-  .hero-lead{
-    font-size:14px;
+  .visual-badge{
+    top:18px;
+    left:18px;
+    font-size:10px;
+  }
+
+  .visual-copy h1{
+    font-size:24px;
+  }
+
+  .visual-copy p{
+    display:none;
   }
 
   .foot{
