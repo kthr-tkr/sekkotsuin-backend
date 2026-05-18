@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="ja">
 <head>
@@ -406,6 +407,19 @@
       .footer{
         flex-direction:column;
       }
+
+      .hero-with-image{
+        min-height:auto;
+        padding:260px 0 20px;
+      }
+
+      .hero-with-image::before,
+      .hero-with-image::after{
+        inset:0 0 auto 0;
+        width:100%;
+        height:230px;
+        border-radius:28px;
+      }
     }
 
     @media (max-width:520px){
@@ -454,6 +468,85 @@
       .footer{
         padding:0 16px 24px;
       }
+
+      .footer-left{
+        align-items:flex-start;
+      }
+
+      .hero-with-image{
+        padding-top:230px;
+      }
+
+      .hero-with-image::before,
+      .hero-with-image::after{
+        height:210px;
+      }
+    }
+
+    .top-links a{
+      color:#475569;
+      text-decoration:none;
+      transition:color .16s ease;
+    }
+
+    .top-links a:hover{
+      color:var(--blue);
+    }
+
+    .footer-left{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+
+    .footer-link{
+      color:#64748b;
+      text-decoration:none;
+      font-weight:700;
+      transition:color .16s ease;
+    }
+
+    .footer-link:hover{
+      color:var(--blue);
+    }
+
+    .hero-with-image{
+      position:relative;
+      min-height:560px;
+      padding:70px 0 40px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+
+    .hero-with-image::before{
+      content:"";
+      position:absolute;
+      inset:-90px auto -80px -210px;
+      width:680px;
+      background:
+        linear-gradient(90deg, rgba(248,251,255,.08) 0%, rgba(248,251,255,.65) 58%, rgba(248,251,255,1) 100%),
+        url("{% static 'img/top_therapy_scene.png' %}") center / cover no-repeat;
+      border-radius:0 42px 42px 0;
+      opacity:.92;
+      z-index:-2;
+      box-shadow:0 24px 60px rgba(15,39,71,.10);
+    }
+
+    .hero-with-image::after{
+      content:"";
+      position:absolute;
+      inset:-90px auto -80px -210px;
+      width:680px;
+      background:linear-gradient(
+        180deg,
+        rgba(239,246,255,.10) 0%,
+        rgba(239,246,255,.55) 70%,
+        rgba(248,251,255,1) 100%
+      );
+      border-radius:0 42px 42px 0;
+      z-index:-1;
     }
   </style>
 </head>
@@ -471,15 +564,14 @@
       </a>
 
       <nav class="top-links" aria-label="メニュー">
-        <span>予約管理</span>
-        <span>問診管理</span>
-        <span>施術計画</span>
-        <span class="top-pill">ログイン</span>
+        <a href="#features">機能について</a>
+        <a href="#contact">お問い合わせ</a>
+        <a class="top-pill" href="{% url 'staff:login' %}">ログイン</a>
       </nav>
     </header>
 
     <main class="main">
-      <section class="hero">
+      <section class="hero hero-with-image">
         <div class="eyebrow">
           <span class="eyebrow-dot"></span>
           MEDICAL OPERATION SYSTEM
@@ -574,7 +666,10 @@
     </main>
 
     <footer class="footer">
-      <div>© Medical Clinic System</div>
+      <div class="footer-left">
+        <span>© Medical Clinic System</span>
+        <a href="#" class="footer-link">プライバシーポリシー</a>
+      </div>
       <div>Secure reservation and clinical support platform.</div>
     </footer>
 
