@@ -16,71 +16,63 @@
 
     <main class="login-main">
 
-      <section class="brand-side" aria-label="CareFrow information">
-        <div class="brand-block">
+      <section class="brand-side">
+        <div class="brand-inner">
           <div class="brand-kicker">CLINICAL OPERATION SYSTEM</div>
           <h1 class="brand-title">CareFrow</h1>
           <p class="brand-lead">
             予約管理、Web問診、患者情報、施術計画をつなぎ、<br>
             現場スタッフの業務をスムーズに支援します。
           </p>
-        </div>
 
-        <div class="info-grid">
-          <section class="info-card news-card">
-            <div class="section-head">
+          <section class="news-box">
+            <div class="box-head">
               <h2>お知らせ</h2>
               <span>NEWS</span>
             </div>
 
-            <div class="news-list">
-              <div class="news-item">
-                <time>2026/05/18</time>
-                <span class="news-label">NEW</span>
-                <p>CareFrow 管理画面のUIを更新しました。</p>
-              </div>
-              <div class="news-item">
-                <time>2026/05/11</time>
-                <span class="news-label">INFO</span>
-                <p>ログイン後は、利用後に必ずログアウトしてください。</p>
-              </div>
-              <div class="news-item">
-                <time>2026/05/01</time>
-                <span class="news-label">INFO</span>
-                <p>患者情報の取り扱いルールをご確認ください。</p>
-              </div>
+            <div class="news-item">
+              <time>2026/05/18</time>
+              <span>NEW</span>
+              <p>CareFrow 管理画面のUIを更新しました。</p>
+            </div>
+            <div class="news-item">
+              <time>2026/05/11</time>
+              <span>INFO</span>
+              <p>ログイン後は、利用後に必ずログアウトしてください。</p>
+            </div>
+            <div class="news-item">
+              <time>2026/05/01</time>
+              <span>INFO</span>
+              <p>患者情報の取り扱いルールをご確認ください。</p>
             </div>
           </section>
 
-          <div class="sub-card-row">
-            <section class="mini-card">
-              <div class="mini-icon">?</div>
-              <div>
-                <h2>お問い合わせ</h2>
-                <p>操作方法やアカウントに関するお問い合わせはこちら。</p>
-                <a href="#">お問い合わせへ</a>
-              </div>
+          <div class="support-grid">
+            <section class="support-card">
+              <div class="support-icon">?</div>
+              <h2>お問い合わせ</h2>
+              <p>操作方法やアカウントに関するお問い合わせはこちら。</p>
+              <a href="#">お問い合わせへ</a>
             </section>
 
-            <section class="mini-card">
-              <div class="mini-icon">✉</div>
-              <div>
-                <h2>ご意見箱</h2>
-                <p>改善要望・気づいた点をお気軽にお寄せください。</p>
-                <a href="#">ご意見を送る</a>
-              </div>
+            <section class="support-card">
+              <div class="support-icon">✉</div>
+              <h2>ご意見箱</h2>
+              <p>改善要望・気づいた点をお気軽にお寄せください。</p>
+              <a href="#">ご意見を送る</a>
             </section>
           </div>
-        </div>
 
-        <footer class="brand-footer">
-          <a href="#">利用規約</a>
-          <a href="#">プライバシーポリシー</a>
-          <span>© 2026 CareFrow</span>
-        </footer>
+          <footer class="brand-footer">
+            <a href="#">利用規約</a>
+            <a href="#">プライバシーポリシー</a>
+            <span>© 2026 CareFrow</span>
+          </footer>
+        </div>
       </section>
 
-      <section class="login-side" aria-label="スタッフログイン">
+      <section class="login-side">
         <div class="login-card">
           <div class="login-logo">
             <div class="logo-mark">C</div>
@@ -93,9 +85,7 @@
           <div class="card-line"></div>
 
           <h2 class="login-title">スタッフログイン</h2>
-          <p class="login-desc">
-            職員IDとパスワードを入力してください。
-          </p>
+          <p class="login-desc">職員IDとパスワードを入力してください。</p>
 
           {% if messages %}
             <div class="messages">
@@ -110,11 +100,11 @@
 
             <label class="label" for="id_username">LOGIN ID</label>
             <input id="id_username" name="username" class="input" type="text"
-                   placeholder="職員IDを入力" required autocomplete="username" />
+                  placeholder="職員IDを入力" required autocomplete="username" />
 
             <label class="label" for="id_password">PASSWORD</label>
             <input id="id_password" name="password" class="input" type="password"
-                   placeholder="パスワードを入力" required autocomplete="current-password" />
+                  placeholder="パスワードを入力" required autocomplete="current-password" />
 
             <label class="remember">
               <input type="checkbox" name="remember">
