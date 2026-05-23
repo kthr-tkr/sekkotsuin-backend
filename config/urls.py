@@ -1,8 +1,5 @@
 """
 URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
 """
 from django.contrib import admin
 from django.http import JsonResponse
@@ -22,6 +19,11 @@ urlpatterns = [
 
     # トップ：患者/管理者の分岐ホーム
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
+
+    # 公開ページ
+    path("terms/", TemplateView.as_view(template_name="terms.html"), name="terms"),
+    path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
+    path("feedback/", TemplateView.as_view(template_name="feedback_form.html"), name="feedback_form"),
 
     # スタッフ（病院側）
     path("staff/", include(("apps.staff.urls", "staff"), namespace="staff")),
