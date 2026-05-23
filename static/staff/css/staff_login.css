@@ -535,6 +535,24 @@ a{
   font-size:11px;
 }
 
+.empty-news{
+  margin-top:16px;
+  padding:18px 16px;
+  border-radius:18px;
+  background:rgba(255,255,255,.10);
+  border:1px dashed rgba(255,255,255,.28);
+  color:#dbeafe;
+  font-size:13px;
+  font-weight:800;
+}
+
+.notice-admin-note{
+  margin-top:10px;
+  color:#bfdbfe;
+  font-size:11px;
+  line-height:1.7;
+}
+
 /* =========================
    Responsive
 ========================= */

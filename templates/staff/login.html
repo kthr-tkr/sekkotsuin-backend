@@ -31,20 +31,12 @@
               <span>NEWS</span>
             </div>
 
-            <div class="news-item">
-              <time>2026/05/18</time>
-              <span>NEW</span>
-              <p>CareFrow 管理画面のUIを更新しました。</p>
+            <div class="empty-news">
+              現在、お知らせはありません。
             </div>
-            <div class="news-item">
-              <time>2026/05/11</time>
-              <span>INFO</span>
-              <p>ログイン後は、利用後に必ずログアウトしてください。</p>
-            </div>
-            <div class="news-item">
-              <time>2026/05/01</time>
-              <span>INFO</span>
-              <p>患者情報の取り扱いルールをご確認ください。</p>
+
+            <div class="notice-admin-note">
+              お知らせの登録・編集は、管理者ログイン後に行えます。
             </div>
           </section>
 
@@ -53,20 +45,20 @@
               <div class="support-icon">?</div>
               <h2>お問い合わせ</h2>
               <p>操作方法やアカウントに関するお問い合わせはこちら。</p>
-              <a href="#">お問い合わせへ</a>
+              <a href="{% url 'inquiry_form' %}">お問い合わせへ</a>
             </section>
 
             <section class="support-card">
               <div class="support-icon">✉</div>
               <h2>ご意見箱</h2>
               <p>改善要望・気づいた点をお気軽にお寄せください。</p>
-              <a href="#">ご意見を送る</a>
+              <a href="{% url 'feedback_form' %}">ご意見を送る</a>
             </section>
           </div>
 
           <footer class="brand-footer">
-            <a href="#">利用規約</a>
-            <a href="#">プライバシーポリシー</a>
+            <a href="{% url 'terms' %}">利用規約</a>
+            <a href="{% url 'privacy' %}">プライバシーポリシー</a>
             <span>© 2026 CareFrow</span>
           </footer>
         </div>
@@ -113,8 +105,8 @@
 
             <p class="agree-text">
               事前に
-              <a href="#">利用規約</a>、
-              <a href="#">プライバシーポリシー</a>
+              <a href="{% url 'terms' %}">利用規約</a>、
+              <a href="{% url 'privacy' %}">プライバシーポリシー</a>
               をご確認いただき、内容に同意の上ログインしてください。
             </p>
 
