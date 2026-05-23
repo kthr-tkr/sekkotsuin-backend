@@ -25,7 +25,16 @@
     </header>
 
     <main class="login-main">
-      <section class="login-visual" aria-label="スタッフログインイメージ"></section>
+      <section class="login-visual" aria-label="スタッフログインイメージ">
+        <div class="visual-caption">
+          <div class="visual-badge">
+            <span></span>
+            STAFF SYSTEM
+          </div>
+          <h1>スタッフ管理画面</h1>
+          <p>予約確認、問診確認、患者管理、施術計画管理へアクセスできます。</p>
+        </div>
+      </section>
 
       <section class="login-card-wrap">
         <div class="card">
@@ -48,13 +57,21 @@
 
             <label class="label" for="id_username">LOGIN ID</label>
             <input id="id_username" name="username" class="input" type="text"
-                   placeholder="職員IDを入力" required autocomplete="username" />
+                  placeholder="職員IDを入力" required autocomplete="username" />
 
             <label class="label" for="id_password">PASSWORD</label>
             <input id="id_password" name="password" class="input" type="password"
-                   placeholder="パスワードを入力" required autocomplete="current-password" />
+                  placeholder="パスワードを入力" required autocomplete="current-password" />
 
             <button class="btn" type="submit">ログイン</button>
+
+            <div class="login-options">
+              <label class="remember">
+                <input type="checkbox" name="remember">
+                <span>ログインIDを保存</span>
+              </label>
+              <a href="#">ログインできない場合</a>
+            </div>
 
             <p class="hint">
               初回ログイン情報は、管理者から付与された職員ID・パスワードを使用してください。
