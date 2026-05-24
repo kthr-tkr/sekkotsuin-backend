@@ -482,14 +482,23 @@
   .rightFoot{
     margin-top:16px;
     display:flex;
+    align-items:center;
     justify-content:space-between;
-    gap:10px;
+    gap:12px;
     flex-wrap:wrap;
-    padding:12px 14px;
-    background:rgba(251,253,255,.92);
-    border:1px solid var(--line);
-    border-radius:20px;
-    backdrop-filter:blur(6px);
+    padding:14px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,251,255,.96) 100%);
+    border:1px solid rgba(226,232,240,.92);
+    border-radius:22px;
+    box-shadow:
+      0 16px 34px rgba(15,23,42,.06),
+      inset 0 1px 0 rgba(255,255,255,.95);
+    position:sticky;
+    bottom:12px;
+    z-index:5;
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
   }
 
   .miniBtn{
@@ -727,6 +736,31 @@
     }
   }
 
+@media (max-width: 720px){
+  .rightFoot{
+    position:static;
+    align-items:stretch;
+  }
+
+  .rightFoot > div:last-child{
+    width:100%;
+    justify-content:flex-start !important;
+  }
+
+  .rightFoot .miniBtn{
+    flex:1;
+    justify-content:center;
+  }
+
+  .rightFoot form{
+    flex:1;
+  }
+
+  .rightFoot form .miniBtn{
+    width:100%;
+  }
+}
+
 .svg-marker-group{
   cursor:pointer;
 }
@@ -919,14 +953,75 @@
   font-weight:900;
 }
 
+.detail-accordion{
+  border:1px solid rgba(226,232,240,.92);
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(248,250,252,.98) 100%);
+  box-shadow:
+    0 14px 30px rgba(15,23,42,.04),
+    inset 0 1px 0 rgba(255,255,255,.9);
+  overflow:hidden;
+}
+
+.detail-accordion-summary{
+  list-style:none;
+  cursor:pointer;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  color:#0f172a;
+  font-size:14px;
+  font-weight:900;
+}
+
+.detail-accordion-summary::-webkit-details-marker{
+  display:none;
+}
+
+.detail-accordion-summary::after{
+  content:"＋";
+  width:26px;
+  height:26px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(59,130,246,.08);
+  color:#2563eb;
+  font-size:16px;
+  font-weight:900;
+  flex-shrink:0;
+}
+
+.detail-accordion[open] .detail-accordion-summary::after{
+  content:"−";
+}
+
+.detail-accordion-summary small{
+  color:#94a3b8;
+  font-size:11px;
+  font-weight:800;
+  margin-left:auto;
+}
+
+.detail-accordion .detail-card{
+  border:none;
+  border-top:1px solid rgba(226,232,240,.85);
+  border-radius:0;
+  box-shadow:none;
+  background:rgba(255,255,255,.72);
+}
+
 </style>
 
 <div class="ai-page">
 
   <div class="ai-topbar">
     <div class="ai-title">
-      <h1>AI Interview</h1>
-      <div class="sub">1画面で SOAP / 抽出 / 質問 を確認します</div>
+      <h1>AI問診結果</h1>
+      <div class="sub">AI要約・SOAP・追加確認事項を確認し、カルテ登録します</div>
     </div>
 
     <div class="ai-head-right">
@@ -953,8 +1048,22 @@
   <div class="ai-grid">
 
     <aside class="ai-left">
-      <h2 class="patient-name">〜様</h2>
-      <div class="patient-sub">問診内容</div>
+      <h2 class="patient-name">
+        {% if patient %}
+          {{ patient.last_name }} {{ patient.first_name }} 様
+        {% elif recording.patient %}
+          {{ recording.patient.last_name }} {{ recording.patient.first_name }} 様
+        {% else %}
+          患者様未確定
+        {% endif %}
+      </h2>
+      <div class="patient-sub">
+        {% if appointment %}
+          {{ appointment.start_at|date:"Y/m/d H:i" }} / {{ appointment.menu|default:"-" }}
+        {% else %}
+          問診内容
+        {% endif %}
+      </div>
 
       <div class="bodywrap">
         <div class="body-card">
@@ -1006,103 +1115,115 @@
 
       <div class="detail-wrap">
 
-        <div class="detail-card">
-          <div class="detail-card-title">手指</div>
-          <div class="detail-grid detail-grid-hands">
+        <details class="detail-accordion">
+          <summary class="detail-accordion-summary">
+            <span>手指の詳細部位</span>
+            <small>必要な場合のみ確認</small>
+          </summary>
 
-            <div class="detail-map">
-              <div class="detail-map-label">左手</div>
-              <svg
-                id="handLeftSvg"
-                class="detail-svg"
-                viewBox="0 0 320 220"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-label="left hand map"
-              >
-                <image
-                  href="{% static 'patients/img/hand_left.png' %}"
-                  x="0"
-                  y="0"
-                  width="320"
-                  height="220"
-                  preserveAspectRatio="xMidYMid meet"
-                />
-                <g id="handLeftMarkers"></g>
-              </svg>
+          <div class="detail-card">
+            <div class="detail-grid detail-grid-hands">
+
+              <div class="detail-map">
+                <div class="detail-map-label">左手</div>
+                <svg
+                  id="handLeftSvg"
+                  class="detail-svg"
+                  viewBox="0 0 320 220"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-label="left hand map"
+                >
+                  <image
+                    href="{% static 'patients/img/hand_left.png' %}"
+                    x="0"
+                    y="0"
+                    width="320"
+                    height="220"
+                    preserveAspectRatio="xMidYMid meet"
+                  />
+                  <g id="handLeftMarkers"></g>
+                </svg>
+              </div>
+
+              <div class="detail-map">
+                <div class="detail-map-label">右手</div>
+                <svg
+                  id="handRightSvg"
+                  class="detail-svg"
+                  viewBox="0 0 320 220"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-label="right hand map"
+                >
+                  <image
+                    href="{% static 'patients/img/hand_right.png' %}"
+                    x="0"
+                    y="0"
+                    width="320"
+                    height="220"
+                    preserveAspectRatio="xMidYMid meet"
+                  />
+                  <g id="handRightMarkers"></g>
+                </svg>
+              </div>
+
             </div>
-
-            <div class="detail-map">
-              <div class="detail-map-label">右手</div>
-              <svg
-                id="handRightSvg"
-                class="detail-svg"
-                viewBox="0 0 320 220"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-label="right hand map"
-              >
-                <image
-                  href="{% static 'patients/img/hand_right.png' %}"
-                  x="0"
-                  y="0"
-                  width="320"
-                  height="220"
-                  preserveAspectRatio="xMidYMid meet"
-                />
-                <g id="handRightMarkers"></g>
-              </svg>
-            </div>
-
           </div>
-        </div>
+        </details>
 
-        <div class="detail-card">
-          <div class="detail-card-title">足指</div>
-          <div class="detail-grid detail-grid-feet">
+        <details class="detail-accordion">
+          <summary class="detail-accordion-summary">
+            <span>足指の詳細部位</span>
+            <small>必要な場合のみ確認</small>
+          </summary>
 
-            <div class="detail-map">
-              <div class="detail-map-label">足背 / 前</div>
-              <svg
-                id="footFrontSvg"
-                class="detail-svg"
-                viewBox="0 0 320 300"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-label="foot front map"
-              >
-                <image
-                  href="{% static 'patients/img/foot_front.png' %}"
-                  x="0"
-                  y="0"
-                  width="320"
-                  height="300"
-                  preserveAspectRatio="xMidYMid meet"
-                />
-                <g id="footFrontMarkers"></g>
-              </svg>
+          <div class="detail-card">
+            <div class="detail-grid detail-grid-feet">
+
+              <div class="detail-map">
+                <div class="detail-map-label">足背 / 前</div>
+                <svg
+                  id="footFrontSvg"
+                  class="detail-svg"
+                  viewBox="0 0 320 300"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-label="foot front map"
+                >
+                  <image
+                    href="{% static 'patients/img/foot_front.png' %}"
+                    x="0"
+                    y="0"
+                    width="320"
+                    height="300"
+                    preserveAspectRatio="xMidYMid meet"
+                  />
+                  <g id="footFrontMarkers"></g>
+                </svg>
+              </div>
+
+              <div class="detail-map">
+                <div class="detail-map-label">足底 / 後</div>
+                <svg
+                  id="footBackSvg"
+                  class="detail-svg"
+                  viewBox="0 0 320 300"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-label="foot back map"
+                >
+                  <image
+                    href="{% static 'patients/img/foot_back.png' %}"
+                    x="0"
+                    y="0"
+                    width="320"
+                    height="300"
+                    preserveAspectRatio="xMidYMid meet"
+                  />
+                  <g id="footBackMarkers"></g>
+                </svg>
+              </div>
+
             </div>
-
-            <div class="detail-map">
-              <div class="detail-map-label">足底 / 後</div>
-              <svg
-                id="footBackSvg"
-                class="detail-svg"
-                viewBox="0 0 320 300"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-label="foot back map"
-              >
-                <image
-                  href="{% static 'patients/img/foot_back.png' %}"
-                  x="0"
-                  y="0"
-                  width="320"
-                  height="300"
-                  preserveAspectRatio="xMidYMid meet"
-                />
-                <g id="footBackMarkers"></g>
-              </svg>
-            </div>
-
           </div>
-        </div>
+        </details>
 
       </div>
 
