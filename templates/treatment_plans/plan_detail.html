@@ -1756,6 +1756,10 @@
       <a href="{% url 'staff:patient_detail' plan.patient.pk %}?tab=treatment_plans" class="tpd-btn">← 患者詳細へ戻る</a>
       <a href="{% url 'treatment_plans:plan_edit' plan.pk %}" class="tpd-btn">編集</a>
 
+      <a href="{% url 'treatment_plans:plan_sign' plan.pk %}" class="tpd-btn primary">
+        患者サインへ
+      </a>
+
       {% if plan.next_visit_date %}
         <a href="{% url 'patients:staff_booking_calendar' plan.patient.pk %}?suggest_date={{ plan.next_visit_date|date:'Y-m-d' }}&treatment_plan_id={{ plan.pk }}" class="tpd-btn primary">
           次回予約を作成

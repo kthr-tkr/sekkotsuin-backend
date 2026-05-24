@@ -9,10 +9,16 @@ from apps.intakes.models import Intake
 from apps.clinical_notes.models import ClinicalNote
 
 from .forms import TreatmentPlanForm, TreatmentProgressForm
-from .models import TreatmentPlan, TreatmentProgress
+from .models import TreatmentPlan, TreatmentProgress, TreatmentPlanConsent
 from django.views.decorators.http import require_POST
 import json
 from django.utils import timezone
+import base64
+import uuid
+
+from django.core.files.base import ContentFile
+from django.http import HttpResponseBadRequest
+from django.db import transaction
 
 @login_required
 def plan_create_view(request, patient_id=None, appointment_id=None):
@@ -300,6 +306,111 @@ def plan_detail_view(request, pk):
             "message": "初回施術後の状態変化を記録しましょう。",
             "button": "経過を追加",
         })
+
+@login_required
+@transaction.atomic
+def plan_sign_view(request, pk):
+    plan = get_object_or_404(
+        TreatmentPlan.objects.select_related(
+            "patient",
+            "appointment",
+            "intake",
+            "clinical_note",
+            "created_by",
+        ),
+        pk=pk,
+    )
+
+    latest_consent = (
+        TreatmentPlanConsent.objects
+        .filter(plan=plan, patient=plan.patient)
+        .order_by("-signed_at")
+        .first()
+    )
+
+    if request.method == "POST":
+        signed_name = (request.POST.get("signed_name") or "").strip()
+        signature_data = request.POST.get("signature_data") or ""
+
+        if not signed_name:
+            messages.error(request, "署名者名を入力してください。")
+            return redirect("treatment_plans:plan_sign", pk=plan.pk)
+
+        if not signature_data:
+            messages.error(request, "サインを入力してください。")
+            return redirect("treatment_plans:plan_sign", pk=plan.pk)
+
+        if not signature_data.startswith("data:image/png;base64,"):
+            return HttpResponseBadRequest("Invalid signature data")
+
+        try:
+            header, encoded = signature_data.split(",", 1)
+            decoded_file = base64.b64decode(encoded)
+        except Exception:
+            return HttpResponseBadRequest("Invalid base64 signature")
+
+        file_name = f"signature_{plan.pk}_{uuid.uuid4().hex}.png"
+
+        plan_snapshot = {
+            "plan_id": plan.id,
+            "patient_id": plan.patient_id,
+            "patient_name": f"{plan.patient.last_name} {plan.patient.first_name}",
+            "title": plan.title,
+            "chief_complaint": plan.chief_complaint,
+            "status": plan.status,
+            "next_visit_date": plan.next_visit_date.isoformat() if plan.next_visit_date else None,
+            "visit_guide_type": plan.visit_guide_type,
+            "visit_guide_type_display": plan.get_visit_guide_type_display() if plan.visit_guide_type else "",
+            "visit_guide_count": plan.visit_guide_count,
+            "visit_guide_unit_note": plan.visit_guide_unit_note,
+            "bath_instruction": plan.bath_instruction,
+            "walking_instruction": plan.walking_instruction,
+            "exercise_instruction": plan.exercise_instruction,
+            "work_instruction": plan.work_instruction,
+            "lifestyle_other_instruction": plan.lifestyle_other_instruction,
+            "caution_notes": plan.caution_notes,
+            "expected_recovery_weeks_min": plan.expected_recovery_weeks_min,
+            "expected_recovery_weeks_max": plan.expected_recovery_weeks_max,
+            "rebound_reaction_note": plan.rebound_reaction_note,
+            "explained_to_patient": True,
+            "created_at": plan.created_at.isoformat() if plan.created_at else None,
+        }
+
+        consent = TreatmentPlanConsent.objects.create(
+            plan=plan,
+            patient=plan.patient,
+            signed_name=signed_name,
+            plan_snapshot=plan_snapshot,
+            signed_by_user=request.user,
+            ip_address=_get_client_ip(request),
+            user_agent=request.META.get("HTTP_USER_AGENT", ""),
+        )
+
+        consent.signature_image.save(
+            file_name,
+            ContentFile(decoded_file),
+            save=True,
+        )
+
+        plan.explained_to_patient = True
+        plan.save(update_fields=["explained_to_patient", "updated_at"])
+
+        messages.success(request, "患者様のサインを保存し、施術計画を説明済みにしました。")
+        return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=patient_explanation")
+
+    return render(request, "treatment_plans/plan_sign.html", {
+        "plan": plan,
+        "patient": plan.patient,
+        "latest_consent": latest_consent,
+        "page_title": "施術計画への同意サイン",
+    })
+
+
+def _get_client_ip(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
 
 @login_required
 def progress_create_view(request, pk):

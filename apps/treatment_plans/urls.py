@@ -17,5 +17,6 @@ urlpatterns = [
         views.plan_create_from_clinical_note_view,
         name="plan_create_from_clinical_note",
     ),
+    path("<int:pk>/sign/", views.plan_sign_view, name="plan_sign"),
 ]
 

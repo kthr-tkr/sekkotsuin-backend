@@ -1,0 +1,629 @@
+{% extends "staff/_layout.html" %}
+{% block title %}Medical AI | Treatment Plan Sign{% endblock %}
+
+{% block content %}
+
+<style>
+  .sign-wrap{
+    max-width:1120px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .sign-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+
+  .sign-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:12px;
+    font-weight:900;
+    margin-bottom:10px;
+  }
+
+  .sign-eyebrow::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#2563eb,#7c3aed);
+  }
+
+  .sign-title{
+    margin:0;
+    color:#0b1220;
+    font-size:42px;
+    line-height:1.08;
+    font-weight:900;
+    letter-spacing:-.05em;
+  }
+
+  .sign-lead{
+    margin-top:9px;
+    color:#64748b;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.7;
+  }
+
+  .sign-btn{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    color:#0f172a;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(15,23,42,.04);
+  }
+
+  .sign-btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#0b1220 0%,#2563eb 100%);
+    box-shadow:0 16px 34px rgba(37,99,235,.22);
+  }
+
+  .sign-btn.ghost{
+    background:#f8fafc;
+  }
+
+  .sign-layout{
+    display:grid;
+    grid-template-columns:1fr 420px;
+    gap:18px;
+    align-items:start;
+  }
+
+  .sign-card{
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.86);
+    border:1px solid rgba(255,255,255,.82);
+    box-shadow:0 18px 42px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+  }
+
+  .plan-preview{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .plan-hero{
+    border-radius:26px;
+    padding:22px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 88% 12%, rgba(96,165,250,.22), transparent 30%),
+      linear-gradient(135deg,#060c19 0%,#111b36 46%,#2563eb 100%);
+    box-shadow:0 22px 54px rgba(15,23,42,.16);
+  }
+
+  .plan-hero-name{
+    font-size:30px;
+    font-weight:900;
+    letter-spacing:-.04em;
+    margin:0;
+  }
+
+  .plan-hero-sub{
+    margin-top:10px;
+    color:rgba(255,255,255,.78);
+    font-size:14px;
+    font-weight:700;
+    line-height:1.8;
+  }
+
+  .info-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .info-box{
+    border-radius:18px;
+    padding:15px;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+    border:1px solid #e8eef7;
+  }
+
+  .info-box.wide{
+    grid-column:1 / -1;
+  }
+
+  .info-label{
+    color:#64748b;
+    font-size:12px;
+    font-weight:900;
+    margin-bottom:7px;
+  }
+
+  .info-value{
+    color:#0f172a;
+    font-size:15px;
+    font-weight:850;
+    line-height:1.8;
+    word-break:break-word;
+  }
+
+  .consent-box{
+    border-radius:22px;
+    padding:18px;
+    background:#fffbeb;
+    border:1px solid #fde68a;
+    color:#92400e;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.8;
+  }
+
+  .sign-panel-title{
+    margin:0;
+    color:#0f172a;
+    font-size:22px;
+    font-weight:900;
+    letter-spacing:-.03em;
+  }
+
+  .sign-panel-sub{
+    margin-top:7px;
+    color:#64748b;
+    font-size:13px;
+    font-weight:700;
+    line-height:1.7;
+  }
+
+  .field{
+    margin-top:16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .field label{
+    color:#475569;
+    font-size:13px;
+    font-weight:900;
+  }
+
+  .form-control{
+    width:100%;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    padding:13px 14px;
+    background:#fff;
+    color:#0f172a;
+    font-size:15px;
+    font-weight:800;
+    outline:none;
+  }
+
+  .form-control:focus{
+    border-color:#93c5fd;
+    box-shadow:0 0 0 4px rgba(59,130,246,.10);
+  }
+
+  .canvas-shell{
+    margin-top:12px;
+    border-radius:22px;
+    padding:12px;
+    background:linear-gradient(180deg,#f8fbff 0%,#eef2ff 100%);
+    border:1px solid #dbeafe;
+  }
+
+  .signature-canvas{
+    width:100%;
+    height:220px;
+    display:block;
+    border-radius:16px;
+    background:#fff;
+    border:1px dashed #cbd5e1;
+    touch-action:none;
+    cursor:crosshair;
+  }
+
+  .canvas-help{
+    margin-top:8px;
+    color:#64748b;
+    font-size:12px;
+    font-weight:700;
+    line-height:1.6;
+  }
+
+  .sign-actions{
+    margin-top:16px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:space-between;
+    align-items:center;
+  }
+
+  .sign-actions-right{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .latest-consent{
+    margin-top:16px;
+    border-radius:18px;
+    padding:14px;
+    background:#ecfdf5;
+    border:1px solid #bbf7d0;
+    color:#166534;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.7;
+  }
+
+  .error-text{
+    margin-top:10px;
+    color:#be123c;
+    font-size:13px;
+    font-weight:900;
+    display:none;
+  }
+
+  @media(max-width:1000px){
+    .sign-layout{
+      grid-template-columns:1fr;
+    }
+
+    .sign-title{
+      font-size:32px;
+    }
+  }
+
+  @media(max-width:720px){
+    .info-grid{
+      grid-template-columns:1fr;
+    }
+
+    .info-box.wide{
+      grid-column:auto;
+    }
+
+    .signature-canvas{
+      height:190px;
+    }
+  }
+</style>
+
+<div class="sign-wrap">
+
+  <header class="sign-head">
+    <div>
+      <div class="sign-eyebrow">Treatment Plan Consent</div>
+      <h1 class="sign-title">施術計画の確認・同意サイン</h1>
+      <div class="sign-lead">
+        患者様へ施術計画を説明し、内容確認後にサインを保存します。
+      </div>
+    </div>
+
+    <div>
+      <a href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=patient_explanation" class="sign-btn">
+        ← 施術計画へ戻る
+      </a>
+    </div>
+  </header>
+
+  <div class="sign-layout">
+
+    <main class="plan-preview">
+
+      <section class="plan-hero">
+        <h2 class="plan-hero-name">
+          {{ patient.last_name }} {{ patient.first_name }} 様
+        </h2>
+        <div class="plan-hero-sub">
+          施術計画：{{ plan.title|default:"施術計画" }}<br>
+          主訴：{{ plan.chief_complaint|default:"-" }}
+        </div>
+      </section>
+
+      <section class="sign-card">
+        <div class="info-grid">
+          <div class="info-box">
+            <div class="info-label">来院目安</div>
+            <div class="info-value">
+              {{ plan.get_visit_guide_type_display|default:"-" }}
+              {% if plan.visit_guide_count %} {{ plan.visit_guide_count }}回{% endif %}
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-label">次回来院日</div>
+            <div class="info-value">
+              {{ plan.next_visit_date|default:"未設定" }}
+            </div>
+          </div>
+
+          <div class="info-box wide">
+            <div class="info-label">来院目安補足</div>
+            <div class="info-value">
+              {{ plan.visit_guide_unit_note|default:"-" }}
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-label">改善目安</div>
+            <div class="info-value">
+              {% if plan.expected_recovery_weeks_min or plan.expected_recovery_weeks_max %}
+                {{ plan.expected_recovery_weeks_min|default:"-" }}〜{{ plan.expected_recovery_weeks_max|default:"-" }}週
+              {% else %}
+                -
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-label">計画ステータス</div>
+            <div class="info-value">
+              {{ plan.get_status_display }}
+            </div>
+          </div>
+
+          <div class="info-box wide">
+            <div class="info-label">入浴について</div>
+            <div class="info-value">
+              {{ plan.bath_instruction|default:"-"|linebreaksbr }}
+            </div>
+          </div>
+
+          <div class="info-box wide">
+            <div class="info-label">歩行について</div>
+            <div class="info-value">
+              {{ plan.walking_instruction|default:"-"|linebreaksbr }}
+            </div>
+          </div>
+
+          <div class="info-box wide">
+            <div class="info-label">運動について</div>
+            <div class="info-value">
+              {{ plan.exercise_instruction|default:"-"|linebreaksbr }}
+            </div>
+          </div>
+
+          <div class="info-box wide">
+            <div class="info-label">就労について</div>
+            <div class="info-value">
+              {{ plan.work_instruction|default:"-"|linebreaksbr }}
+            </div>
+          </div>
+
+          <div class="info-box wide">
+            <div class="info-label">その他注意事項</div>
+            <div class="info-value">
+              {{ plan.caution_notes|default:"-"|linebreaksbr }}
+            </div>
+          </div>
+
+          <div class="info-box wide">
+            <div class="info-label">好転反応の説明</div>
+            <div class="info-value">
+              {{ plan.rebound_reaction_note|default:"-"|linebreaksbr }}
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="sign-card">
+      <h2 class="sign-panel-title">患者様サイン</h2>
+      <div class="sign-panel-sub">
+        説明内容を確認後、患者様に署名していただきます。
+      </div>
+
+      {% if latest_consent %}
+        <div class="latest-consent">
+          直近の同意：{{ latest_consent.signed_at|date:"Y-m-d H:i" }}<br>
+          署名者：{{ latest_consent.signed_name|default:"-" }}
+        </div>
+      {% endif %}
+
+      <form method="post" id="signForm">
+        {% csrf_token %}
+
+        <div class="field">
+          <label for="signedName">署名者名</label>
+          <input
+            type="text"
+            id="signedName"
+            name="signed_name"
+            class="form-control"
+            value="{{ patient.last_name }} {{ patient.first_name }}"
+            placeholder="例：山田 太郎"
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="field">
+          <label>サイン</label>
+
+          <div class="canvas-shell">
+            <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+            <div class="canvas-help">
+              指またはマウスで枠内にサインしてください。やり直す場合は「クリア」を押してください。
+            </div>
+          </div>
+
+          <input type="hidden" name="signature_data" id="signatureData">
+          <div class="error-text" id="signatureError">
+            サインを入力してください。
+          </div>
+        </div>
+
+        <div class="consent-box">
+          私は、上記の施術計画・来院目安・生活上の注意事項について説明を受け、内容を確認しました。
+        </div>
+
+        <div class="sign-actions">
+          <button type="button" class="sign-btn ghost" id="clearSignature">
+            クリア
+          </button>
+
+          <div class="sign-actions-right">
+            <a href="{% url 'treatment_plans:plan_detail' plan.pk %}?tab=patient_explanation" class="sign-btn">
+              キャンセル
+            </a>
+            <button type="submit" class="sign-btn primary" id="submitSignBtn">
+              同意して保存
+            </button>
+          </div>
+        </div>
+      </form>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById("signatureCanvas");
+  const ctx = canvas.getContext("2d");
+  const clearBtn = document.getElementById("clearSignature");
+  const form = document.getElementById("signForm");
+  const signatureData = document.getElementById("signatureData");
+  const signatureError = document.getElementById("signatureError");
+  const submitBtn = document.getElementById("submitSignBtn");
+
+  let drawing = false;
+  let hasDrawn = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+
+    const oldData = hasDrawn ? canvas.toDataURL("image/png") : null;
+
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#0f172a";
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    if (oldData) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      };
+      img.src = oldData;
+    }
+  }
+
+  function getPoint(e) {
+    const rect = canvas.getBoundingClientRect();
+
+    if (e.touches && e.touches.length > 0) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+      };
+    }
+
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    const p = getPoint(e);
+    drawing = true;
+    hasDrawn = true;
+    lastX = p.x;
+    lastY = p.y;
+
+    signatureError.style.display = "none";
+  }
+
+  function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+
+    const p = getPoint(e);
+
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+
+    lastX = p.x;
+    lastY = p.y;
+  }
+
+  function stopDraw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    drawing = false;
+  }
+
+  function clearCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    hasDrawn = false;
+    signatureData.value = "";
+    signatureError.style.display = "none";
+  }
+
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  canvas.addEventListener("mousedown", startDraw);
+  canvas.addEventListener("mousemove", draw);
+  window.addEventListener("mouseup", stopDraw);
+
+  canvas.addEventListener("touchstart", startDraw, { passive:false });
+  canvas.addEventListener("touchmove", draw, { passive:false });
+  canvas.addEventListener("touchend", stopDraw, { passive:false });
+  canvas.addEventListener("touchcancel", stopDraw, { passive:false });
+
+  clearBtn.addEventListener("click", clearCanvas);
+
+  form.addEventListener("submit", (e) => {
+    if (!hasDrawn) {
+      e.preventDefault();
+      signatureError.style.display = "block";
+      return;
+    }
+
+    signatureData.value = canvas.toDataURL("image/png");
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "保存中...";
+  });
+});
+</script>
+
+{% endblock %}
