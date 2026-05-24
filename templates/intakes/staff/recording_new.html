@@ -2,36 +2,278 @@
 {% extends "staff/_layout.html" %}
 {% load static %}
 
+{% block title %}CareFrow | AI問診アシスタント{% endblock %}
+
 {% block content %}
 <link rel="stylesheet" href="{% static 'intakes/css/recording.css' %}">
 <script defer src="{% static 'intakes/js/recording.js' %}"></script>
 
 <style>
-  .interview-check-card{
-    margin-bottom:16px;
-    border:1px solid var(--line, #e5e7eb);
+  .cf-ai-page{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .cf-ai-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+  }
+
+  .cf-ai-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(124,58,237,.08);
+    color:#5b38c5;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.02em;
+    margin-bottom:12px;
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+  }
+
+  .cf-ai-eyebrow::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+    box-shadow:0 0 0 4px rgba(124,58,237,.08);
+  }
+
+  .cf-ai-title{
+    margin:0;
+    color:#0b1220;
+    font-size:46px;
+    line-height:1.04;
+    letter-spacing:-0.05em;
+    font-weight:900;
+  }
+
+  .cf-ai-sub{
+    margin-top:10px;
+    color:#64748b;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.7;
+  }
+
+  .cf-ai-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .cf-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.84);
+    color:#111827;
+    font-size:14px;
+    font-weight:900;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    text-decoration:none;
+    transition:.18s ease;
+    cursor:pointer;
+  }
+
+  .cf-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 14px 28px rgba(15,23,42,.08);
+  }
+
+  .cf-btn-primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+    box-shadow:0 16px 36px rgba(29,78,216,.20), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  .cf-patient-strip{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:18px;
+    background:
+      radial-gradient(circle at 92% 18%, rgba(96,165,250,.16), transparent 24%),
+      linear-gradient(135deg, rgba(255,255,255,.92) 0%, rgba(248,251,255,.88) 100%);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:0 18px 42px rgba(15,23,42,.06);
+    -webkit-backdrop-filter:blur(16px);
+    backdrop-filter:blur(16px);
+  }
+
+  .cf-patient-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.4fr repeat(3, minmax(150px, .7fr));
+    gap:12px;
+  }
+
+  .cf-patient-main,
+  .cf-patient-item{
     border-radius:20px;
-    padding:16px;
-    background:linear-gradient(180deg, rgba(251,253,255,.92) 0%, rgba(245,248,252,.96) 100%);
+    padding:14px 16px;
+    border:1px solid #edf2f8;
+    background:rgba(255,255,255,.82);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
   }
 
-  .interview-check-title{
-    font-size:18px;
+  .cf-label{
+    color:#64748b;
+    font-size:11px;
     font-weight:900;
-    color:#0f172a;
+    letter-spacing:.08em;
     margin-bottom:6px;
+    text-transform:uppercase;
   }
 
-  .interview-check-sub{
-    color:#6b7280;
+  .cf-value{
+    color:#0f172a;
+    font-size:16px;
+    font-weight:900;
+    line-height:1.45;
+  }
+
+  .cf-patient-name{
+    font-size:22px;
+    letter-spacing:-0.03em;
+  }
+
+  .cf-steps{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+  }
+
+  .cf-step{
+    min-height:44px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    border:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.62);
+    color:#94a3b8;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.08em;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.75);
+  }
+
+  .cf-step.active{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg, #0b1220 0%, #1c2d63 58%, #3b82f6 100%);
+    box-shadow:0 16px 34px rgba(29,78,216,.18), inset 0 1px 0 rgba(255,255,255,.12);
+  }
+
+  .cf-step-no{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:22px;
+    height:22px;
+    border-radius:999px;
+    background:rgba(255,255,255,.16);
+    font-size:11px;
+  }
+
+  .cf-main-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:32px;
+    padding:22px;
+    background:rgba(255,255,255,.80);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:0 22px 60px rgba(15,23,42,.07);
+    -webkit-backdrop-filter:blur(18px);
+    backdrop-filter:blur(18px);
+  }
+
+  .cf-main-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .cf-interview-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:minmax(0, 1.15fr) minmax(360px, .85fr);
+    gap:18px;
+    align-items:stretch;
+  }
+
+  .cf-panel{
+    border-radius:26px;
+    padding:18px;
+    border:1px solid #e8edf5;
+    background:linear-gradient(180deg, rgba(251,253,255,.94) 0%, rgba(246,249,253,.98) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+  }
+
+  .cf-panel-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:14px;
+  }
+
+  .cf-panel-title{
+    margin:0;
+    color:#0f172a;
+    font-size:20px;
+    font-weight:900;
+    letter-spacing:-0.02em;
+  }
+
+  .cf-panel-sub{
+    margin-top:6px;
+    color:#64748b;
     font-size:13px;
+    font-weight:700;
     line-height:1.6;
-    margin-bottom:12px;
+  }
+
+  .cf-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:30px;
+    padding:0 10px;
+    border-radius:999px;
+    background:linear-gradient(135deg, rgba(59,130,246,.10) 0%, rgba(124,58,237,.08) 100%);
+    border:1px solid rgba(59,130,246,.10);
+    color:#3658c9;
+    font-size:11px;
+    font-weight:900;
+    white-space:nowrap;
   }
 
   .interview-check-list{
     display:grid;
+    grid-template-columns:1fr;
     gap:8px;
   }
 
@@ -39,15 +281,16 @@
     display:flex;
     align-items:flex-start;
     gap:10px;
-    padding:10px 12px;
-    border-radius:14px;
+    padding:11px 12px;
+    border-radius:16px;
     border:1px solid #e2e8f0;
     background:#fff;
+    box-shadow:0 8px 18px rgba(15,23,42,.03);
   }
 
   .interview-check-no{
-    width:24px;
-    height:24px;
+    width:26px;
+    height:26px;
     flex-shrink:0;
     border-radius:999px;
     display:flex;
@@ -64,233 +307,469 @@
     font-size:14px;
     line-height:1.6;
     color:#0f172a;
+    font-weight:800;
+  }
+
+  .cf-rec-panel{
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    min-height:100%;
+    border-radius:28px;
+    padding:20px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 80% 10%, rgba(96,165,250,.28), transparent 28%),
+      radial-gradient(circle at 15% 90%, rgba(124,58,237,.18), transparent 24%),
+      linear-gradient(135deg, #060c19 0%, #111b36 46%, #315fe8 100%);
+    box-shadow:0 24px 60px rgba(15,23,42,.14), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .cf-rec-panel::after{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:27px;
+    border:1px solid rgba(255,255,255,.08);
+    pointer-events:none;
+  }
+
+  .cf-rec-top,
+  .cf-rec-center,
+  .cf-rec-bottom{
+    position:relative;
+    z-index:1;
+  }
+
+  .cf-rec-title{
+    margin:0;
+    font-size:22px;
+    line-height:1.35;
+    font-weight:900;
+    letter-spacing:-0.03em;
+  }
+
+  .cf-rec-sub{
+    margin-top:8px;
+    color:rgba(255,255,255,.72);
+    font-size:13px;
+    line-height:1.7;
     font-weight:700;
   }
 
+  .cf-rec-center{
+    padding:28px 0 18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .rec-area{
+    width:100%;
+    padding:0 !important;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .rec-btn{
+    width:132px;
+    height:132px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.20);
+    background:
+      radial-gradient(circle at 70% 20%, rgba(255,255,255,.22), transparent 30%),
+      linear-gradient(145deg, #ffffff 0%, #dbeafe 100%);
+    color:#0f172a;
+    box-shadow:
+      0 24px 54px rgba(2,6,23,.28),
+      inset 0 1px 0 rgba(255,255,255,.9);
+    cursor:pointer;
+    transition:.18s ease;
+  }
+
+  .rec-btn:hover{
+    transform:translateY(-2px) scale(1.02);
+  }
+
+  .rec-btn.is-recording{
+    background:
+      radial-gradient(circle at 70% 20%, rgba(255,255,255,.20), transparent 30%),
+      linear-gradient(145deg, #ef4444 0%, #991b1b 100%);
+    color:#fff;
+    box-shadow:
+      0 24px 54px rgba(239,68,68,.28),
+      inset 0 1px 0 rgba(255,255,255,.20);
+  }
+
+  .rec-icon{
+    font-size:42px;
+  }
+
+  .rec-status{
+    margin-top:18px;
+    text-align:center;
+  }
+
+  .rec-state{
+    color:rgba(255,255,255,.68);
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.14em;
+  }
+
+  .rec-timer{
+    margin-top:8px;
+    color:#fff;
+    font-size:42px;
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-weight:300;
+  }
+
+  .upload-state{
+    margin-top:14px;
+    min-height:22px;
+    color:rgba(255,255,255,.78);
+    font-size:13px;
+    font-weight:800;
+    line-height:1.6;
+    text-align:center;
+  }
+
+  .upload-state.ok{
+    color:#bbf7d0;
+  }
+
+  .upload-state.error{
+    color:#fecaca;
+  }
+
+  .upload-state.loading{
+    color:#bfdbfe;
+  }
+
+  .preview{
+    width:100%;
+    margin-top:14px;
+  }
+
+  .preview audio{
+    width:100%;
+  }
+
+  .rec-footer{
+    width:100%;
+    margin-top:18px !important;
+    display:flex;
+    justify-content:center;
+  }
+
+  .rec-footer .btn,
+  .rec-footer .cf-btn{
+    width:100%;
+    min-height:48px;
+    border-radius:16px;
+  }
+
+  #goDetailBtn{
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    background:linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    border-color:transparent;
+    box-shadow:0 16px 34px rgba(37,99,235,.28);
+    font-weight:900;
+    text-decoration:none;
+  }
+
+  .cf-rec-note{
+    position:relative;
+    z-index:1;
+    margin-top:16px;
+    padding:12px 14px;
+    border-radius:18px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.10);
+    color:rgba(255,255,255,.72);
+    font-size:12px;
+    line-height:1.7;
+    font-weight:700;
+  }
+
+  .cf-after-card{
+    border-radius:24px;
+    padding:16px 18px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:0 16px 36px rgba(15,23,42,.06);
+    -webkit-backdrop-filter:blur(16px);
+    backdrop-filter:blur(16px);
+  }
+
+  .cf-after-title{
+    color:#0f172a;
+    font-size:16px;
+    font-weight:900;
+    margin-bottom:8px;
+  }
+
+  .cf-after-text{
+    color:#64748b;
+    font-size:13px;
+    line-height:1.75;
+    font-weight:700;
+  }
+
+  @media (max-width: 1180px){
+    .cf-patient-grid{
+      grid-template-columns:1fr 1fr;
+    }
+
+    .cf-interview-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
   @media (max-width: 980px){
-    .ai-head{
+    .cf-ai-page{
+      gap:14px;
+    }
+
+    .cf-ai-head{
       flex-direction:column;
-      align-items:stretch !important;
-      gap:10px !important;
+      align-items:stretch;
+      gap:10px;
     }
 
-    .ai-title{
-      font-size:28px !important;
-      line-height:1.08 !important;
-      margin:0 !important;
+    .cf-ai-eyebrow{
+      display:none;
     }
 
-    .ai-sub{
-      font-size:13px !important;
-      line-height:1.6 !important;
-    }
-
-    .ai-actions{
-      display:flex;
-      justify-content:flex-start;
-    }
-
-    .ai-actions .btn{
-      min-height:40px !important;
-      padding:0 12px !important;
-      font-size:12px !important;
-      border-radius:12px !important;
-    }
-
-    .ai-steps{
-      gap:8px !important;
-    }
-
-    .step{
-      min-height:38px !important;
-      font-size:11px !important;
-      letter-spacing:.06em !important;
-      padding:0 10px !important;
-    }
-
-    .card{
-      border-radius:20px !important;
-    }
-
-    .card-header,
-    .card-body{
-      padding:14px !important;
-    }
-
-    .tabs{
-      gap:6px !important;
-      flex-wrap:wrap !important;
-    }
-
-    .tab{
-      min-height:38px !important;
-      padding:0 12px !important;
-      font-size:12px !important;
-      border-radius:999px !important;
-    }
-
-    .hint{
-      font-size:12px !important;
-      line-height:1.6 !important;
-      margin-top:8px !important;
-    }
-
-    .interview-check-card{
-      margin-bottom:12px !important;
-      border-radius:16px !important;
-      padding:14px !important;
-    }
-
-    .interview-check-title{
-      font-size:16px !important;
-    }
-
-    .interview-check-sub{
-      font-size:12px !important;
-      line-height:1.55 !important;
-    }
-
-    .interview-check-item{
-      padding:9px 10px !important;
-      border-radius:12px !important;
-    }
-
-    .interview-check-text{
-      font-size:13px !important;
-    }
-
-    .rec-area{
-      padding:18px 0 10px !important;
-    }
-
-    .rec-btn{
-      width:96px !important;
-      height:96px !important;
-    }
-
-    .rec-icon{
+    .cf-ai-title{
       font-size:30px !important;
     }
 
-    .rec-state{
-      font-size:11px !important;
-      line-height:1.5 !important;
-      letter-spacing:.08em !important;
-      text-align:center;
-      padding:0 10px;
+    .cf-ai-sub{
+      font-size:13px;
+    }
+
+    .cf-ai-actions{
+      justify-content:flex-start;
+    }
+
+    .cf-patient-strip{
+      border-radius:22px;
+      padding:14px;
+    }
+
+    .cf-patient-grid{
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .cf-patient-main,
+    .cf-patient-item{
+      border-radius:16px;
+      padding:12px;
+    }
+
+    .cf-patient-name{
+      font-size:18px;
+    }
+
+    .cf-value{
+      font-size:14px;
+    }
+
+    .cf-steps{
+      gap:8px;
+    }
+
+    .cf-step{
+      min-height:38px;
+      font-size:11px;
+      letter-spacing:.04em;
+    }
+
+    .cf-main-card{
+      border-radius:22px;
+      padding:14px;
+    }
+
+    .cf-panel{
+      border-radius:18px;
+      padding:14px;
+    }
+
+    .cf-panel-title{
+      font-size:17px;
+    }
+
+    .cf-panel-sub{
+      font-size:12px;
+    }
+
+    .interview-check-item{
+      padding:10px;
+      border-radius:14px;
+    }
+
+    .interview-check-text{
+      font-size:13px;
+    }
+
+    .cf-rec-panel{
+      border-radius:22px;
+      padding:16px;
+    }
+
+    .cf-rec-title{
+      font-size:19px;
+    }
+
+    .cf-rec-sub{
+      font-size:12px;
+    }
+
+    .rec-btn{
+      width:104px !important;
+      height:104px !important;
+    }
+
+    .rec-icon{
+      font-size:32px !important;
     }
 
     .rec-timer{
-      font-size:28px !important;
-    }
-
-    .upload-state{
-      font-size:12px !important;
-      line-height:1.6 !important;
-      text-align:center;
-    }
-
-    .rec-footer{
-      margin-top:12px !important;
-      display:flex;
-      justify-content:stretch !important;
-    }
-
-    .rec-footer .btn{
-      width:100% !important;
-      min-height:42px !important;
-      font-size:13px !important;
-      border-radius:12px !important;
-      justify-content:center !important;
+      font-size:30px !important;
     }
   }
 
   @media (max-width: 640px){
-    .ai-title{
-      font-size:24px !important;
-    }
-
-    .ai-steps{
-      grid-template-columns:1fr !important;
-      display:grid !important;
-    }
-
-    .step{
-      width:100%;
-      justify-content:center;
-    }
-
-    .interview-check-list{
-      gap:6px !important;
-    }
-
-    .interview-check-no{
-      width:22px !important;
-      height:22px !important;
-      font-size:11px !important;
-    }
-
-    .interview-check-text{
-      font-size:12px !important;
-      line-height:1.55 !important;
-    }
-
-    .rec-btn{
-      width:84px !important;
-      height:84px !important;
-    }
-
-    .rec-icon{
+    .cf-ai-title{
       font-size:26px !important;
     }
 
+    .cf-patient-grid{
+      grid-template-columns:1fr;
+    }
+
+    .cf-steps{
+      grid-template-columns:1fr;
+    }
+
+    .cf-step{
+      justify-content:flex-start;
+      padding:0 14px;
+    }
+
+    .interview-check-no{
+      width:22px;
+      height:22px;
+      font-size:11px;
+    }
+
+    .interview-check-text{
+      font-size:12px;
+      line-height:1.55;
+    }
+
+    .rec-btn{
+      width:92px !important;
+      height:92px !important;
+    }
+
+    .rec-icon{
+      font-size:28px !important;
+    }
+
     .rec-timer{
-      font-size:24px !important;
+      font-size:26px !important;
     }
   }
 </style>
 
-<div class="ai-wrap"
+<div class="ai-wrap cf-ai-page"
      data-upload-url="{{ upload_url }}"
      data-process-url="{{ process_url }}"
      data-detail-url="{{ detail_url }}"
      data-csrf="{{ csrf_token }}">
 
-  <div class="ai-head">
+  <header class="cf-ai-head">
     <div>
-      <h1 class="ai-title">AI Interview</h1>
-      <div class="ai-sub">症状を記録してAIが整理します</div>
-    </div>
-    <div class="ai-actions">
-      <a class="btn btn-light" href="{{ back_url|default:'javascript:history.back()' }}">← 戻る</a>
-    </div>
-  </div>
-
-  <div class="ai-steps">
-    <div class="step active">INPUT</div>
-    <div class="step">PROCESSING</div>
-    <div class="step">VISUALIZATION</div>
-  </div>
-
-  <div class="card">
-
-    <div class="card-header">
-      <div class="tabs">
-        <button class="tab active" type="button">音声録音</button>
-        <button class="tab" type="button" disabled>手入力</button>
-        <button class="tab" type="button" disabled>貼り付け</button>
-      </div>
-      <div class="hint">
-        マイクボタンをクリックして録音 → 停止後に自動アップロードします。
+      <div class="cf-ai-eyebrow">AI Interview Assistant</div>
+      <h1 class="cf-ai-title">AI問診アシスタント</h1>
+      <div class="cf-ai-sub">
+        患者さんの訴えを録音し、AIがSOAP・要点・確認事項の下書きへ整理します。
       </div>
     </div>
 
-    <div class="card-body">
+    <div class="cf-ai-actions">
+      <a class="cf-btn" href="{{ back_url|default:'javascript:history.back()' }}">← 戻る</a>
+    </div>
+  </header>
 
-      <div class="interview-check-card">
-        <div class="interview-check-title">問診で確認したい項目</div>
-        <div class="interview-check-sub">
-          聞き漏れ防止のため、録音前にこの項目を確認してください。
+  <section class="cf-patient-strip">
+    <div class="cf-patient-grid">
+      <div class="cf-patient-main">
+        <div class="cf-label">Patient</div>
+        <div class="cf-value cf-patient-name">
+          {% if appointment.patient %}
+            {{ appointment.patient.last_name }} {{ appointment.patient.first_name }} 様
+          {% else %}
+            患者未確定
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="cf-patient-item">
+        <div class="cf-label">Appointment</div>
+        <div class="cf-value">{{ appointment.start_at|date:"Y/m/d H:i" }}</div>
+      </div>
+
+      <div class="cf-patient-item">
+        <div class="cf-label">Menu</div>
+        <div class="cf-value">{{ appointment.menu|default:"-" }}</div>
+      </div>
+
+      <div class="cf-patient-item">
+        <div class="cf-label">Recording</div>
+        <div class="cf-value">#{{ recording.id }} / {{ recording.get_status_display|default:recording.status }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cf-steps">
+    <div class="cf-step active">
+      <span class="cf-step-no">1</span>
+      <span>記録</span>
+    </div>
+    <div class="cf-step">
+      <span class="cf-step-no">2</span>
+      <span>AI整理</span>
+    </div>
+    <div class="cf-step">
+      <span class="cf-step-no">3</span>
+      <span>確認・登録</span>
+    </div>
+  </section>
+
+  <section class="cf-main-card">
+    <div class="cf-interview-grid">
+
+      <div class="cf-panel">
+        <div class="cf-panel-head">
+          <div>
+            <h2 class="cf-panel-title">聞き取りチェックリスト</h2>
+            <div class="cf-panel-sub">
+              聞き漏れ防止のため、録音前に確認してください。すべて聞けなくても、AIが不足点を後で追加確認事項として整理します。
+            </div>
+          </div>
+          <span class="cf-chip">9 items</span>
         </div>
 
         <div class="interview-check-list">
@@ -336,34 +815,60 @@
 
           <div class="interview-check-item">
             <div class="interview-check-no">9</div>
-            <div class="interview-check-text">治療による最終目標 どうなりたいですか？</div>
+            <div class="interview-check-text">治療による最終目標は何ですか？ どうなりたいですか？</div>
           </div>
         </div>
       </div>
 
-      <div class="rec-area">
-        <button id="recBtn" class="rec-btn" type="button" aria-label="record">
-          <span id="recIcon" class="rec-icon">🎙️</span>
-        </button>
-
-        <div class="rec-status">
-          <div id="recState" class="rec-state">CLICK TO START RECORDING</div>
-          <div id="timer" class="rec-timer">00:00</div>
+      <aside class="cf-rec-panel">
+        <div class="cf-rec-top">
+          <h2 class="cf-rec-title">音声を録音</h2>
+          <div class="cf-rec-sub">
+            マイクボタンを押して録音を開始します。停止後、自動で音声ファイルをアップロードします。
+          </div>
         </div>
 
-        <div id="uploadState" class="upload-state"></div>
+        <div class="cf-rec-center">
+          <div class="rec-area">
+            <button id="recBtn" class="rec-btn" type="button" aria-label="record">
+              <span id="recIcon" class="rec-icon">🎙️</span>
+            </button>
 
-        <div class="preview">
-          <audio id="audioPreview" controls style="display:none; width: 100%;"></audio>
+            <div class="rec-status">
+              <div id="recState" class="rec-state">CLICK TO START RECORDING</div>
+              <div id="timer" class="rec-timer">00:00</div>
+            </div>
+
+            <div id="uploadState" class="upload-state"></div>
+
+            <div class="preview">
+              <audio id="audioPreview" controls style="display:none; width:100%;"></audio>
+            </div>
+
+            <div class="rec-footer">
+              <a id="goDetailBtn" class="btn btn-primary" href="{{ detail_url }}" style="display:none;">
+                録音内容を整理 →
+              </a>
+            </div>
+          </div>
         </div>
 
-        <div class="rec-footer">
-          <a id="goDetailBtn" class="btn btn-primary" href="{{ detail_url }}" style="display:none;">
-            録音内容を整理 →
-          </a>
+        <div class="cf-rec-bottom">
+          <div class="cf-rec-note">
+            録音内容には個人情報が含まれる可能性があります。患者さん本人の同意を得たうえで、必要な範囲のみ記録してください。
+          </div>
         </div>
-      </div>
+      </aside>
+
     </div>
-  </div>
+  </section>
+
+  <section class="cf-after-card">
+    <div class="cf-after-title">この後の流れ</div>
+    <div class="cf-after-text">
+      録音アップロード後、「録音内容を整理」へ進みます。次画面で文字起こし・AI要約・SOAP下書き・追加確認事項を確認し、必要に応じて編集してからカルテへ登録します。
+    </div>
+  </section>
+
 </div>
 {% endblock %}

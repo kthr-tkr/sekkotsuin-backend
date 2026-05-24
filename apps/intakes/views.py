@@ -25,6 +25,7 @@ from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequ
 from .services.ai_summarizer import SUMMARY_JSON_SCHEMA
 
 from .services.stt import run_stt   # ↑で分離した場合
+from apps.staff.decorators import staff_required
 
 # apps/intakes/views.py
 
@@ -407,7 +408,15 @@ def record_page(request, appointment_id):
 
 @login_required
 def recording_detail(request, recording_id):
-    rec = get_object_or_404(InterviewRecording, pk=recording_id)
+    rec = get_object_or_404(
+        InterviewRecording.objects.select_related("appointment", "patient", "intake"),
+        pk=recording_id,
+    )
+
+    try:
+        _must_own_recording(request.user, rec)
+    except PermissionError:
+        return HttpResponseForbidden("この録音にはアクセスできません。")
 
     # ★確定版があればそっちを表示する（重要）
     summary = rec.get_active_summary() or {}
@@ -438,10 +447,15 @@ def recording_detail(request, recording_id):
 
     return render(request, "intakes/staff/recording_detail.html", context)
 
-@staff_member_required
+@staff_required
 @require_POST
 def recording_confirm(request, recording_id: int):
     rec = get_object_or_404(InterviewRecording, pk=recording_id)
+
+    try:
+        _must_own_recording(request.user, rec)
+    except PermissionError:
+        return HttpResponseForbidden("この録音にはアクセスできません。")
 
     raw = (request.POST.get("summary_json") or "").strip()
     if not raw:
