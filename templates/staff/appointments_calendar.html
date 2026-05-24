@@ -668,6 +668,301 @@
     border:1px solid transparent;
   }
 
+  /* ===== Day Timeline View ===== */
+  .day-timeline-card{
+    position:relative;
+    z-index:1;
+  }
+
+  .day-timeline-toolbar{
+    position:relative;
+    z-index:1;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    margin-bottom:14px;
+  }
+
+  .day-timeline-title{
+    margin:0;
+    font-size:30px;
+    font-weight:900;
+    letter-spacing:-0.04em;
+    color:#0b1220;
+  }
+
+  .day-timeline-note{
+    color:#7b8798;
+    font-size:13px;
+    font-weight:700;
+    line-height:1.6;
+  }
+
+  .day-timeline-scroll{
+    position:relative;
+    z-index:1;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:6px;
+  }
+
+  .day-timeline{
+    min-width:1160px;
+    border:1px solid #e8edf5;
+    border-radius:22px;
+    overflow:hidden;
+    background:rgba(255,255,255,.82);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+  }
+
+  .timeline-header{
+    display:grid;
+    grid-template-columns:150px minmax(960px, 1fr);
+    background:linear-gradient(180deg, rgba(248,251,255,.96) 0%, rgba(241,245,249,.96) 100%);
+    border-bottom:1px solid #e8edf5;
+  }
+
+  .timeline-staff-head{
+    padding:14px 16px;
+    color:#64748b;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.08em;
+    border-right:1px solid #e8edf5;
+    display:flex;
+    align-items:center;
+  }
+
+  .timeline-hours{
+    position:relative;
+    height:52px;
+  }
+
+  .timeline-hour-label{
+    position:absolute;
+    top:14px;
+    transform:translateX(-50%);
+    color:#334155;
+    font-size:13px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .timeline-body{
+    display:flex;
+    flex-direction:column;
+  }
+
+  .timeline-row{
+    display:grid;
+    grid-template-columns:150px minmax(960px, 1fr);
+    min-height:94px;
+    border-bottom:1px solid #e8edf5;
+  }
+
+  .timeline-row:last-child{
+    border-bottom:none;
+  }
+
+  .timeline-staff{
+    padding:14px 14px;
+    border-right:1px solid #e8edf5;
+    background:linear-gradient(180deg, rgba(255,255,255,.94), rgba(248,250,252,.94));
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:4px;
+  }
+
+  .timeline-staff-name{
+    color:#0f172a;
+    font-size:15px;
+    font-weight:900;
+    line-height:1.4;
+  }
+
+  .timeline-staff-sub{
+    color:#94a3b8;
+    font-size:11px;
+    font-weight:800;
+  }
+
+  .timeline-lane{
+    position:relative;
+    min-height:94px;
+    background:
+      repeating-linear-gradient(
+        to right,
+        rgba(226,232,240,.95) 0,
+        rgba(226,232,240,.95) 1px,
+        transparent 1px,
+        transparent calc(100% / 12)
+      ),
+      linear-gradient(180deg, rgba(255,255,255,.96), rgba(250,252,255,.96));
+  }
+
+  .timeline-lane::after{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+    background:
+      repeating-linear-gradient(
+        to right,
+        transparent 0,
+        transparent calc((100% / 12) / 2 - 1px),
+        rgba(203,213,225,.65) calc((100% / 12) / 2 - 1px),
+        rgba(203,213,225,.65) calc((100% / 12) / 2),
+        transparent calc((100% / 12) / 2),
+        transparent calc(100% / 12)
+      );
+    pointer-events:none;
+  }
+
+  .timeline-appt{
+    position:absolute;
+    top:16px;
+    height:62px;
+    border:none;
+    border-radius:16px;
+    padding:9px 10px;
+    text-align:left;
+    cursor:pointer;
+    overflow:hidden;
+    box-shadow:
+      0 12px 24px rgba(15,23,42,.08),
+      inset 0 1px 0 rgba(255,255,255,.55);
+    transition:.16s ease;
+    z-index:2;
+  }
+
+  .timeline-appt:hover{
+    transform:translateY(-2px);
+    box-shadow:
+      0 18px 32px rgba(15,23,42,.12),
+      inset 0 1px 0 rgba(255,255,255,.55);
+  }
+
+  .timeline-appt.booked,
+  .timeline-appt.pending{
+    background:#fef3c7;
+    border:1px solid #fde68a;
+    color:#92400e;
+  }
+
+  .timeline-appt.arrived{
+    background:#cffafe;
+    border:1px solid #67e8f9;
+    color:#155e75;
+  }
+
+  .timeline-appt.completed{
+    background:#dbeafe;
+    border:1px solid #93c5fd;
+    color:#1d4ed8;
+  }
+
+  .timeline-appt.cancelled{
+    background:#fee2e2;
+    border:1px solid #fecaca;
+    color:#991b1b;
+  }
+
+  .timeline-appt.no_show{
+    background:#f3f4f6;
+    border:1px solid #e5e7eb;
+    color:#374151;
+  }
+
+  .timeline-appt-time{
+    font-size:11px;
+    font-weight:900;
+    line-height:1.2;
+    opacity:.9;
+    margin-bottom:3px;
+    white-space:nowrap;
+  }
+
+  .timeline-appt-name{
+    font-size:13px;
+    font-weight:900;
+    line-height:1.25;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .timeline-appt-meta{
+    margin-top:3px;
+    font-size:10px;
+    font-weight:800;
+    opacity:.78;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .timeline-empty{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    padding-left:18px;
+    color:#cbd5e1;
+    font-size:13px;
+    font-weight:800;
+    pointer-events:none;
+  }
+
+  @media (max-width: 980px){
+    .day-timeline-title{
+      font-size:20px !important;
+    }
+
+    .day-timeline-note{
+      font-size:12px !important;
+    }
+
+    .day-timeline{
+      min-width:980px;
+      border-radius:18px;
+    }
+
+    .timeline-header,
+    .timeline-row{
+      grid-template-columns:120px minmax(860px, 1fr);
+    }
+
+    .timeline-staff-head,
+    .timeline-staff{
+      padding:12px 10px;
+    }
+
+    .timeline-staff-name{
+      font-size:13px;
+    }
+
+    .timeline-row,
+    .timeline-lane{
+      min-height:82px;
+    }
+
+    .timeline-appt{
+      top:12px;
+      height:56px;
+      border-radius:14px;
+      padding:8px;
+    }
+
+    .timeline-appt-name{
+      font-size:12px;
+    }
+  }
+
   .day-chip.total{
     background:#e2e8f0;
     color:#0f172a;
@@ -1463,9 +1758,104 @@
         <h3 class="card-title">カレンダービュー</h3>
         <div class="card-sub">予約をクリックすると右側に詳細が表示されます</div>
       </div>
-      <div class="calendar-scroll">
-        <div id="calendar"></div>
-      </div>
+      {% if period == "day" %}
+        <div class="day-timeline-card">
+          <div class="day-timeline-toolbar">
+            <div>
+              <h3 class="day-timeline-title">{{ day|date:"Y年n月j日(D)" }}</h3>
+              <div class="day-timeline-note">
+                8:00〜20:00 の予約状況を施術者別に確認できます
+              </div>
+            </div>
+            <div class="day-timeline-note">
+              予約をクリックすると右側に詳細が表示されます
+            </div>
+          </div>
+
+          <div class="day-timeline-scroll">
+            <div class="day-timeline">
+              <div class="timeline-header">
+                <div class="timeline-staff-head">STAFF</div>
+                <div class="timeline-hours">
+                  {% for h in timeline.hours %}
+                    <div
+                      class="timeline-hour-label"
+                      style="left:{% widthratio forloop.counter0 12 100 %}%;">
+                      {{ h }}:00
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="timeline-body">
+                {% for row in timeline.rows %}
+                  <div class="timeline-row">
+                    <div class="timeline-staff">
+                      <div class="timeline-staff-name">{{ row.staff_name }}</div>
+                      <div class="timeline-staff-sub">
+                        予約 {{ row.appointments|length }} 件
+                      </div>
+                    </div>
+
+                    <div class="timeline-lane">
+                      {% if row.appointments %}
+                        {% for a in row.appointments %}
+                          <button
+                            type="button"
+                            class="timeline-appt {{ a.status }}"
+                            style="left:{{ a.left_percent }}%; width:{{ a.width_percent }}%;"
+                            data-patient-name="{{ a.patient_name|escape }}"
+                            data-start-time="{{ a.start_time|escape }}"
+                            data-end-time="{{ a.end_time|escape }}"
+                            data-menu="{{ a.menu|escape }}"
+                            data-staff-name="{{ row.staff_name|escape }}"
+                            data-status-label="{{ a.status_label|escape }}"
+                            data-intake-state="{{ a.intake_state|escape }}"
+                            data-intake-kind-label="{{ a.intake_kind_label|default:'-'|escape }}"
+                            data-visit-type-label="{{ a.visit_type_label|escape }}"
+                            data-chief-label="{{ a.chief_label|escape }}"
+                            data-pain-level-display="{{ a.pain_level_display|escape }}"
+                            data-areas-display="{{ a.areas_display|escape }}"
+                            data-intake-detail-url="{{ a.intake_detail_url|escape }}"
+                            data-recording-url="{{ a.recording_url|escape }}"
+                            data-day-url="{{ a.day_url|escape }}"
+                          >
+                            <div class="timeline-appt-time">
+                              {{ a.start_time }} - {{ a.end_time }}
+                            </div>
+                            <div class="timeline-appt-name">
+                              {{ a.patient_name }}
+                            </div>
+                            <div class="timeline-appt-meta">
+                              {{ a.menu }} / {{ a.intake_state }}
+                            </div>
+                          </button>
+                        {% endfor %}
+                      {% else %}
+                        <div class="timeline-empty">予約なし</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% empty %}
+                  <div class="timeline-row">
+                    <div class="timeline-staff">
+                      <div class="timeline-staff-name">スタッフ未登録</div>
+                      <div class="timeline-staff-sub">設定を確認してください</div>
+                    </div>
+                    <div class="timeline-lane">
+                      <div class="timeline-empty">表示できる予約枠がありません</div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="calendar-scroll">
+          <div id="calendar"></div>
+        </div>
+      {% endif %}
     </section>
 
     <aside class="side-card" id="detailPanel">
@@ -1556,6 +1946,8 @@
   }
 
   function renderPanel(event) {
+    if (!panel) return;
+
     const p = event.extendedProps;
 
     panel.innerHTML = `
@@ -1572,6 +1964,62 @@
         <span class="badge">${escapeHtml(p.intakeState)}</span>
         <span class="badge">${escapeHtml(p.intakeKindLabel)}</span>
         <span class="badge">${escapeHtml(p.visitTypeLabel)}</span>
+      </div>
+
+      <div class="panel-grid">
+        <div class="panel-item">
+          <div class="mini">メニュー</div>
+          <div class="big">${escapeHtml(p.menu)}</div>
+        </div>
+        <div class="panel-item">
+          <div class="mini">施術者</div>
+          <div class="big">${escapeHtml(p.staffName)}</div>
+        </div>
+        <div class="panel-item wide">
+          <div class="mini">主訴</div>
+          <div class="big">${escapeHtml(p.chiefLabel)}</div>
+        </div>
+        <div class="panel-item">
+          <div class="mini">痛み強さ</div>
+          <div class="big">${escapeHtml(p.painLevelDisplay)}</div>
+        </div>
+        <div class="panel-item">
+          <div class="mini">来院種別</div>
+          <div class="big">${escapeHtml(p.visitTypeLabel)}</div>
+        </div>
+        <div class="panel-item wide">
+          <div class="mini">痛み部位</div>
+          <div class="big">${escapeHtml(p.areasDisplay)}</div>
+        </div>
+      </div>
+
+      <div class="panel-actions">
+        ${p.intakeDetailUrl ? `<a class="btn" href="${p.intakeDetailUrl}">問診を確認</a>` : ''}
+        <a class="btn primary" href="${p.recordingUrl}">診察へ</a>
+        <a class="btn" href="${p.dayUrl}">日表示で見る</a>
+      </div>
+    `;
+  }
+
+  function renderTimelinePanel(button) {
+    if (!panel) return;
+
+    const p = button.dataset;
+
+    panel.innerHTML = `
+      <div class="side-title">予約詳細</div>
+
+      <div class="mini">患者名</div>
+      <div class="big">${escapeHtml(p.patientName)}</div>
+
+      <div class="mini">日時</div>
+      <div class="big">${escapeHtml(p.startTime)} - ${escapeHtml(p.endTime)}</div>
+
+      <div>
+        <span class="badge">${escapeHtml(p.statusLabel)}</span>
+        <span class="badge">${escapeHtml(p.intakeState)}</span>
+        <span class="badge">${escapeHtml(p.intakeKindLabel || '-')}</span>
+        <span class="badge">${escapeHtml(p.visitTypeLabel || '-')}</span>
       </div>
 
       <div class="panel-grid">
@@ -1656,9 +2104,24 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    const timelineButtons = document.querySelectorAll('.timeline-appt');
+
+    if (timelineButtons.length > 0) {
+      timelineButtons.forEach((button) => {
+        button.addEventListener('click', function () {
+          renderTimelinePanel(button);
+        });
+      });
+
+      renderTimelinePanel(timelineButtons[0]);
+      return;
+    }
+
     const calendarEl = document.getElementById('calendar');
+    if (!calendarEl) return;
 
     let initialView = 'dayGridMonth';
+
     if ("{{ period }}" === "week") {
       initialView = 'timeGridWeek';
     } else if ("{{ period }}" === "month") {
@@ -1692,6 +2155,7 @@
       eventStartEditable: "{{ period }}" === "week",
       eventDurationEditable: "{{ period }}" === "week",
       dayMaxEvents: 2,
+
       moreLinkText: function(n) {
         return `他 ${n}件`;
       },
@@ -1729,30 +2193,36 @@
       },
 
       eventDidMount: function(info) {
-        const status = info.event.extendedProps.status;
+        const status = String(info.event.extendedProps.status || '').toLowerCase();
 
-        if (status === 'CANCELLED') {
+        if (status === 'cancelled') {
           info.el.style.backgroundColor = '#fee2e2';
           info.el.style.borderColor = '#fecaca';
           info.el.style.color = '#991b1b';
         }
 
-        if (status === 'ARRIVED') {
+        if (status === 'arrived') {
           info.el.style.backgroundColor = '#dbeafe';
           info.el.style.borderColor = '#93c5fd';
           info.el.style.color = '#1d4ed8';
         }
 
-        if (status === 'COMPLETED') {
+        if (status === 'completed') {
           info.el.style.backgroundColor = '#e0f2fe';
           info.el.style.borderColor = '#7dd3fc';
           info.el.style.color = '#0369a1';
         }
 
-        if (status === 'BOOKED') {
+        if (status === 'booked' || status === 'pending') {
           info.el.style.backgroundColor = '#fef3c7';
           info.el.style.borderColor = '#fde68a';
           info.el.style.color = '#92400e';
+        }
+
+        if (status === 'no_show') {
+          info.el.style.backgroundColor = '#f3f4f6';
+          info.el.style.borderColor = '#e5e7eb';
+          info.el.style.color = '#374151';
         }
       },
 
@@ -1818,7 +2288,7 @@
         timeGridWeek: {
           allDaySlot: false,
           slotMinTime: "08:00:00",
-          slotMaxTime: "21:00:00",
+          slotMaxTime: "20:00:00",
           slotDuration: "00:30:00",
           eventMinHeight: 36
         },

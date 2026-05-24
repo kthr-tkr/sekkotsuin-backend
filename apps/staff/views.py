@@ -435,11 +435,16 @@ def staff_appointments_view(request):
         "status_choices": Appointment.Status.choices,
     }
 
-    if period == "day":
-        return render(request, "staff/appointments.html", context)
-
     context["calendar_events"] = _build_calendar_events(appointments)
     context["calendar_day_summary"] = _build_calendar_day_summary(appointments)
+
+    if period == "day":
+        context["timeline"] = _build_day_timeline_rows(
+            appointments=appointments,
+            staff_users=staff_users,
+            base_day=base_day,
+        )
+
     return render(request, "staff/appointments_calendar.html", context)
 
 
@@ -776,6 +781,109 @@ def _build_calendar_day_summary(appointments):
 
     return summary
 
+def _minutes_from_time(dt, base_day):
+    local_dt = timezone.localtime(dt)
+    return local_dt.hour * 60 + local_dt.minute
+
+
+def _build_day_timeline_rows(appointments, staff_users, base_day):
+    """
+    日表示用：横型スケジュール表データを作成する。
+    横軸は 9:00〜19:00、縦軸は施術者。
+    """
+    start_hour = 8
+    end_hour = 20
+    start_minutes = start_hour * 60
+    end_minutes = end_hour * 60
+    total_minutes = end_minutes - start_minutes
+
+    staff_map = {}
+
+    for user in staff_users:
+        staff_name = user.get_full_name().strip() or user.username
+        staff_map[str(user.id)] = {
+            "staff_id": user.id,
+            "staff_name": staff_name,
+            "appointments": [],
+        }
+
+    unassigned_key = "unassigned"
+    staff_map[unassigned_key] = {
+        "staff_id": None,
+        "staff_name": "未割当",
+        "appointments": [],
+    }
+
+    for a in appointments:
+        intake = getattr(a, "intake", None)
+        summary = _build_staff_intake_summary(intake)
+
+        patient_name = "（患者未確定）"
+        if a.patient:
+            patient_name = f"{a.patient.last_name} {a.patient.first_name}"
+
+        start_dt = timezone.localtime(a.start_at)
+        end_dt = timezone.localtime(a.end_at) if a.end_at else start_dt + timedelta(minutes=30)
+
+        start_min = start_dt.hour * 60 + start_dt.minute
+        end_min = end_dt.hour * 60 + end_dt.minute
+
+        clipped_start = max(start_min, start_minutes)
+        clipped_end = min(end_min, end_minutes)
+
+        if clipped_end <= start_minutes or clipped_start >= end_minutes:
+            continue
+
+        left_percent = ((clipped_start - start_minutes) / total_minutes) * 100
+        width_percent = max(((clipped_end - clipped_start) / total_minutes) * 100, 3)
+
+        intake_state = "問診未着手"
+        if summary["has_intake"]:
+            intake_state = "問診完了" if summary["intake_completed"] else "問診入力中"
+
+        row_key = str(a.assigned_staff_id) if a.assigned_staff_id else unassigned_key
+        if row_key not in staff_map:
+            staff_map[row_key] = {
+                "staff_id": a.assigned_staff_id,
+                "staff_name": a.assigned_staff.username if a.assigned_staff else "未割当",
+                "appointments": [],
+            }
+
+        staff_map[row_key]["appointments"].append({
+            "id": a.id,
+            "patient_name": patient_name,
+            "start_time": start_dt.strftime("%H:%M"),
+            "end_time": end_dt.strftime("%H:%M"),
+            "menu": a.menu or "-",
+            "status": a.status,
+            "status_label": a.get_status_display(),
+            "intake_state": intake_state,
+            "chief_label": summary["chief_label"] or "主訴未入力",
+            "pain_level_display": summary["pain_level_display"] or "-",
+            "visit_type_label": summary["visit_type_label"] or "-",
+            "areas_display": "、".join(summary["areas_display"]) if summary["areas_display"] else "-",
+            "left_percent": round(left_percent, 3),
+            "width_percent": round(width_percent, 3),
+            "intake_detail_url": reverse("staff:intake_detail", args=[a.intake.id]) if intake else "",
+            "recording_url": reverse("intakes:recording_new", args=[a.id]),
+            "day_url": f"{reverse('staff:appointments')}?period=day&day={a.start_at.date().isoformat()}",
+        })
+
+    rows = list(staff_map.values())
+
+    rows = [
+        row for row in rows
+        if row["appointments"] or row["staff_id"] is not None
+    ]
+
+    rows.sort(key=lambda x: (x["staff_name"] == "未割当", x["staff_name"]))
+
+    return {
+        "start_hour": start_hour,
+        "end_hour": end_hour,
+        "hours": list(range(start_hour, end_hour + 1)),
+        "rows": rows,
+    }
 
 @staff_required
 @require_POST

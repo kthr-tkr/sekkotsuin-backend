@@ -702,37 +702,42 @@
 
         <nav class="nav">
           <a href="{% url 'staff:dashboard' %}" class="{% if active == 'home' %}active{% endif %}">
-            <span class="nav-icon">⌂</span>
+            <span class="nav-icon">🏠</span>
             <span class="label-text">ホーム</span>
           </a>
 
           <a href="{% url 'staff:intake' %}" class="{% if active == 'intake' %}active{% endif %}">
-            <span class="nav-icon">✎</span>
+            <span class="nav-icon">🖋</span>
             <span class="label-text">問診</span>
           </a>
 
           <a href="{% url 'staff:appointments' %}" class="{% if active == 'appointments' %}active{% endif %}">
-            <span class="nav-icon">◷</span>
+            <span class="nav-icon">⌚</span>
             <span class="label-text">予約管理</span>
           </a>
 
           <a href="{% url 'staff:patient_search' %}" class="{% if active == 'search' %}active{% endif %}">
-            <span class="nav-icon">⌕</span>
-            <span class="label-text">患者検索</span>
+            <span class="nav-icon">🔍</span>
+            <span class="label-text">患者様一覧</span>
           </a>
 
           <a href="{% url 'staff:staff_list' %}" class="{% if active == 'staffs' %}active{% endif %}">
-            <span class="nav-icon">☰</span>
+            <span class="nav-icon">👤</span>
             <span class="label-text">担当者一覧</span>
           </a>
 
+          <a href="{% url 'staff:settings' %}" class="{% if active == 'settings' %}active{% endif %}">
+            <span class="nav-icon">📈</span>
+            <span class="label-text">KPI</span>
+          </a>
+
           <a href="{% url 'staff:manual' %}" class="{% if active == 'manual' %}active{% endif %}">
-            <span class="nav-icon">?</span>
+            <span class="nav-icon">❔</span>
             <span class="label-text">操作マニュアル</span>
           </a>
 
           <a href="{% url 'staff:settings' %}" class="{% if active == 'settings' %}active{% endif %}">
-            <span class="nav-icon">⚙</span>
+            <span class="nav-icon">📚</span>
             <span class="label-text">設定</span>
           </a>
         </nav>
