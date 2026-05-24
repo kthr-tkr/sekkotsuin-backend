@@ -1867,6 +1867,152 @@
     </a>
   </nav>
 
+  {% if active_tab == "overview" %}
+
+    <section class="summary-grid">
+      <div class="summary-card {% if plan.is_active %}good{% else %}bad{% endif %}">
+        <div class="summary-label">現在ステータス</div>
+        <div class="summary-value">{{ plan.get_status_display }}</div>
+        <div class="summary-sub">
+          {% if plan.is_active %}有効な計画です{% else %}現在は非アクティブです{% endif %}
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">総施術回数</div>
+        <div class="summary-value">{{ progress_count }}回</div>
+        <div class="summary-sub">
+          {% if latest_progress %}
+            直近施術日：{{ latest_progress.visit_date }}
+          {% else %}
+            まだ記録がありません
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="summary-card {% if plan.next_visit_date %}good{% else %}bad{% endif %}">
+        <div class="summary-label">次回来院日</div>
+        <div class="summary-value">{{ plan.next_visit_date|default:"未設定" }}</div>
+        <div class="summary-sub">予約タブから関連予約を確認できます</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">痛み推移</div>
+        <div class="summary-value
+          {% if pain_trend_label == '大きく改善' or pain_trend_label == '改善傾向' %}trend-good{% elif pain_trend_label == '横ばい' %}trend-mid{% elif pain_trend_label == '再評価候補' %}trend-bad{% endif %}
+        ">
+          {{ pain_trend_label }}
+        </div>
+        <div class="summary-sub">
+          {% if first_pain_level is not None and latest_pain_level is not None %}
+            初回 {{ first_pain_level }} → 直近 {{ latest_pain_level }}
+          {% else %}
+            痛みレベルの記録待ち
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="overview-main-grid">
+
+      <div class="overview-focus-card">
+        <h2 class="overview-focus-title">計画の要点</h2>
+        <div class="overview-focus-sub">
+          施術計画の中心となる情報だけを確認します。
+        </div>
+
+        <div class="overview-plan-title">
+          {{ plan.title|default:"施術計画" }}
+        </div>
+
+        <div class="overview-plan-chief">
+          主訴：{{ plan.chief_complaint|default:"-" }}
+        </div>
+
+        <div class="overview-mini-grid">
+          <div class="overview-mini-box">
+            <div class="overview-mini-label">患者名</div>
+            <div class="overview-mini-value">
+              {{ plan.patient.last_name }} {{ plan.patient.first_name }}
+            </div>
+          </div>
+
+          <div class="overview-mini-box">
+            <div class="overview-mini-label">来院目安</div>
+            <div class="overview-mini-value">
+              {{ plan.get_visit_guide_type_display|default:"-" }}
+              {% if plan.visit_guide_count %} {{ plan.visit_guide_count }}回{% endif %}
+            </div>
+          </div>
+
+          <div class="overview-mini-box">
+            <div class="overview-mini-label">来院補足</div>
+            <div class="overview-mini-value">
+              {{ plan.visit_guide_unit_note|default:"-" }}
+            </div>
+          </div>
+
+          <div class="overview-mini-box">
+            <div class="overview-mini-label">改善目安</div>
+            <div class="overview-mini-value">
+              {% if plan.expected_recovery_weeks_min or plan.expected_recovery_weeks_max %}
+                {{ plan.expected_recovery_weeks_min|default:"-" }}〜{{ plan.expected_recovery_weeks_max|default:"-" }}週
+              {% else %}
+                -
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="overview-side-card">
+        <div class="section-head" style="margin-bottom:10px;">
+          <div>
+            <h2 class="section-title">計画状態</h2>
+            <div class="section-sub">説明状態とステータスを管理します</div>
+          </div>
+        </div>
+
+        <div class="pill-list">
+          {% if plan.explained_to_patient %}
+            <span class="overview-status-chip good">患者へ説明済み</span>
+          {% else %}
+            <span class="overview-status-chip warn">未説明</span>
+          {% endif %}
+
+          {% if plan.is_active %}
+            <span class="overview-status-chip good">有効な計画</span>
+          {% else %}
+            <span class="overview-status-chip warn">非アクティブ</span>
+          {% endif %}
+        </div>
+
+        <div class="overview-status-actions">
+          <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="active">
+            <input type="hidden" name="next" value="{{ current_path }}">
+            <button type="submit" class="tpd-btn">進行中にする</button>
+          </form>
+
+          <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="paused">
+            <input type="hidden" name="next" value="{{ current_path }}">
+            <button type="submit" class="tpd-btn">中断にする</button>
+          </form>
+
+          <form method="post" action="{% url 'treatment_plans:plan_status_update' plan.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="completed">
+            <input type="hidden" name="next" value="{{ current_path }}">
+            <button type="submit" class="tpd-btn primary">完了にする</button>
+          </form>
+        </div>
+      </aside>
+
+    </section>
+
   {% elif active_tab == "progress" %}
 
     <section class="tpd-card">
