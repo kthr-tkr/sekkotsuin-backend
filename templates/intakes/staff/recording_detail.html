@@ -1014,6 +1014,441 @@
   background:rgba(255,255,255,.72);
 }
 
+/* ===== Premium Summary Editor Modal ===== */
+#modal-editor{
+  z-index:80;
+}
+
+#modal-editor .modal{
+  width:min(1180px, calc(100vw - 48px));
+  max-height:calc(100vh - 48px);
+  border:none;
+  border-radius:30px;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(96,165,250,.18), transparent 26%),
+    linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(246,249,253,.98) 100%);
+  box-shadow:
+    0 40px 100px rgba(2,6,23,.34),
+    inset 0 1px 0 rgba(255,255,255,.95);
+  overflow:hidden;
+}
+
+#modal-editor .modalHead{
+  padding:20px 22px;
+  border-bottom:1px solid rgba(226,232,240,.85);
+  background:
+    radial-gradient(circle at 88% 12%, rgba(91,140,255,.22), transparent 26%),
+    linear-gradient(135deg, #060c19 0%, #111b36 48%, #315fe8 100%);
+  color:#fff;
+}
+
+.editor-head-left{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.editor-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:rgba(255,255,255,.62);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+
+.editor-kicker::before{
+  content:"";
+  width:20px;
+  height:1px;
+  background:rgba(255,255,255,.35);
+}
+
+.editor-title{
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:-.03em;
+}
+
+.editor-sub{
+  color:rgba(255,255,255,.70);
+  font-size:12px;
+  font-weight:700;
+  line-height:1.6;
+}
+
+#modal-editor .modalClose{
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.10);
+  color:#fff;
+  border-radius:999px;
+  padding:9px 13px;
+  font-weight:900;
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+}
+
+#modal-editor .modalClose:hover{
+  background:rgba(255,255,255,.18);
+}
+
+#modal-editor .modalBody{
+  padding:0;
+  max-height:calc(100vh - 150px);
+  overflow:auto;
+}
+
+.editor-wrap{
+  padding:22px;
+}
+
+.editor-notice{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  border:1px solid rgba(245,158,11,.22);
+  background:linear-gradient(180deg, rgba(255,251,235,.90) 0%, rgba(255,255,255,.94) 100%);
+  color:#92400e;
+  border-radius:20px;
+  padding:14px 16px;
+  margin-bottom:18px;
+  box-shadow:0 12px 26px rgba(245,158,11,.06);
+}
+
+.editor-notice-icon{
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  background:rgba(245,158,11,.14);
+  color:#b45309;
+  font-weight:900;
+}
+
+.editor-notice-title{
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:3px;
+}
+
+.editor-notice-text{
+  font-size:12px;
+  line-height:1.65;
+  font-weight:700;
+}
+
+.editor-section{
+  border:1px solid rgba(226,232,240,.92);
+  border-radius:26px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,250,252,.96) 100%);
+  box-shadow:
+    0 18px 42px rgba(15,23,42,.06),
+    inset 0 1px 0 rgba(255,255,255,.95);
+  overflow:hidden;
+  margin-bottom:18px;
+}
+
+.editor-section-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  padding:16px 18px;
+  border-bottom:1px solid rgba(226,232,240,.82);
+  background:rgba(255,255,255,.72);
+}
+
+.editor-section-title{
+  font-size:17px;
+  font-weight:900;
+  color:#0f172a;
+  letter-spacing:-.02em;
+}
+
+.editor-section-sub{
+  margin-top:4px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.6;
+}
+
+.editor-section-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  padding:0 11px;
+  border-radius:999px;
+  background:linear-gradient(135deg, rgba(59,130,246,.10) 0%, rgba(124,58,237,.08) 100%);
+  border:1px solid rgba(59,130,246,.10);
+  color:#3658c9;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.editor-section-body{
+  padding:18px;
+}
+
+.editor-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.editor-field{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.editor-field.is-wide{
+  grid-column:1 / -1;
+}
+
+.editor-label{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:900;
+}
+
+.editor-label small{
+  color:#94a3b8;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.04em;
+}
+
+#modal-editor .editor-input,
+#modal-editor .editor-textarea{
+  width:100%;
+  border:1px solid rgba(203,213,225,.9);
+  border-radius:18px;
+  background:rgba(255,255,255,.94);
+  color:#0f172a;
+  outline:none;
+  font-size:14px;
+  font-weight:700;
+  line-height:1.7;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    0 10px 22px rgba(15,23,42,.03);
+  transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+#modal-editor .editor-input{
+  min-height:50px;
+  padding:0 14px;
+}
+
+#modal-editor .editor-textarea{
+  min-height:112px;
+  padding:13px 14px;
+  resize:vertical;
+}
+
+#modal-editor .editor-textarea.soap{
+  min-height:160px;
+}
+
+#modal-editor .editor-input:focus,
+#modal-editor .editor-textarea:focus{
+  border-color:rgba(59,130,246,.55);
+  box-shadow:
+    0 0 0 4px rgba(59,130,246,.10),
+    inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+.soap-editor-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.soap-editor-card{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(226,232,240,.92);
+  border-radius:24px;
+  background:#fff;
+  box-shadow:0 14px 30px rgba(15,23,42,.04);
+}
+
+.soap-editor-card::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:4px;
+}
+
+.soap-editor-card.s::before{ background:#bff5f6; }
+.soap-editor-card.o::before{ background:#86e7ea; }
+.soap-editor-card.a::before{ background:#63cfe3; }
+.soap-editor-card.p::before{ background:#4499d8; }
+
+.soap-editor-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 14px 0;
+}
+
+.soap-pill{
+  width:42px;
+  height:42px;
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#0f172a;
+  font-size:18px;
+  font-weight:900;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.soap-editor-card.s .soap-pill{ background:#bff5f6; }
+.soap-editor-card.o .soap-pill{ background:#86e7ea; }
+.soap-editor-card.a .soap-pill{ background:#63cfe3; }
+.soap-editor-card.p .soap-pill{ background:#4499d8; color:#fff; }
+
+.soap-title{
+  font-size:14px;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.soap-help{
+  margin-top:2px;
+  color:#94a3b8;
+  font-size:11px;
+  font-weight:800;
+}
+
+.soap-editor-body{
+  padding:12px 14px 14px;
+}
+
+.editor-actions{
+  position:sticky;
+  bottom:0;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px 22px;
+  border-top:1px solid rgba(226,232,240,.9);
+  background:rgba(255,255,255,.86);
+  -webkit-backdrop-filter:blur(16px);
+  backdrop-filter:blur(16px);
+}
+
+.editor-actions-left{
+  color:#64748b;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.6;
+}
+
+.editor-actions-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.editor-save-btn{
+  min-height:44px;
+  padding:0 18px;
+  border-radius:16px;
+  border:none;
+  color:#fff;
+  background:linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
+  box-shadow:0 16px 34px rgba(37,99,235,.24);
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.editor-json-details{
+  margin-top:14px;
+}
+
+.editor-json-details summary{
+  cursor:pointer;
+  color:#475569;
+  font-size:12px;
+  font-weight:900;
+}
+
+#modal-editor #summary_json_preview{
+  margin-top:10px;
+  min-height:220px;
+}
+
+@media (max-width: 980px){
+  #modal-editor .modal{
+    width:calc(100vw - 20px);
+    max-height:calc(100vh - 20px);
+    border-radius:24px;
+  }
+
+  #modal-editor .modalBody{
+    max-height:calc(100vh - 130px);
+  }
+
+  .editor-wrap{
+    padding:14px;
+  }
+
+  .editor-grid,
+  .soap-editor-grid{
+    grid-template-columns:1fr;
+  }
+
+  .editor-section-head{
+    flex-direction:column;
+    gap:8px;
+    padding:14px;
+  }
+
+  .editor-section-body{
+    padding:14px;
+  }
+
+  .editor-actions{
+    position:static;
+    flex-direction:column;
+    align-items:stretch;
+    padding:14px;
+  }
+
+  .editor-actions-right{
+    justify-content:stretch;
+  }
+
+  .editor-save-btn,
+  .editor-actions-right .badge{
+    width:100%;
+    justify-content:center;
+  }
+}
+
 </style>
 
 <div class="ai-page">
@@ -1460,121 +1895,239 @@
   </div>
 </div>
 
-{# ===== Modal: Editor ===== #}
+{# ===== Modal: Premium Editor ===== #}
 <div class="modalMask" id="modal-editor" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modalHead">
-      <div class="ttl">編集（SOAP）→ 確定保存</div>
+      <div class="editor-head-left">
+        <div class="editor-kicker">AI Draft Editor</div>
+        <div class="editor-title">診療要約の編集</div>
+        <div class="editor-sub">
+          AI下書きを確認し、施術者の判断で修正してから確定保存します。
+        </div>
+      </div>
+
       <button class="modalClose" type="button" data-close>閉じる</button>
     </div>
 
     <div class="modalBody">
-      <div class="muted" style="font-size:12px; margin-bottom:10px;">
-        ※1行=1項目です。保存時にJSONへ反映されます（バックエンド変更なし）。
-      </div>
-
       <form method="post" action="{{ confirm_url }}" id="soapEditForm">
         {% csrf_token %}
-        <div style="margin-bottom:14px;">
-          <div style="font-weight:900; margin:0 0 10px;">診療要約の編集</div>
 
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-            <div style="grid-column:1 / -1;">
-              <div style="font-weight:900; margin:0 0 6px;">主訴</div>
-              <textarea class="jsonarea" style="min-height:90px;" data-extract="chief_complaint"
-                placeholder="例）腰をひねってからズキズキ痛む">{% if summary.extract.chief_complaint %}{{ summary.extract.chief_complaint }}{% endif %}</textarea>
-            </div>
+        <div class="editor-wrap">
 
+          <div class="editor-notice">
+            <div class="editor-notice-icon">!</div>
             <div>
-              <div style="font-weight:900; margin:0 0 6px;">発症</div>
-              <input class="jsonarea" style="min-height:auto; height:46px;" data-extract="onset"
-                value="{{ summary.extract.onset|default:'' }}" placeholder="例）2週間前">
-            </div>
-
-            <div>
-              <div style="font-weight:900; margin:0 0 6px;">きっかけ</div>
-              <input class="jsonarea" style="min-height:auto; height:46px;" data-extract="trigger"
-                value="{{ summary.extract.trigger|default:'' }}" placeholder="例）腰をひねった">
-            </div>
-
-            <div>
-              <div style="font-weight:900; margin:0 0 6px;">痛み(0-10)</div>
-              <input class="jsonarea" style="min-height:auto; height:46px;" data-extract="severity_0_10"
-                value="{{ summary.extract.severity_0_10|default:'' }}" placeholder="例）7">
-            </div>
-
-            <div>
-              <div style="font-weight:900; margin:0 0 6px;">急性 / 慢性</div>
-              <input class="jsonarea" style="min-height:auto; height:46px;" data-extract="symptom_type"
-                value="{{ summary.extract.symptom_type|default:'' }}" placeholder="例）acute">
-            </div>
-
-            <div style="grid-column:1 / -1;">
-              <div style="font-weight:900; margin:0 0 6px;">部位（1行に1項目）</div>
-              <textarea class="jsonarea" style="min-height:100px;" data-extract-list="locations"
-                placeholder="例）腰&#10;右腰">{% if summary.extract.locations %}{% for x in summary.extract.locations %}{{ x }}{% if not forloop.last %}\n{% endif %}{% endfor %}{% endif %}</textarea>
-            </div>
-
-            <div style="grid-column:1 / -1;">
-              <div style="font-weight:900; margin:0 0 6px;">性状（1行に1項目）</div>
-              <textarea class="jsonarea" style="min-height:100px;" data-extract-list="qualities"
-                placeholder="例）ズキズキする&#10;張っている">{% if summary.extract.qualities %}{% for x in summary.extract.qualities %}{{ x }}{% if not forloop.last %}\n{% endif %}{% endfor %}{% endif %}</textarea>
+              <div class="editor-notice-title">AI下書きは必ず確認してください</div>
+              <div class="editor-notice-text">
+                この内容は録音内容から生成された下書きです。最終的な判断・修正・確定は施術者が行ってください。
+              </div>
             </div>
           </div>
-        </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-          <div>
-            <div style="font-weight:900; margin:0 0 6px;">S</div>
-            <textarea class="jsonarea" style="min-height:140px;" data-soap="S"
-              placeholder="例）1週間前から右腰に急な痛み…">{% for x in soap_view.S %}{{ x }}{% if not forloop.last %}\n{% endif %}{% endfor %}</textarea>
-          </div>
 
-          <div>
-            <div style="font-weight:900; margin:0 0 6px;">O</div>
-            <textarea class="jsonarea" style="min-height:140px;" data-soap="O"
-              placeholder="例）しびれ、筋力低下…">{% for x in soap_view.O %}{{ x }}{% if not forloop.last %}\n{% endif %}{% endfor %}</textarea>
-          </div>
+          <section class="editor-section">
+            <div class="editor-section-head">
+              <div>
+                <div class="editor-section-title">診療要約</div>
+                <div class="editor-section-sub">
+                  主訴・発症・部位など、カルテ登録前に要約情報を整えます。
+                </div>
+              </div>
+              <span class="editor-section-badge">Summary</span>
+            </div>
 
-          <div>
-            <div style="font-weight:900; margin:0 0 6px;">A</div>
-            <textarea class="jsonarea" style="min-height:140px;" data-soap="A"
-              placeholder="例）右腰の急性痛…鑑別…">{% for x in soap_view.A %}{{ x }}{% if not forloop.last %}\n{% endif %}{% endfor %}</textarea>
-          </div>
+            <div class="editor-section-body">
+              <div class="editor-grid">
 
-          <div>
-            <div style="font-weight:900; margin:0 0 6px;">P</div>
-            <textarea class="jsonarea" style="min-height:140px;" data-soap="P"
-              placeholder="例）施術、経過観察…">{% for x in soap_view.P %}{{ x }}{% if not forloop.last %}\n{% endif %}{% endfor %}</textarea>
-          </div>
-        </div>
+                <div class="editor-field is-wide">
+                  <label class="editor-label">
+                    主訴
+                    <small>chief complaint</small>
+                  </label>
+                  <textarea class="editor-textarea"
+                            data-extract="chief_complaint"
+                            placeholder="例）腰をひねってからズキズキ痛む">{% if summary.extract.chief_complaint %}{{ summary.extract.chief_complaint }}{% endif %}</textarea>
+                </div>
 
-        <div style="height:12px;"></div>
+                <div class="editor-field">
+                  <label class="editor-label">
+                    発症
+                    <small>onset</small>
+                  </label>
+                  <input class="editor-input"
+                         data-extract="onset"
+                         value="{{ summary.extract.onset|default:'' }}"
+                         placeholder="例）2週間前">
+                </div>
 
-        <textarea name="summary_json" id="summary_json_hidden" class="jsonarea" style="display:none;">
+                <div class="editor-field">
+                  <label class="editor-label">
+                    きっかけ
+                    <small>trigger</small>
+                  </label>
+                  <input class="editor-input"
+                         data-extract="trigger"
+                         value="{{ summary.extract.trigger|default:'' }}"
+                         placeholder="例）腰をひねった">
+                </div>
+
+                <div class="editor-field">
+                  <label class="editor-label">
+                    痛み
+                    <small>0-10</small>
+                  </label>
+                  <input class="editor-input"
+                         data-extract="severity_0_10"
+                         value="{{ summary.extract.severity_0_10|default:'' }}"
+                         placeholder="例）7">
+                </div>
+
+                <div class="editor-field">
+                  <label class="editor-label">
+                    急性 / 慢性
+                    <small>type</small>
+                  </label>
+                  <input class="editor-input"
+                         data-extract="symptom_type"
+                         value="{{ summary.extract.symptom_type|default:'' }}"
+                         placeholder="例）acute">
+                </div>
+
+                <div class="editor-field is-wide">
+                  <label class="editor-label">
+                    部位
+                    <small>1行に1項目</small>
+                  </label>
+                  <textarea class="editor-textarea"
+                            data-extract-list="locations"
+                            placeholder="例）腰&#10;右腰">{% if summary.extract.locations %}{% for x in summary.extract.locations %}{{ x }}{% if not forloop.last %}
+{% endif %}{% endfor %}{% endif %}</textarea>
+                </div>
+
+                <div class="editor-field is-wide">
+                  <label class="editor-label">
+                    性状
+                    <small>1行に1項目</small>
+                  </label>
+                  <textarea class="editor-textarea"
+                            data-extract-list="qualities"
+                            placeholder="例）ズキズキする&#10;張っている">{% if summary.extract.qualities %}{% for x in summary.extract.qualities %}{{ x }}{% if not forloop.last %}
+{% endif %}{% endfor %}{% endif %}</textarea>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          <section class="editor-section">
+            <div class="editor-section-head">
+              <div>
+                <div class="editor-section-title">SOAP</div>
+                <div class="editor-section-sub">
+                  S/O/A/Pを1行1項目で編集できます。保存時にJSONへ反映します。
+                </div>
+              </div>
+              <span class="editor-section-badge">Clinical Note</span>
+            </div>
+
+            <div class="editor-section-body">
+              <div class="soap-editor-grid">
+
+                <div class="soap-editor-card s">
+                  <div class="soap-editor-head">
+                    <div class="soap-pill">S</div>
+                    <div>
+                      <div class="soap-title">Subjective</div>
+                      <div class="soap-help">患者さんの訴え・自覚症状</div>
+                    </div>
+                  </div>
+                  <div class="soap-editor-body">
+                    <textarea class="editor-textarea soap"
+                              data-soap="S"
+                              placeholder="例）1週間前から右腰に急な痛み…">{% for x in soap_view.S %}{{ x }}{% if not forloop.last %}
+{% endif %}{% endfor %}</textarea>
+                  </div>
+                </div>
+
+                <div class="soap-editor-card o">
+                  <div class="soap-editor-head">
+                    <div class="soap-pill">O</div>
+                    <div>
+                      <div class="soap-title">Objective</div>
+                      <div class="soap-help">観察・動作確認・客観所見</div>
+                    </div>
+                  </div>
+                  <div class="soap-editor-body">
+                    <textarea class="editor-textarea soap"
+                              data-soap="O"
+                              placeholder="例）前屈時に痛み…">{% for x in soap_view.O %}{{ x }}{% if not forloop.last %}
+{% endif %}{% endfor %}</textarea>
+                  </div>
+                </div>
+
+                <div class="soap-editor-card a">
+                  <div class="soap-editor-head">
+                    <div class="soap-pill">A</div>
+                    <div>
+                      <div class="soap-title">Assessment</div>
+                      <div class="soap-help">評価・原因仮説・注意点</div>
+                    </div>
+                  </div>
+                  <div class="soap-editor-body">
+                    <textarea class="editor-textarea soap"
+                              data-soap="A"
+                              placeholder="例）急性腰痛の可能性…">{% for x in soap_view.A %}{{ x }}{% if not forloop.last %}
+{% endif %}{% endfor %}</textarea>
+                  </div>
+                </div>
+
+                <div class="soap-editor-card p">
+                  <div class="soap-editor-head">
+                    <div class="soap-pill">P</div>
+                    <div>
+                      <div class="soap-title">Plan</div>
+                      <div class="soap-help">施術方針・次回確認・生活指導</div>
+                    </div>
+                  </div>
+                  <div class="soap-editor-body">
+                    <textarea class="editor-textarea soap"
+                              data-soap="P"
+                              placeholder="例）施術、経過観察…">{% for x in soap_view.P %}{{ x }}{% if not forloop.last %}
+{% endif %}{% endfor %}</textarea>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          <textarea name="summary_json" id="summary_json_hidden" style="display:none;">
 {% if summary_json_pretty %}{{ summary_json_pretty }}{% else %}{{ recording.summary_json|default:"" }}{% endif %}
-        </textarea>
+          </textarea>
 
-        <div style="display:flex; align-items:center; gap:10px; justify-content:space-between; margin-top:12px;">
-          <div class="muted" style="font-size:12px;">
-            ※SOAP以外（extract/followups）は現状のJSONを維持します（壊さない運用）
+          <details class="editor-json-details">
+            <summary>上級者向け：JSONを確認</summary>
+            <textarea class="editor-textarea" id="summary_json_preview" readonly></textarea>
+          </details>
+
+        </div>
+
+        <div class="editor-actions">
+          <div class="editor-actions-left">
+            ※「確定する」を押すと、編集内容がAI下書きではなく確定版として保存されます。
           </div>
 
-          <div style="display:flex; align-items:center; gap:10px;">
-            <button class="btn btn-primary" type="submit">確定する</button>
+          <div class="editor-actions-right">
             {% if recording.is_confirmed %}
               <span class="badge">確定済み</span>
             {% else %}
               <span class="badge">未確定</span>
             {% endif %}
+            <button class="editor-save-btn" type="submit">確定する</button>
           </div>
         </div>
 
-        <details style="margin-top:12px;">
-          <summary style="cursor:pointer; font-weight:900;">上級者向け：JSONを確認</summary>
-          <div style="margin-top:10px;">
-            <textarea class="jsonarea" id="summary_json_preview" readonly></textarea>
-          </div>
-        </details>
       </form>
     </div>
   </div>
