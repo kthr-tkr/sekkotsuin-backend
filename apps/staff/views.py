@@ -246,36 +246,73 @@ def staff_dashboard_view(request):
 
     todays_appts = (
         Appointment.objects
-        .select_related("patient", "assigned_staff")
-        .filter(clinic=clinic, start_at__date=today)
+        .select_related("patient", "assigned_staff", "intake")
+        .filter(
+            clinic=clinic,
+            start_at__date=today,
+        )
         .order_by("start_at")
     )
 
-    waiting_qs = todays_appts.filter(status__in=[Appointment.Status.BOOKED, Appointment.Status.ARRIVED])
-    waiting_count = waiting_qs.count()
-    done_count = todays_appts.filter(status=Appointment.Status.COMPLETED).count()
-    intake_count = Intake.objects.filter(clinic=clinic, submitted_at__date=today).count()
-    not_intake_count = todays_appts.filter(intake__isnull=True).count()
+    total_appointment_count = todays_appts.count()
 
-    ai_count = intake_count
-    note_count = intake_count
+    waiting_qs = todays_appts.filter(
+        status__in=[
+            Appointment.Status.BOOKED,
+            Appointment.Status.ARRIVED,
+        ]
+    )
+
+    waiting_count = waiting_qs.count()
+
+    done_count = todays_appts.filter(
+        status=Appointment.Status.COMPLETED
+    ).count()
+
+    intake_count = Intake.objects.filter(
+        clinic=clinic,
+        submitted_at__date=today,
+    ).count()
+
+    not_intake_count = todays_appts.filter(
+        intake__isnull=True
+    ).count()
+
     next_appt = waiting_qs.first()
     appt_cards = todays_appts[:5]
+
+    # 今後、施術計画・経過記録モデルと正確に連携する想定
+    active_plan_count = 0
+    paused_plan_count = 0
+    completed_plan_count = 0
+    today_progress_count = 0
+
+    # 今後、AI要約・カルテ生成ステータスと連携する想定
+    ai_count = intake_count
+    note_count = intake_count
 
     return render(request, "staff/dashboard.html", {
         "active": "home",
         "page_title": "Dashboard",
         "today": today,
+
+        "total_appointment_count": total_appointment_count,
         "waiting_count": waiting_count,
         "done_count": done_count,
-        "ai_count": ai_count,
+
         "intake_count": intake_count,
-        "note_count": note_count,
         "not_intake_count": not_intake_count,
+        "ai_count": ai_count,
+        "note_count": note_count,
+
+        "active_plan_count": active_plan_count,
+        "paused_plan_count": paused_plan_count,
+        "completed_plan_count": completed_plan_count,
+        "today_progress_count": today_progress_count,
+
         "next_appt": next_appt,
         "appointments": appt_cards,
     })
-
 
 @staff_required
 def staff_intake_view(request):

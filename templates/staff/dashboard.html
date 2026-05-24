@@ -1,6 +1,6 @@
 {# templates/staff/dashboard.html #}
 {% extends "staff/_layout.html" %}
-{% block title %}Medical AI | Dashboard{% endblock %}
+{% block title %}CareFrow | Dashboard{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -21,6 +21,7 @@
     --success:#10b981;
     --warn:#f59e0b;
     --danger:#ef4444;
+    --cyan:#06b6d4;
 
     --shadow-xs:0 6px 18px rgba(15,23,42,.05);
     --shadow-sm:0 16px 36px rgba(15,23,42,.06);
@@ -62,6 +63,7 @@
     font-weight:800;
     letter-spacing:.02em;
     margin-bottom:14px;
+    -webkit-backdrop-filter:blur(10px);
     backdrop-filter:blur(10px);
   }
 
@@ -148,71 +150,6 @@
     margin-right:8px;
     box-shadow:0 0 0 4px rgba(34,197,94,.15);
     vertical-align:middle;
-  }
-
-  .divider{
-    height:1px;
-    background:linear-gradient(90deg, rgba(148,163,184,.0) 0%, rgba(148,163,184,.35) 18%, rgba(148,163,184,.35) 82%, rgba(148,163,184,.0) 100%);
-  }
-
-  .action-row{
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-  }
-
-  .btn{
-    position:relative;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:46px;
-    padding:0 18px;
-    border-radius:16px;
-    border:1px solid rgba(15,23,42,.08);
-    background:rgba(255,255,255,.78);
-    color:#111827;
-    font-size:14px;
-    font-weight:800;
-    letter-spacing:.01em;
-    box-shadow:var(--shadow-xs);
-    backdrop-filter:blur(10px);
-    transition:.2s ease;
-  }
-
-  .btn:hover{
-    transform:translateY(-1px);
-    box-shadow:0 14px 28px rgba(15,23,42,.08);
-  }
-
-  .btn-primary{
-    color:#fff;
-    border-color:transparent;
-    background:
-      linear-gradient(135deg, #0b1220 0%, #1c2d63 55%, #3b82f6 100%);
-    box-shadow:
-      0 16px 36px rgba(29,78,216,.20),
-      inset 0 1px 0 rgba(255,255,255,.10);
-  }
-
-  .btn-primary::after{
-    content:"";
-    position:absolute;
-    inset:1px;
-    border-radius:15px;
-    border:1px solid rgba(255,255,255,.08);
-    pointer-events:none;
-  }
-
-  .btn-ghost{
-    background:rgba(255,255,255,.88);
-  }
-
-  .btn:disabled{
-    opacity:.45;
-    cursor:not-allowed;
-    transform:none;
-    box-shadow:none;
   }
 
   .hero{
@@ -313,6 +250,7 @@
     color:#fff;
     font-size:12px;
     font-weight:800;
+    -webkit-backdrop-filter:blur(10px);
     backdrop-filter:blur(10px);
   }
 
@@ -329,6 +267,7 @@
     background:linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.08) 100%);
     border:1px solid rgba(255,255,255,.12);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+    -webkit-backdrop-filter:blur(12px);
     backdrop-filter:blur(12px);
     overflow:hidden;
   }
@@ -384,7 +323,7 @@
 
   .stats-grid{
     display:grid;
-    grid-template-columns:repeat(4, 1fr);
+    grid-template-columns:repeat(6, 1fr);
     gap:16px;
   }
 
@@ -392,10 +331,11 @@
     position:relative;
     overflow:hidden;
     border-radius:24px;
-    padding:22px 22px 20px;
+    padding:22px 20px 20px;
     background:rgba(255,255,255,.76);
     border:1px solid rgba(255,255,255,.75);
     box-shadow:var(--shadow-sm);
+    -webkit-backdrop-filter:blur(14px);
     backdrop-filter:blur(14px);
   }
 
@@ -433,6 +373,18 @@
     box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
   }
 
+  .stat-accent.success{
+    background:linear-gradient(135deg, rgba(16,185,129,.14) 0%, rgba(34,197,94,.10) 100%);
+  }
+
+  .stat-accent.warn{
+    background:linear-gradient(135deg, rgba(245,158,11,.16) 0%, rgba(251,191,36,.10) 100%);
+  }
+
+  .stat-accent.ai{
+    background:linear-gradient(135deg, rgba(124,58,237,.16) 0%, rgba(59,130,246,.12) 100%);
+  }
+
   .stat-value{
     position:relative;
     z-index:1;
@@ -453,7 +405,15 @@
     font-weight:600;
   }
 
-  .section-card{
+  .dashboard-grid{
+    display:grid;
+    grid-template-columns:1.2fr .8fr;
+    gap:18px;
+    align-items:start;
+  }
+
+  .section-card,
+  .schedule-card{
     position:relative;
     overflow:hidden;
     border-radius:28px;
@@ -461,10 +421,12 @@
     background:rgba(255,255,255,.78);
     border:1px solid rgba(255,255,255,.78);
     box-shadow:var(--shadow-sm);
+    -webkit-backdrop-filter:blur(16px);
     backdrop-filter:blur(16px);
   }
 
-  .section-card::after{
+  .section-card::after,
+  .schedule-card::after{
     content:"";
     position:absolute;
     inset:0;
@@ -571,25 +533,6 @@
     line-height:1.6;
   }
 
-  .schedule-card{
-    position:relative;
-    overflow:hidden;
-    border-radius:28px;
-    padding:22px;
-    background:rgba(255,255,255,.78);
-    border:1px solid rgba(255,255,255,.78);
-    box-shadow:var(--shadow-sm);
-    backdrop-filter:blur(16px);
-  }
-
-  .schedule-card::after{
-    content:"";
-    position:absolute;
-    inset:0;
-    background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
-    pointer-events:none;
-  }
-
   .appt-list{
     position:relative;
     z-index:1;
@@ -618,7 +561,9 @@
     box-shadow:0 18px 34px rgba(15,23,42,.08);
   }
 
-  .appt-left{ min-width:0; }
+  .appt-left{
+    min-width:0;
+  }
 
   .appt-time{
     color:#3b82f6;
@@ -686,64 +631,183 @@
     font-weight:700;
   }
 
-  @media (max-width: 1180px){
-    .hero-grid,
-    .stats-grid,
-    .plan-grid{
+  .ai-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:22px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 90% 12%, rgba(96,165,250,.28), transparent 28%),
+      linear-gradient(145deg, #0b1020 0%, #14234d 56%, #3b5edb 100%);
+    box-shadow:
+      0 24px 60px rgba(15,23,42,.16),
+      inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .ai-card::after{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:27px;
+    border:1px solid rgba(255,255,255,.08);
+    pointer-events:none;
+  }
+
+  .ai-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 11px;
+    border-radius:999px;
+    background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.12);
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.12em;
+    color:rgba(255,255,255,.72);
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+
+  .ai-badge::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:#22c55e;
+    box-shadow:0 0 0 4px rgba(34,197,94,.15);
+  }
+
+  .ai-title{
+    position:relative;
+    z-index:1;
+    margin:0 0 8px;
+    font-size:21px;
+    line-height:1.35;
+    letter-spacing:-0.03em;
+    font-weight:900;
+  }
+
+  .ai-text{
+    position:relative;
+    z-index:1;
+    margin:0;
+    color:rgba(255,255,255,.74);
+    font-size:13px;
+    line-height:1.8;
+    font-weight:600;
+  }
+
+  .ai-list{
+    position:relative;
+    z-index:1;
+    display:grid;
+    gap:10px;
+    margin-top:18px;
+  }
+
+  .ai-item{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 13px;
+    border-radius:16px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.10);
+    color:rgba(255,255,255,.88);
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .ai-item span:last-child{
+    color:#fff;
+  }
+
+  .quick-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+  }
+
+  .quick-link{
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-height:104px;
+    padding:16px;
+    border-radius:20px;
+    background:linear-gradient(180deg, rgba(255,255,255,.90) 0%, rgba(248,251,255,.96) 100%);
+    border:1px solid #edf2f8;
+    box-shadow:0 10px 22px rgba(15,23,42,.04);
+    transition:.2s ease;
+  }
+
+  .quick-link:hover{
+    transform:translateY(-2px);
+    box-shadow:0 18px 34px rgba(15,23,42,.08);
+  }
+
+  .quick-icon{
+    width:36px;
+    height:36px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg, rgba(59,130,246,.12) 0%, rgba(124,58,237,.10) 100%);
+    color:#3658c9;
+    font-size:15px;
+    font-weight:900;
+  }
+
+  .quick-title{
+    color:#0b1220;
+    font-size:14px;
+    font-weight:900;
+  }
+
+  .quick-sub{
+    color:#94a3b8;
+    font-size:11px;
+    line-height:1.5;
+    font-weight:700;
+  }
+
+  @media (max-width: 1380px){
+    .stats-grid{
+      grid-template-columns:repeat(3, 1fr);
+    }
+
+    .dashboard-grid{
       grid-template-columns:1fr;
     }
   }
 
-  @media (max-width: 880px){
-    .topbar{
-      flex-direction:column;
-      align-items:stretch;
+  @media (max-width: 1180px){
+    .hero-grid,
+    .plan-grid{
+      grid-template-columns:1fr;
     }
 
-    .lux-clock{
-      min-width:auto;
-    }
-
-    .page-title{
-      font-size:42px;
-    }
-  }
-
-  @media (max-width: 640px){
-    .page-title{
-      font-size:34px;
-    }
-
-    .hero{
-      padding:24px;
-      border-radius:24px;
-    }
-
-    .hero-title{
-      font-size:26px;
-    }
-
-    .next-time{
-      font-size:40px;
-    }
-
-    .next-name{
-      font-size:20px;
-    }
-
-    .stat-value,
-    .plan-value{
-      font-size:32px;
+    .quick-grid{
+      grid-template-columns:repeat(2, 1fr);
     }
   }
 
   @media (max-width: 980px){
     .dashboard{
-      gap:18px;
+      gap:14px !important;
     }
 
     .topbar{
-      gap:16px;
+      flex-direction:column;
+      align-items:stretch;
+      gap:12px !important;
     }
 
     .page-head{
@@ -759,96 +823,124 @@
     .lux-clock{
       min-width:100%;
       width:100%;
-      padding:18px 18px 16px;
-      border-radius:24px;
+      padding:14px 16px !important;
+      border-radius:20px !important;
     }
 
     .clock{
-      font-size:42px;
+      font-size:34px !important;
+    }
+
+    .clock-sub{
+      margin-top:4px !important;
+      font-size:10px !important;
     }
 
     .clock-stats{
-      margin-top:14px;
-      gap:6px;
-      font-size:13px;
+      margin-top:10px !important;
+      gap:4px !important;
+      font-size:12px !important;
     }
 
     .hero{
-      padding:22px 18px;
-      border-radius:26px;
+      padding:16px 14px !important;
+      border-radius:20px !important;
     }
 
     .hero-grid{
-      gap:18px;
+      gap:12px !important;
+    }
+
+    .hero-kicker{
+      margin-bottom:10px !important;
+      font-size:10px !important;
     }
 
     .hero-title{
-      font-size:24px;
-      line-height:1.35;
-      margin-bottom:10px;
+      font-size:20px !important;
+      line-height:1.4 !important;
+      margin-bottom:8px !important;
     }
 
     .hero-sub{
-      font-size:13px;
-      line-height:1.75;
+      font-size:12px !important;
+      line-height:1.65 !important;
     }
 
     .hero-tags{
-      margin-top:18px;
-      gap:8px;
+      margin-top:12px !important;
+      gap:6px !important;
     }
 
     .hero-tag{
-      padding:7px 12px;
-      font-size:11px;
+      padding:6px 10px !important;
+      font-size:10px !important;
     }
 
     .next-card{
-      border-radius:22px;
-      padding:18px 18px 16px;
+      padding:14px !important;
+      border-radius:18px !important;
+    }
+
+    .next-label{
+      margin-bottom:10px !important;
+      font-size:10px !important;
     }
 
     .next-time{
-      font-size:42px;
+      font-size:32px !important;
+      margin-bottom:8px !important;
     }
 
     .next-name{
-      font-size:20px;
+      font-size:17px !important;
+      margin-bottom:6px !important;
+    }
+
+    .next-sub{
+      font-size:12px !important;
+      line-height:1.55 !important;
     }
 
     .stats-grid{
-      gap:14px;
+      grid-template-columns:repeat(2, 1fr) !important;
+      gap:10px !important;
     }
 
     .stat-card{
-      padding:18px 18px 16px;
-      border-radius:22px;
+      padding:14px 14px 12px !important;
+      border-radius:18px !important;
     }
 
     .stat-top{
-      margin-bottom:10px;
+      margin-bottom:8px !important;
+    }
+
+    .stat-label{
+      font-size:12px !important;
     }
 
     .stat-accent{
-      width:34px;
-      height:34px;
-      border-radius:12px;
+      width:30px !important;
+      height:30px !important;
+      border-radius:10px !important;
     }
 
     .stat-value{
-      font-size:34px;
-      margin-bottom:8px;
+      font-size:28px !important;
+      margin-bottom:6px !important;
     }
 
     .stat-sub{
-      font-size:11px;
-      line-height:1.6;
+      font-size:11px !important;
+      line-height:1.45 !important;
     }
 
     .section-card,
-    .schedule-card{
-      padding:18px 16px;
-      border-radius:24px;
+    .schedule-card,
+    .ai-card{
+      padding:16px 14px !important;
+      border-radius:20px !important;
     }
 
     .section-head{
@@ -869,41 +961,51 @@
     }
 
     .plan-grid{
-      gap:12px;
+      grid-template-columns:repeat(2, 1fr) !important;
+      gap:10px !important;
     }
 
     .plan-box{
-      padding:16px 14px;
-      border-radius:18px;
+      padding:14px 12px !important;
+      border-radius:16px !important;
     }
 
     .plan-value{
-      font-size:34px;
+      font-size:28px !important;
     }
 
     .plan-label{
-      font-size:12px;
+      margin-top:8px !important;
+      font-size:12px !important;
     }
 
     .plan-sub{
-      font-size:11px;
-      line-height:1.55;
+      margin-top:4px !important;
+      font-size:11px !important;
+      line-height:1.45 !important;
     }
 
     .appt-item{
-      padding:14px 14px;
-      border-radius:18px;
+      padding:12px !important;
+      border-radius:16px !important;
       align-items:flex-start;
     }
 
+    .appt-time{
+      font-size:12px !important;
+      margin-bottom:4px !important;
+    }
+
     .appt-name{
-      font-size:16px;
+      font-size:15px !important;
+      margin-bottom:4px !important;
     }
 
     .appt-sub{
       max-width:none;
       white-space:normal;
-      line-height:1.6;
+      font-size:12px !important;
+      line-height:1.5 !important;
     }
 
     .appt-right{
@@ -919,19 +1021,19 @@
     }
 
     .empty{
-      padding:22px 16px;
-      border-radius:18px;
-      font-size:13px;
+      padding:18px 12px !important;
+      border-radius:16px !important;
+      font-size:12px !important;
+    }
+
+    .quick-grid{
+      grid-template-columns:repeat(2, 1fr);
     }
   }
 
   @media (max-width: 640px){
     .dashboard{
       gap:16px;
-    }
-
-    .topbar{
-      gap:14px;
     }
 
     .eyebrow{
@@ -949,278 +1051,33 @@
       font-size:12px;
     }
 
-    .lux-clock{
-      padding:16px;
-      border-radius:22px;
-    }
-
-    .clock{
-      font-size:36px;
-    }
-
-    .clock-sub{
-      font-size:11px;
-      letter-spacing:.12em;
-    }
-
-    .hero{
-      padding:18px 16px;
-      border-radius:22px;
-    }
-
-    .hero-kicker{
-      margin-bottom:12px;
-      font-size:10px;
-    }
-
-    .hero-title{
-      font-size:21px;
-      line-height:1.45;
-    }
-
     .hero-sub{
-      font-size:12px;
-      line-height:1.8;
-    }
-
-    .hero-tag{
-      font-size:10px;
-      padding:7px 10px;
-    }
-
-    .next-card{
-      padding:16px;
-      border-radius:20px;
-    }
-
-    .next-time{
-      font-size:36px;
-    }
-
-    .next-name{
-      font-size:18px;
-      line-height:1.35;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
     }
 
     .stats-grid,
-    .plan-grid{
-      gap:10px;
+    .plan-grid,
+    .quick-grid{
+      grid-template-columns:repeat(2, 1fr) !important;
     }
 
-    .stat-card{
-      padding:16px 16px 14px;
+    .quick-link{
+      min-height:96px;
+      padding:14px;
+      border-radius:18px;
     }
 
-    .stat-value,
-    .plan-value{
-      font-size:28px;
+    .quick-title{
+      font-size:13px;
     }
 
-    .section-card,
-    .schedule-card{
-      padding:16px 14px;
-      border-radius:22px;
-    }
-
-    .section-head{
-      flex-direction:column;
-      align-items:flex-start;
-      gap:8px;
-    }
-
-    .appt-item{
-      gap:10px;
-    }
-
-    .appt-right{
-      align-self:flex-end;
+    .quick-sub{
+      font-size:10px;
     }
   }
-
-  @media (max-width: 980px){
-    .dashboard{
-      gap: 14px !important;
-    }
-
-    .topbar{
-      gap: 12px !important;
-    }
-
-    .lux-clock{
-      padding: 14px 16px !important;
-      border-radius: 20px !important;
-    }
-
-    .clock{
-      font-size: 34px !important;
-    }
-
-    .clock-sub{
-      margin-top: 4px !important;
-      font-size: 10px !important;
-    }
-
-    .clock-stats{
-      margin-top: 10px !important;
-      gap: 4px !important;
-      font-size: 12px !important;
-    }
-
-    .hero{
-      padding: 16px 14px !important;
-      border-radius: 20px !important;
-    }
-
-    .hero-grid{
-      gap: 12px !important;
-    }
-
-    .hero-kicker{
-      margin-bottom: 10px !important;
-      font-size: 10px !important;
-    }
-
-    .hero-title{
-      font-size: 20px !important;
-      line-height: 1.4 !important;
-      margin-bottom: 8px !important;
-    }
-
-    .hero-sub{
-      font-size: 12px !important;
-      line-height: 1.65 !important;
-    }
-
-    .hero-tags{
-      margin-top: 12px !important;
-      gap: 6px !important;
-    }
-
-    .hero-tag{
-      padding: 6px 10px !important;
-      font-size: 10px !important;
-    }
-
-    .next-card{
-      padding: 14px !important;
-      border-radius: 18px !important;
-    }
-
-    .next-label{
-      margin-bottom: 10px !important;
-      font-size: 10px !important;
-    }
-
-    .next-time{
-      font-size: 32px !important;
-      margin-bottom: 8px !important;
-    }
-
-    .next-name{
-      font-size: 17px !important;
-      margin-bottom: 6px !important;
-    }
-
-    .next-sub{
-      font-size: 12px !important;
-      line-height: 1.55 !important;
-    }
-
-    .stat-card{
-      padding: 14px 14px 12px !important;
-      border-radius: 18px !important;
-    }
-
-    .stat-top{
-      margin-bottom: 8px !important;
-    }
-
-    .stat-label{
-      font-size: 12px !important;
-    }
-
-    .stat-accent{
-      width: 30px !important;
-      height: 30px !important;
-      border-radius: 10px !important;
-    }
-
-    .stat-value{
-      font-size: 28px !important;
-      margin-bottom: 6px !important;
-    }
-
-    .stat-sub{
-      font-size: 11px !important;
-      line-height: 1.45 !important;
-    }
-
-    .plan-box{
-      padding: 14px 12px !important;
-      border-radius: 16px !important;
-    }
-
-    .plan-value{
-      font-size: 28px !important;
-    }
-
-    .plan-label{
-      margin-top: 8px !important;
-      font-size: 12px !important;
-    }
-
-    .plan-sub{
-      margin-top: 4px !important;
-      font-size: 11px !important;
-      line-height: 1.45 !important;
-    }
-
-    .appt-item{
-      padding: 12px !important;
-      border-radius: 16px !important;
-    }
-
-    .appt-time{
-      font-size: 12px !important;
-      margin-bottom: 4px !important;
-    }
-
-    .appt-name{
-      font-size: 15px !important;
-      margin-bottom: 4px !important;
-    }
-
-    .appt-sub{
-      font-size: 12px !important;
-      line-height: 1.5 !important;
-    }
-
-    .empty{
-      padding: 18px 12px !important;
-      border-radius: 16px !important;
-      font-size: 12px !important;
-    }
-  }
-
-  @media (max-width: 640px){
-    .hero-sub{
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-  }
-
-  @media (max-width: 980px){
-    .stats-grid{
-      grid-template-columns: repeat(2, 1fr) !important;
-    }
-
-    .plan-grid{
-      grid-template-columns: repeat(2, 1fr) !important;
-    }
-  }
-
 </style>
 {% endblock %}
 
@@ -1232,7 +1089,7 @@
       <div class="eyebrow">Staff Workspace</div>
       <h1 class="page-title">ダッシュボード</h1>
       <div class="page-meta">
-        山田 太郎 | 担当：整骨 | {{ today|date:"Y年n月j日(D)" }}
+        {{ request.user.get_full_name|default:request.user.username }} | CareFrow Staff | {{ today|date:"Y年n月j日(D)" }}
       </div>
     </div>
 
@@ -1241,8 +1098,8 @@
       <div class="clock-sub">JST / CLINIC TIME</div>
       <div class="clock-stats">
         <div><span class="clock-dot"></span>AI稼働中</div>
-        <div>施術待ち：{{ waiting_count|default:2 }}件</div>
-        <div>完了：{{ done_count|default:1 }}件</div>
+        <div>施術待ち：{{ waiting_count|default:0 }}件</div>
+        <div>完了：{{ done_count|default:0 }}件</div>
       </div>
     </div>
   </header>
@@ -1250,7 +1107,7 @@
   <section class="hero">
     <div class="hero-grid">
       <div>
-        <div class="hero-kicker">Medical AI Platform</div>
+        <div class="hero-kicker">CareFrow Medical AI Platform</div>
         <h2 class="hero-title">AI問診から施術計画まで、現場判断をひとつ上の体験へ。</h2>
         <p class="hero-sub">
           問診、SOAP、施術計画、経過記録を一気通貫で接続し、
@@ -1296,35 +1153,53 @@
         <div class="stat-label">本日の予約</div>
         <div class="stat-accent"></div>
       </div>
-      <div class="stat-value">{{ appointments|length|default:0 }}</div>
+      <div class="stat-value">{{ total_appointment_count|default:0 }}</div>
       <div class="stat-sub">受付・診療予定の合計件数</div>
     </div>
 
     <div class="stat-card">
       <div class="stat-top">
         <div class="stat-label">施術待ち</div>
-        <div class="stat-accent"></div>
+        <div class="stat-accent warn"></div>
       </div>
-      <div class="stat-value">{{ waiting_count|default:2 }}</div>
+      <div class="stat-value">{{ waiting_count|default:0 }}</div>
       <div class="stat-sub">対応待ちの患者数</div>
     </div>
 
     <div class="stat-card">
       <div class="stat-top">
         <div class="stat-label">対応完了</div>
-        <div class="stat-accent"></div>
+        <div class="stat-accent success"></div>
       </div>
-      <div class="stat-value">{{ done_count|default:1 }}</div>
+      <div class="stat-value">{{ done_count|default:0 }}</div>
       <div class="stat-sub">本日完了した件数</div>
     </div>
 
     <div class="stat-card">
       <div class="stat-top">
-        <div class="stat-label">進行中プラン</div>
+        <div class="stat-label">問診提出</div>
         <div class="stat-accent"></div>
       </div>
-      <div class="stat-value">{{ active_plan_count|default:4 }}</div>
-      <div class="stat-sub">現在進行中の施術計画</div>
+      <div class="stat-value">{{ intake_count|default:0 }}</div>
+      <div class="stat-sub">本日提出されたWeb問診</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">未問診</div>
+        <div class="stat-accent warn"></div>
+      </div>
+      <div class="stat-value">{{ not_intake_count|default:0 }}</div>
+      <div class="stat-sub">予約済みで問診未提出</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-label">AI確認待ち</div>
+        <div class="stat-accent ai"></div>
+      </div>
+      <div class="stat-value">{{ ai_count|default:0 }}</div>
+      <div class="stat-sub">AI要約・判断補助の確認対象</div>
     </div>
   </section>
 
@@ -1338,65 +1213,141 @@
 
     <div class="plan-grid">
       <div class="plan-box primary">
-        <div class="plan-value">{{ active_plan_count|default:4 }}</div>
+        <div class="plan-value">{{ active_plan_count|default:0 }}</div>
         <div class="plan-label">進行中プラン</div>
         <div class="plan-sub">現在稼働している施術計画</div>
       </div>
 
       <div class="plan-box info">
-        <div class="plan-value">{{ paused_plan_count|default:1 }}</div>
+        <div class="plan-value">{{ paused_plan_count|default:0 }}</div>
         <div class="plan-label">一時停止</div>
         <div class="plan-sub">経過観察中・保留中の計画</div>
       </div>
 
       <div class="plan-box success">
-        <div class="plan-value">{{ completed_plan_count|default:3 }}</div>
+        <div class="plan-value">{{ completed_plan_count|default:0 }}</div>
         <div class="plan-label">完了</div>
         <div class="plan-sub">施術完了となった計画</div>
       </div>
 
       <div class="plan-box warn">
-        <div class="plan-value">{{ today_progress_count|default:2 }}</div>
+        <div class="plan-value">{{ today_progress_count|default:0 }}</div>
         <div class="plan-label">本日の経過記録</div>
         <div class="plan-sub">今日追加された経過記録数</div>
       </div>
     </div>
   </section>
 
-  <section class="schedule-card">
+  <div class="dashboard-grid">
+    <section class="schedule-card">
+      <div class="section-head">
+        <div>
+          <h3 class="section-title">今日の予約一覧</h3>
+          <div class="section-sub">本日の予約を時刻順に確認できます</div>
+        </div>
+        <a class="section-link" href="{% url 'staff:appointments' %}">予約管理へ →</a>
+      </div>
+
+      <div class="appt-list">
+        {% for a in appointments %}
+          <a class="appt-item" href="{% url 'staff:appointments' %}">
+            <div class="appt-left">
+              <div class="appt-time">{{ a.start_at|date:"H:i" }}</div>
+              <div class="appt-name">
+                {% if a.patient %}
+                  {{ a.patient.last_name }} {{ a.patient.first_name }}
+                {% else %}
+                  （患者未確定）
+                {% endif %}
+              </div>
+              <div class="appt-sub">
+                {{ a.menu }}{% if a.notes %} / {{ a.notes }}{% endif %}
+              </div>
+            </div>
+
+            <div class="appt-right">
+              <span class="status">{{ a.get_status_display }}</span>
+              <span class="chev">›</span>
+            </div>
+          </a>
+        {% empty %}
+          <div class="empty">本日の予約はありません</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="ai-card">
+      <div class="ai-badge">AI Assistant</div>
+      <h3 class="ai-title">本日の確認ポイント</h3>
+      <p class="ai-text">
+        問診提出状況、未問診、AI要約の確認対象をもとに、対応漏れを減らすためのチェックポイントを表示します。
+      </p>
+
+      <div class="ai-list">
+        <div class="ai-item">
+          <span>問診提出</span>
+          <span>{{ intake_count|default:0 }}件</span>
+        </div>
+        <div class="ai-item">
+          <span>未問診</span>
+          <span>{{ not_intake_count|default:0 }}件</span>
+        </div>
+        <div class="ai-item">
+          <span>AI確認待ち</span>
+          <span>{{ ai_count|default:0 }}件</span>
+        </div>
+        <div class="ai-item">
+          <span>カルテ作成補助</span>
+          <span>{{ note_count|default:0 }}件</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="section-card">
     <div class="section-head">
       <div>
-        <h3 class="section-title">今日の予約一覧</h3>
-        <div class="section-sub">本日の予約を時刻順に確認できます</div>
+        <h3 class="section-title">クイック操作</h3>
+        <div class="section-sub">よく使う業務画面へすぐに移動できます</div>
       </div>
-      <a class="section-link" href="{% url 'staff:appointments' %}">予約管理へ →</a>
     </div>
 
-    <div class="appt-list">
-      {% for a in appointments %}
-        <a class="appt-item" href="{% url 'staff:appointments' %}">
-          <div class="appt-left">
-            <div class="appt-time">{{ a.start_at|date:"H:i" }}</div>
-            <div class="appt-name">
-              {% if a.patient %}
-                {{ a.patient.last_name }} {{ a.patient.first_name }}
-              {% else %}
-                （患者未確定）
-              {% endif %}
-            </div>
-            <div class="appt-sub">
-              {{ a.menu }}{% if a.notes %} / {{ a.notes }}{% endif %}
-            </div>
-          </div>
+    <div class="quick-grid">
+      <a class="quick-link" href="{% url 'staff:appointments' %}">
+        <div class="quick-icon">◷</div>
+        <div class="quick-title">予約管理</div>
+        <div class="quick-sub">本日・週・月の予約を確認</div>
+      </a>
 
-          <div class="appt-right">
-            <span class="status">{{ a.get_status_display }}</span>
-            <span class="chev">›</span>
-          </div>
-        </a>
-      {% empty %}
-        <div class="empty">本日の予約はありません</div>
-      {% endfor %}
+      <a class="quick-link" href="{% url 'staff:intake' %}">
+        <div class="quick-icon">✎</div>
+        <div class="quick-title">問診確認</div>
+        <div class="quick-sub">Web問診とAI要約を確認</div>
+      </a>
+
+      <a class="quick-link" href="{% url 'staff:patient_search' %}">
+        <div class="quick-icon">⌕</div>
+        <div class="quick-title">患者検索</div>
+        <div class="quick-sub">患者情報・履歴をすばやく検索</div>
+      </a>
+
+      <a class="quick-link" href="{% url 'staff:staff_list' %}">
+        <div class="quick-icon">☰</div>
+        <div class="quick-title">担当者一覧</div>
+        <div class="quick-sub">スタッフ情報を確認</div>
+      </a>
+
+      <a class="quick-link" href="{% url 'staff:manual' %}">
+        <div class="quick-icon">?</div>
+        <div class="quick-title">操作マニュアル</div>
+        <div class="quick-sub">使い方・運用ルールを確認</div>
+      </a>
+
+      <a class="quick-link" href="{% url 'staff:settings' %}">
+        <div class="quick-icon">⚙</div>
+        <div class="quick-title">設定</div>
+        <div class="quick-sub">システム設定・運用設定</div>
+      </a>
     </div>
   </section>
 
