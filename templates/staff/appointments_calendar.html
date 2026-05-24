@@ -423,19 +423,20 @@
 
   .calendar-layout{
     display:grid;
-    grid-template-columns:minmax(0, 1fr) 390px;
+    grid-template-columns:1fr;
     gap:18px;
     align-items:start;
+  }
+
+  .side-card{
+    position:relative;
+    top:auto;
   }
 
   .calendar-card{
     padding:18px;
   }
 
-  .side-card{
-    position:sticky;
-    top:20px;
-  }
 
   .side-title{
     position:relative;
@@ -709,7 +710,8 @@
   }
 
   .day-timeline{
-    min-width:1160px;
+    width:100%;
+    min-width:0;
     border:1px solid #e8edf5;
     border-radius:22px;
     overflow:hidden;
@@ -719,7 +721,7 @@
 
   .timeline-header{
     display:grid;
-    grid-template-columns:150px minmax(960px, 1fr);
+    grid-template-columns:140px minmax(0, 1fr);
     background:linear-gradient(180deg, rgba(248,251,255,.96) 0%, rgba(241,245,249,.96) 100%);
     border-bottom:1px solid #e8edf5;
   }
@@ -757,7 +759,7 @@
 
   .timeline-row{
     display:grid;
-    grid-template-columns:150px minmax(960px, 1fr);
+    grid-template-columns:140px minmax(0, 1fr);
     min-height:94px;
     border-bottom:1px solid #e8edf5;
   }
@@ -1894,6 +1896,30 @@
       ?.split('=')[1] || '';
   }
 
+  function formatLocalDate(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function reloadCalendarWithDay(dayStr) {
+    const params = new URLSearchParams();
+
+    params.set('period', "{{ period }}");
+    params.set('day', dayStr);
+
+    const staff = "{{ filter_staff|escapejs }}";
+    const status = "{{ filter_status|escapejs }}";
+    const q = "{{ filter_q|escapejs }}";
+
+    if (staff) params.set('staff', staff);
+    if (status) params.set('status', status);
+    if (q) params.set('q', q);
+
+    window.location.href = `?${params.toString()}`;
+  }
+
   function injectDaySummaries(calendar) {
     const viewType = calendar.view.type;
 
@@ -2188,8 +2214,20 @@
         window.location.href = url;
       },
 
-      datesSet: function() {
+      datesSet: function(info) {
         setTimeout(() => injectDaySummaries(calendar), 0);
+
+        if (calendar.__firstDatesSetDone !== true) {
+          calendar.__firstDatesSetDone = true;
+          return;
+        }
+
+        const nextDay = formatLocalDate(info.view.currentStart);
+        const currentDay = "{{ day|date:'Y-m-d' }}";
+
+        if (nextDay !== currentDay) {
+          reloadCalendarWithDay(nextDay);
+        }
       },
 
       eventDidMount: function(info) {
