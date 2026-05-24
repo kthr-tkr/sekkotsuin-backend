@@ -1235,6 +1235,15 @@ def register_clinical_note(request, recording_id):
     )
 
     messages.success(request, "内容登録（確定保存）が完了しました。")
+
+    next_after_register = (request.POST.get("next_after_register") or "").strip()
+
+    if next_after_register == "treatment_plan":
+        return redirect(
+            "treatment_plans:plan_create_from_clinical_note",
+            clinical_note_id=note.id,
+        )
+
     return redirect("staff:patient_detail", patient_id=patient.id)
 
 

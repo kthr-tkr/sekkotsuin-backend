@@ -415,3 +415,118 @@ def plan_status_update_view(request, pk):
 
     messages.success(request, f"施術計画を「{plan.get_status_display()}」に更新しました。")
     return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=overview")
+
+@login_required
+def plan_create_from_clinical_note_view(request, clinical_note_id):
+    clinical_note = get_object_or_404(
+        ClinicalNote.objects.select_related("patient", "appointment", "intake"),
+        pk=clinical_note_id,
+    )
+
+    patient = clinical_note.patient
+    appointment = clinical_note.appointment
+    intake = clinical_note.intake
+
+    initial = build_treatment_plan_initial_from_note(clinical_note)
+
+    if request.method == "POST":
+        form = TreatmentPlanForm(request.POST)
+        if form.is_valid():
+            plan = form.save(commit=False)
+            plan.patient = patient
+            plan.appointment = appointment
+            plan.intake = intake
+            plan.clinical_note = clinical_note
+            plan.created_by = request.user
+            plan.save()
+
+            messages.success(request, "AI下書きから施術計画を作成しました。")
+            return redirect("treatment_plans:plan_detail", pk=plan.pk)
+    else:
+        form = TreatmentPlanForm(initial=initial)
+
+    return render(request, "treatment_plans/plan_form.html", {
+        "form": form,
+        "patient": patient,
+        "appointment": appointment,
+        "intake": intake,
+        "clinical_note": clinical_note,
+        "page_title": "AI施術計画案の確認",
+        "is_ai_draft": True,
+    })
+    
+def build_treatment_plan_initial_from_note(clinical_note):
+    extract = clinical_note.extract_json or {}
+    soap = clinical_note.soap_json or {}
+
+    chief = extract.get("chief_complaint") or ""
+    locations = extract.get("locations") or []
+    severity = extract.get("severity_0_10")
+    symptom_type = extract.get("symptom_type") or ""
+
+    soap_a = soap.get("A") or []
+    soap_p = soap.get("P") or []
+
+    if isinstance(locations, list):
+        location_text = "・".join([str(x) for x in locations if x])
+    else:
+        location_text = str(locations)
+
+    title_base = chief or location_text or "症状"
+    title = f"{title_base}に対する施術計画"
+
+    caution_notes = [
+        "痛みのでる動作はなるべく控えてください。",
+        "同じ姿勢を続けないように注意してください。",
+        "睡眠は十分にとってください。",
+    ]
+
+    if symptom_type == "acute":
+        visit_guide_type = "weekly"
+        visit_guide_count = 2
+        visit_guide_unit_note = "初期は週2回を目安に、症状の変化を確認しながら調整します。"
+        expected_min = 2
+        expected_max = 4
+        exercise_instruction = "本日から一定期間は中止"
+        work_instruction = "痛みが出たら中止"
+    else:
+        visit_guide_type = "weekly"
+        visit_guide_count = 1
+        visit_guide_unit_note = "週1回を目安に、生活動作と症状の変化を確認しながら調整します。"
+        expected_min = 4
+        expected_max = 8
+        exercise_instruction = "痛みが出ない範囲で許可"
+        work_instruction = "痛みが出たら中止"
+
+    lifestyle_other = ""
+
+    if soap_p:
+        lifestyle_other += "AI施術方針案：\n"
+        lifestyle_other += "\n".join([f"・{x}" for x in soap_p])
+
+    if soap_a:
+        lifestyle_other += "\n\n評価メモ：\n"
+        lifestyle_other += "\n".join([f"・{x}" for x in soap_a])
+
+    if severity:
+        lifestyle_other += f"\n\n初回確認時の痛み目安：{severity}/10"
+
+    return {
+        "title": title,
+        "chief_complaint": chief,
+        "status": "active",
+        "visit_guide_type": visit_guide_type,
+        "visit_guide_count": visit_guide_count,
+        "visit_guide_unit_note": visit_guide_unit_note,
+        "bath_instruction": ["長湯はしないでください"],
+        "walking_instruction": ["痛みが出たら中止"],
+        "exercise_instruction": [exercise_instruction],
+        "work_instruction": [work_instruction],
+        "lifestyle_other_instruction": lifestyle_other.strip(),
+        "caution_notes": caution_notes,
+        "expected_recovery_weeks_min": expected_min,
+        "expected_recovery_weeks_max": expected_max,
+        "rebound_reaction_note": "施術後、一時的にだるさ・眠気・違和感などが出る場合があります。強い痛みや不安な症状がある場合は、無理をせずご相談ください。",
+        "explained_to_patient": False,
+        "is_active": True,
+    }

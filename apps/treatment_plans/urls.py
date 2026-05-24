@@ -12,4 +12,10 @@ urlpatterns = [
     path("<int:pk>/status/", views.plan_status_update_view, name="plan_status_update"),
     path("progress/<int:pk>/edit/", views.progress_edit_view, name="progress_edit"),
     path("progress/<int:pk>/delete/", views.progress_delete_view, name="progress_delete"),
+    path(
+        "create/clinical-note/<int:clinical_note_id>/",
+        views.plan_create_from_clinical_note_view,
+        name="plan_create_from_clinical_note",
+    ),
 ]
+

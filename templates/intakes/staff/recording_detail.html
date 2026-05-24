@@ -1449,6 +1449,24 @@
   }
 }
 
+.register-actions-form{
+  display:inline-flex !important;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.register-actions-form .miniBtn.primary{
+  background:linear-gradient(135deg,#0b1220 0%,#1d4ed8 58%,#4f46e5 100%);
+  border-color:transparent;
+  color:#fff;
+  box-shadow:0 14px 28px rgba(29,78,216,.22);
+}
+
+.register-actions-form .miniBtn.primary:hover{
+  transform:translateY(-1px);
+  box-shadow:0 18px 34px rgba(29,78,216,.28);
+}
 </style>
 
 <div class="ai-page">
@@ -1821,8 +1839,8 @@
               <form method="post"
                     action="{% url 'staff:register_clinical_note' recording.id %}"
                     id="clinicalNoteRegisterForm"
-                    style="display:inline;"
-                    onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='保存中...';">
+                    class="register-actions-form"
+                    style="display:inline;">
                 {% csrf_token %}
 
                 <input type="hidden" id="register_selected_locations_json" name="selected_locations_json" value="[]">
@@ -1831,7 +1849,19 @@
                 <input type="hidden" id="register_extract_json" name="extract_json" value="">
                 <input type="hidden" id="register_followups_json" name="followups_json" value="">
 
-                <button type="submit" class="miniBtn primary">内容登録</button>
+                <button type="submit"
+                        class="miniBtn"
+                        name="next_after_register"
+                        value="patient_detail">
+                  カルテ登録へ
+                </button>
+
+                <button type="submit"
+                        class="miniBtn primary"
+                        name="next_after_register"
+                        value="treatment_plan">
+                  施術計画へ
+                </button>
               </form>
             </div>
           </div>
@@ -2792,9 +2822,27 @@ function syncRegisterFormHiddenFields() {
 
 document.addEventListener("DOMContentLoaded", () => {
   const registerForm = document.getElementById("clinicalNoteRegisterForm");
+
   if (registerForm) {
-    registerForm.addEventListener("submit", () => {
+    registerForm.addEventListener("submit", (event) => {
       syncRegisterFormHiddenFields();
+
+      const submitter = event.submitter;
+      if (submitter) {
+        submitter.disabled = true;
+
+        if (submitter.value === "treatment_plan") {
+          submitter.innerText = "施術計画を準備中...";
+        } else {
+          submitter.innerText = "保存中...";
+        }
+      }
+
+      registerForm.querySelectorAll('button[type="submit"]').forEach((btn) => {
+        if (btn !== submitter) {
+          btn.disabled = true;
+        }
+      });
     });
   }
 });

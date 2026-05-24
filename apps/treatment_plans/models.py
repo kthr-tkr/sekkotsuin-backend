@@ -171,3 +171,51 @@ class TreatmentProgress(models.Model):
 
         if errors:
             raise ValidationError(errors)
+        
+class TreatmentPlanConsent(models.Model):
+    plan = models.ForeignKey(
+        TreatmentPlan,
+        on_delete=models.CASCADE,
+        related_name="consents",
+        verbose_name="施術計画同意",
+    )
+
+    patient = models.ForeignKey(
+        "patients.Patient",
+        on_delete=models.CASCADE,
+        related_name="treatment_plan_consents",
+        verbose_name="患者",
+    )
+
+    signed_name = models.CharField("署名者名", max_length=100, blank=True)
+
+    signature_image = models.ImageField(
+        "署名画像",
+        upload_to="treatment_plan_signatures/%Y/%m/",
+        blank=True,
+        null=True,
+    )
+
+    plan_snapshot = models.JSONField("署名時点の施術計画", default=dict, blank=True)
+
+    signed_at = models.DateTimeField("署名日時", auto_now_add=True)
+
+    signed_by_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="signed_treatment_plan_consents",
+        verbose_name="署名ユーザー",
+    )
+
+    ip_address = models.GenericIPAddressField("IPアドレス", null=True, blank=True)
+    user_agent = models.TextField("User Agent", blank=True)
+
+    class Meta:
+        verbose_name = "施術計画同意"
+        verbose_name_plural = "施術計画同意"
+        ordering = ["-signed_at"]
+
+    def __str__(self):
+        return f"{self.patient} / plan={self.plan_id} / {self.signed_at:%Y-%m-%d %H:%M}"
