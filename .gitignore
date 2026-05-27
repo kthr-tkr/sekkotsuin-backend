@@ -17,4 +17,7 @@ db.sqlite3
 Thumbs.db
 
 # VSCode
-.vscode/
+.vscode/media/
+media/
+media/*
+/media/

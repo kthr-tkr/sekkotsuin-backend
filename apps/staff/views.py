@@ -29,7 +29,7 @@ from apps.treatment_plans.models import TreatmentPlan
 from apps.visits.models import Visit
 
 from .forms import StaffCreateForm
-
+from apps.ai_usage.services import build_ai_usage_summary
 
 INTAKE_FIELD_LABELS = {
     "visit_type": "来院種別",
@@ -244,6 +244,10 @@ def staff_dashboard_view(request):
     clinic = get_current_clinic(request)
     today = timezone.localdate()
 
+    ai_usage_summary = build_ai_usage_summary(clinic)
+    ai_usage_percent_for_bar = min(ai_usage_summary.usage_percent, 100)
+
+
     todays_appts = (
         Appointment.objects
         .select_related("patient", "assigned_staff", "intake")
@@ -281,13 +285,11 @@ def staff_dashboard_view(request):
     next_appt = waiting_qs.first()
     appt_cards = todays_appts[:5]
 
-    # 今後、施術計画・経過記録モデルと正確に連携する想定
     active_plan_count = 0
     paused_plan_count = 0
     completed_plan_count = 0
     today_progress_count = 0
 
-    # 今後、AI要約・カルテ生成ステータスと連携する想定
     ai_count = intake_count
     note_count = intake_count
 
@@ -312,6 +314,9 @@ def staff_dashboard_view(request):
 
         "next_appt": next_appt,
         "appointments": appt_cards,
+
+        "ai_usage_summary": ai_usage_summary,
+        "ai_usage_percent_for_bar": ai_usage_percent_for_bar,
     })
 
 @staff_required

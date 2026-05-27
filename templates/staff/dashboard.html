@@ -327,6 +327,202 @@
     gap:16px;
   }
 
+  .ai-usage-panel{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:22px 24px;
+    background:
+      radial-gradient(circle at 92% 12%, rgba(91,140,255,.18), transparent 26%),
+      linear-gradient(180deg, rgba(255,255,255,.88) 0%, rgba(247,250,255,.94) 100%);
+    border:1px solid rgba(255,255,255,.82);
+    box-shadow:var(--shadow-sm);
+    -webkit-backdrop-filter:blur(16px);
+    backdrop-filter:blur(16px);
+  }
+
+  .ai-usage-panel::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .ai-usage-inner{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.1fr 1.5fr auto;
+    gap:22px;
+    align-items:center;
+  }
+
+  .ai-usage-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 11px;
+    border-radius:999px;
+    background:rgba(59,130,246,.08);
+    color:#3658c9;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+
+  .ai-usage-kicker::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:#22c55e;
+    box-shadow:0 0 0 4px rgba(34,197,94,.12);
+  }
+
+  .ai-usage-title{
+    margin:0;
+    color:#0b1220;
+    font-size:20px;
+    font-weight:900;
+    letter-spacing:-0.03em;
+  }
+
+  .ai-usage-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:13px;
+    line-height:1.6;
+    font-weight:600;
+  }
+
+  .ai-usage-meter{
+    min-width:0;
+  }
+
+  .ai-usage-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:14px;
+    margin-bottom:10px;
+  }
+
+  .ai-usage-main{
+    color:#0b1220;
+    font-size:28px;
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-weight:900;
+  }
+
+  .ai-usage-main span{
+    color:#64748b;
+    font-size:15px;
+    letter-spacing:0;
+    font-weight:800;
+  }
+
+  .ai-usage-percent{
+    color:#4f46e5;
+    font-size:13px;
+    font-weight:900;
+  }
+
+  .ai-progress{
+    position:relative;
+    overflow:hidden;
+    height:10px;
+    border-radius:999px;
+    background:#e9eef7;
+    box-shadow:inset 0 1px 2px rgba(15,23,42,.06);
+  }
+
+  .ai-progress-bar{
+    height:100%;
+    min-width:4px;
+    border-radius:999px;
+    background:linear-gradient(90deg, #3b82f6 0%, #7c3aed 100%);
+  }
+
+  .ai-usage-mini{
+    display:grid;
+    grid-template-columns:repeat(3, auto);
+    gap:10px;
+    margin-top:12px;
+  }
+
+  .ai-usage-chip{
+    display:inline-flex;
+    flex-direction:column;
+    gap:3px;
+    min-width:110px;
+    padding:10px 12px;
+    border-radius:16px;
+    background:rgba(255,255,255,.72);
+    border:1px solid #edf2f8;
+  }
+
+  .ai-usage-chip small{
+    color:#94a3b8;
+    font-size:11px;
+    font-weight:800;
+  }
+
+  .ai-usage-chip strong{
+    color:#0b1220;
+    font-size:14px;
+    font-weight:900;
+  }
+
+  .ai-usage-status{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:10px;
+  }
+
+  .ai-status-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:9px 13px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .ai-status-badge.none{
+    color:#047857;
+    background:rgba(16,185,129,.10);
+    border:1px solid rgba(16,185,129,.14);
+  }
+
+  .ai-status-badge.warning{
+    color:#b45309;
+    background:rgba(245,158,11,.12);
+    border:1px solid rgba(245,158,11,.18);
+  }
+
+  .ai-status-badge.danger,
+  .ai-status-badge.overage,
+  .ai-status-badge.hard_limit,
+  .ai-status-badge.disabled{
+    color:#b91c1c;
+    background:rgba(239,68,68,.10);
+    border:1px solid rgba(239,68,68,.16);
+  }
+
+  .ai-detail-link{
+    color:#4f46e5;
+    font-size:13px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
   .stat-card{
     position:relative;
     overflow:hidden;
@@ -1200,6 +1396,87 @@
       </div>
       <div class="stat-value">{{ ai_count|default:0 }}</div>
       <div class="stat-sub">AI要約・判断補助の確認対象</div>
+    </div>
+  </section>
+  <section class="ai-usage-panel">
+    <div class="ai-usage-inner">
+      <div>
+        <div class="ai-usage-kicker">AI Usage Monitor</div>
+        <h3 class="ai-usage-title">AI利用状況</h3>
+        <div class="ai-usage-sub">
+          今月のAI録音・文字起こし利用量を確認できます。
+        </div>
+      </div>
+
+      <div class="ai-usage-meter">
+        <div class="ai-usage-row">
+          <div class="ai-usage-main">
+            {{ ai_usage_summary.used_minutes|default:0 }}
+            <span>/ {{ ai_usage_summary.included_minutes|default:1000 }}分</span>
+          </div>
+          <div class="ai-usage-percent">
+            {{ ai_usage_summary.usage_percent|default:0 }}%
+          </div>
+        </div>
+
+        <div class="ai-progress">
+          <div
+            class="ai-progress-bar"
+            style="width: {{ ai_usage_percent_for_bar|default:0 }}%;"
+          ></div>
+        </div>
+
+        <div class="ai-usage-mini">
+          <div class="ai-usage-chip">
+            <small>残り</small>
+            <strong>{{ ai_usage_summary.remaining_minutes|default:0 }}分</strong>
+          </div>
+
+          <div class="ai-usage-chip">
+            <small>超過課金</small>
+            <strong>{{ ai_usage_summary.overage_fee|default:0 }}円</strong>
+          </div>
+
+          <div class="ai-usage-chip">
+            <small>AI原価</small>
+            <strong>{{ ai_usage_summary.estimated_cost_yen|default:0 }}円</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-usage-status">
+        {% if not ai_usage_summary.can_use_ai %}
+          <span class="ai-status-badge {{ ai_usage_summary.warning_level|default:'disabled' }}">
+            利用停止中
+          </span>
+        {% elif ai_usage_summary.warning_level == "overage" %}
+          <span class="ai-status-badge overage">
+            超過利用中
+          </span>
+        {% elif ai_usage_summary.warning_level == "danger" %}
+          <span class="ai-status-badge danger">
+            上限間近
+          </span>
+        {% elif ai_usage_summary.warning_level == "warning" %}
+          <span class="ai-status-badge warning">
+            注意
+          </span>
+        {% else %}
+          <span class="ai-status-badge none">
+            利用可能
+          </span>
+        {% endif %}
+
+        {% if ai_usage_summary.warning_message %}
+          <div class="ai-usage-sub" style="text-align:right; max-width:260px;">
+            {{ ai_usage_summary.warning_message }}
+          </div>
+        {% endif %}
+
+        <a class="ai-detail-link" href="{% url 'staff:settings' %}">
+          KPI詳細へ →
+        </a>
+      </div>
     </div>
   </section>
 

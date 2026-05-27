@@ -30,10 +30,14 @@ SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 
 ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
     "app.carefrow.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
     "https://app.carefrow.com",
 ]
 
@@ -57,6 +61,7 @@ INSTALLED_APPS = [
     "apps.ai_jobs.apps.AiJobsConfig",
     "apps.clinical_notes.apps.ClinicalNotesConfig",
     "apps.treatment_plans.apps.TreatmentPlansConfig",
+    "apps.ai_usage.apps.AiUsageConfig",
 ]
 
 MIDDLEWARE = [
@@ -169,9 +174,10 @@ if not DEBUG and not SECRET_KEY:
 if not DEBUG and not ALLOWED_HOSTS:
     raise Exception("DJANGO_ALLOWED_HOSTS must not be empty when DEBUG=False")
 
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# ローカルではHTTP、本番ではHTTPSへリダイレクト
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"

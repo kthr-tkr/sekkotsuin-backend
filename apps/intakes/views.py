@@ -20,12 +20,20 @@ from pathlib import Path
 from openai import OpenAI
 from django.db import transaction
 from django.contrib import messages
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
 from .services.ai_summarizer import SUMMARY_JSON_SCHEMA
 
 from .services.stt import run_stt   # ↑で分離した場合
 from apps.staff.decorators import staff_required
+
+from apps.ai_usage.models import AiUsageLog
+from apps.ai_usage.services import (
+    build_ai_usage_summary,
+    create_ai_usage_log_for_recording,
+    get_clinic_from_recording,
+)
 
 # apps/intakes/views.py
 
@@ -343,10 +351,69 @@ def upload_recording(request, recording_id):
 @require_POST
 @login_required
 def process_recording(request, recording_id):
-    # ✅ select_for_update で連打/多重実行耐性
-    with transaction.atomic():
-        rec = InterviewRecording.objects.select_for_update().get(pk=recording_id)
+    """
+    録音データをAI処理する。
+
+    流れ:
+    1. 録音データ取得
+    2. 所有権チェック
+    3. clinic取得
+    4. AI利用上限チェック
+    5. STT実行
+    6. STT利用ログ作成 billing_minutesあり
+    7. AI要約実行
+    8. 要約利用ログ作成 billing_minutesなし
+    9. Intakeへ同期
+    """
+
+    # 通常取得。ここでは select_for_update しない。
+    rec = get_object_or_404(
+        InterviewRecording.objects.select_related(
+            "clinic",
+            "patient",
+            "appointment",
+            "appointment__patient",
+            "intake",
+            "intake__patient",
+        ),
+        pk=recording_id,
+    )
+
+    try:
         _must_own_recording(request.user, rec)
+    except PermissionError:
+        return HttpResponseForbidden("この録音にはアクセスできません。")
+
+    clinic = get_clinic_from_recording(rec)
+
+    if clinic is None:
+        messages.error(
+            request,
+            "録音データに院情報が紐づいていないため、AI処理を実行できません。",
+        )
+        return redirect("intakes:recording_detail", recording_id=rec.id)
+
+    ai_usage_summary = build_ai_usage_summary(clinic)
+
+    if not ai_usage_summary.can_use_ai:
+        messages.error(
+            request,
+            ai_usage_summary.warning_message or "AI利用上限に達しているため処理できません。",
+        )
+        return redirect("intakes:recording_detail", recording_id=rec.id)
+
+    # ここでは InterviewRecording 本体だけをロックする
+    with transaction.atomic():
+        rec = (
+            InterviewRecording.objects
+            .select_for_update()
+            .get(pk=recording_id)
+        )
+
+        try:
+            _must_own_recording(request.user, rec)
+        except PermissionError:
+            return HttpResponseForbidden("この録音にはアクセスできません。")
 
         if rec.status in [
             InterviewRecording.Status.TRANSCRIBING,
@@ -366,6 +433,21 @@ def process_recording(request, recording_id):
         rec.save(update_fields=["status", "error_message"])
 
     try:
+        # 最新状態を関連込みで取り直す
+        rec = (
+            InterviewRecording.objects
+            .select_related(
+                "clinic",
+                "patient",
+                "appointment",
+                "appointment__patient",
+                "intake",
+                "intake__patient",
+            )
+            .get(pk=recording_id)
+        )
+
+        # 1. 文字起こし
         transcript_text, transcript_json = run_stt(rec.audio_file.path, rec.mime_type)
 
         rec.transcript_text = transcript_text
@@ -373,11 +455,58 @@ def process_recording(request, recording_id):
         rec.status = InterviewRecording.Status.SUMMARIZING
         rec.save(update_fields=["transcript_text", "transcript_json", "status"])
 
-        summary = summarize_transcript(transcript_text)  # ここは次フェーズで改善
+        # 2. STT利用ログ
+        if not AiUsageLog.objects.filter(
+            recording=rec,
+            usage_type=AiUsageLog.UsageType.STT,
+            status=AiUsageLog.Status.SUCCESS,
+        ).exists():
+            create_ai_usage_log_for_recording(
+                recording=rec,
+                usage_type=AiUsageLog.UsageType.STT,
+                model_name="whisper-1",
+                transcript_text=rec.transcript_text or "",
+                estimated_cost_yen=0,
+                created_by=request.user,
+                count_billing_minutes=True,
+                metadata={
+                    "source": "process_recording",
+                    "stage": "stt",
+                    "duration_sec": rec.duration_sec,
+                    "mime_type": rec.mime_type,
+                },
+            )
+
+        # 3. AI要約
+        summary = summarize_transcript(transcript_text)
+
         rec.summary_json = summary
         rec.status = InterviewRecording.Status.DONE
         rec.save(update_fields=["summary_json", "status"])
 
+        # 4. 要約利用ログ
+        if not AiUsageLog.objects.filter(
+            recording=rec,
+            usage_type=AiUsageLog.UsageType.SUMMARY,
+            status=AiUsageLog.Status.SUCCESS,
+        ).exists():
+            create_ai_usage_log_for_recording(
+                recording=rec,
+                usage_type=AiUsageLog.UsageType.SUMMARY,
+                model_name=getattr(settings, "OPENAI_MODEL", "gpt-4o-mini"),
+                transcript_text=rec.transcript_text or "",
+                estimated_cost_yen=0,
+                created_by=request.user,
+                count_billing_minutes=False,
+                metadata={
+                    "source": "process_recording",
+                    "stage": "summary",
+                    "duration_sec": rec.duration_sec,
+                    "mime_type": rec.mime_type,
+                },
+            )
+
+        # 5. IntakeへAI要約を同期
         if rec.intake_id:
             intake = rec.intake
             sync_intake_columns_from_summary(intake, summary)
@@ -385,12 +514,36 @@ def process_recording(request, recording_id):
             intake.payload["ai_summary"] = summary
             intake.save(update_fields=["payload"])
 
+        messages.success(request, "AI要約が完了しました。")
         return redirect("intakes:recording_detail", recording_id=rec.id)
 
     except Exception as e:
         rec.status = InterviewRecording.Status.FAILED
         rec.error_message = str(e)
         rec.save(update_fields=["status", "error_message"])
+
+        try:
+            create_ai_usage_log_for_recording(
+                recording=rec,
+                usage_type=AiUsageLog.UsageType.OTHER,
+                model_name="",
+                transcript_text=getattr(rec, "transcript_text", "") or "",
+                estimated_cost_yen=0,
+                status=AiUsageLog.Status.FAILED,
+                error_message=str(e),
+                created_by=request.user,
+                count_billing_minutes=False,
+                metadata={
+                    "source": "process_recording",
+                    "stage": "error",
+                    "duration_sec": getattr(rec, "duration_sec", 0),
+                    "mime_type": getattr(rec, "mime_type", ""),
+                },
+            )
+        except Exception:
+            pass
+
+        messages.error(request, f"AI処理に失敗しました: {e}")
         return redirect("intakes:recording_detail", recording_id=rec.id)
 
 
