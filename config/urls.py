@@ -33,4 +33,8 @@ urlpatterns = [
     path("patients/", include(("apps.patients.urls", "patients"), namespace="patients")),
     path("intakes/", include(("apps.intakes.urls", "intakes"), namespace="intakes")),
     path("treatment_plans/", include(("apps.treatment_plans.urls", "apps.treatment_plans"), namespace="treatment_plans")),
+    path(
+        "treatment-sessions/",
+        include("apps.treatment_sessions.urls"),
+    ),
 ]

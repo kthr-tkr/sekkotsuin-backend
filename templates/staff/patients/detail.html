@@ -1149,6 +1149,27 @@
     font-size:20px;
   }
 }
+
+.section-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  padding:0 15px;
+  border-radius:14px;
+  border:1px solid transparent;
+  background:linear-gradient(135deg,#0b1220 0%,#1d4ed8 100%);
+  color:#fff;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:900;
+  box-shadow:0 14px 28px rgba(29,78,216,.20);
+}
+
+.section-btn:hover{
+  color:#fff;
+  transform:translateY(-1px);
+}
 </style>
 {% endblock %}
 
@@ -1600,6 +1621,10 @@
           <h3 class="card-title">カルテ</h3>
           <div class="card-sub">確定済みカルテの要点と履歴を確認できます</div>
         </div>
+
+        <a href="{% url 'treatment_sessions:start_for_patient' patient.id %}" class="section-btn">
+          AI施術録音を開始 →
+        </a>
       </div>
 
       {% if latest_note %}
@@ -1666,9 +1691,13 @@
             </div>
           </div>
 
-          <div style="margin-top:16px;">
+          <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
             <a href="{% url 'staff:clinical_note_detail' latest_note.id %}" class="section-btn">
               最新カルテを見る →
+            </a>
+
+            <a href="{% url 'treatment_sessions:start_for_patient' patient.id %}" class="overview-mini-btn">
+              AI施術録音を開始
             </a>
           </div>
         </div>

@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "apps.ai_jobs.apps.AiJobsConfig",
     "apps.clinical_notes.apps.ClinicalNotesConfig",
     "apps.treatment_plans.apps.TreatmentPlansConfig",
+    "apps.treatment_sessions.apps.TreatmentSessionsConfig",
     "apps.ai_usage.apps.AiUsageConfig",
 ]
 
