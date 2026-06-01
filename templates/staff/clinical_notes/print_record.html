@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>施術録 #{{ note.id }}</title>
+
+  <style>
+    :root{
+      --ink:#1f4f9a;
+      --ink-soft:#7fa0d4;
+      --ink-light:#eef5ff;
+      --text:#111827;
+      --muted:#4b5563;
+      --paper:#ffffff;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    html,
+    body{
+      margin:0;
+      padding:0;
+      background:#e5e7eb;
+      color:var(--text);
+      font-family:
+        "Yu Gothic",
+        "YuGothic",
+        "Hiragino Kaku Gothic ProN",
+        "Meiryo",
+        sans-serif;
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .print-toolbar{
+      max-width:210mm;
+      margin:18px auto 10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+
+    .toolbar-title{
+      color:#111827;
+      font-size:14px;
+      font-weight:900;
+    }
+
+    .toolbar-note{
+      margin-top:4px;
+      color:#4b5563;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .toolbar-actions{
+      display:flex;
+      gap:8px;
+      flex-shrink:0;
+    }
+
+    .toolbar-btn{
+      border:1px solid #d1d5db;
+      background:#fff;
+      color:#111827;
+      border-radius:10px;
+      padding:9px 13px;
+      font-size:13px;
+      font-weight:900;
+      text-decoration:none;
+      cursor:pointer;
+      box-shadow:0 8px 18px rgba(15,23,42,.08);
+    }
+
+    .toolbar-btn.primary{
+      color:#fff;
+      border-color:#1d4ed8;
+      background:#1d4ed8;
+    }
+
+    .page{
+      width:210mm;
+      min-height:297mm;
+      margin:0 auto 20px;
+      padding:8mm;
+      background:var(--paper);
+      border:1px solid #111827;
+      box-shadow:0 18px 40px rgba(15,23,42,.15);
+    }
+
+    .record-frame{
+      border:2px solid var(--ink);
+      min-height:281mm;
+      padding:0;
+      color:var(--ink);
+      background:#fff;
+    }
+
+    .record-header{
+      display:grid;
+      grid-template-columns:1fr 1.3fr 1fr;
+      border-bottom:2px solid var(--ink);
+      min-height:25mm;
+    }
+
+    .record-header-left,
+    .record-header-center,
+    .record-header-right{
+      padding:6px 8px;
+    }
+
+    .record-header-center{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+    }
+
+    .record-title{
+      letter-spacing:.6em;
+      font-size:24px;
+      font-weight:900;
+      color:var(--ink);
+    }
+
+    .record-header-right{
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      gap:8px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .record-sub-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:8px 10px;
+      border-bottom:2px solid var(--ink);
+      color:var(--ink);
+      font-weight:900;
+      min-height:14mm;
+    }
+
+    .record-sub-header span{
+      margin-left:14px;
+      color:#111827;
+      font-weight:700;
+    }
+
+    .mini-line{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .line{
+      flex:1;
+      min-height:16px;
+      border-bottom:1px solid var(--ink);
+      color:#111827;
+      padding-left:4px;
+    }
+
+    .insurance-list{
+      font-size:10px;
+      line-height:1.7;
+      font-weight:700;
+    }
+
+    .section-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      border-bottom:2px solid var(--ink);
+    }
+
+    .section-grid.three{
+      grid-template-columns:1fr 1fr 1fr;
+    }
+
+    .cell{
+      min-height:9mm;
+      border-right:1px solid var(--ink-soft);
+      border-bottom:1px solid var(--ink-soft);
+      padding:5px 6px;
+      color:var(--ink);
+    }
+
+    .cell:nth-child(2n){
+      border-right:none;
+    }
+
+    .section-grid.three .cell:nth-child(2n){
+      border-right:1px solid var(--ink-soft);
+    }
+
+    .section-grid.three .cell:nth-child(3n){
+      border-right:none;
+    }
+
+    .cell-label{
+      display:inline-block;
+      min-width:72px;
+      font-size:10px;
+      font-weight:900;
+      color:var(--ink);
+      vertical-align:top;
+    }
+
+    .cell-value{
+      color:#111827;
+      font-weight:700;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .wide-section{
+      border-bottom:2px solid var(--ink);
+      padding:0;
+    }
+
+    .wide-title{
+      padding:5px 7px;
+      color:var(--ink);
+      font-size:12px;
+      font-weight:900;
+      border-bottom:1px solid var(--ink);
+      background:#f8fbff;
+    }
+
+    .wide-body{
+      min-height:20mm;
+      padding:6px 7px;
+      color:#111827;
+      font-weight:700;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-size:11px;
+      line-height:1.45;
+    }
+
+    .injury-layout{
+      display:grid;
+      grid-template-columns:62mm 1fr;
+      border-bottom:2px solid var(--ink);
+    }
+
+    .injury-left{
+      border-right:2px solid var(--ink);
+    }
+
+    .injury-left .wide-section{
+      border-bottom:none;
+    }
+
+    .body-map{
+      min-height:118mm;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .body-map-title{
+      padding:5px 7px;
+      border-bottom:1px solid var(--ink);
+      font-size:12px;
+      font-weight:900;
+      color:var(--ink);
+      background:#f8fbff;
+    }
+
+    .body-map-body{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px;
+      color:#93a7d5;
+      font-weight:900;
+      text-align:center;
+    }
+
+    .body-simple{
+      width:100%;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      align-items:center;
+      justify-items:center;
+    }
+
+    .human-box{
+      width:60mm;
+      height:78mm;
+      border:1px dashed var(--ink-soft);
+      border-radius:8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      color:#7b93c8;
+      background:#fbfdff;
+      line-height:1.8;
+    }
+
+    .print-body-svg-wrap{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    align-items:stretch;
+    }
+
+    .print-body-panel{
+    min-height:105mm;
+    border:1px dashed var(--ink-soft);
+    border-radius:8px;
+    background:#fbfdff;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding:5px;
+    overflow:hidden;
+    }
+
+    .print-body-title{
+    width:100%;
+    color:#1f4f9a;
+    font-size:11px;
+    font-weight:900;
+    text-align:center;
+    margin-bottom:3px;
+    padding-bottom:3px;
+    border-bottom:1px solid rgba(127,160,212,.45);
+    }
+
+    .print-body-svg{
+    width:100%;
+    height:96mm;
+    display:block;
+    }
+
+    .print-marker{
+    fill:#f2a007;
+    fill-opacity:.9;
+    stroke:#fffaf0;
+    stroke-width:4;
+    filter:drop-shadow(0 0 6px rgba(242,160,7,.25));
+    }
+
+    .print-marker-label{
+    font-size:18px;
+    font-weight:900;
+    fill:#0f172a;
+    paint-order:stroke;
+    stroke:#ffffff;
+    stroke-width:5px;
+    stroke-linejoin:round;
+    }
+
+    .page-two-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      border-bottom:2px solid var(--ink);
+    }
+
+    .page-two-cell{
+      min-height:52mm;
+      border-right:1px solid var(--ink);
+    }
+
+    .page-two-cell:nth-child(2n){
+      border-right:none;
+    }
+
+    .page-two-cell.large{
+      min-height:72mm;
+    }
+
+    .soap-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      border-bottom:2px solid var(--ink);
+    }
+
+    .soap-cell{
+      min-height:43mm;
+      border-right:1px solid var(--ink);
+      border-bottom:1px solid var(--ink);
+    }
+
+    .soap-cell:nth-child(2n){
+      border-right:none;
+    }
+
+    .soap-head{
+      padding:5px 7px;
+      border-bottom:1px solid var(--ink);
+      color:var(--ink);
+      background:#f8fbff;
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .soap-body{
+      padding:6px 8px;
+      color:#111827;
+      font-weight:700;
+      font-size:11px;
+      line-height:1.55;
+    }
+
+    .soap-body ul,
+    .print-list{
+      margin:0;
+      padding-left:17px;
+    }
+
+    .soap-body li,
+    .print-list li{
+      margin-bottom:4px;
+    }
+
+    .bottom-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      border-bottom:2px solid var(--ink);
+    }
+
+    .bottom-cell{
+      min-height:32mm;
+      border-right:1px solid var(--ink);
+      padding:6px 8px;
+    }
+
+    .bottom-cell:nth-child(2n){
+      border-right:none;
+    }
+
+    .bottom-label{
+      color:var(--ink);
+      font-size:12px;
+      font-weight:900;
+      margin-bottom:4px;
+    }
+
+    .bottom-value{
+      color:#111827;
+      font-weight:700;
+      font-size:11px;
+      line-height:1.5;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .signature-row{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      border-top:0;
+    }
+
+    .signature-cell{
+      min-height:15mm;
+      border-right:1px solid var(--ink);
+      padding:6px 8px;
+      color:#111827;
+      font-weight:700;
+    }
+
+    .signature-cell:last-child{
+      border-right:none;
+    }
+
+    .small-muted{
+      color:#4b5563;
+      font-size:10px;
+      font-weight:700;
+    }
+
+    @media print{
+      @page{
+        size:A4 portrait;
+        margin:0;
+      }
+
+      html,
+      body{
+        width:210mm;
+        background:#fff !important;
+        -webkit-print-color-adjust:exact !important;
+        print-color-adjust:exact !important;
+      }
+
+      .print-toolbar{
+        display:none !important;
+      }
+
+      .page{
+        width:210mm;
+        min-height:297mm;
+        margin:0;
+        padding:8mm;
+        border:none;
+        box-shadow:none;
+        page-break-after:always;
+        break-after:page;
+      }
+
+      .page:last-child{
+        page-break-after:auto;
+        break-after:auto;
+      }
+
+      .record-frame{
+        min-height:281mm;
+      }
+
+      .no-print{
+        display:none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="print-toolbar">
+    <div>
+      <div class="toolbar-title">
+        施術録プレビュー：{{ patient.last_name }} {{ patient.first_name }} 様
+      </div>
+      <div class="toolbar-note">
+        A4縦・2ページ構成です。PDF保存またはプリンター設定で両面印刷できます。
+      </div>
+    </div>
+
+    <div class="toolbar-actions">
+      <a href="{% url 'staff:clinical_note_detail' note.id %}" class="toolbar-btn">
+        ← 詳細へ戻る
+      </a>
+
+      <button type="button" class="toolbar-btn primary" onclick="window.print()">
+        印刷 / PDF保存
+      </button>
+    </div>
+  </div>
+
+  <!-- 1ページ目 -->
+  <main class="page">
+    <div class="record-frame">
+
+      <header class="record-header">
+        <div class="record-header-left">
+          <div class="insurance-list">
+            健康保険・国民健康保険<br>
+            後期高齢・自費・公費負担<br>
+            労災・交通事故・その他
+          </div>
+        </div>
+
+        <div class="record-header-center">
+          <div class="record-title">施 術 録</div>
+        </div>
+
+        <div class="record-header-right">
+          <div>CareFrow 施術録</div>
+          <div class="mini-line">
+            <span>No.</span>
+            <span class="line">{{ note.id }}</span>
+          </div>
+          <div class="small-muted">
+            作成日：{{ note.created_at|date:"Y年n月j日" }}
+          </div>
+        </div>
+      </header>
+
+      <section class="section-grid">
+        <div class="cell">
+          <span class="cell-label">氏名</span>
+          <span class="cell-value">{{ patient.last_name }} {{ patient.first_name }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">予約ID</span>
+          <span class="cell-value">{{ note.appointment_id|default:"-" }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">生年月日</span>
+          <span class="cell-value">{{ patient.birth_date|default:"-" }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">電話番号</span>
+          <span class="cell-value">{{ patient.phone|default:"-" }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">来院日</span>
+          <span class="cell-value">{% if appointment %}{{ appointment.start_at|date:"Y年n月j日 H:i" }}{% else %}{{ note.created_at|date:"Y年n月j日 H:i" }}{% endif %}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">来院種別</span>
+          <span class="cell-value">{{ visit_type_label }}</span>
+        </div>
+      </section>
+
+      <section class="section-grid three">
+        <div class="cell">
+          <span class="cell-label">主訴</span>
+          <span class="cell-value">{{ chief_complaint_label }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">受傷部位</span>
+          <span class="cell-value">{{ location_label }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">痛み</span>
+          <span class="cell-value">{{ extract.severity_0_10|default:"-" }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">発症</span>
+          <span class="cell-value">{{ extract.onset|default:"-" }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">きっかけ</span>
+          <span class="cell-value">{{ extract.trigger|default:"-" }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="cell-label">次回来院</span>
+          <span class="cell-value">{{ recommended_visit_timing }}</span>
+        </div>
+      </section>
+
+      <section class="injury-layout">
+        <div class="injury-left">
+          <div class="wide-section">
+            <div class="wide-title">負傷原因・経過・施術の種類その他</div>
+
+            <div class="wide-body">【重要ポイント】
+{% if important_points %}{% for p in important_points %}・{{ p }}
+{% endfor %}{% else %}-{% endif %}
+
+【前回からの変化】
+痛み：{{ progress_change.pain_change|default:"-" }}
+動作：{{ progress_change.movement_change|default:"-" }}
+日常生活：{{ progress_change.daily_life_change|default:"-" }}
+患者コメント：{{ progress_change.patient_comment|default:"-" }}
+
+【施術者の所見】
+{% if findings %}{% for item in findings %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}
+
+【確認部位】
+{% if checked_areas %}{% for item in checked_areas %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}
+
+【原因候補】
+{% if suspected_causes %}{% for item in suspected_causes %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}</div>
+          </div>
+        </div>
+
+        <div class="body-map">
+          <div class="body-map-title">受傷部位（図解）</div>
+
+            <div class="body-map-body">
+            <div class="print-body-svg-wrap">
+
+                <div class="print-body-panel">
+                <div class="print-body-title">前面</div>
+
+                <svg
+                    class="print-body-svg"
+                    viewBox="0 0 300 700"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-label="body front"
+                >
+                    <image
+                    href="{% static 'patients/img/body_front3.png' %}"
+                    x="0"
+                    y="0"
+                    width="300"
+                    height="700"
+                    preserveAspectRatio="xMidYMid meet"
+                    />
+
+                    {% for marker in body_markers %}
+                    {% if marker.view == "front" %}
+                        <g class="print-marker-group">
+                        <circle
+                            cx="{{ marker.x }}"
+                            cy="{{ marker.y }}"
+                            r="11"
+                            class="print-marker"
+                        />
+                        <text
+                            x="{{ marker.x }}"
+                            y="{{ marker.y|add:'-16' }}"
+                            text-anchor="middle"
+                            class="print-marker-label"
+                        >{{ marker.label }}</text>
+                        </g>
+                    {% endif %}
+                    {% endfor %}
+                </svg>
+                </div>
+
+                <div class="print-body-panel">
+                <div class="print-body-title">背面</div>
+
+                <svg
+                    class="print-body-svg"
+                    viewBox="0 0 300 700"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-label="body back"
+                >
+                    <image
+                    href="{% static 'patients/img/body_back3.png' %}"
+                    x="0"
+                    y="0"
+                    width="300"
+                    height="700"
+                    preserveAspectRatio="xMidYMid meet"
+                    />
+
+                    {% for marker in body_markers %}
+                    {% if marker.view == "back" %}
+                        <g class="print-marker-group">
+                        <circle
+                            cx="{{ marker.x }}"
+                            cy="{{ marker.y }}"
+                            r="11"
+                            class="print-marker"
+                        />
+                        <text
+                            x="{{ marker.x }}"
+                            y="{{ marker.y|add:'-16' }}"
+                            text-anchor="middle"
+                            class="print-marker-label"
+                        >{{ marker.label }}</text>
+                        </g>
+                    {% endif %}
+                    {% endfor %}
+                </svg>
+                </div>
+
+            </div>
+            </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- 2ページ目 -->
+  <main class="page">
+    <div class="record-frame">
+
+      <header class="record-sub-header">
+        <div>
+          <strong>施術録 続き</strong>
+          <span>患者：{{ patient.last_name }} {{ patient.first_name }}</span>
+        </div>
+        <div>No. {{ note.id }}</div>
+      </header>
+
+      <section class="page-two-grid">
+        <div class="page-two-cell large">
+          <div class="wide-title">実施した施術</div>
+          <div class="wide-body">【対象部位】
+{% if target_areas %}{{ target_areas|join:" / " }}{% else %}-{% endif %}
+
+【実施した施術】
+{% if performed_treatments %}{% for item in performed_treatments %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}
+
+【施術意図】
+{{ treatment_intent|default:"-" }}</div>
+        </div>
+
+        <div class="page-two-cell large">
+          <div class="wide-title">患者反応・説明・生活指導</div>
+          <div class="wide-body">【患者反応・施術後変化】
+反応：{{ patient_response|default:"-" }}
+施術後：{{ after_treatment_change|default:"-" }}
+
+【説明内容】
+{% if explained_to_patient %}{% for item in explained_to_patient %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}
+
+【生活指導】
+{% if lifestyle_guidance %}{% for item in lifestyle_guidance %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}
+
+【セルフケア】
+{% if home_care %}{% for item in home_care %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}</div>
+        </div>
+      </section>
+
+      <section class="soap-grid">
+        <div class="soap-cell">
+          <div class="soap-head">S 主観</div>
+          <div class="soap-body">
+            <ul>
+              {% for x in soap_view.S %}
+                <li>{{ x }}</li>
+              {% empty %}
+                <li>-</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="soap-cell">
+          <div class="soap-head">O 客観</div>
+          <div class="soap-body">
+            <ul>
+              {% for x in soap_view.O %}
+                <li>{{ x }}</li>
+              {% empty %}
+                <li>-</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="soap-cell">
+          <div class="soap-head">A 評価</div>
+          <div class="soap-body">
+            <ul>
+              {% for x in soap_view.A %}
+                <li>{{ x }}</li>
+              {% empty %}
+                <li>-</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="soap-cell">
+          <div class="soap-head">P 計画</div>
+          <div class="soap-body">
+            <ul>
+              {% for x in soap_view.P %}
+                <li>{{ x }}</li>
+              {% empty %}
+                <li>-</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="bottom-grid">
+        <div class="bottom-cell">
+          <div class="bottom-label">次回までの注意</div>
+          <div class="bottom-value">{% if cautions_until_next_visit %}{% for item in cautions_until_next_visit %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}</div>
+        </div>
+
+        <div class="bottom-cell">
+          <div class="bottom-label">次回方針・確認事項</div>
+          <div class="bottom-value">方針：{{ next_treatment_policy }}
+
+確認：
+{% if items_to_check_next_time %}{% for item in items_to_check_next_time %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}</div>
+        </div>
+      </section>
+
+      <section class="bottom-grid">
+        <div class="bottom-cell">
+          <div class="bottom-label">備考・患者対応メモ</div>
+          <div class="bottom-value">{% if relationship_notes %}{% for item in relationship_notes %}・{{ item }}
+{% endfor %}{% else %}-{% endif %}</div>
+        </div>
+
+        <div class="bottom-cell">
+          <div class="bottom-label">追加確認・安全上の注意</div>
+          <div class="bottom-value">{% if missing_information %}【追加確認】
+{% for item in missing_information %}・{{ item }}
+{% endfor %}{% endif %}
+{% if safety_notes %}【安全上の注意】
+{% for item in safety_notes %}・{{ item }}
+{% endfor %}{% endif %}
+{% if not missing_information and not safety_notes %}-{% endif %}</div>
+        </div>
+      </section>
+
+      <section class="signature-row">
+        <div class="signature-cell">
+          施術者：
+          {% if note.registered_by %}
+            {{ note.registered_by }}
+          {% endif %}
+        </div>
+
+        <div class="signature-cell">
+          確認日：　　　　年　　　月　　　日
+        </div>
+
+        <div class="signature-cell">
+          署名：
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+</body>
+</html>

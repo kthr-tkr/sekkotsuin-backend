@@ -29,6 +29,15 @@ class ClinicalNote(models.Model):
         related_name="clinical_notes",
     )
 
+    treatment_session = models.ForeignKey(
+        "treatment_sessions.TreatmentSession",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="clinical_notes",
+        verbose_name="施術セッション",
+    )
+
     web_intake_snapshot = models.JSONField(default=dict, blank=True)
     soap_json = models.JSONField(default=dict, blank=True)
     extract_json = models.JSONField(default=dict, blank=True)
@@ -80,6 +89,17 @@ class ClinicalNote(models.Model):
 
         if self.recording and self.appointment and self.recording.appointment_id != self.appointment_id:
             errors["recording"] = "録音データの予約とカルテの予約が一致していません。"
+
+        if self.treatment_session and self.patient and self.treatment_session.patient_id != self.patient_id:
+            errors["treatment_session"] = "施術セッションの患者とカルテの患者が一致していません。"
+
+        if (
+            self.treatment_session
+            and self.appointment
+            and self.treatment_session.appointment_id
+            and self.treatment_session.appointment_id != self.appointment_id
+        ):
+            errors["treatment_session"] = "施術セッションの予約とカルテの予約が一致していません。"
 
         if errors:
             raise ValidationError(errors)

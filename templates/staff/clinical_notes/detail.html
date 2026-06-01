@@ -1,116 +1,429 @@
 {% extends "staff/_layout.html" %}
+{% block title %}CareFrow | Clinical Note{% endblock %}
+
 {% block content %}
 
 <style>
-  .cn-wrap{
-    max-width: 1200px;
-    margin: 0 auto;
+  :root{
+    --cn-bg:#f3f6fb;
+    --cn-panel:rgba(255,255,255,.82);
+    --cn-white:#ffffff;
+    --cn-line:#e2e8f0;
+    --cn-text:#0b1220;
+    --cn-muted:#64748b;
+    --cn-soft:#f8fafc;
+    --cn-navy:#080f1f;
+    --cn-blue:#2563eb;
+    --cn-violet:#7c3aed;
+    --cn-green:#10b981;
+    --cn-orange:#f59e0b;
+    --cn-red:#ef4444;
+    --cn-shadow:0 22px 60px rgba(15,23,42,.08);
+    --cn-shadow-soft:0 14px 34px rgba(15,23,42,.06);
+    --cn-radius:28px;
   }
 
-  .cn-head{
+  .cn-page{
+    max-width:1280px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  .cn-top{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    gap:16px;
+    gap:18px;
     flex-wrap:wrap;
-    margin-bottom:20px;
   }
 
-  .cn-title{
-    font-size:42px;
-    font-weight:900;
-    line-height:1.1;
-    margin:0;
-    color:#0f172a;
-  }
-
-  .cn-meta{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-top:14px;
-  }
-
-  .cn-chip{
+  .cn-eyebrow{
     display:inline-flex;
     align-items:center;
     gap:8px;
-    padding:8px 12px;
+    padding:7px 12px;
     border-radius:999px;
-    background:#ffffff;
-    border:1px solid #e5e7eb;
-    color:#475569;
-    font-size:13px;
-    font-weight:700;
+    background:rgba(99,102,241,.10);
+    color:#4338ca;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.04em;
+    margin-bottom:12px;
   }
 
-  .cn-back{
+  .cn-eyebrow::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#2563eb,#7c3aed);
+    box-shadow:0 0 0 4px rgba(99,102,241,.12);
+  }
+
+  .cn-title{
+    margin:0;
+    color:var(--cn-text);
+    font-size:52px;
+    line-height:1.02;
+    font-weight:950;
+    letter-spacing:-.055em;
+  }
+
+  .cn-subtitle{
+    margin-top:10px;
+    color:#64748b;
+    font-size:14px;
+    font-weight:800;
+    line-height:1.7;
+  }
+
+  .cn-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .cn-btn{
+    min-height:46px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
     gap:8px;
-    padding:12px 16px;
-    border-radius:14px;
-    background:#ffffff;
-    border:1px solid #e5e7eb;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid rgba(226,232,240,.9);
+    background:rgba(255,255,255,.88);
     color:#0f172a;
     text-decoration:none;
-    font-weight:800;
-    box-shadow:0 6px 20px rgba(15,23,42,.04);
+    font-size:14px;
+    font-weight:900;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    cursor:pointer;
+    transition:.18s ease;
   }
 
-  .cn-back:hover{
-    color:#0f172a;
+  .cn-btn:hover{
     transform:translateY(-1px);
+    color:#0f172a;
+    box-shadow:0 16px 32px rgba(15,23,42,.08);
   }
 
-  .cn-panel{
-    background:#ffffff;
-    border:1px solid #e5e7eb;
+  .cn-btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#071122 0%,#1d4ed8 62%,#4f46e5 100%);
+    box-shadow:0 16px 34px rgba(37,99,235,.22);
+  }
+
+  .cn-btn.primary:hover{
+    color:#fff;
+  }
+
+  .cn-hero{
+    position:relative;
+    overflow:hidden;
+    border-radius:34px;
+    padding:26px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 88% 18%, rgba(96,165,250,.28), transparent 28%),
+      radial-gradient(circle at 10% 90%, rgba(124,58,237,.16), transparent 26%),
+      linear-gradient(135deg,#050b18 0%,#111b38 42%,#2446be 100%);
+    box-shadow:0 26px 72px rgba(15,23,42,.18);
+  }
+
+  .cn-hero::after{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:33px;
+    border:1px solid rgba(255,255,255,.10);
+    pointer-events:none;
+  }
+
+  .cn-hero-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.2fr .8fr;
+    gap:18px;
+    align-items:stretch;
+  }
+
+  .cn-patient-name{
+    margin:0;
+    font-size:32px;
+    font-weight:950;
+    letter-spacing:-.04em;
+  }
+
+  .cn-hero-meta{
+    margin-top:12px;
+    color:rgba(255,255,255,.74);
+    font-size:14px;
+    line-height:1.8;
+    font-weight:750;
+  }
+
+  .cn-source-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-top:16px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.14);
+    color:#fff;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .cn-source-badge::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:#22c55e;
+    box-shadow:0 0 0 4px rgba(34,197,94,.14);
+  }
+
+  .cn-hero-stats{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .cn-stat{
     border-radius:22px;
-    padding:22px;
-    box-shadow:0 10px 28px rgba(15,23,42,.05);
+    padding:16px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.13);
+    backdrop-filter:blur(12px);
   }
 
-  .cn-section{
-    margin-top:26px;
+  .cn-stat-label{
+    color:rgba(255,255,255,.64);
+    font-size:11px;
+    font-weight:900;
+    margin-bottom:8px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  .cn-stat-value{
+    color:#fff;
+    font-size:18px;
+    line-height:1.45;
+    font-weight:950;
+    word-break:break-word;
+  }
+
+  .cn-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.84);
+    border:1px solid rgba(255,255,255,.86);
+    box-shadow:var(--cn-shadow-soft);
+    backdrop-filter:blur(16px);
+  }
+
+  .cn-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.36),rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .cn-card-inner{
+    position:relative;
+    z-index:1;
+  }
+
+  .cn-section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+
+  .cn-section-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+
+  .cn-section-kicker.green{
+    background:#ecfdf5;
+    color:#166534;
+  }
+
+  .cn-section-kicker.orange{
+    background:#fff7ed;
+    color:#9a3412;
+  }
+
+  .cn-section-kicker.red{
+    background:#fef2f2;
+    color:#991b1b;
   }
 
   .cn-section-title{
-    font-size:18px;
-    font-weight:900;
-    margin:0 0 14px;
-    color:#0f172a;
+    margin:0;
+    color:#0b1220;
+    font-size:24px;
+    font-weight:950;
+    letter-spacing:-.04em;
+  }
+
+  .cn-section-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:13px;
+    line-height:1.6;
+    font-weight:750;
+  }
+
+  .cn-critical{
+    position:relative;
+    overflow:hidden;
+    border-radius:30px;
+    padding:22px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 92% 12%, rgba(96,165,250,.25), transparent 30%),
+      linear-gradient(135deg,#071122 0%,#172554 48%,#2563eb 100%);
+    box-shadow:0 24px 60px rgba(37,99,235,.20);
+  }
+
+  .cn-critical-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+
+  .cn-critical-kicker{
+    color:rgba(255,255,255,.62);
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    margin-bottom:7px;
+  }
+
+  .cn-critical-title{
+    font-size:26px;
+    font-weight:950;
+    letter-spacing:-.045em;
+  }
+
+  .cn-count-pill{
+    display:inline-flex;
+    align-items:center;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.15);
+    color:#fff;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .cn-critical-list{
+    display:grid;
+    gap:10px;
+  }
+
+  .cn-critical-item{
+    display:flex;
+    gap:11px;
+    align-items:flex-start;
+    padding:13px 14px;
+    border-radius:17px;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.13);
+    color:rgba(255,255,255,.95);
+    line-height:1.75;
+    font-size:14px;
+    font-weight:850;
+  }
+
+  .cn-critical-no{
+    flex:0 0 auto;
+    width:25px;
+    height:25px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    background:rgba(255,255,255,.16);
+    color:#fff;
+    font-size:12px;
+    font-weight:950;
   }
 
   .cn-soap-grid{
     display:grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:14px;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
   }
 
   .cn-soap-card{
-    background:#ffffff;
-    border:1px solid #e5e7eb;
-    border-radius:20px;
     overflow:hidden;
-    box-shadow:0 8px 22px rgba(15,23,42,.04);
+    border-radius:24px;
+    background:#fff;
+    border:1px solid #e8eef7;
+    box-shadow:0 14px 34px rgba(15,23,42,.05);
   }
 
   .cn-soap-head{
-    padding:14px 18px;
-    font-size:20px;
-    font-weight:900;
-    color:#ffffff;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:15px 18px;
+    color:#fff;
   }
 
-  .cn-soap-head.s{ background:linear-gradient(135deg, #3b82f6, #2563eb); }
-  .cn-soap-head.o{ background:linear-gradient(135deg, #10b981, #059669); }
-  .cn-soap-head.a{ background:linear-gradient(135deg, #f59e0b, #d97706); }
-  .cn-soap-head.p{ background:linear-gradient(135deg, #8b5cf6, #7c3aed); }
+  .cn-soap-letter{
+    font-size:24px;
+    font-weight:950;
+  }
+
+  .cn-soap-label{
+    font-size:12px;
+    font-weight:950;
+    color:rgba(255,255,255,.72);
+    letter-spacing:.10em;
+    text-transform:uppercase;
+  }
+
+  .cn-soap-head.s{background:linear-gradient(135deg,#2563eb,#4f46e5);}
+  .cn-soap-head.o{background:linear-gradient(135deg,#059669,#10b981);}
+  .cn-soap-head.a{background:linear-gradient(135deg,#d97706,#f59e0b);}
+  .cn-soap-head.p{background:linear-gradient(135deg,#7c3aed,#9333ea);}
 
   .cn-soap-body{
-    padding:18px 18px 16px;
+    padding:18px;
     min-height:150px;
   }
 
@@ -120,460 +433,1212 @@
   }
 
   .cn-list li{
-    margin:0 0 8px;
-    line-height:1.7;
+    margin:0 0 9px;
     color:#0f172a;
+    line-height:1.75;
+    font-size:14px;
+    font-weight:760;
   }
 
   .cn-empty{
     color:#94a3b8;
-    font-weight:700;
+    font-weight:850;
+    line-height:1.7;
   }
 
-  .cn-info-box{
-    background:#ffffff;
-    border:1px solid #e5e7eb;
-    border-radius:20px;
-    padding:20px 22px;
-    box-shadow:0 8px 22px rgba(15,23,42,.04);
+  .cn-grid-2{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+  }
+
+  .cn-grid-3{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:14px;
+  }
+
+  .cn-info{
+    border-radius:22px;
+    padding:18px;
+    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+    border:1px solid #e8eef7;
+    box-shadow:0 10px 26px rgba(15,23,42,.04);
+  }
+
+  .cn-info.blue{
+    background:linear-gradient(180deg,#fff 0%,#eff6ff 100%);
+    border-color:#bfdbfe;
+  }
+
+  .cn-info.green{
+    background:linear-gradient(180deg,#fff 0%,#ecfdf5 100%);
+    border-color:#bbf7d0;
+  }
+
+  .cn-info.orange{
+    background:linear-gradient(180deg,#fff 0%,#fff7ed 100%);
+    border-color:#fed7aa;
+  }
+
+  .cn-info.red{
+    background:linear-gradient(180deg,#fff 0%,#fff1f2 100%);
+    border-color:#fecdd3;
+  }
+
+  .cn-info.purple{
+    background:linear-gradient(180deg,#fff 0%,#f5f3ff 100%);
+    border-color:#ddd6fe;
+  }
+
+  .cn-info-label{
+    color:#64748b;
+    font-size:12px;
+    font-weight:950;
+    margin-bottom:8px;
+  }
+
+  .cn-info-value{
+    color:#0f172a;
+    font-size:15px;
+    line-height:1.8;
+    font-weight:850;
+    word-break:break-word;
+  }
+
+  .cn-mini-list{
+    display:grid;
+    gap:9px;
+  }
+
+  .cn-mini-item{
+    display:flex;
+    gap:9px;
+    align-items:flex-start;
+    color:#0f172a;
+    font-size:14px;
+    line-height:1.75;
+    font-weight:780;
+  }
+
+  .cn-mini-dot{
+    flex:0 0 auto;
+    width:8px;
+    height:8px;
+    margin-top:9px;
+    border-radius:999px;
+    background:#2563eb;
+  }
+
+  .cn-mini-dot.green{background:#10b981;}
+  .cn-mini-dot.orange{background:#f59e0b;}
+  .cn-mini-dot.red{background:#ef4444;}
+  .cn-mini-dot.purple{background:#7c3aed;}
+
+  .cn-next-card{
+    border-radius:28px;
+    padding:22px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 86% 12%, rgba(255,255,255,.18), transparent 32%),
+      linear-gradient(135deg,#3b0764 0%,#6d28d9 52%,#2563eb 100%);
+    box-shadow:0 20px 50px rgba(109,40,217,.18);
+  }
+
+  .cn-next-grid{
+    display:grid;
+    grid-template-columns:.9fr 1.1fr;
+    gap:16px;
+    align-items:start;
+  }
+
+  .cn-next-label{
+    color:rgba(255,255,255,.66);
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+
+  .cn-next-main{
+    color:#fff;
+    font-size:18px;
+    line-height:1.7;
+    font-weight:900;
+  }
+
+  .cn-checklist{
+    display:grid;
+    gap:10px;
+  }
+
+  .cn-check-item{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:12px 13px;
+    border-radius:16px;
+    background:rgba(255,255,255,.11);
+    border:1px solid rgba(255,255,255,.13);
+    color:rgba(255,255,255,.94);
+    font-size:14px;
+    line-height:1.65;
+    font-weight:850;
+  }
+
+  .cn-check-box{
+    flex:0 0 auto;
+    width:19px;
+    height:19px;
+    border-radius:6px;
+    border:2px solid rgba(255,255,255,.62);
+    margin-top:2px;
   }
 
   .cn-kv{
     display:grid;
-    grid-template-columns:180px 1fr;
-    gap:10px 18px;
+    grid-template-columns:170px 1fr;
+    gap:12px 18px;
     align-items:start;
   }
 
   .cn-k{
-    color:#475569;
-    font-weight:900;
+    color:#64748b;
+    font-size:13px;
+    font-weight:950;
   }
 
   .cn-v{
     color:#0f172a;
-    font-weight:700;
-    line-height:1.7;
+    font-size:14px;
+    line-height:1.75;
+    font-weight:780;
     word-break:break-word;
   }
 
-  .cn-note-footer{
-    margin-top:28px;
+  .cn-tag-row{
     display:flex;
-    justify-content:flex-start;
+    flex-wrap:wrap;
+    gap:8px;
   }
 
   .cn-tag{
     display:inline-flex;
     align-items:center;
-    gap:8px;
-    padding:10px 14px;
+    gap:7px;
+    padding:8px 11px;
     border-radius:999px;
     background:#eef2ff;
     color:#3730a3;
-    font-weight:800;
-    font-size:13px;
+    border:1px solid #c7d2fe;
+    font-size:12px;
+    font-weight:950;
   }
 
-  @media (max-width: 900px){
+  .cn-tag.green{
+    background:#ecfdf5;
+    color:#166534;
+    border-color:#bbf7d0;
+  }
+
+  .cn-tag.orange{
+    background:#fff7ed;
+    color:#9a3412;
+    border-color:#fed7aa;
+  }
+
+  .cn-tag.red{
+    background:#fef2f2;
+    color:#991b1b;
+    border-color:#fecaca;
+  }
+
+  .cn-fold{
+    border-radius:22px;
+    background:#fff;
+    border:1px solid #e8eef7;
+    overflow:hidden;
+  }
+
+  .cn-fold summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:16px 18px;
+    color:#0f172a;
+    font-size:15px;
+    font-weight:950;
+    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+  }
+
+  .cn-fold summary::-webkit-details-marker{
+    display:none;
+  }
+
+  .cn-fold-body{
+    padding:18px;
+    border-top:1px solid #e8eef7;
+  }
+
+  .cn-json{
+    margin:0;
+    padding:16px;
+    border-radius:18px;
+    background:#0f172a;
+    color:#e5e7eb;
+    font-size:12px;
+    line-height:1.65;
+    white-space:pre-wrap;
+    word-break:break-word;
+    overflow:auto;
+  }
+
+  .cn-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:18px 0 4px;
+  }
+
+  .cn-status-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  @media(max-width: 1100px){
+    .cn-hero-grid,
+    .cn-next-grid,
+    .cn-grid-2{
+      grid-template-columns:1fr;
+    }
+
+    .cn-grid-3{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media(max-width: 760px){
+    .cn-title{
+      font-size:34px;
+    }
+
+    .cn-hero{
+      border-radius:24px;
+      padding:20px;
+    }
+
+    .cn-hero-stats,
     .cn-soap-grid{
       grid-template-columns:1fr;
     }
 
-    .cn-title{
-      font-size:32px;
-    }
-
     .cn-kv{
       grid-template-columns:1fr;
-      gap:4px 0;
+      gap:5px;
+    }
+
+    .cn-actions{
+      justify-content:flex-start;
+    }
+
+    .cn-btn{
+      width:100%;
     }
   }
 
-.cn-fold{
-  margin-top:10px;
-}
+@media print{
+  @page{
+    size:A4;
+    margin:10mm;
+  }
 
-.cn-fold-summary{
-  list-style:none;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 14px;
-  border-radius:12px;
-  background:#ffffff;
-  border:1px solid #e5e7eb;
-  color:#0f172a;
-  font-weight:800;
-  box-shadow:0 6px 20px rgba(15,23,42,.04);
-}
+  html,
+  body{
+    background:#fff !important;
+    color:#000 !important;
+    font-size:10.5pt !important;
+  }
 
-.cn-fold-summary::-webkit-details-marker{
-  display:none;
-}
+  body{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
 
-.cn-json{
-  margin:0;
-  padding:16px;
-  border-radius:16px;
-  background:#f8fafc;
-  border:1px solid #e5e7eb;
-  color:#334155;
-  font-size:13px;
-  line-height:1.6;
-  white-space:pre-wrap;
-  word-break:break-word;
-  overflow:auto;
-}
+  .staff-sidebar,
+  .sidebar,
+  .cn-actions,
+  .cn-btn,
+  .cn-fold,
+  nav,
+  header.staff-header{
+    display:none !important;
+  }
 
+  .cn-page{
+    max-width:none !important;
+    margin:0 !important;
+    gap:8px !important;
+  }
+
+  .cn-top{
+    margin-bottom:6px !important;
+  }
+
+  .cn-eyebrow{
+    background:none !important;
+    color:#111827 !important;
+    padding:0 !important;
+    margin-bottom:3px !important;
+  }
+
+  .cn-title{
+    font-size:22pt !important;
+    color:#000 !important;
+  }
+
+  .cn-subtitle{
+    color:#374151 !important;
+    font-size:9.5pt !important;
+  }
+
+  .cn-hero,
+  .cn-critical,
+  .cn-next-card,
+  .cn-card{
+    box-shadow:none !important;
+    border:1px solid #d1d5db !important;
+    break-inside:avoid !important;
+    page-break-inside:avoid !important;
+  }
+
+  .cn-hero,
+  .cn-critical,
+  .cn-next-card{
+    color:#000 !important;
+    background:#ffffff !important;
+  }
+
+  .cn-hero::after,
+  .cn-card::after{
+    display:none !important;
+  }
+
+  .cn-hero{
+    padding:12px !important;
+    border-radius:12px !important;
+  }
+
+  .cn-critical,
+  .cn-card,
+  .cn-next-card{
+    padding:12px !important;
+    border-radius:12px !important;
+  }
+
+  .cn-patient-name{
+    color:#000 !important;
+    font-size:18pt !important;
+  }
+
+  .cn-hero-meta,
+  .cn-source-badge,
+  .cn-critical-kicker,
+  .cn-count-pill,
+  .cn-critical-item,
+  .cn-next-label,
+  .cn-next-main,
+  .cn-check-item{
+    color:#000 !important;
+  }
+
+  .cn-source-badge,
+  .cn-count-pill,
+  .cn-critical-item,
+  .cn-check-item{
+    background:#ffffff !important;
+    border:1px solid #d1d5db !important;
+  }
+
+  .cn-hero-grid,
+  .cn-grid-2,
+  .cn-grid-3,
+  .cn-next-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+  }
+
+  .cn-hero-stats{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+  }
+
+  .cn-stat{
+    background:#ffffff !important;
+    border:1px solid #d1d5db !important;
+    padding:8px !important;
+  }
+
+  .cn-stat-label,
+  .cn-info-label,
+  .cn-section-sub{
+    color:#374151 !important;
+  }
+
+  .cn-stat-value,
+  .cn-info-value,
+  .cn-v,
+  .cn-mini-item,
+  .cn-list li{
+    color:#000 !important;
+  }
+
+  .cn-section-title{
+    font-size:14pt !important;
+  }
+
+  .cn-soap-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+  }
+
+  .cn-soap-card{
+    box-shadow:none !important;
+    border:1px solid #d1d5db !important;
+    break-inside:avoid !important;
+  }
+
+  .cn-soap-head{
+    color:#000 !important;
+    background:#f3f4f6 !important;
+    border-bottom:1px solid #d1d5db !important;
+    padding:7px 9px !important;
+  }
+
+  .cn-soap-label{
+    color:#374151 !important;
+  }
+
+  .cn-soap-body{
+    padding:9px !important;
+    min-height:auto !important;
+  }
+
+  .cn-info{
+    box-shadow:none !important;
+    background:#ffffff !important;
+    border:1px solid #d1d5db !important;
+    padding:9px !important;
+    break-inside:avoid !important;
+  }
+
+  .cn-critical-no{
+    background:#f3f4f6 !important;
+    color:#000 !important;
+    border:1px solid #d1d5db !important;
+  }
+
+  .cn-check-box{
+    border-color:#111827 !important;
+  }
+
+  .cn-tag{
+    background:#ffffff !important;
+    color:#000 !important;
+    border:1px solid #d1d5db !important;
+  }
+
+  .cn-footer{
+    display:none !important;
+  }
+}
 </style>
 
-<div class="cn-wrap">
+<div class="cn-page">
 
-  <div class="cn-head">
+  <header class="cn-top">
     <div>
+      <div class="cn-eyebrow">Clinical Intelligence</div>
       <h1 class="cn-title">Clinical Note #{{ note.id }}</h1>
-
-      <div class="cn-meta">
-        <span class="cn-chip">患者：{{ note.patient.last_name }} {{ note.patient.first_name }}</span>
-        <span class="cn-chip">予約ID：{{ note.appointment_id }}</span>
-        <span class="cn-chip">作成：{{ note.created_at|date:"Y-m-d H:i" }}</span>
-
-        {% if note.registered_by %}
-          <span class="cn-chip">作成者：{{ note.registered_by }}</span>
-        {% endif %}
-
-        <span class="cn-chip">最終更新：{{ note.updated_at|date:"Y-m-d H:i" }}</span>
-
-        {% if note.updated_by %}
-          <span class="cn-chip">更新者：{{ note.updated_by }}</span>
-        {% endif %}
-
-        {% if note.recording_id %}
-          <span class="cn-chip">録音ID：{{ note.recording_id }}</span>
-        {% endif %}
+      <div class="cn-subtitle">
+        AI要約・SOAP・施術記録・次回方針を一画面で確認できます
       </div>
     </div>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-
+    <div class="cn-actions">
       {% if note.appointment_id %}
-        <a href="{% url 'treatment_plans:plan_create_for_appointment' note.appointment_id %}" class="cn-back" style="background:#0f172a; color:#fff; border-color:#0f172a;">
+        <a href="{% url 'treatment_plans:plan_create_for_appointment' note.appointment_id %}" class="cn-btn primary">
           ＋ 施術計画を作成
         </a>
       {% elif note.patient_id %}
-        <a href="{% url 'treatment_plans:plan_create_for_patient' note.patient_id %}" class="cn-back" style="background:#0f172a; color:#fff; border-color:#0f172a;">
+        <a href="{% url 'treatment_plans:plan_create_for_patient' note.patient_id %}" class="cn-btn primary">
           ＋ 施術計画を作成
         </a>
       {% endif %}
 
-      <a href="{% url 'staff:clinical_note_edit' note.id %}" class="cn-back">
+      <a href="{% url 'staff:clinical_note_edit' note.id %}" class="cn-btn">
         ✏️ 編集
       </a>
 
-      <a href="{% url 'staff:patient_detail' note.patient_id %}" class="cn-back">
-        ← 患者詳細へ戻る
+      <button type="button" class="cn-btn" onclick="window.print()">
+        🖨 画面を印刷
+      </button>
+
+      <a href="{% url 'staff:clinical_note_print' note.id %}" class="cn-btn" target="_blank">
+        🧾 施術録を印刷
       </a>
 
+      <a href="{% url 'staff:patient_detail' note.patient_id %}" class="cn-btn">
+        ← 患者詳細へ戻る
+      </a>
     </div>
-  </div>
+  </header>
 
-  <div class="cn-section">
-    <h2 class="cn-section-title">SOAP</h2>
+  <section class="cn-hero">
+    <div class="cn-hero-grid">
+      <div>
+        <h2 class="cn-patient-name">
+          {{ note.patient.last_name }} {{ note.patient.first_name }}
+        </h2>
 
-    <div class="cn-soap-grid">
-      <div class="cn-soap-card">
-        <div class="cn-soap-head s">S</div>
-        <div class="cn-soap-body">
-          <ul class="cn-list">
-            {% for x in soap_view.S %}
-              <li>{{ x }}</li>
-            {% empty %}
-              <li class="cn-empty">記録なし</li>
-            {% endfor %}
-          </ul>
+        <div class="cn-hero-meta">
+          患者ID：{{ note.patient_id }}
+          {% if note.appointment_id %} / 予約ID：{{ note.appointment_id }}{% endif %}
+          <br>
+          作成：{{ note.created_at|date:"Y-m-d H:i" }}
+          {% if note.registered_by %} / 作成者：{{ note.registered_by }}{% endif %}
+          <br>
+          最終更新：{{ note.updated_at|date:"Y-m-d H:i" }}
+          {% if note.updated_by %} / 更新者：{{ note.updated_by }}{% endif %}
         </div>
-      </div>
 
-      <div class="cn-soap-card">
-        <div class="cn-soap-head o">O</div>
-        <div class="cn-soap-body">
-          <ul class="cn-list">
-            {% for x in soap_view.O %}
-              <li>{{ x }}</li>
-            {% empty %}
-              <li class="cn-empty">記録なし</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-
-      <div class="cn-soap-card">
-        <div class="cn-soap-head a">A</div>
-        <div class="cn-soap-body">
-          <ul class="cn-list">
-            {% for x in soap_view.A %}
-              <li>{{ x }}</li>
-            {% empty %}
-              <li class="cn-empty">記録なし</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-
-      <div class="cn-soap-card">
-        <div class="cn-soap-head p">P</div>
-        <div class="cn-soap-body">
-          <ul class="cn-list">
-            {% for x in soap_view.P %}
-              <li>{{ x }}</li>
-            {% empty %}
-              <li class="cn-empty">記録なし</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="cn-section">
-    <h2 class="cn-section-title">抽出内容</h2>
-
-    <div class="cn-info-box">
-      <div class="cn-kv">
-        <div class="cn-k">主訴</div>
-        <div class="cn-v">{{ extract.chief_complaint|default:"-" }}</div>
-
-        <div class="cn-k">発症</div>
-        <div class="cn-v">{{ extract.onset|default:"-" }}</div>
-
-        <div class="cn-k">きっかけ</div>
-        <div class="cn-v">{{ extract.trigger|default:"-" }}</div>
-
-        <div class="cn-k">痛み(0-10)</div>
-        <div class="cn-v">{{ extract.severity_0_10|default:"-" }}</div>
-
-        <div class="cn-k">部位</div>
-        <div class="cn-v">
-          {% if extract.locations %}
-            {{ extract.locations|join:" / " }}
-          {% else %}
-            -
+        <div class="cn-source-badge {{ source_badge_class }}">
+          {{ source_label }}
+          {% if note.treatment_session_id %}
+            / Session #{{ note.treatment_session_id }}
+          {% elif note.recording_id %}
+            / Recording #{{ note.recording_id }}
           {% endif %}
         </div>
+      </div>
 
-        <div class="cn-k">性状</div>
-        <div class="cn-v">
-          {% if extract.qualities %}
-            {{ extract.qualities|join:" / " }}
-          {% else %}
-            -
-          {% endif %}
+      <div class="cn-hero-stats">
+        <div class="cn-stat">
+          <div class="cn-stat-label">主訴</div>
+          <div class="cn-stat-value">{{ chief_complaint_label }}</div>
         </div>
 
-        <div class="cn-k">急性/慢性</div>
-        <div class="cn-v">{{ extract.symptom_type|default:"-" }}</div>
+        <div class="cn-stat">
+          <div class="cn-stat-label">部位</div>
+          <div class="cn-stat-value">{{ location_label }}</div>
+        </div>
+
+        <div class="cn-stat">
+          <div class="cn-stat-label">来院種別</div>
+          <div class="cn-stat-value">{{ visit_type_label }}</div>
+        </div>
+
+        <div class="cn-stat">
+          <div class="cn-stat-label">次回目安</div>
+          <div class="cn-stat-value">{{ recommended_visit_timing|default:"-" }}</div>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="cn-section">
-    <h2 class="cn-section-title">追加質問（Followups）</h2>
+  {% if is_treatment_session_note %}
+    <section class="cn-critical">
+      <div class="cn-critical-top">
+        <div>
+          <div class="cn-critical-kicker">AI Critical Points</div>
+          <div class="cn-critical-title">今日の重要ポイント</div>
+        </div>
 
-    <div class="cn-info-box">
-      {% if followups %}
-        <ul class="cn-list">
-          {% for q in followups %}
-            <li>{{ q }}</li>
+        <div class="cn-count-pill">
+          {{ important_points|length }}件
+        </div>
+      </div>
+
+      {% if important_points %}
+        <div class="cn-critical-list">
+          {% for point in important_points %}
+            <div class="cn-critical-item">
+              <span class="cn-critical-no">{{ forloop.counter }}</span>
+              <span>{{ point }}</span>
+            </div>
           {% endfor %}
-        </ul>
+        </div>
       {% else %}
-        <div class="cn-empty">質問はありません。</div>
+        <div style="color:rgba(255,255,255,.72); font-weight:850;">
+          重要ポイントはありません。
+        </div>
       {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="cn-card">
+    <div class="cn-card-inner">
+      <div class="cn-section-head">
+        <div>
+          <div class="cn-section-kicker">SOAP</div>
+          <h2 class="cn-section-title">診療記録</h2>
+          <div class="cn-section-sub">
+            主観・客観・評価・計画を確認できます
+          </div>
+        </div>
+      </div>
+
+      <div class="cn-soap-grid">
+        <div class="cn-soap-card">
+          <div class="cn-soap-head s">
+            <span class="cn-soap-letter">S</span>
+            <span class="cn-soap-label">Subjective</span>
+          </div>
+          <div class="cn-soap-body">
+            <ul class="cn-list">
+              {% for x in soap_view.S %}
+                <li>{{ x }}</li>
+              {% empty %}
+                <li class="cn-empty">記録なし</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="cn-soap-card">
+          <div class="cn-soap-head o">
+            <span class="cn-soap-letter">O</span>
+            <span class="cn-soap-label">Objective</span>
+          </div>
+          <div class="cn-soap-body">
+            <ul class="cn-list">
+              {% for x in soap_view.O %}
+                <li>{{ x }}</li>
+              {% empty %}
+                <li class="cn-empty">記録なし</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="cn-soap-card">
+          <div class="cn-soap-head a">
+            <span class="cn-soap-letter">A</span>
+            <span class="cn-soap-label">Assessment</span>
+          </div>
+          <div class="cn-soap-body">
+            <ul class="cn-list">
+              {% for x in soap_view.A %}
+                <li>{{ x }}</li>
+              {% empty %}
+                <li class="cn-empty">記録なし</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="cn-soap-card">
+          <div class="cn-soap-head p">
+            <span class="cn-soap-letter">P</span>
+            <span class="cn-soap-label">Plan</span>
+          </div>
+          <div class="cn-soap-body">
+            <ul class="cn-list">
+              {% for x in soap_view.P %}
+                <li>{{ x }}</li>
+              {% empty %}
+                <li class="cn-empty">記録なし</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="cn-note-footer">
-    <span class="cn-tag">確定カルテ</span>
+  {% if is_treatment_session_note %}
+    <section class="cn-card">
+      <div class="cn-card-inner">
+        <div class="cn-section-head">
+          <div>
+            <div class="cn-section-kicker green">Treatment Session</div>
+            <h2 class="cn-section-title">施術セッション記録</h2>
+            <div class="cn-section-sub">
+              前回からの変化、評価、施術意図、実施内容を整理します
+            </div>
+          </div>
+        </div>
 
-    {% if note.updated_by %}
-      <span class="cn-tag" style="background:#ecfeff; color:#155e75;">
-        編集済み
-      </span>
-    {% endif %}
-  </div>
+        <div class="cn-grid-2">
+          <div class="cn-info green">
+            <div class="cn-info-label">前回からの変化</div>
+            <div class="cn-info-value">
+              <strong>痛み：</strong>{{ progress_change.pain_change|default:"-" }}<br>
+              <strong>動作：</strong>{{ progress_change.movement_change|default:"-" }}<br>
+              <strong>日常生活：</strong>{{ progress_change.daily_life_change|default:"-" }}<br>
+              <strong>新しい症状：</strong>{{ progress_change.new_symptoms|default:"-" }}<br>
+              <strong>患者コメント：</strong>{{ progress_change.patient_comment|default:"-" }}
+            </div>
+          </div>
 
-  <div class="cn-section">
-    <h2 class="cn-section-title">Web問診 snapshot</h2>
+          <div class="cn-info orange">
+            <div class="cn-info-label">評価・確認内容</div>
+            <div class="cn-info-value">
+              <strong>確認部位：</strong>
+              {% if checked_areas %}{{ checked_areas|join:" / " }}{% else %}-{% endif %}
+              <br>
 
-    <details class="cn-fold">
-      <summary class="cn-fold-summary">元のWeb問診データを表示</summary>
+              <strong>痛みの部位：</strong>
+              {% if pain_areas %}{{ pain_areas|join:" / " }}{% else %}-{% endif %}
+              <br>
 
-      <div class="cn-info-box" style="margin-top:12px;">
-        {% if note.web_intake_snapshot %}
-          <div class="cn-kv">
-            <div class="cn-k">主訴</div>
-            <div class="cn-v">{{ note.web_intake_snapshot.chief_complaint|default:"-" }}</div>
+              <strong>動作確認：</strong>
+              {% if movement_tests %}{{ movement_tests|join:" / " }}{% else %}-{% endif %}
+              <br>
 
-            <div class="cn-k">発症</div>
-            <div class="cn-v">{{ note.web_intake_snapshot.onset|default:"-" }}</div>
+              <strong>原因候補：</strong>
+              {% if suspected_causes %}{{ suspected_causes|join:" / " }}{% else %}-{% endif %}
+            </div>
+          </div>
+        </div>
 
-            <div class="cn-k">急性/慢性</div>
-            <div class="cn-v">
-              {% if note.web_intake_snapshot.symptom_type == "acute" %}
-                急性
-              {% elif note.web_intake_snapshot.symptom_type == "chronic" %}
-                慢性
-              {% elif note.web_intake_snapshot.symptom_type == "unknown" %}
-                不明
+        <div style="height:14px;"></div>
+
+        <div class="cn-info">
+          <div class="cn-info-label">施術者の所見・施術意図</div>
+          <div class="cn-info-value">
+            <strong>所見：</strong>
+            {% if findings %}
+              <div class="cn-mini-list" style="margin:10px 0 14px;">
+                {% for item in findings %}
+                  <div class="cn-mini-item">
+                    <span class="cn-mini-dot orange"></span>
+                    <span>{{ item }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              -
+            {% endif %}
+
+            <strong>施術意図：</strong>
+            {{ treatment_intent|default:"-" }}
+          </div>
+        </div>
+
+        <div style="height:14px;"></div>
+
+        <div class="cn-grid-2">
+          <div class="cn-info purple">
+            <div class="cn-info-label">実施した施術</div>
+            <div class="cn-info-value">
+              <strong>対象部位：</strong>
+              {% if target_areas %}{{ target_areas|join:" / " }}{% else %}-{% endif %}
+
+              <br><br>
+
+              <strong>施術内容：</strong>
+              {% if performed_treatments %}
+                <div class="cn-mini-list" style="margin-top:10px;">
+                  {% for item in performed_treatments %}
+                    <div class="cn-mini-item">
+                      <span class="cn-mini-dot purple"></span>
+                      <span>{{ item }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
               {% else %}
-                {{ note.web_intake_snapshot.symptom_type|default:"-" }}
+                -
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="cn-info blue">
+            <div class="cn-info-label">患者反応・施術後変化</div>
+            <div class="cn-info-value">
+              <strong>反応：</strong>{{ patient_response|default:"-" }}<br>
+              <strong>施術後の変化：</strong>{{ after_treatment_change|default:"-" }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cn-next-card">
+      <div class="cn-next-grid">
+        <div>
+          <div class="cn-next-label">Next Action</div>
+          <div class="cn-next-main">
+            {{ next_treatment_policy|default:"次回方針は未設定です。" }}
+          </div>
+
+          {% if recommended_visit_timing %}
+            <div style="margin-top:14px; color:rgba(255,255,255,.74); line-height:1.7; font-weight:850;">
+              来院目安：{{ recommended_visit_timing }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div>
+          <div class="cn-next-label">次回確認事項</div>
+
+          {% if items_to_check_next_time %}
+            <div class="cn-checklist">
+              {% for item in items_to_check_next_time %}
+                <div class="cn-check-item">
+                  <span class="cn-check-box"></span>
+                  <span>{{ item }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div style="color:rgba(255,255,255,.72); font-weight:850;">
+              次回確認事項はありません。
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="cn-card">
+      <div class="cn-card-inner">
+        <div class="cn-section-head">
+          <div>
+            <div class="cn-section-kicker orange">Guidance</div>
+            <h2 class="cn-section-title">患者説明・生活指導</h2>
+            <div class="cn-section-sub">
+              患者へ説明した内容、セルフケア、次回までの注意を確認します
+            </div>
+          </div>
+        </div>
+
+        <div class="cn-grid-3">
+          <div class="cn-info">
+            <div class="cn-info-label">説明内容</div>
+            {% if explained_to_patient %}
+              <div class="cn-mini-list">
+                {% for item in explained_to_patient %}
+                  <div class="cn-mini-item">
+                    <span class="cn-mini-dot"></span>
+                    <span>{{ item }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="cn-empty">記録なし</div>
+            {% endif %}
+          </div>
+
+          <div class="cn-info green">
+            <div class="cn-info-label">生活指導・セルフケア</div>
+
+            {% if lifestyle_guidance %}
+              <div class="cn-mini-list">
+                {% for item in lifestyle_guidance %}
+                  <div class="cn-mini-item">
+                    <span class="cn-mini-dot green"></span>
+                    <span>{{ item }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if home_care %}
+              <div class="cn-mini-list" style="margin-top:10px;">
+                {% for item in home_care %}
+                  <div class="cn-mini-item">
+                    <span class="cn-mini-dot green"></span>
+                    <span>{{ item }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if not lifestyle_guidance and not home_care %}
+              <div class="cn-empty">記録なし</div>
+            {% endif %}
+          </div>
+
+          <div class="cn-info red">
+            <div class="cn-info-label">次回までの注意点</div>
+            {% if cautions_until_next_visit %}
+              <div class="cn-mini-list">
+                {% for item in cautions_until_next_visit %}
+                  <div class="cn-mini-item">
+                    <span class="cn-mini-dot red"></span>
+                    <span>{{ item }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="cn-empty">記録なし</div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if progress_note.record_text or progress_note.short_summary %}
+          <div style="height:16px;"></div>
+
+          <div class="cn-info blue">
+            <div class="cn-info-label">経過記録用サマリー</div>
+            <div class="cn-info-value" style="white-space:pre-wrap;">
+              {% if progress_note.record_text %}
+                {{ progress_note.record_text }}
+              {% elif progress_note.short_summary %}
+                {{ progress_note.short_summary }}
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    {% if relationship_notes or missing_information or safety_notes %}
+      <section class="cn-card">
+        <div class="cn-card-inner">
+          <div class="cn-section-head">
+            <div>
+              <div class="cn-section-kicker red">Assistant Notes</div>
+              <h2 class="cn-section-title">補足メモ・注意事項</h2>
+              <div class="cn-section-sub">
+                患者対応メモ、追加確認事項、安全上の注意を表示します
+              </div>
+            </div>
+          </div>
+
+          <div class="cn-grid-3">
+            <div class="cn-info purple">
+              <div class="cn-info-label">患者対応メモ</div>
+              {% if relationship_notes %}
+                <div class="cn-mini-list">
+                  {% for item in relationship_notes %}
+                    <div class="cn-mini-item">
+                      <span class="cn-mini-dot purple"></span>
+                      <span>{{ item }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="cn-empty">記録なし</div>
               {% endif %}
             </div>
 
-            <div class="cn-k">送信日時</div>
-            <div class="cn-v">{{ note.web_intake_snapshot.submitted_at|default:"-" }}</div>
+            <div class="cn-info orange">
+              <div class="cn-info-label">追加確認が必要な情報</div>
+              {% if missing_information %}
+                <div class="cn-mini-list">
+                  {% for item in missing_information %}
+                    <div class="cn-mini-item">
+                      <span class="cn-mini-dot orange"></span>
+                      <span>{{ item }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="cn-empty">記録なし</div>
+              {% endif %}
+            </div>
+
+            <div class="cn-info red">
+              <div class="cn-info-label">安全上の注意</div>
+              {% if safety_notes %}
+                <div class="cn-mini-list">
+                  {% for item in safety_notes %}
+                    <div class="cn-mini-item">
+                      <span class="cn-mini-dot red"></span>
+                      <span>{{ item }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="cn-empty">記録なし</div>
+              {% endif %}
+            </div>
           </div>
+        </div>
+      </section>
+    {% endif %}
 
-          {% if note.web_intake_snapshot.payload %}
-            {% with payload=note.web_intake_snapshot.payload %}
-              <div style="margin-top:18px; display:grid; gap:14px;">
+  {% else %}
+    <section class="cn-card">
+      <div class="cn-card-inner">
+        <div class="cn-section-head">
+          <div>
+            <div class="cn-section-kicker">Extract</div>
+            <h2 class="cn-section-title">抽出内容</h2>
+            <div class="cn-section-sub">
+              問診・録音内容から抽出された基本情報です
+            </div>
+          </div>
+        </div>
 
-                {% if payload.ai_summary %}
-                  <div class="cn-info-box">
-                    <div class="cn-section-title" style="margin-bottom:12px;">AI要約</div>
+        <div class="cn-info">
+          <div class="cn-kv">
+            <div class="cn-k">主訴</div>
+            <div class="cn-v">{{ chief_complaint_label }}</div>
 
-                    {% with ai=payload.ai_summary %}
-                      <div class="cn-kv">
-                        <div class="cn-k">主訴</div>
-                        <div class="cn-v">{{ ai.extract.chief_complaint|default:"-" }}</div>
+            <div class="cn-k">発症</div>
+            <div class="cn-v">{{ extract.onset|default:"-" }}</div>
 
-                        <div class="cn-k">発症</div>
-                        <div class="cn-v">{{ ai.extract.onset|default:"-" }}</div>
+            <div class="cn-k">きっかけ</div>
+            <div class="cn-v">{{ extract.trigger|default:"-" }}</div>
 
-                        <div class="cn-k">きっかけ</div>
-                        <div class="cn-v">{{ ai.extract.trigger|default:"-" }}</div>
+            <div class="cn-k">痛み(0-10)</div>
+            <div class="cn-v">{{ extract.severity_0_10|default:"-" }}</div>
 
-                        <div class="cn-k">部位</div>
-                        <div class="cn-v">
-                          {% if ai.extract.locations %}
-                            {{ ai.extract.locations|join:" / " }}
-                          {% else %}
-                            -
-                          {% endif %}
-                        </div>
+            <div class="cn-k">部位</div>
+            <div class="cn-v">
+              {% if extract.locations %}
+                {{ extract.locations|join:" / " }}
+              {% else %}
+                -
+              {% endif %}
+            </div>
 
-                        <div class="cn-k">性状</div>
-                        <div class="cn-v">
-                          {% if ai.extract.qualities %}
-                            {{ ai.extract.qualities|join:" / " }}
-                          {% else %}
-                            -
-                          {% endif %}
-                        </div>
+            <div class="cn-k">性状</div>
+            <div class="cn-v">
+              {% if extract.qualities %}
+                {{ extract.qualities|join:" / " }}
+              {% else %}
+                -
+              {% endif %}
+            </div>
 
-                        <div class="cn-k">症状タイプ</div>
-                        <div class="cn-v">
-                          {% if ai.extract.symptom_type == "acute" %}
-                            急性
-                          {% elif ai.extract.symptom_type == "chronic" %}
-                            慢性
-                          {% elif ai.extract.symptom_type == "unknown" %}
-                            不明
-                          {% else %}
-                            {{ ai.extract.symptom_type|default:"-" }}
-                          {% endif %}
-                        </div>
-
-                        <div class="cn-k">痛み(0-10)</div>
-                        <div class="cn-v">{{ ai.extract.severity_0_10|default:"-" }}</div>
-                      </div>
-
-                      {% if ai.followups %}
-                        <div style="margin-top:16px;">
-                          <div style="font-weight:900; margin-bottom:8px; color:#475569;">追加質問候補</div>
-                          <ul class="cn-list">
-                            {% for q in ai.followups %}
-                              <li>{{ q }}</li>
-                            {% endfor %}
-                          </ul>
-                        </div>
-                      {% endif %}
-                    {% endwith %}
-                  </div>
-                {% endif %}
-
-                {% if payload.history %}
-                  <div class="cn-info-box">
-                    <div class="cn-section-title" style="margin-bottom:12px;">既往歴・履歴</div>
-
-                    <div class="cn-kv">
-                      <div class="cn-k">final_note</div>
-                      <div class="cn-v">{{ payload.history.final_note|default:"-" }}</div>
-
-                      <div class="cn-k">history_note</div>
-                      <div class="cn-v">{{ payload.history.history_note|default:"-" }}</div>
-
-                      <div class="cn-k">meds_note</div>
-                      <div class="cn-v">{{ payload.history.meds_note|default:"-" }}</div>
-
-                      <div class="cn-k">other_clinic</div>
-                      <div class="cn-v">{{ payload.history.other_clinic|default:"-" }}</div>
-                    </div>
-                  </div>
-                {% endif %}
-
-                {% if payload.consent %}
-                  <div class="cn-info-box">
-                    <div class="cn-section-title" style="margin-bottom:12px;">同意情報</div>
-
-                    <div class="cn-kv">
-                      <div class="cn-k">同意</div>
-                      <div class="cn-v">
-                        {% if payload.consent.agreed %}
-                          済
-                        {% else %}
-                          未
-                        {% endif %}
-                      </div>
-                    </div>
-                  </div>
-                {% endif %}
-
-                <details class="cn-fold">
-                  <summary class="cn-fold-summary">raw JSON を表示</summary>
-                  <div style="margin-top:12px;">
-                    <pre class="cn-json">{{ payload|pprint }}</pre>
-                  </div>
-                </details>
-
-              </div>
-            {% endwith %}
-          {% endif %}
-        {% else %}
-          <div class="cn-empty">Web問診 snapshot はありません。</div>
-        {% endif %}
+            <div class="cn-k">急性/慢性</div>
+            <div class="cn-v">{{ extract.symptom_type|default:"-" }}</div>
+          </div>
+        </div>
       </div>
-    </details>
-  </div>
+    </section>
+  {% endif %}
+
+  {% if followup_items %}
+    <section class="cn-card">
+      <div class="cn-card-inner">
+        <div class="cn-section-head">
+          <div>
+            <div class="cn-section-kicker">Followups</div>
+            <h2 class="cn-section-title">追加確認事項</h2>
+            <div class="cn-section-sub">
+              次回確認事項・不足情報・安全上の確認をまとめています
+            </div>
+          </div>
+        </div>
+
+        <div class="cn-tag-row">
+          {% for item in followup_items %}
+            <span class="cn-tag
+              {% if item.type == 'next_check' %}green{% endif %}
+              {% if item.type == 'missing_information' %}orange{% endif %}
+              {% if item.type == 'safety' %}red{% endif %}
+            ">
+              {{ item.text }}
+            </span>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="cn-card">
+    <div class="cn-card-inner">
+      <div class="cn-section-head">
+        <div>
+          <div class="cn-section-kicker">Source Data</div>
+          <h2 class="cn-section-title">元データ</h2>
+          <div class="cn-section-sub">
+            Web問診 snapshot と raw JSON を確認できます
+          </div>
+        </div>
+      </div>
+
+      <details class="cn-fold">
+        <summary>
+          <span>Web問診 snapshot / raw JSON を表示</span>
+          <span>⌄</span>
+        </summary>
+
+        <div class="cn-fold-body">
+          {% if note.web_intake_snapshot %}
+            <div class="cn-info">
+              <div class="cn-kv">
+                <div class="cn-k">主訴</div>
+                <div class="cn-v">{{ note.web_intake_snapshot.chief_complaint|default:"-" }}</div>
+
+                <div class="cn-k">発症</div>
+                <div class="cn-v">{{ note.web_intake_snapshot.onset|default:"-" }}</div>
+
+                <div class="cn-k">急性/慢性</div>
+                <div class="cn-v">{{ note.web_intake_snapshot.symptom_type|default:"-" }}</div>
+
+                <div class="cn-k">送信日時</div>
+                <div class="cn-v">{{ note.web_intake_snapshot.submitted_at|default:"-" }}</div>
+              </div>
+            </div>
+
+            {% if note.web_intake_snapshot.payload %}
+              <div style="height:14px;"></div>
+              <pre class="cn-json">{{ note.web_intake_snapshot.payload|pprint }}</pre>
+            {% endif %}
+          {% else %}
+            <div class="cn-empty">Web問診 snapshot はありません。</div>
+          {% endif %}
+        </div>
+      </details>
+    </div>
+  </section>
 
   {% if histories %}
-    <div class="cn-section">
-      <h2 class="cn-section-title">編集履歴</h2>
+    <section class="cn-card">
+      <div class="cn-card-inner">
+        <div class="cn-section-head">
+          <div>
+            <div class="cn-section-kicker">History</div>
+            <h2 class="cn-section-title">編集履歴</h2>
+            <div class="cn-section-sub">
+              カルテ更新前の履歴を確認できます
+            </div>
+          </div>
+        </div>
 
-      <div class="cn-info-box">
-        <ul class="cn-list">
+        <div class="cn-mini-list">
           {% for h in histories %}
-            <li>
-              {{ h.created_at|date:"Y-m-d H:i" }}
-              {% if h.edited_by %} / {{ h.edited_by }}{% endif %}
-            </li>
+            <div class="cn-mini-item">
+              <span class="cn-mini-dot"></span>
+              <span>
+                {{ h.created_at|date:"Y-m-d H:i" }}
+                {% if h.edited_by %} / {{ h.edited_by }}{% endif %}
+              </span>
+            </div>
           {% endfor %}
-        </ul>
+        </div>
       </div>
-    </div>
+    </section>
   {% endif %}
+
+  <footer class="cn-footer">
+    <div class="cn-status-row">
+      <span class="cn-tag green">確定カルテ</span>
+
+      {% if note.updated_by %}
+        <span class="cn-tag">編集済み</span>
+      {% endif %}
+
+      {% if is_treatment_session_note %}
+        <span class="cn-tag purple">施術セッション連携</span>
+      {% endif %}
+    </div>
+
+    <a href="{% url 'staff:patient_detail' note.patient_id %}" class="cn-btn">
+      ← 患者詳細へ戻る
+    </a>
+  </footer>
 
 </div>
 

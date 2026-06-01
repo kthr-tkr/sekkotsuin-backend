@@ -1,72 +1,1093 @@
 {% extends "staff/_layout.html" %}
 {% block title %}CareFrow | 施術セッション{% endblock %}
 
-{% block content %}
-<div style="max-width: 1100px; margin: 0 auto; padding: 32px;">
-  <div style="background: #fff; border-radius: 24px; padding: 28px; box-shadow: 0 18px 40px rgba(15,23,42,.08);">
-    <div style="font-size: 12px; font-weight: 800; color: #4f46e5; letter-spacing: .12em; text-transform: uppercase;">
-      Treatment Session
-    </div>
+{% block extra_head %}
+<style>
+  .session-page{
+    max-width:1100px;
+    margin:0 auto;
+    padding:32px;
+  }
 
-    <h1 style="margin: 12px 0 8px; font-size: 32px;">
+  .session-card{
+    background:#fff;
+    border-radius:28px;
+    padding:30px;
+    box-shadow:0 18px 40px rgba(15,23,42,.08);
+  }
+
+  .session-kicker{
+    font-size:12px;
+    font-weight:900;
+    color:#4f46e5;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    margin-bottom:12px;
+  }
+
+  .session-title{
+    margin:0 0 8px;
+    font-size:34px;
+    font-weight:900;
+    letter-spacing:-.04em;
+    color:#0f172a;
+  }
+
+  .session-sub{
+    color:#64748b;
+    margin-bottom:24px;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.8;
+  }
+
+  .session-info-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:16px;
+    margin-bottom:24px;
+  }
+
+  .session-info-box{
+    border:1px solid #e8eef7;
+    border-radius:18px;
+    padding:16px;
+    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+  }
+
+  .session-info-label{
+    color:#64748b;
+    font-size:12px;
+    font-weight:900;
+    margin-bottom:8px;
+  }
+
+  .session-info-value{
+    color:#0f172a;
+    font-size:16px;
+    font-weight:900;
+    line-height:1.5;
+  }
+
+  .record-panel{
+    margin-top:24px;
+    border-radius:24px;
+    padding:22px;
+    background:
+      radial-gradient(circle at 92% 12%, rgba(59,130,246,.14), transparent 32%),
+      linear-gradient(180deg,#ffffff 0%,#eff6ff 100%);
+    border:1px solid #bfdbfe;
+  }
+
+  .record-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+
+  .record-title{
+    margin:0;
+    font-size:22px;
+    font-weight:900;
+    color:#0f172a;
+  }
+
+  .record-status{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 12px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .record-timer{
+    font-size:48px;
+    font-weight:300;
+    color:#0f172a;
+    letter-spacing:-.04em;
+    margin-bottom:16px;
+  }
+
+  .record-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .record-btn{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 18px;
+    border-radius:16px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    color:#0f172a;
+    font-size:14px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(15,23,42,.04);
+  }
+
+  .record-btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#0b1220 0%,#1d4ed8 100%);
+  }
+
+  .record-btn.danger{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#991b1b 0%,#ef4444 100%);
+  }
+
+  .record-btn:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+  }
+
+  .upload-message{
+    margin-top:14px;
+    color:#475569;
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .chunk-section{
+    margin-top:28px;
+  }
+
+  .chunk-title{
+    font-size:20px;
+    font-weight:900;
+    margin-bottom:14px;
+    color:#0f172a;
+  }
+
+  .chunk-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .chunk-item{
+    border:1px solid #e8eef7;
+    border-radius:18px;
+    padding:14px 16px;
+    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+
+  .chunk-main{
+    color:#0f172a;
+    font-size:14px;
+    font-weight:900;
+  }
+
+  .chunk-sub{
+    color:#64748b;
+    font-size:12px;
+    font-weight:800;
+    margin-top:4px;
+  }
+
+  .chunk-badge{
+    padding:7px 10px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:12px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .empty-box{
+    border:1px dashed #d6dfeb;
+    border-radius:20px;
+    padding:24px;
+    text-align:center;
+    color:#94a3b8;
+    background:rgba(250,252,255,.8);
+    font-size:14px;
+    font-weight:800;
+  }
+
+  .back-link{
+    display:inline-flex;
+    margin-top:28px;
+    color:#4f46e5;
+    font-weight:900;
+    text-decoration:none;
+  }
+
+.collapse-box{
+  margin-top:28px;
+  border-radius:22px;
+  border:1px solid #e2e8f0;
+  background:rgba(255,255,255,.86);
+  box-shadow:0 12px 28px rgba(15,23,42,.04);
+  overflow:hidden;
+}
+
+.collapse-box summary{
+  cursor:pointer;
+  list-style:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:18px 20px;
+  color:#0f172a;
+  font-size:18px;
+  font-weight:900;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+}
+
+.collapse-box summary::-webkit-details-marker{
+  display:none;
+}
+
+.collapse-title{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.collapse-sub{
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.5;
+}
+
+.collapse-icon{
+  width:34px;
+  height:34px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#1d4ed8;
+  background:#eef2ff;
+  font-size:18px;
+  font-weight:900;
+  transition:.18s ease;
+}
+
+.collapse-box[open] .collapse-icon{
+  transform:rotate(180deg);
+}
+
+.collapse-content{
+  padding:18px 20px 22px;
+  border-top:1px solid #e2e8f0;
+}
+
+  @media(max-width:720px){
+    .session-page{
+      padding:18px;
+    }
+
+    .session-card{
+      padding:20px;
+      border-radius:22px;
+    }
+
+    .session-info-grid{
+      grid-template-columns:1fr;
+    }
+
+    .record-timer{
+      font-size:38px;
+    }
+
+    .chunk-item{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="session-page">
+  <div class="session-card">
+    <div class="session-kicker">Treatment Session</div>
+
+    <h1 class="session-title">
       施術セッション
     </h1>
 
-    <p style="color: #64748b; margin-bottom: 24px;">
+    <p class="session-sub">
       来院から施術終了までの会話・施術内容を記録するためのセッションです。
     </p>
 
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px;">
-      <div>
-        <strong>患者様</strong><br>
-        {{ session.patient.last_name }} {{ session.patient.first_name }}
+    <div class="session-info-grid">
+      <div class="session-info-box">
+        <div class="session-info-label">患者様</div>
+        <div class="session-info-value">
+          {{ session.patient.last_name }} {{ session.patient.first_name }}
+        </div>
       </div>
 
-      <div>
-        <strong>ステータス</strong><br>
-        {{ session.get_status_display }}
+      <div class="session-info-box">
+        <div class="session-info-label">ステータス</div>
+        <div class="session-info-value">
+          {{ session.get_status_display }}
+        </div>
       </div>
 
-      <div>
-        <strong>予約日時</strong><br>
-        {% if session.appointment %}
-          {{ session.appointment.start_at|date:"Y年n月j日 H:i" }}
-        {% else %}
-          -
-        {% endif %}
+      <div class="session-info-box">
+        <div class="session-info-label">予約日時</div>
+        <div class="session-info-value">
+          {% if session.appointment %}
+            {{ session.appointment.start_at|date:"Y年n月j日 H:i" }}
+          {% else %}
+            -
+          {% endif %}
+        </div>
       </div>
 
-      <div>
-        <strong>合計録音時間</strong><br>
-        {{ session.total_duration_sec }} 秒
+      <div class="session-info-box">
+        <div class="session-info-label">合計録音時間</div>
+        <div class="session-info-value" id="totalDuration">
+          {{ session.total_duration_sec }} 秒
+        </div>
       </div>
     </div>
 
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+    <section class="record-panel">
+      <div class="record-head">
+        <div>
+          <h2 class="record-title">施術録音</h2>
+          <div class="session-sub" style="margin:6px 0 0;">
+            まずは1回の録音を1チャンクとして保存します。
+          </div>
+        </div>
 
-    <h2 style="font-size: 20px;">録音チャンク</h2>
+        <div class="record-status" id="recordStatus">
+          待機中
+        </div>
+      </div>
 
-    {% if chunks %}
-      <ul>
-        {% for chunk in chunks %}
-          <li>
-            chunk {{ chunk.chunk_index }} /
-            {{ chunk.get_status_display }} /
-            {{ chunk.duration_sec }}秒
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p style="color: #94a3b8;">
-        まだ録音データはありません。
-      </p>
+      <div class="record-timer" id="recordTimer">
+        00:00
+      </div>
+
+      <div class="record-actions">
+        <button type="button" class="record-btn primary" id="startRecordBtn">
+          録音開始
+        </button>
+
+        <button type="button" class="record-btn danger" id="stopRecordBtn" disabled>
+          録音停止
+        </button>
+
+        <button type="button" class="record-btn" id="reloadBtn">
+          再読み込み
+        </button>
+      </div>
+
+      <div class="upload-message" id="uploadMessage"></div>
+    </section>
+
+    <details class="collapse-box">
+    <summary>
+        <span class="collapse-title">
+        <span>録音チャンク</span>
+        <span class="collapse-sub">
+            保存済み音声・チャンクごとの文字起こしを確認できます
+        </span>
+        </span>
+        <span class="collapse-icon">⌄</span>
+    </summary>
+
+    <div class="collapse-content">
+        {% if chunks %}
+        <div class="chunk-list">
+            {% for chunk in chunks %}
+            <div class="chunk-item" style="align-items:flex-start;">
+                <div style="flex:1; min-width:0;">
+                <div class="chunk-main">
+                    chunk {{ chunk.chunk_index }}
+                </div>
+
+                <div class="chunk-sub">
+                    {{ chunk.duration_sec }}秒 /
+                    {{ chunk.mime_type|default:"-" }}
+                    {% if chunk.audio_file %}
+                    / 音声保存済み
+                    {% endif %}
+                </div>
+
+                {% if chunk.transcript_text %}
+                    <div style="margin-top:12px; padding:12px 14px; border-radius:14px; background:#f8fafc; border:1px solid #e2e8f0; color:#334155; font-size:13px; line-height:1.8; font-weight:700; white-space:pre-wrap;">
+                    {{ chunk.transcript_text }}
+                    </div>
+                {% endif %}
+
+                {% if chunk.error_message %}
+                    <div style="margin-top:10px; color:#b91c1c; font-size:12px; font-weight:800;">
+                    {{ chunk.error_message }}
+                    </div>
+                {% endif %}
+                </div>
+
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+                <div class="chunk-badge">
+                    {{ chunk.get_status_display }}
+                </div>
+
+                {% if chunk.audio_file and not chunk.transcript_text %}
+                    <form method="post" action="{% url 'treatment_sessions:transcribe_chunk' chunk.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="record-btn primary" style="min-height:36px; padding:0 12px; font-size:12px;">
+                        文字起こし
+                    </button>
+                    </form>
+                {% elif chunk.transcript_text %}
+                    <span class="chunk-badge" style="background:#dcfce7; color:#166534;">
+                    文字起こし済み
+                    </span>
+                {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-box">
+            まだ録音データはありません。
+        </div>
+        {% endif %}
+    </div>
+    </details>
+
+    {% if session.transcript_text %}
+    <details class="collapse-box">
+        <summary>
+        <span class="collapse-title">
+            <span>統合文字起こし</span>
+            <span class="collapse-sub">
+            AI要約の根拠となる全文テキストを確認できます
+            </span>
+        </span>
+        <span class="collapse-icon">⌄</span>
+        </summary>
+
+        <div class="collapse-content">
+        <div style="padding:16px; border-radius:18px; background:#f8fafc; border:1px solid #e2e8f0; color:#334155; font-size:14px; line-height:1.9; font-weight:700; white-space:pre-wrap;">
+            {{ session.transcript_text }}
+        </div>
+        </div>
+    </details>
     {% endif %}
 
-    <div style="margin-top: 28px;">
-      <a href="{% url 'staff:appointments' %}" style="color: #4f46e5; font-weight: 800;">
-        予約管理へ戻る
-      </a>
-    </div>
+    {% if session.transcript_text %}
+    <section class="chunk-section">
+        <form method="post" action="{% url 'treatment_sessions:summarize' session.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="force" value="1">
+
+        <button type="submit" class="record-btn primary">
+            {% if session.summary_json %}
+            AI統合要約を再作成
+            {% else %}
+            AI統合要約を作成
+            {% endif %}
+        </button>
+        </form>
+    </section>
+    {% endif %}
+
+    {% if summary %}
+    <section class="chunk-section">
+        <h2 class="chunk-title">AI施術セッション要約</h2>
+
+            {% if important_points %}
+            <div style="
+                margin: 0 0 18px;
+                padding: 18px;
+                border-radius: 22px;
+                background:
+                radial-gradient(circle at 92% 12%, rgba(59,130,246,.16), transparent 30%),
+                linear-gradient(135deg,#0b1220 0%,#1e3a8a 52%,#2563eb 100%);
+                color: #fff;
+                box-shadow: 0 18px 42px rgba(37,99,235,.18);
+            ">
+                <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:flex-start;
+                gap:12px;
+                flex-wrap:wrap;
+                margin-bottom:12px;
+                ">
+                <div>
+                    <div style="
+                    font-size:11px;
+                    font-weight:900;
+                    letter-spacing:.16em;
+                    text-transform:uppercase;
+                    color:rgba(255,255,255,.66);
+                    margin-bottom:6px;
+                    ">
+                    AI Critical Points
+                    </div>
+                    <div style="
+                    font-size:22px;
+                    font-weight:900;
+                    letter-spacing:-.04em;
+                    ">
+                    今日の重要ポイント
+                    </div>
+                </div>
+
+                <div style="
+                    display:inline-flex;
+                    align-items:center;
+                    padding:7px 11px;
+                    border-radius:999px;
+                    background:rgba(255,255,255,.12);
+                    border:1px solid rgba(255,255,255,.14);
+                    font-size:12px;
+                    font-weight:900;
+                    color:#fff;
+                ">
+                    {{ important_points|length }}件
+                </div>
+                </div>
+
+                <div style="display:grid; gap:10px;">
+                {% for point in important_points %}
+                    <div style="
+                    display:flex;
+                    gap:10px;
+                    align-items:flex-start;
+                    padding:12px 14px;
+                    border-radius:16px;
+                    background:rgba(255,255,255,.10);
+                    border:1px solid rgba(255,255,255,.12);
+                    color:rgba(255,255,255,.94);
+                    font-size:14px;
+                    line-height:1.7;
+                    font-weight:800;
+                    ">
+                    <span style="
+                        flex:0 0 auto;
+                        width:24px;
+                        height:24px;
+                        display:inline-flex;
+                        align-items:center;
+                        justify-content:center;
+                        border-radius:999px;
+                        background:rgba(255,255,255,.16);
+                        color:#fff;
+                        font-size:12px;
+                        font-weight:900;
+                    ">
+                        {{ forloop.counter }}
+                    </span>
+                    <span>{{ point }}</span>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        <div style="
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        margin: 0 0 18px;
+        ">
+        <form method="post" action="{% url 'treatment_sessions:register_clinical_note' session.id %}">
+            {% csrf_token %}
+            <button type="submit" class="record-btn primary">
+            カルテに登録
+            </button>
+        </form>
+
+        {% if session.clinical_note %}
+            <a
+            href="{% url 'staff:clinical_note_detail' session.clinical_note.id %}"
+            class="record-btn"
+            style="text-decoration:none;"
+            >
+            登録済みカルテを見る
+            </a>
+        {% endif %}
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:14px;">
+        <div style="padding:14px; border-radius:16px; background:#eff6ff; border:1px solid #bfdbfe;">
+            <div style="color:#1e3a8a; font-size:12px; font-weight:900; margin-bottom:6px;">患者の訴え</div>
+            <div style="font-weight:900; color:#0f172a; line-height:1.7;">
+            {{ session_summary.chief_complaint|default:"-" }}
+            </div>
+        </div>
+
+        <div style="padding:14px; border-radius:16px; background:#f8fafc; border:1px solid #e2e8f0;">
+            <div style="color:#64748b; font-size:12px; font-weight:900; margin-bottom:6px;">来院種別</div>
+            <div style="font-weight:900; color:#0f172a; line-height:1.7;">
+            {{ session_summary.visit_type|default:"unknown" }}
+            </div>
+        </div>
+
+        <div style="grid-column:1 / -1; padding:16px; border-radius:18px; background:#f8fafc; border:1px solid #e2e8f0;">
+            <div style="color:#64748b; font-size:12px; font-weight:900; margin-bottom:8px;">全体サマリー</div>
+            <div style="white-space:pre-wrap; color:#0f172a; font-size:14px; line-height:1.9; font-weight:800;">
+            {{ session_summary.overall_summary|default:"-" }}
+            </div>
+        </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:14px;">
+        <div style="padding:16px; border-radius:18px; background:#ecfdf5; border:1px solid #bbf7d0;">
+            <div style="color:#166534; font-size:13px; font-weight:900; margin-bottom:10px;">前回からの変化</div>
+            <div style="color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            <strong>痛み：</strong>{{ session_summary.progress_change.pain_change|default:"-" }}<br>
+            <strong>動作：</strong>{{ session_summary.progress_change.movement_change|default:"-" }}<br>
+            <strong>日常生活：</strong>{{ session_summary.progress_change.daily_life_change|default:"-" }}<br>
+            <strong>新しい症状：</strong>{{ session_summary.progress_change.new_symptoms|default:"-" }}<br>
+            <strong>患者コメント：</strong>{{ session_summary.progress_change.patient_comment|default:"-" }}
+            </div>
+        </div>
+
+        <div style="padding:16px; border-radius:18px; background:#fff7ed; border:1px solid #fed7aa;">
+            <div style="color:#9a3412; font-size:13px; font-weight:900; margin-bottom:10px;">評価・確認内容</div>
+            <div style="color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            <strong>確認部位：</strong>
+            {% if clinical_assessment.checked_areas %}
+                {{ clinical_assessment.checked_areas|join:" / " }}
+            {% else %}
+                -
+            {% endif %}
+            <br>
+
+            <strong>痛みの部位：</strong>
+            {% if clinical_assessment.pain_areas %}
+                {{ clinical_assessment.pain_areas|join:" / " }}
+            {% else %}
+                -
+            {% endif %}
+            <br>
+
+            <strong>原因候補：</strong>
+            {% if clinical_assessment.suspected_causes %}
+                {{ clinical_assessment.suspected_causes|join:" / " }}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+        </div>
+
+        <div style="padding:16px; border-radius:18px; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:14px;">
+        <div style="color:#475569; font-size:13px; font-weight:900; margin-bottom:10px;">施術者の所見・施術意図</div>
+
+        <div style="color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            {% if clinical_assessment.findings %}
+            <strong>所見：</strong>
+            <ul style="margin:8px 0 12px 20px;">
+                {% for item in clinical_assessment.findings %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <strong>所見：</strong> -<br>
+            {% endif %}
+
+            <strong>施術意図：</strong>
+            {{ clinical_assessment.treatment_intent|default:"-" }}
+        </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:14px;">
+        <div style="padding:16px; border-radius:18px; background:#eef2ff; border:1px solid #c7d2fe;">
+            <div style="color:#3730a3; font-size:13px; font-weight:900; margin-bottom:10px;">実施した施術</div>
+
+            <div style="color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            <strong>対象部位：</strong>
+            {% if treatment.target_areas %}
+                {{ treatment.target_areas|join:" / " }}
+            {% else %}
+                -
+            {% endif %}
+
+            <br>
+
+            <strong>施術内容：</strong>
+            {% if treatment.performed_treatments %}
+                <ul style="margin:8px 0 0 20px;">
+                {% for item in treatment.performed_treatments %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div style="padding:16px; border-radius:18px; background:#f0fdfa; border:1px solid #99f6e4;">
+            <div style="color:#0f766e; font-size:13px; font-weight:900; margin-bottom:10px;">患者反応・施術後変化</div>
+
+            <div style="color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            <strong>施術中/施術後の反応：</strong>
+            {{ treatment.patient_response|default:"-" }}
+            <br>
+            <strong>施術後の変化：</strong>
+            {{ treatment.after_treatment_change|default:"-" }}
+            </div>
+        </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:14px;">
+        <div style="padding:16px; border-radius:18px; background:#ffffff; border:1px solid #e2e8f0;">
+            <div style="color:#475569; font-size:13px; font-weight:900; margin-bottom:10px;">患者への説明・生活指導</div>
+
+            <div style="color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            <strong>説明内容：</strong>
+            {% if explanation.explained_to_patient %}
+                <ul style="margin:8px 0 12px 20px;">
+                {% for item in explanation.explained_to_patient %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                -
+            {% endif %}
+
+            <strong>生活指導：</strong>
+            {% if explanation.lifestyle_guidance %}
+                <ul style="margin:8px 0 12px 20px;">
+                {% for item in explanation.lifestyle_guidance %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                -
+            {% endif %}
+
+            <strong>セルフケア：</strong>
+            {% if explanation.home_care %}
+                <ul style="margin:8px 0 0 20px;">
+                {% for item in explanation.home_care %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div style="padding:16px; border-radius:18px; background:#fff1f2; border:1px solid #fecdd3;">
+            <div style="color:#be123c; font-size:13px; font-weight:900; margin-bottom:10px;">次回までの注意・次回方針</div>
+
+            <div style="color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            <strong>次回までの注意：</strong>
+            {% if explanation.cautions_until_next_visit %}
+                <ul style="margin:8px 0 12px 20px;">
+                {% for item in explanation.cautions_until_next_visit %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                -
+            {% endif %}
+
+            <strong>次回方針：</strong>
+            {{ next_plan.next_treatment_policy|default:"-" }}
+            <br>
+
+            <strong>来院目安：</strong>
+            {{ next_plan.recommended_visit_timing|default:"-" }}
+            </div>
+        </div>
+        </div>
+
+        <div style="padding:16px; border-radius:18px; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:14px;">
+        <div style="color:#475569; font-size:13px; font-weight:900; margin-bottom:10px;">経過記録用サマリー</div>
+        <div style="white-space:pre-wrap; color:#0f172a; font-size:14px; line-height:1.9; font-weight:800;">
+            {% if progress_note.record_text %}
+            {{ progress_note.record_text }}
+            {% elif progress_note.short_summary %}
+            {{ progress_note.short_summary }}
+            {% else %}
+            -
+            {% endif %}
+        </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:14px;">
+        <div style="padding:16px; border-radius:18px; background:#eff6ff; border:1px solid #bfdbfe;">
+            <div style="color:#1e3a8a; font-size:13px; font-weight:900; margin-bottom:8px;">S 主観</div>
+            <div style="white-space:pre-wrap; color:#0f172a; font-size:14px; line-height:1.8; font-weight:700;">
+            {% if soap.S %}
+                {% for item in soap.S %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div style="padding:16px; border-radius:18px; background:#f8fafc; border:1px solid #e2e8f0;">
+            <div style="color:#475569; font-size:13px; font-weight:900; margin-bottom:8px;">O 客観</div>
+            <div style="white-space:pre-wrap; color:#0f172a; font-size:14px; line-height:1.8; font-weight:700;">
+            {% if soap.O %}
+                {% for item in soap.O %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div style="padding:16px; border-radius:18px; background:#fff7ed; border:1px solid #fed7aa;">
+            <div style="color:#9a3412; font-size:13px; font-weight:900; margin-bottom:8px;">A 評価</div>
+            <div style="white-space:pre-wrap; color:#0f172a; font-size:14px; line-height:1.8; font-weight:700;">
+            {% if soap.A %}
+                {% for item in soap.A %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div style="padding:16px; border-radius:18px; background:#ecfdf5; border:1px solid #bbf7d0;">
+            <div style="color:#166534; font-size:13px; font-weight:900; margin-bottom:8px;">P 計画</div>
+            <div style="white-space:pre-wrap; color:#0f172a; font-size:14px; line-height:1.8; font-weight:700;">
+            {% if soap.P %}
+                {% for item in soap.P %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+        </div>
+
+        {% if relationship_notes %}
+        <div style="padding:16px; border-radius:18px; background:#fdf4ff; border:1px solid #f5d0fe; margin-bottom:14px;">
+            <div style="color:#86198f; font-size:13px; font-weight:900; margin-bottom:10px;">患者対応メモ</div>
+            <ul style="margin:0 0 0 20px; color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            {% for item in relationship_notes %}
+                <li>{{ item }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if missing_information %}
+        <div style="padding:16px; border-radius:18px; background:#fff7ed; border:1px solid #fed7aa; margin-bottom:14px;">
+            <div style="color:#9a3412; font-size:13px; font-weight:900; margin-bottom:10px;">追加確認が必要な情報</div>
+            <ul style="margin:0 0 0 20px; color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            {% for item in missing_information %}
+                <li>{{ item }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if safety_notes %}
+        <div style="padding:16px; border-radius:18px; background:#fef2f2; border:1px solid #fecaca; margin-bottom:14px;">
+            <div style="color:#991b1b; font-size:13px; font-weight:900; margin-bottom:10px;">注意事項</div>
+            <ul style="margin:0 0 0 20px; color:#0f172a; font-size:14px; line-height:1.9; font-weight:700;">
+            {% for item in safety_notes %}
+                <li>{{ item }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <details style="margin-top:16px;">
+        <summary style="cursor:pointer; color:#4f46e5; font-weight:900;">
+            JSONを確認
+        </summary>
+        <pre style="margin-top:12px; padding:14px; border-radius:16px; background:#0f172a; color:#e5e7eb; overflow:auto; font-size:12px;">{{ summary_json_pretty }}</pre>
+        </details>
+    </section>
+    {% endif %}
+
+    <a href="{% url 'staff:appointments' %}" class="back-link">
+      予約管理へ戻る
+    </a>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const uploadUrl = "{% url 'treatment_sessions:upload_chunk' session.id %}";
+
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let startedAt = null;
+  let timerId = null;
+
+  const startBtn = document.getElementById("startRecordBtn");
+  const stopBtn = document.getElementById("stopRecordBtn");
+  const reloadBtn = document.getElementById("reloadBtn");
+  const statusEl = document.getElementById("recordStatus");
+  const timerEl = document.getElementById("recordTimer");
+  const messageEl = document.getElementById("uploadMessage");
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop().split(";").shift();
+    }
+    return "";
+  }
+
+  function pad(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function updateTimer() {
+    if (!startedAt) {
+      timerEl.textContent = "00:00";
+      return;
+    }
+
+    const elapsedSec = Math.floor((Date.now() - startedAt) / 1000);
+    const min = Math.floor(elapsedSec / 60);
+    const sec = elapsedSec % 60;
+
+    timerEl.textContent = `${pad(min)}:${pad(sec)}`;
+  }
+
+  function setMessage(text) {
+    messageEl.textContent = text || "";
+  }
+
+  async function startRecording() {
+    setMessage("");
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setMessage("このブラウザでは録音機能を利用できません。");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      audioChunks = [];
+
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = function(event) {
+        if (event.data && event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async function() {
+        const durationSec = Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
+        const mimeType = mediaRecorder.mimeType || "audio/webm";
+        const blob = new Blob(audioChunks, { type: mimeType });
+
+        stream.getTracks().forEach(track => track.stop());
+
+        await uploadRecording(blob, durationSec, mimeType);
+      };
+
+      startedAt = Date.now();
+      timerId = setInterval(updateTimer, 500);
+      updateTimer();
+
+      mediaRecorder.start();
+
+      statusEl.textContent = "録音中";
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      setMessage("録音中です。停止すると自動で保存されます。");
+
+    } catch (error) {
+      console.error(error);
+      setMessage("マイクへのアクセスに失敗しました。ブラウザの権限を確認してください。");
+    }
+  }
+
+  function stopRecording() {
+    if (!mediaRecorder || mediaRecorder.state === "inactive") {
+      return;
+    }
+
+    mediaRecorder.stop();
+
+    clearInterval(timerId);
+    timerId = null;
+
+    statusEl.textContent = "アップロード中";
+    stopBtn.disabled = true;
+
+    setMessage("音声をアップロードしています...");
+  }
+
+  async function uploadRecording(blob, durationSec, mimeType) {
+    const formData = new FormData();
+
+    const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+    const file = new File([blob], `treatment-session.${ext}`, { type: mimeType });
+
+    formData.append("audio", file);
+    formData.append("duration_sec", String(durationSec));
+
+    try {
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "アップロードに失敗しました。");
+      }
+
+      statusEl.textContent = "保存完了";
+      setMessage(`録音を保存しました。chunk ${data.chunk_index} / ${data.duration_sec}秒`);
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 900);
+
+    } catch (error) {
+      console.error(error);
+      statusEl.textContent = "エラー";
+      startBtn.disabled = false;
+      setMessage(error.message || "アップロード中にエラーが発生しました。");
+    }
+  }
+
+  startBtn.addEventListener("click", startRecording);
+  stopBtn.addEventListener("click", stopRecording);
+  reloadBtn.addEventListener("click", function() {
+    window.location.reload();
+  });
+</script>
 {% endblock %}

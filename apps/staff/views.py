@@ -1407,13 +1407,189 @@ def _as_list(v):
         return [s.strip() for s in v.split("\n") if s.strip()]
     return [str(v)]
 
+def normalize_print_location_name(name: str) -> str:
+    n = str(name or "").strip()
+
+    aliases = {
+        "首": "喉前",
+        "頚部": "喉前",
+        "後頭部後": "首後",
+
+        "肩": "喉前",
+        "肩周り": "右肩前",
+        "首肩": "喉前",
+        "右肩": "右肩前",
+        "左肩": "左肩前",
+
+        "胸": "鳩尾前",
+        "右胸": "右胸前",
+        "左胸": "左胸前",
+
+        "背部": "背中下後",
+        "背中": "背中下後",
+
+        "腰": "腰後",
+        "腰部": "腰後",
+        "右腰": "右腰後",
+        "左腰": "左腰後",
+
+        "臀部": "臀裂上後",
+        "お尻": "臀裂上後",
+        "ヒップ": "臀裂上後",
+        "右臀部": "右臀部後",
+        "左臀部": "左臀部後",
+
+        "股関節": "右鼠径部前",
+        "右股関節": "右鼠径部前",
+        "左股関節": "左鼠径部前",
+
+        "右上腕": "右上腕前",
+        "左上腕": "左上腕前",
+        "右肘": "右肘前",
+        "左肘": "左肘前",
+        "右前腕": "右前腕前",
+        "左前腕": "左前腕前",
+
+        "右大腿": "右大腿前",
+        "左大腿": "左大腿前",
+        "右膝": "右膝前",
+        "左膝": "左膝前",
+        "右下腿": "右下腿前",
+        "左下腿": "左下腿前",
+        "右足": "右足前",
+        "左足": "左足前",
+
+        "ひざ": "右膝前",
+        "膝": "右膝前",
+    }
+
+    return aliases.get(n, n)
+
+
+def build_print_body_markers(locations):
+    """
+    施術録印刷用の人体マーカーを作る。
+    viewBox="0 0 300 700" 前提。
+    recording_detail.html の positionMap と同じ座標系。
+    """
+    if not locations:
+        return []
+
+    position_map = {
+        # 前面
+        "喉前": {"front": {"x": 155, "y": 118}},
+        "右鎖骨前": {"front": {"x": 126, "y": 145}},
+        "左鎖骨前": {"front": {"x": 184, "y": 145}},
+        "右胸前": {"front": {"x": 132, "y": 184}},
+        "左胸前": {"front": {"x": 178, "y": 184}},
+        "鳩尾前": {"front": {"x": 155, "y": 215}},
+        "右上腹部前": {"front": {"x": 136, "y": 305}},
+        "左上腹部前": {"front": {"x": 174, "y": 305}},
+        "下腹部前": {"front": {"x": 155, "y": 346}},
+        "右肩前": {"front": {"x": 75, "y": 150}},
+        "左肩前": {"front": {"x": 235, "y": 150}},
+        "右上腕前": {"front": {"x": 75, "y": 240}},
+        "左上腕前": {"front": {"x": 235, "y": 240}},
+        "右肘前": {"front": {"x": 70, "y": 270}},
+        "左肘前": {"front": {"x": 240, "y": 270}},
+        "右前腕前": {"front": {"x": 68, "y": 305}},
+        "左前腕前": {"front": {"x": 242, "y": 305}},
+        "右鼠径部前": {"front": {"x": 138, "y": 345}},
+        "左鼠径部前": {"front": {"x": 172, "y": 345}},
+        "右大腿前": {"front": {"x": 124, "y": 425}},
+        "左大腿前": {"front": {"x": 186, "y": 425}},
+        "右膝前": {"front": {"x": 127, "y": 490}},
+        "左膝前": {"front": {"x": 189, "y": 490}},
+        "右下腿前": {"front": {"x": 127, "y": 580}},
+        "左下腿前": {"front": {"x": 186, "y": 580}},
+        "右足前": {"front": {"x": 127, "y": 660}},
+        "左足前": {"front": {"x": 186, "y": 660}},
+
+        # 背面
+        "首後": {"back": {"x": 155, "y": 104}},
+        "右肩後": {"back": {"x": 235, "y": 150}},
+        "左肩後": {"back": {"x": 75, "y": 150}},
+        "右肩甲骨後": {"back": {"x": 132, "y": 185}},
+        "左肩甲骨後": {"back": {"x": 178, "y": 185}},
+        "背中上後": {"back": {"x": 155, "y": 215}},
+        "背中下後": {"back": {"x": 155, "y": 275}},
+        "右腰後": {"back": {"x": 186, "y": 308}},
+        "左腰後": {"back": {"x": 124, "y": 308}},
+        "腰後": {"back": {"x": 155, "y": 308}},
+        "右臀部後": {"back": {"x": 186, "y": 360}},
+        "左臀部後": {"back": {"x": 124, "y": 360}},
+        "臀裂上後": {"back": {"x": 155, "y": 360}},
+        "右上腕後": {"back": {"x": 235, "y": 240}},
+        "左上腕後": {"back": {"x": 75, "y": 240}},
+        "右肘後": {"back": {"x": 240, "y": 270}},
+        "左肘後": {"back": {"x": 70, "y": 270}},
+        "右前腕後": {"back": {"x": 242, "y": 305}},
+        "左前腕後": {"back": {"x": 68, "y": 305}},
+        "右大腿後": {"back": {"x": 186, "y": 425}},
+        "左大腿後": {"back": {"x": 124, "y": 425}},
+        "右膝後": {"back": {"x": 189, "y": 490}},
+        "左膝後": {"back": {"x": 127, "y": 490}},
+        "右下腿後": {"back": {"x": 186, "y": 580}},
+        "左下腿後": {"back": {"x": 127, "y": 580}},
+        "右足後": {"back": {"x": 186, "y": 660}},
+        "左足後": {"back": {"x": 127, "y": 660}},
+    }
+
+    markers = []
+    seen = set()
+
+    for raw in locations:
+        raw_name = str(raw or "").strip()
+        if not raw_name:
+            continue
+
+        normalized = normalize_print_location_name(raw_name)
+
+        # 完全一致優先
+        matched_key = normalized if normalized in position_map else None
+
+        # 部分一致フォロー
+        if not matched_key:
+            for key in position_map.keys():
+                if key in normalized or normalized in key:
+                    matched_key = key
+                    break
+
+        if not matched_key:
+            continue
+
+        pos_data = position_map.get(matched_key, {})
+
+        for view_name, pos in pos_data.items():
+            unique_key = f"{view_name}:{matched_key}"
+            if unique_key in seen:
+                continue
+
+            seen.add(unique_key)
+
+            markers.append({
+                "view": view_name,
+                "label": raw_name,
+                "normalized": matched_key,
+                "x": pos["x"],
+                "y": pos["y"],
+            })
+
+    return markers
 
 @staff_required
 def staff_clinical_note_detail_view(request, pk):
     clinic = get_current_clinic(request)
+
     note = get_object_or_404(
         ClinicalNote.objects.select_related(
-            "patient", "appointment", "intake", "recording", "registered_by", "updated_by"
+            "patient",
+            "appointment",
+            "intake",
+            "recording",
+            "treatment_session",
+            "registered_by",
+            "updated_by",
         ),
         pk=pk,
         patient__clinic=clinic,
@@ -1431,16 +1607,265 @@ def staff_clinical_note_detail_view(request, pk):
     followups = note.followups_json or []
     histories = note.histories.select_related("edited_by").all()
 
-    return render(request, "staff/clinical_notes/detail.html", {
+    is_treatment_session_note = (
+        extract.get("source") == "treatment_session"
+        or getattr(note, "treatment_session_id", None)
+    )
+
+    progress_change = extract.get("progress_change") or {}
+    progress_note = extract.get("progress_note") or {}
+    next_plan = extract.get("next_plan") or {}
+
+    important_points = extract.get("important_points") or []
+
+    checked_areas = extract.get("checked_areas") or []
+    pain_areas = extract.get("pain_areas") or extract.get("locations") or []
+    movement_tests = extract.get("movement_tests") or []
+    findings = extract.get("findings") or []
+    suspected_causes = extract.get("suspected_causes") or []
+
+    performed_treatments = extract.get("performed_treatments") or []
+    target_areas = extract.get("target_areas") or []
+
+    explained_to_patient = extract.get("explained_to_patient") or []
+    lifestyle_guidance = extract.get("lifestyle_guidance") or []
+    home_care = extract.get("home_care") or []
+    cautions_until_next_visit = extract.get("cautions_until_next_visit") or []
+
+    relationship_notes = extract.get("relationship_notes") or []
+    missing_information = extract.get("missing_information") or []
+    safety_notes = extract.get("safety_notes") or []
+
+    visit_type_label = (
+        extract.get("visit_type")
+        or extract.get("symptom_type")
+        or "-"
+    )
+
+    chief_complaint_label = extract.get("chief_complaint") or "-"
+
+    location_list = (
+        pain_areas
+        or extract.get("locations")
+        or []
+    )
+
+    location_label = " / ".join(location_list) if location_list else "-"
+
+    # followups_json は文字列と dict が混在する可能性があるので、テンプレ用に整形
+    followup_items = []
+    for item in followups:
+        if isinstance(item, dict):
+            followup_items.append({
+                "type": item.get("type", "followup"),
+                "text": item.get("text", ""),
+            })
+        else:
+            followup_items.append({
+                "type": "followup",
+                "text": str(item),
+            })
+
+    if note.treatment_session_id:
+        source_label = "施術セッションAI"
+        source_badge_class = "session"
+    elif note.recording_id:
+        source_label = "AI問診録音"
+        source_badge_class = "recording"
+    else:
+        source_label = "手動 / Web問診"
+        source_badge_class = "manual"
+
+    context = {
         "active": "patient_search",
         "page_title": "カルテ詳細",
+
         "note": note,
+        "patient": note.patient,
+        "appointment": note.appointment,
+
         "soap_view": soap_view,
         "extract": extract,
         "followups": followups,
+        "followup_items": followup_items,
         "histories": histories,
-    })
 
+        "is_treatment_session_note": is_treatment_session_note,
+        "source_label": source_label,
+        "source_badge_class": source_badge_class,
+
+        # 施術セッション由来カルテ用
+        "important_points": important_points,
+        "progress_change": progress_change,
+        "progress_note": progress_note,
+        "checked_areas": checked_areas,
+        "pain_areas": pain_areas,
+        "movement_tests": movement_tests,
+        "findings": findings,
+        "suspected_causes": suspected_causes,
+        "treatment_intent": extract.get("treatment_intent", ""),
+
+        "performed_treatments": performed_treatments,
+        "target_areas": target_areas,
+        "patient_response": extract.get("patient_response", ""),
+        "after_treatment_change": extract.get("after_treatment_change", ""),
+
+        "explained_to_patient": explained_to_patient,
+        "lifestyle_guidance": lifestyle_guidance,
+        "home_care": home_care,
+        "cautions_until_next_visit": cautions_until_next_visit,
+
+        "next_plan": next_plan,
+        "next_treatment_policy": extract.get("next_treatment_policy") or next_plan.get("next_treatment_policy", ""),
+        "recommended_visit_timing": extract.get("recommended_visit_timing") or next_plan.get("recommended_visit_timing", ""),
+        "items_to_check_next_time": extract.get("items_to_check_next_time") or next_plan.get("items_to_check_next_time") or [],
+
+        "relationship_notes": relationship_notes,
+        "missing_information": missing_information,
+        "safety_notes": safety_notes,
+        
+        "visit_type_label": visit_type_label,
+        "chief_complaint_label": chief_complaint_label,
+        "location_label": location_label,
+    }
+
+    return render(request, "staff/clinical_notes/detail.html", context)
+
+@staff_required
+def staff_clinical_note_print_view(request, pk):
+    clinic = get_current_clinic(request)
+
+    note = get_object_or_404(
+        ClinicalNote.objects.select_related(
+            "patient",
+            "appointment",
+            "intake",
+            "recording",
+            "registered_by",
+            "updated_by",
+        ),
+        pk=pk,
+        patient__clinic=clinic,
+    )
+
+    soap = note.soap_json or {}
+    soap_view = {
+        "S": _as_list(soap.get("S")),
+        "O": _as_list(soap.get("O")),
+        "A": _as_list(soap.get("A")),
+        "P": _as_list(soap.get("P")),
+    }
+
+    extract = note.extract_json or {}
+    followups = note.followups_json or []
+
+    progress_change = extract.get("progress_change") or {}
+    progress_note = extract.get("progress_note") or {}
+    next_plan = extract.get("next_plan") or {}
+
+    important_points = extract.get("important_points") or []
+
+    checked_areas = extract.get("checked_areas") or []
+    pain_areas = extract.get("pain_areas") or extract.get("locations") or []
+    movement_tests = extract.get("movement_tests") or []
+    findings = extract.get("findings") or []
+    suspected_causes = extract.get("suspected_causes") or []
+
+    performed_treatments = extract.get("performed_treatments") or []
+    target_areas = extract.get("target_areas") or []
+
+    explained_to_patient = extract.get("explained_to_patient") or []
+    lifestyle_guidance = extract.get("lifestyle_guidance") or []
+    home_care = extract.get("home_care") or []
+    cautions_until_next_visit = extract.get("cautions_until_next_visit") or []
+
+    relationship_notes = extract.get("relationship_notes") or []
+    missing_information = extract.get("missing_information") or []
+    safety_notes = extract.get("safety_notes") or []
+
+    visit_type_label = (
+        extract.get("visit_type")
+        or extract.get("symptom_type")
+        or "-"
+    )
+
+    chief_complaint_label = extract.get("chief_complaint") or "-"
+
+    location_list = pain_areas or extract.get("locations") or []
+    location_label = " / ".join(location_list) if location_list else "-"
+
+    marker_source_locations = (
+        pain_areas
+        or checked_areas
+        or extract.get("locations")
+        or []
+    )
+
+    body_markers = build_print_body_markers(marker_source_locations)
+
+    recommended_visit_timing = (
+        extract.get("recommended_visit_timing")
+        or next_plan.get("recommended_visit_timing")
+        or "-"
+    )
+
+    next_treatment_policy = (
+        extract.get("next_treatment_policy")
+        or next_plan.get("next_treatment_policy")
+        or "-"
+    )
+
+    items_to_check_next_time = (
+        extract.get("items_to_check_next_time")
+        or next_plan.get("items_to_check_next_time")
+        or []
+    )
+
+    return render(request, "staff/clinical_notes/print_record.html", {
+        "note": note,
+        "patient": note.patient,
+        "appointment": note.appointment,
+
+        "soap_view": soap_view,
+        "extract": extract,
+        "followups": followups,
+
+        "chief_complaint_label": chief_complaint_label,
+        "visit_type_label": visit_type_label,
+        "location_label": location_label,
+
+        "body_markers": body_markers,
+
+        "important_points": important_points,
+        "progress_change": progress_change,
+        "progress_note": progress_note,
+
+        "checked_areas": checked_areas,
+        "pain_areas": pain_areas,
+        "movement_tests": movement_tests,
+        "findings": findings,
+        "suspected_causes": suspected_causes,
+
+        "performed_treatments": performed_treatments,
+        "target_areas": target_areas,
+        "treatment_intent": extract.get("treatment_intent", ""),
+
+        "patient_response": extract.get("patient_response", ""),
+        "after_treatment_change": extract.get("after_treatment_change", ""),
+
+        "explained_to_patient": explained_to_patient,
+        "lifestyle_guidance": lifestyle_guidance,
+        "home_care": home_care,
+        "cautions_until_next_visit": cautions_until_next_visit,
+
+        "recommended_visit_timing": recommended_visit_timing,
+        "next_treatment_policy": next_treatment_policy,
+        "items_to_check_next_time": items_to_check_next_time,
+
+        "relationship_notes": relationship_notes,
+        "missing_information": missing_information,
+        "safety_notes": safety_notes,
+    })
 
 @staff_required
 def staff_clinical_note_edit(request, note_id):
@@ -1448,7 +1873,7 @@ def staff_clinical_note_edit(request, note_id):
     note = get_object_or_404(ClinicalNote, id=note_id, patient__clinic=clinic)
 
     if request.method == "POST":
-        form = ClinicalNoteEditForm(request.POST)
+        form = ClinicalNoteEditForm(request.POST, note=note)
         if form.is_valid():
             payload = form.build_payload()
 

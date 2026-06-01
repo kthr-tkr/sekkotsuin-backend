@@ -1,69 +1,338 @@
 {% extends "staff/_layout.html" %}
+{% block title %}CareFrow | Clinical Note Editor{% endblock %}
+
 {% block content %}
 
 <style>
-  .ce-wrap{
-    max-width: 1100px;
-    margin: 0 auto;
+  :root{
+    --ce-text:#0b1220;
+    --ce-muted:#64748b;
+    --ce-line:#e2e8f0;
+    --ce-white:#ffffff;
+    --ce-blue:#2563eb;
+    --ce-violet:#7c3aed;
+    --ce-green:#10b981;
+    --ce-orange:#f59e0b;
+    --ce-red:#ef4444;
+    --ce-shadow:0 22px 60px rgba(15,23,42,.08);
+    --ce-shadow-soft:0 14px 34px rgba(15,23,42,.06);
   }
 
-  .ce-head{
+  .ce-page{
+    max-width:1280px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  .ce-top{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    gap:16px;
+    gap:18px;
     flex-wrap:wrap;
-    margin-bottom:20px;
+  }
+
+  .ce-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(99,102,241,.10);
+    color:#4338ca;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.04em;
+    margin-bottom:12px;
+  }
+
+  .ce-eyebrow::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#2563eb,#7c3aed);
+    box-shadow:0 0 0 4px rgba(99,102,241,.12);
   }
 
   .ce-title{
-    font-size:38px;
-    font-weight:900;
     margin:0;
-    color:#0f172a;
+    color:var(--ce-text);
+    font-size:52px;
+    line-height:1.02;
+    font-weight:950;
+    letter-spacing:-.055em;
   }
 
   .ce-sub{
     margin-top:10px;
-    color:#64748b;
-    font-weight:700;
+    color:var(--ce-muted);
+    font-size:14px;
+    font-weight:800;
+    line-height:1.7;
   }
 
-  .ce-back{
+  .ce-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .ce-btn{
+    min-height:46px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
     gap:8px;
-    padding:12px 16px;
-    border-radius:14px;
-    background:#ffffff;
-    border:1px solid #e5e7eb;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid rgba(226,232,240,.9);
+    background:rgba(255,255,255,.9);
     color:#0f172a;
     text-decoration:none;
-    font-weight:800;
-    box-shadow:0 6px 20px rgba(15,23,42,.04);
+    font-size:14px;
+    font-weight:900;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    cursor:pointer;
+    transition:.18s ease;
+  }
+
+  .ce-btn:hover{
+    transform:translateY(-1px);
+    color:#0f172a;
+    box-shadow:0 16px 32px rgba(15,23,42,.08);
+  }
+
+  .ce-btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#071122 0%,#1d4ed8 62%,#4f46e5 100%);
+    box-shadow:0 16px 34px rgba(37,99,235,.22);
+  }
+
+  .ce-btn.primary:hover{
+    color:#fff;
+  }
+
+  .ce-hero{
+    position:relative;
+    overflow:hidden;
+    border-radius:34px;
+    padding:26px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 88% 18%, rgba(96,165,250,.28), transparent 28%),
+      radial-gradient(circle at 10% 90%, rgba(124,58,237,.16), transparent 26%),
+      linear-gradient(135deg,#050b18 0%,#111b38 42%,#2446be 100%);
+    box-shadow:0 26px 72px rgba(15,23,42,.18);
+  }
+
+  .ce-hero::after{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:33px;
+    border:1px solid rgba(255,255,255,.10);
+    pointer-events:none;
+  }
+
+  .ce-hero-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:1.05fr .95fr;
+    gap:18px;
+    align-items:stretch;
+  }
+
+  .ce-patient-name{
+    margin:0;
+    font-size:32px;
+    font-weight:950;
+    letter-spacing:-.04em;
+  }
+
+  .ce-hero-meta{
+    margin-top:12px;
+    color:rgba(255,255,255,.76);
+    font-size:14px;
+    line-height:1.8;
+    font-weight:750;
+  }
+
+  .ce-editor-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-top:16px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.14);
+    color:#fff;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .ce-editor-badge::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:#22c55e;
+    box-shadow:0 0 0 4px rgba(34,197,94,.14);
+  }
+
+  .ce-hero-side{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .ce-mini-stat{
+    border-radius:22px;
+    padding:16px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.13);
+    backdrop-filter:blur(12px);
+  }
+
+  .ce-mini-label{
+    color:rgba(255,255,255,.64);
+    font-size:11px;
+    font-weight:900;
+    margin-bottom:8px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  .ce-mini-value{
+    color:#fff;
+    font-size:17px;
+    line-height:1.45;
+    font-weight:950;
+    word-break:break-word;
   }
 
   .ce-card{
-    background:#ffffff;
-    border:1px solid #e5e7eb;
-    border-radius:22px;
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
     padding:22px;
-    box-shadow:0 10px 28px rgba(15,23,42,.05);
-    margin-top:18px;
+    background:rgba(255,255,255,.86);
+    border:1px solid rgba(255,255,255,.9);
+    box-shadow:var(--ce-shadow-soft);
+    backdrop-filter:blur(16px);
+  }
+
+  .ce-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.38),rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .ce-card-inner{
+    position:relative;
+    z-index:1;
+  }
+
+  .ce-section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+
+  .ce-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+
+  .ce-kicker.green{
+    background:#ecfdf5;
+    color:#166534;
+  }
+
+  .ce-kicker.orange{
+    background:#fff7ed;
+    color:#9a3412;
   }
 
   .ce-section-title{
-    font-size:18px;
-    font-weight:900;
-    margin:0 0 14px;
-    color:#0f172a;
+    margin:0;
+    color:#0b1220;
+    font-size:24px;
+    font-weight:950;
+    letter-spacing:-.04em;
   }
 
-  .ce-grid-2{
+  .ce-section-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:13px;
+    line-height:1.6;
+    font-weight:750;
+  }
+
+  .ce-soap-grid{
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:16px;
+  }
+
+  .ce-soap-box{
+    overflow:hidden;
+    border-radius:24px;
+    background:#fff;
+    border:1px solid #e8eef7;
+    box-shadow:0 14px 34px rgba(15,23,42,.05);
+  }
+
+  .ce-soap-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    color:#fff;
+  }
+
+  .ce-soap-head.s{background:linear-gradient(135deg,#2563eb,#4f46e5);}
+  .ce-soap-head.o{background:linear-gradient(135deg,#059669,#10b981);}
+  .ce-soap-head.a{background:linear-gradient(135deg,#d97706,#f59e0b);}
+  .ce-soap-head.p{background:linear-gradient(135deg,#7c3aed,#9333ea);}
+
+  .ce-soap-letter{
+    font-size:24px;
+    font-weight:950;
+  }
+
+  .ce-soap-label{
+    font-size:11px;
+    font-weight:950;
+    color:rgba(255,255,255,.75);
+    letter-spacing:.10em;
+    text-transform:uppercase;
+  }
+
+  .ce-soap-body{
+    padding:16px;
   }
 
   .ce-field{
@@ -73,174 +342,418 @@
   }
 
   .ce-field label{
-    font-weight:900;
     color:#334155;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .ce-field input,
+  .ce-field textarea,
+  .ce-field select{
+    width:100%;
+    border:1px solid #dbe4f0;
+    border-radius:16px;
+    background:#fff;
+    color:#0f172a;
+    font-size:14px;
+    line-height:1.6;
+    font-weight:750;
+    padding:12px 14px;
+    outline:none;
+    transition:.16s ease;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  }
+
+  .ce-field textarea{
+    resize:vertical;
+    min-height:120px;
+  }
+
+  .ce-field input:focus,
+  .ce-field textarea:focus,
+  .ce-field select:focus{
+    border-color:#93c5fd;
+    box-shadow:0 0 0 4px rgba(59,130,246,.12);
   }
 
   .ce-help{
+    color:#94a3b8;
     font-size:12px;
-    color:#64748b;
-    margin-top:4px;
-  }
-
-  .ce-actions{
-    display:flex;
-    gap:12px;
-    margin-top:22px;
-    flex-wrap:wrap;
-  }
-
-  .ce-btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    padding:12px 18px;
-    border-radius:14px;
-    border:1px solid #e5e7eb;
-    background:#fff;
-    color:#0f172a;
-    text-decoration:none;
-    font-weight:800;
-  }
-
-  .ce-btn-primary{
-    background:#2563eb;
-    border-color:#2563eb;
-    color:#fff;
-  }
-
-  .errorlist{
-    margin:0;
-    padding-left:18px;
-    color:#dc2626;
-    font-size:13px;
+    line-height:1.6;
     font-weight:700;
   }
 
-  @media (max-width: 900px){
-    .ce-grid-2{
+  .ce-grid-2{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+  }
+
+  .ce-grid-3{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:16px;
+  }
+
+  .ce-extract-box{
+    border-radius:22px;
+    padding:18px;
+    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+    border:1px solid #e8eef7;
+    box-shadow:0 10px 26px rgba(15,23,42,.04);
+  }
+
+  .ce-extract-box.blue{
+    background:linear-gradient(180deg,#fff 0%,#eff6ff 100%);
+    border-color:#bfdbfe;
+  }
+
+  .ce-extract-box.green{
+    background:linear-gradient(180deg,#fff 0%,#ecfdf5 100%);
+    border-color:#bbf7d0;
+  }
+
+  .ce-extract-box.orange{
+    background:linear-gradient(180deg,#fff 0%,#fff7ed 100%);
+    border-color:#fed7aa;
+  }
+
+  .ce-error .errorlist,
+  .errorlist{
+    margin:4px 0 0;
+    padding-left:18px;
+    color:#dc2626;
+    font-size:12px;
+    font-weight:800;
+  }
+
+  .ce-bottom-actions{
+    position:sticky;
+    bottom:14px;
+    z-index:50;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:14px;
+    border-radius:24px;
+    background:rgba(255,255,255,.84);
+    border:1px solid rgba(226,232,240,.92);
+    box-shadow:0 22px 50px rgba(15,23,42,.12);
+    backdrop-filter:blur(18px);
+  }
+
+  .ce-save-note{
+    color:#64748b;
+    font-size:13px;
+    line-height:1.6;
+    font-weight:800;
+  }
+
+  @media(max-width:1100px){
+    .ce-hero-grid,
+    .ce-grid-2,
+    .ce-grid-3{
       grid-template-columns:1fr;
     }
 
+    .ce-hero-side{
+      grid-template-columns:1fr 1fr;
+    }
+  }
+
+  @media(max-width:760px){
     .ce-title{
-      font-size:30px;
+      font-size:34px;
+    }
+
+    .ce-hero{
+      padding:20px;
+      border-radius:24px;
+    }
+
+    .ce-hero-side,
+    .ce-soap-grid{
+      grid-template-columns:1fr;
+    }
+
+    .ce-actions{
+      justify-content:flex-start;
+      width:100%;
+    }
+
+    .ce-btn{
+      width:100%;
+    }
+
+    .ce-bottom-actions{
+      position:static;
     }
   }
 </style>
 
-<div class="ce-wrap">
+<div class="ce-page">
 
-  <div class="ce-head">
+  <header class="ce-top">
     <div>
+      <div class="ce-eyebrow">Clinical Note Editor</div>
       <h1 class="ce-title">Clinical Note 編集</h1>
       <div class="ce-sub">
-        患者：{{ note.patient.last_name }} {{ note.patient.first_name }} / 予約ID：{{ note.appointment_id }}
-      </div>
-    </div>
-
-    <a href="{% url 'staff:clinical_note_detail' note.id %}" class="ce-back">
-      ← カルテ詳細へ戻る
-    </a>
-  </div>
-
-  <form method="post">
-    {% csrf_token %}
-
-    <div class="ce-card">
-      <div class="ce-section-title">SOAP</div>
-
-      <div class="ce-grid-2">
-        <div class="ce-field">
-          {{ form.soap_s.label_tag }}
-          {{ form.soap_s }}
-          {{ form.soap_s.errors }}
-        </div>
-
-        <div class="ce-field">
-          {{ form.soap_o.label_tag }}
-          {{ form.soap_o }}
-          {{ form.soap_o.errors }}
-        </div>
-
-        <div class="ce-field">
-          {{ form.soap_a.label_tag }}
-          {{ form.soap_a }}
-          {{ form.soap_a.errors }}
-        </div>
-
-        <div class="ce-field">
-          {{ form.soap_p.label_tag }}
-          {{ form.soap_p }}
-          {{ form.soap_p.errors }}
-        </div>
-      </div>
-    </div>
-
-    <div class="ce-card">
-      <div class="ce-section-title">抽出内容</div>
-
-      <div class="ce-grid-2">
-        <div class="ce-field">
-          {{ form.chief_complaint.label_tag }}
-          {{ form.chief_complaint }}
-          {{ form.chief_complaint.errors }}
-        </div>
-
-        <div class="ce-field">
-          {{ form.onset.label_tag }}
-          {{ form.onset }}
-          {{ form.onset.errors }}
-        </div>
-
-        <div class="ce-field">
-          {{ form.trigger.label_tag }}
-          {{ form.trigger }}
-          {{ form.trigger.errors }}
-        </div>
-
-        <div class="ce-field">
-          {{ form.severity_0_10.label_tag }}
-          {{ form.severity_0_10 }}
-          {{ form.severity_0_10.errors }}
-        </div>
-
-        <div class="ce-field">
-          {{ form.locations.label_tag }}
-          {{ form.locations }}
-          {% if form.locations.help_text %}<div class="ce-help">{{ form.locations.help_text }}</div>{% endif %}
-          {{ form.locations.errors }}
-        </div>
-
-        <div class="ce-field">
-          {{ form.qualities.label_tag }}
-          {{ form.qualities }}
-          {% if form.qualities.help_text %}<div class="ce-help">{{ form.qualities.help_text }}</div>{% endif %}
-          {{ form.qualities.errors }}
-        </div>
-
-        <div class="ce-field">
-          {{ form.symptom_type.label_tag }}
-          {{ form.symptom_type }}
-          {{ form.symptom_type.errors }}
-        </div>
-      </div>
-    </div>
-
-    <div class="ce-card">
-      <div class="ce-section-title">追加質問</div>
-
-      <div class="ce-field">
-        {{ form.followups.label_tag }}
-        {{ form.followups }}
-        {% if form.followups.help_text %}<div class="ce-help">{{ form.followups.help_text }}</div>{% endif %}
-        {{ form.followups.errors }}
+        AIで生成されたカルテを、施術者の判断で最終調整します。
       </div>
     </div>
 
     <div class="ce-actions">
-      <button type="submit" class="ce-btn ce-btn-primary">保存する</button>
-      <a href="{% url 'staff:clinical_note_detail' note.id %}" class="ce-btn">キャンセル</a>
+      <a href="{% url 'staff:clinical_note_detail' note.id %}" class="ce-btn">
+        ← カルテ詳細へ戻る
+      </a>
+    </div>
+  </header>
+
+  <section class="ce-hero">
+    <div class="ce-hero-grid">
+      <div>
+        <h2 class="ce-patient-name">
+          {{ note.patient.last_name }} {{ note.patient.first_name }}
+        </h2>
+
+        <div class="ce-hero-meta">
+          患者ID：{{ note.patient_id }}
+          {% if note.appointment_id %} / 予約ID：{{ note.appointment_id }}{% endif %}
+          <br>
+          作成：{{ note.created_at|date:"Y-m-d H:i" }}
+          {% if note.registered_by %} / 作成者：{{ note.registered_by }}{% endif %}
+          <br>
+          最終更新：{{ note.updated_at|date:"Y-m-d H:i" }}
+          {% if note.updated_by %} / 更新者：{{ note.updated_by }}{% endif %}
+        </div>
+
+        <div class="ce-editor-badge">
+          AI Draft Editor / Human Confirmed
+        </div>
+      </div>
+
+      <div class="ce-hero-side">
+        <div class="ce-mini-stat">
+          <div class="ce-mini-label">主訴</div>
+          <div class="ce-mini-value">
+            {{ form.chief_complaint.value|default:"-" }}
+          </div>
+        </div>
+
+        <div class="ce-mini-stat">
+          <div class="ce-mini-label">予約</div>
+          <div class="ce-mini-value">
+            {% if note.appointment %}
+              {{ note.appointment.start_at|date:"Y-m-d H:i" }}
+            {% else %}
+              -
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="ce-mini-stat">
+          <div class="ce-mini-label">カルテID</div>
+          <div class="ce-mini-value">#{{ note.id }}</div>
+        </div>
+
+        <div class="ce-mini-stat">
+          <div class="ce-mini-label">編集状態</div>
+          <div class="ce-mini-value">編集中</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <section class="ce-card">
+      <div class="ce-card-inner">
+        <div class="ce-section-head">
+          <div>
+            <div class="ce-kicker">SOAP</div>
+            <h2 class="ce-section-title">診療記録を編集</h2>
+            <div class="ce-section-sub">
+              主観・客観・評価・計画を確認し、必要に応じて修正してください。
+            </div>
+          </div>
+        </div>
+
+        <div class="ce-soap-grid">
+          <div class="ce-soap-box">
+            <div class="ce-soap-head s">
+              <span class="ce-soap-letter">S</span>
+              <span class="ce-soap-label">Subjective</span>
+            </div>
+            <div class="ce-soap-body">
+              <div class="ce-field">
+                {{ form.soap_s }}
+                {{ form.soap_s.errors }}
+              </div>
+            </div>
+          </div>
+
+          <div class="ce-soap-box">
+            <div class="ce-soap-head o">
+              <span class="ce-soap-letter">O</span>
+              <span class="ce-soap-label">Objective</span>
+            </div>
+            <div class="ce-soap-body">
+              <div class="ce-field">
+                {{ form.soap_o }}
+                {{ form.soap_o.errors }}
+              </div>
+            </div>
+          </div>
+
+          <div class="ce-soap-box">
+            <div class="ce-soap-head a">
+              <span class="ce-soap-letter">A</span>
+              <span class="ce-soap-label">Assessment</span>
+            </div>
+            <div class="ce-soap-body">
+              <div class="ce-field">
+                {{ form.soap_a }}
+                {{ form.soap_a.errors }}
+              </div>
+            </div>
+          </div>
+
+          <div class="ce-soap-box">
+            <div class="ce-soap-head p">
+              <span class="ce-soap-letter">P</span>
+              <span class="ce-soap-label">Plan</span>
+            </div>
+            <div class="ce-soap-body">
+              <div class="ce-field">
+                {{ form.soap_p }}
+                {{ form.soap_p.errors }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ce-card">
+      <div class="ce-card-inner">
+        <div class="ce-section-head">
+          <div>
+            <div class="ce-kicker green">Extract</div>
+            <h2 class="ce-section-title">抽出内容を編集</h2>
+            <div class="ce-section-sub">
+              患者詳細・検索・施術計画生成に使う重要情報です。
+            </div>
+          </div>
+        </div>
+
+        <div class="ce-grid-2">
+          <div class="ce-extract-box blue">
+            <div class="ce-field">
+              {{ form.chief_complaint.label_tag }}
+              {{ form.chief_complaint }}
+              {{ form.chief_complaint.errors }}
+            </div>
+          </div>
+
+          <div class="ce-extract-box">
+            <div class="ce-field">
+              {{ form.onset.label_tag }}
+              {{ form.onset }}
+              {{ form.onset.errors }}
+            </div>
+          </div>
+
+          <div class="ce-extract-box">
+            <div class="ce-field">
+              {{ form.trigger.label_tag }}
+              {{ form.trigger }}
+              {{ form.trigger.errors }}
+            </div>
+          </div>
+
+          <div class="ce-extract-box orange">
+            <div class="ce-field">
+              {{ form.severity_0_10.label_tag }}
+              {{ form.severity_0_10 }}
+              {{ form.severity_0_10.errors }}
+            </div>
+          </div>
+
+          <div class="ce-extract-box green">
+            <div class="ce-field">
+              {{ form.locations.label_tag }}
+              {{ form.locations }}
+              {% if form.locations.help_text %}
+                <div class="ce-help">{{ form.locations.help_text }}</div>
+              {% endif %}
+              {{ form.locations.errors }}
+            </div>
+          </div>
+
+          <div class="ce-extract-box">
+            <div class="ce-field">
+              {{ form.qualities.label_tag }}
+              {{ form.qualities }}
+              {% if form.qualities.help_text %}
+                <div class="ce-help">{{ form.qualities.help_text }}</div>
+              {% endif %}
+              {{ form.qualities.errors }}
+            </div>
+          </div>
+
+          <div class="ce-extract-box">
+            <div class="ce-field">
+              {{ form.symptom_type.label_tag }}
+              {{ form.symptom_type }}
+              {{ form.symptom_type.errors }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ce-card">
+      <div class="ce-card-inner">
+        <div class="ce-section-head">
+          <div>
+            <div class="ce-kicker orange">Followups</div>
+            <h2 class="ce-section-title">追加確認事項</h2>
+            <div class="ce-section-sub">
+              次回確認事項や不足情報を1行ずつ編集できます。
+            </div>
+          </div>
+        </div>
+
+        <div class="ce-extract-box">
+          <div class="ce-field">
+            {{ form.followups.label_tag }}
+            {{ form.followups }}
+            {% if form.followups.help_text %}
+              <div class="ce-help">{{ form.followups.help_text }}</div>
+            {% endif %}
+            {{ form.followups.errors }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="ce-bottom-actions">
+      <div class="ce-save-note">
+        保存すると編集履歴が残ります。AI下書きではなく、施術者確認済みの正式カルテとして更新されます。
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="{% url 'staff:clinical_note_detail' note.id %}" class="ce-btn">
+          キャンセル
+        </a>
+
+        <button type="submit" class="ce-btn primary">
+          保存する
+        </button>
+      </div>
     </div>
   </form>
 

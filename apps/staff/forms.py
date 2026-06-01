@@ -9,6 +9,7 @@ SYMPTOM_TYPE_CHOICES = [
     ("acute", "急性"),
     ("chronic", "慢性"),
     ("unknown", "不明"),
+    ("followup", "通院・再診"),
 ]
 
 
@@ -87,6 +88,106 @@ class StaffCreateForm(UserCreationForm):
             user.save()
         return user
 
+def _list_to_text(value):
+    """
+    list / dict / str が混在しても、編集フォーム用のテキストに安全変換する。
+    dict は [type] text 形式にして、後で復元しやすくする。
+    """
+    if value is None:
+        return ""
+
+    if isinstance(value, str):
+        return value
+
+    if isinstance(value, dict):
+        text = value.get("text") or value.get("label") or value.get("value")
+        item_type = value.get("type", "")
+
+        if text:
+            return f"[{item_type}] {text}" if item_type else str(text)
+
+        return str(value)
+
+    if isinstance(value, list):
+        lines = []
+
+        for item in value:
+            if item is None:
+                continue
+
+            if isinstance(item, str):
+                if item.strip():
+                    lines.append(item.strip())
+                continue
+
+            if isinstance(item, dict):
+                text = item.get("text") or item.get("label") or item.get("value")
+                item_type = item.get("type", "")
+
+                if text:
+                    lines.append(f"[{item_type}] {text}" if item_type else str(text))
+                else:
+                    lines.append(str(item))
+                continue
+
+            lines.append(str(item))
+
+        return "\n".join(lines)
+
+    return str(value)
+
+
+def _text_to_list(value):
+    """
+    複数行テキストを list[str] に戻す。
+    """
+    if not value:
+        return []
+
+    return [
+        line.strip()
+        for line in str(value).splitlines()
+        if line.strip()
+    ]
+
+
+def _text_to_followups(value):
+    """
+    [next_check] xxx のような行は dict に戻す。
+    それ以外は通常の followup として dict 化する。
+    """
+    rows = _text_to_list(value)
+    results = []
+
+    for row in rows:
+        if row.startswith("[") and "]" in row:
+            item_type, text = row.split("]", 1)
+            item_type = item_type.replace("[", "").strip()
+            text = text.strip()
+
+            if text:
+                results.append({
+                    "type": item_type or "followup",
+                    "text": text,
+                })
+            continue
+
+        results.append({
+            "type": "followup",
+            "text": row,
+        })
+
+    return results
+
+
+def _safe_choice_value(value, choices, default=""):
+    """
+    choices に存在しない値が入っていてもフォームを壊さないための保険。
+    """
+    valid_values = {str(choice[0]) for choice in choices}
+    value = "" if value is None else str(value)
+    return value if value in valid_values else default
+
 class ClinicalNoteEditForm(forms.Form):
     # SOAP
     soap_s = forms.CharField(
@@ -144,7 +245,7 @@ class ClinicalNoteEditForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
     )
     symptom_type = forms.ChoiceField(
-        label="急性/慢性",
+        label="急性/慢性・来院種別",
         required=False,
         choices=SYMPTOM_TYPE_CHOICES,
         widget=forms.Select(attrs={"class": "form-select"}),
@@ -152,37 +253,80 @@ class ClinicalNoteEditForm(forms.Form):
 
     # followups
     followups = forms.CharField(
-        label="追加質問",
+        label="追加確認事項",
         required=False,
-        help_text="1行に1件ずつ入力",
+        help_text="1行に1件ずつ入力。例：[next_check] 右膝の荷重時痛を確認",
         widget=forms.Textarea(attrs={"rows": 6, "class": "form-control"}),
     )
 
+    def __init__(self, *args, note=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.note = note
+        self.base_extract = {}
+        self.base_web_intake_snapshot = {}
+
+        if note is not None:
+            self.base_extract = note.extract_json or {}
+            self.base_web_intake_snapshot = note.web_intake_snapshot or {}
+
     def _split_lines(self, value: str):
-        if not value:
-            return []
-        return [line.strip() for line in value.splitlines() if line.strip()]
+        return _text_to_list(value)
 
     def build_payload(self):
+        """
+        編集フォームの内容から ClinicalNote 保存用 payload を作る。
+
+        重要:
+        - 施術セッション由来の extract_json には important_points / progress_change などがある
+        - それを消さないように、既存 extract をベースに編集項目だけ上書きする
+        """
         cd = self.cleaned_data
 
+        soap = {
+            "S": _text_to_list(cd.get("soap_s")),
+            "O": _text_to_list(cd.get("soap_o")),
+            "A": _text_to_list(cd.get("soap_a")),
+            "P": _text_to_list(cd.get("soap_p")),
+        }
+
+        extract = dict(self.base_extract or {})
+
+        locations = _text_to_list(cd.get("locations"))
+        qualities = _text_to_list(cd.get("qualities"))
+
+        extract.update({
+            "chief_complaint": cd.get("chief_complaint", "") or "",
+            "onset": cd.get("onset", "") or "",
+            "trigger": cd.get("trigger", "") or "",
+            "severity_0_10": cd.get("severity_0_10", "") or "",
+            "locations": locations,
+            "qualities": qualities,
+        })
+
+        symptom_type = cd.get("symptom_type") or ""
+
+        if symptom_type:
+            # 既存の visit_type は残しつつ、通常カルテ互換の symptom_type も保持
+            if symptom_type == "followup":
+                extract["visit_type"] = "followup"
+                extract["symptom_type"] = extract.get("symptom_type") or "unknown"
+            else:
+                extract["symptom_type"] = symptom_type
+        else:
+            extract["symptom_type"] = extract.get("symptom_type") or "unknown"
+
+        # 施術セッション由来の場合、pain_areas / checked_areas 側にも最低限同期
+        if extract.get("source") == "treatment_session":
+            if locations:
+                extract["pain_areas"] = locations
+
+        followups = _text_to_followups(cd.get("followups"))
+
         return {
-            "soap": {
-                "S": self._split_lines(cd.get("soap_s", "")),
-                "O": self._split_lines(cd.get("soap_o", "")),
-                "A": self._split_lines(cd.get("soap_a", "")),
-                "P": self._split_lines(cd.get("soap_p", "")),
-            },
-            "extract": {
-                "chief_complaint": cd.get("chief_complaint", "") or "",
-                "onset": cd.get("onset", "") or "",
-                "trigger": cd.get("trigger", "") or "",
-                "severity_0_10": cd.get("severity_0_10", "") or "",
-                "locations": self._split_lines(cd.get("locations", "")),
-                "qualities": self._split_lines(cd.get("qualities", "")),
-                "symptom_type": cd.get("symptom_type", "") or "unknown",
-            },
-            "followups": self._split_lines(cd.get("followups", "")),
+            "soap": soap,
+            "extract": extract,
+            "followups": followups,
         }
 
     @classmethod
@@ -191,18 +335,42 @@ class ClinicalNoteEditForm(forms.Form):
         extract = note.extract_json or {}
         followups = note.followups_json or []
 
+        locations = (
+            extract.get("locations")
+            or extract.get("pain_areas")
+            or extract.get("checked_areas")
+            or []
+        )
+
+        qualities = extract.get("qualities") or []
+
+        symptom_or_visit_type = (
+            extract.get("symptom_type")
+            or extract.get("visit_type")
+            or ""
+        )
+
+        symptom_or_visit_type = _safe_choice_value(
+            symptom_or_visit_type,
+            SYMPTOM_TYPE_CHOICES,
+            default="unknown",
+        )
+
         initial = {
-            "soap_s": "\n".join(soap.get("S", [])),
-            "soap_o": "\n".join(soap.get("O", [])),
-            "soap_a": "\n".join(soap.get("A", [])),
-            "soap_p": "\n".join(soap.get("P", [])),
+            "soap_s": _list_to_text(soap.get("S")),
+            "soap_o": _list_to_text(soap.get("O")),
+            "soap_a": _list_to_text(soap.get("A")),
+            "soap_p": _list_to_text(soap.get("P")),
+
             "chief_complaint": extract.get("chief_complaint", ""),
             "onset": extract.get("onset", ""),
             "trigger": extract.get("trigger", ""),
             "severity_0_10": extract.get("severity_0_10", ""),
-            "locations": "\n".join(extract.get("locations", [])),
-            "qualities": "\n".join(extract.get("qualities", [])),
-            "symptom_type": extract.get("symptom_type", "") or "unknown",
-            "followups": "\n".join(followups),
+            "locations": _list_to_text(locations),
+            "qualities": _list_to_text(qualities),
+            "symptom_type": symptom_or_visit_type,
+
+            "followups": _list_to_text(followups),
         }
-        return cls(initial=initial)
+
+        return cls(note=note, initial=initial)

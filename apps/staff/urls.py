@@ -41,4 +41,9 @@ urlpatterns = [
     path("clinical_notes/<int:note_id>/edit/", views.staff_clinical_note_edit, name="clinical_note_edit"),
     path("api/appointments/<int:pk>/move/", views.move_appointment_view, name="appointment_move"),
     path("staffs/create/", views.staff_create, name="staff_create"),
+    path(
+        "clinical_notes/<int:pk>/print/",
+        views.staff_clinical_note_print_view,
+        name="clinical_note_print",
+    ),
 ]
