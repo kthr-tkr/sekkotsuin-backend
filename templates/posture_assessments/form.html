@@ -949,6 +949,56 @@
       width:100%;
     }
   }
+
+/* ===== Custom File Upload UI ===== */
+
+.file-zone{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.file-input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+.upload-trigger{
+  width:100%;
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border-radius:15px;
+  border:1px solid #dbe3ef;
+  background:#fff;
+  color:#0f172a;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 10px 22px rgba(15,23,42,.04);
+  transition:.18s ease;
+}
+
+.upload-trigger:hover{
+  transform:translateY(-1px);
+  border-color:#93c5fd;
+  box-shadow:0 16px 30px rgba(37,99,235,.10);
+}
+
+.preview-box{
+  cursor:pointer;
+}
+
+.preview-box:hover{
+  border-color:#93c5fd;
+}
 </style>
 
 <div class="pa-create">
@@ -1109,6 +1159,13 @@
 
             <div class="file-zone">
               {{ form.front_image }}
+
+              <button type="button"
+                      class="upload-trigger"
+                      data-file-trigger="front_image">
+                ＋ 正面画像を選択
+              </button>
+
               <div class="photo-status" data-status="front_image">未選択</div>
               {{ form.front_image.errors }}
             </div>
@@ -1131,6 +1188,13 @@
 
             <div class="file-zone">
               {{ form.side_right_image }}
+
+              <button type="button"
+                      class="upload-trigger"
+                      data-file-trigger="side_right_image">
+                ＋ 右側面画像を選択
+              </button>
+
               <div class="photo-status" data-status="side_right_image">未選択</div>
               {{ form.side_right_image.errors }}
             </div>
@@ -1153,6 +1217,13 @@
 
             <div class="file-zone">
               {{ form.back_image }}
+
+              <button type="button"
+                      class="upload-trigger"
+                      data-file-trigger="back_image">
+                ＋ 背面画像を選択
+              </button>
+
               <div class="photo-status" data-status="back_image">未選択</div>
               {{ form.back_image.errors }}
             </div>
@@ -1238,15 +1309,34 @@
   enhanceField("title", "input");
   enhanceField("memo", "textarea");
 
-  ["front_image", "side_right_image", "back_image"].forEach(name => {
+  const fileNames = ["front_image", "side_right_image", "back_image"];
+
+  fileNames.forEach(name => {
     const input = document.querySelector(`[name="${name}"]`);
     if(!input) return;
 
     input.classList.add("file-input");
+
+    const trigger = document.querySelector(`[data-file-trigger="${name}"]`);
+    const preview = document.querySelector(`[data-preview="${name}"]`);
+
+    if(trigger){
+      trigger.addEventListener("click", () => {
+        input.click();
+      });
+    }
+
+    if(preview){
+      preview.addEventListener("click", () => {
+        input.click();
+      });
+    }
+
     input.addEventListener("change", () => {
       const preview = document.querySelector(`[data-preview="${name}"]`);
       const status = document.querySelector(`[data-status="${name}"]`);
       const card = input.closest(".photo-card");
+      const trigger = document.querySelector(`[data-file-trigger="${name}"]`);
       const file = input.files && input.files[0];
 
       if(!preview) return;
@@ -1254,6 +1344,7 @@
       if(!file){
         preview.textContent = "画像プレビュー";
         if(status) status.textContent = "未選択";
+        if(trigger) trigger.textContent = "＋ 画像を選択";
         if(card) card.classList.remove("has-image");
         return;
       }
@@ -1261,6 +1352,7 @@
       if(!file.type.startsWith("image/")){
         preview.textContent = "画像ファイルを選択してください";
         if(status) status.textContent = "画像ファイルではありません";
+        if(trigger) trigger.textContent = "＋ 画像を選び直す";
         if(card) card.classList.remove("has-image");
         return;
       }
@@ -1269,12 +1361,14 @@
 
       reader.onload = e => {
         preview.innerHTML = "";
+
         const img = document.createElement("img");
         img.src = e.target.result;
         img.alt = file.name;
         preview.appendChild(img);
 
-        if(status) status.textContent = "選択済み";
+        if(status) status.textContent = `選択済み：${file.name}`;
+        if(trigger) trigger.textContent = "画像を選び直す";
         if(card) card.classList.add("has-image");
       };
 
@@ -1287,6 +1381,7 @@
     form.addEventListener("submit", e => {
       const btn = form.querySelector(".submit-btn");
       if(!btn) return;
+
       btn.disabled = true;
       btn.textContent = "保存中...";
     });
