@@ -37,4 +37,8 @@ urlpatterns = [
         "treatment-sessions/",
         include("apps.treatment_sessions.urls"),
     ),
+    path(
+        "posture-assessments/",
+        include("apps.posture_assessments.urls"),
+    ),
 ]

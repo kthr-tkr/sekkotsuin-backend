@@ -30,6 +30,7 @@ from apps.visits.models import Visit
 
 from .forms import StaffCreateForm
 from apps.ai_usage.services import build_ai_usage_summary
+from apps.posture_assessments.models import PostureAssessment
 
 INTAKE_FIELD_LABELS = {
     "visit_type": "来院種別",
@@ -1258,7 +1259,17 @@ def staff_patient_detail_view(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id, clinic=clinic)
 
     active_tab = request.GET.get("tab", "overview")
-    valid_tabs = ["overview", "appointments", "clinical_notes", "treatment_plans", "files"]
+
+    # ★ posture を追加
+    valid_tabs = [
+        "overview",
+        "appointments",
+        "clinical_notes",
+        "treatment_plans",
+        "posture",
+        "files",
+    ]
+
     if active_tab not in valid_tabs:
         active_tab = "overview"
 
@@ -1294,6 +1305,28 @@ def staff_patient_detail_view(request, patient_id):
         .select_related("assigned_staff", "treatment_plan")
         .order_by("-start_at")
     )
+
+    # ★ AI姿勢分析
+    posture_assessments = (
+        PostureAssessment.objects
+        .filter(
+            clinic=clinic,
+            patient=patient,
+        )
+        .select_related(
+            "created_by",
+            "confirmed_by",
+            "updated_by",
+            "appointment",
+            "treatment_session",
+            "clinical_note",
+        )
+        .prefetch_related("images")
+        .order_by("-created_at")
+    )
+
+    posture_assessment_count = posture_assessments.count()
+    latest_posture_assessment = posture_assessments.first()
 
     upcoming_appointments = appointments.filter(start_at__gte=now).order_by("start_at")[:4]
     past_appointments = appointments.filter(start_at__lt=now).order_by("-start_at")[:8]
@@ -1363,6 +1396,16 @@ def staff_patient_detail_view(request, patient_id):
             "url": reverse("staff:clinical_note_detail", args=[latest_note.id]),
         })
 
+    # ★ 姿勢分析がない場合、今日やることにも軽く出せる
+    if not latest_posture_assessment:
+        command_cards.append({
+            "level": "info",
+            "title": "AI姿勢分析が未作成です",
+            "text": "正面・側面・背面の写真を登録し、姿勢傾向を記録できます。",
+            "button": "姿勢分析を作成",
+            "url": reverse("posture_assessments:create", args=[patient.id]),
+        })
+
     return render(request, "staff/patients/detail.html", {
         "active": "patient_search",
         "page_title": "患者詳細",
@@ -1394,6 +1437,11 @@ def staff_patient_detail_view(request, patient_id):
         "latest_note": latest_note,
         "latest_extract": latest_extract,
         "latest_assessment": latest_assessment,
+
+        # ★ AI姿勢分析
+        "posture_assessments": posture_assessments,
+        "posture_assessment_count": posture_assessment_count,
+        "latest_posture_assessment": latest_posture_assessment,
 
         "file_count": 0,
     })

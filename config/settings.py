@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "apps.treatment_plans.apps.TreatmentPlansConfig",
     "apps.treatment_sessions.apps.TreatmentSessionsConfig",
     "apps.ai_usage.apps.AiUsageConfig",
+    "apps.posture_assessments.apps.PostureAssessmentsConfig",
 ]
 
 MIDDLEWARE = [
