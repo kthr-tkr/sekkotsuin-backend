@@ -965,7 +965,7 @@
   height:1px;
   opacity:0;
   overflow:hidden;
-  pointer-events:none;
+  z-index:-1;
 }
 
 .upload-trigger{
@@ -984,6 +984,7 @@
   cursor:pointer;
   box-shadow:0 10px 22px rgba(15,23,42,.04);
   transition:.18s ease;
+  user-select:none;
 }
 
 .upload-trigger:hover{
@@ -992,12 +993,24 @@
   box-shadow:0 16px 30px rgba(37,99,235,.10);
 }
 
+.upload-trigger:active{
+  transform:translateY(0);
+}
+
 .preview-box{
   cursor:pointer;
 }
 
 .preview-box:hover{
   border-color:#93c5fd;
+}
+
+.file-input:focus + .upload-trigger,
+.upload-trigger:focus{
+  outline:none;
+  box-shadow:
+    0 0 0 4px rgba(59,130,246,.12),
+    0 16px 30px rgba(37,99,235,.10);
 }
 </style>
 
@@ -1160,11 +1173,13 @@
             <div class="file-zone">
               {{ upload_form.front_image }}
 
-              <button type="button"
-                      class="upload-trigger"
-                      data-file-trigger="front_image">
+              <label
+                for="{{ upload_form.front_image.id_for_label }}"
+                class="upload-trigger"
+                data-file-trigger="front_image"
+              >
                 ＋ 正面画像を選択
-              </button>
+              </label>
 
               <div class="photo-status" data-status="front_image">未選択</div>
               {{ upload_form.front_image.errors }}
@@ -1189,11 +1204,13 @@
             <div class="file-zone">
               {{ upload_form.side_right_image }}
 
-              <button type="button"
-                      class="upload-trigger"
-                      data-file-trigger="side_right_image">
+              <label
+                for="{{ upload_form.side_right_image.id_for_label }}"
+                class="upload-trigger"
+                data-file-trigger="side_right_image"
+              >
                 ＋ 右側面画像を選択
-              </button>
+              </label>
 
               <div class="photo-status" data-status="side_right_image">未選択</div>
               {{ upload_form.side_right_image.errors }}
@@ -1218,11 +1235,13 @@
             <div class="file-zone">
               {{ upload_form.back_image }}
 
-              <button type="button"
-                      class="upload-trigger"
-                      data-file-trigger="back_image">
+              <label
+                for="{{ upload_form.back_image.id_for_label }}"
+                class="upload-trigger"
+                data-file-trigger="back_image"
+              >
                 ＋ 背面画像を選択
-              </button>
+              </label>
 
               <div class="photo-status" data-status="back_image">未選択</div>
               {{ upload_form.back_image.errors }}
@@ -1309,9 +1328,29 @@
   enhanceField("title", "input");
   enhanceField("memo", "textarea");
 
-  const fileNames = ["front_image", "side_right_image", "back_image"];
+  const fileNames = [
+    {
+      name: "front_image",
+      emptyText: "正面画像プレビュー",
+      triggerText: "＋ 正面画像を選択",
+      retryText: "正面画像を選び直す"
+    },
+    {
+      name: "side_right_image",
+      emptyText: "側面画像プレビュー",
+      triggerText: "＋ 右側面画像を選択",
+      retryText: "右側面画像を選び直す"
+    },
+    {
+      name: "back_image",
+      emptyText: "背面画像プレビュー",
+      triggerText: "＋ 背面画像を選択",
+      retryText: "背面画像を選び直す"
+    }
+  ];
 
-  fileNames.forEach(name => {
+  fileNames.forEach(item => {
+    const name = item.name;
     const input = document.querySelector(`[name="${name}"]`);
     if(!input) return;
 
@@ -1319,12 +1358,8 @@
 
     const trigger = document.querySelector(`[data-file-trigger="${name}"]`);
     const preview = document.querySelector(`[data-preview="${name}"]`);
-
-    if(trigger){
-      trigger.addEventListener("click", () => {
-        input.click();
-      });
-    }
+    const status = document.querySelector(`[data-status="${name}"]`);
+    const card = input.closest(".photo-card");
 
     if(preview){
       preview.addEventListener("click", () => {
@@ -1333,27 +1368,24 @@
     }
 
     input.addEventListener("change", () => {
-      const preview = document.querySelector(`[data-preview="${name}"]`);
-      const status = document.querySelector(`[data-status="${name}"]`);
-      const card = input.closest(".photo-card");
-      const trigger = document.querySelector(`[data-file-trigger="${name}"]`);
       const file = input.files && input.files[0];
 
       if(!preview) return;
 
       if(!file){
-        preview.textContent = "画像プレビュー";
+        preview.innerHTML = item.emptyText;
         if(status) status.textContent = "未選択";
-        if(trigger) trigger.textContent = "＋ 画像を選択";
+        if(trigger) trigger.textContent = item.triggerText;
         if(card) card.classList.remove("has-image");
         return;
       }
 
-      if(!file.type.startsWith("image/")){
-        preview.textContent = "画像ファイルを選択してください";
+      if(!file.type || !file.type.startsWith("image/")){
+        preview.innerHTML = "画像ファイルを選択してください";
         if(status) status.textContent = "画像ファイルではありません";
-        if(trigger) trigger.textContent = "＋ 画像を選び直す";
+        if(trigger) trigger.textContent = item.retryText;
         if(card) card.classList.remove("has-image");
+        input.value = "";
         return;
       }
 
@@ -1368,7 +1400,7 @@
         preview.appendChild(img);
 
         if(status) status.textContent = `選択済み：${file.name}`;
-        if(trigger) trigger.textContent = "画像を選び直す";
+        if(trigger) trigger.textContent = item.retryText;
         if(card) card.classList.add("has-image");
       };
 
@@ -1377,8 +1409,9 @@
   });
 
   const form = document.getElementById("postureCreateForm");
+
   if(form){
-    form.addEventListener("submit", e => {
+    form.addEventListener("submit", () => {
       const btn = form.querySelector(".submit-btn");
       if(!btn) return;
 
