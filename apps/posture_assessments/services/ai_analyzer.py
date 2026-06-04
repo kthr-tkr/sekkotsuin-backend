@@ -1,7 +1,6 @@
 import base64
 import json
 import mimetypes
-from pathlib import Path
 
 from django.conf import settings
 from openai import OpenAI
@@ -123,19 +122,60 @@ IMAGE_TYPE_LABELS = {
 }
 
 
-def _image_to_data_url(image_path: str) -> str:
-    path = Path(image_path)
+def _guess_mime_type(file_field) -> str:
+    """
+    S3 / ローカル保存どちらでも、FileField/ImageField の name からMIMEを推定する。
+    """
+    name = getattr(file_field, "name", "") or ""
+    mime, _ = mimetypes.guess_type(name)
 
-    if not path.exists():
-        raise FileNotFoundError(f"画像ファイルが見つかりません: {path}")
+    if mime:
+        return mime
 
-    mime, _ = mimetypes.guess_type(str(path))
-    if not mime:
-        mime = "image/jpeg"
+    lower_name = name.lower()
 
-    with path.open("rb") as f:
-        encoded = base64.b64encode(f.read()).decode("utf-8")
+    if lower_name.endswith((".jpg", ".jpeg")):
+        return "image/jpeg"
 
+    if lower_name.endswith(".png"):
+        return "image/png"
+
+    if lower_name.endswith(".webp"):
+        return "image/webp"
+
+    return "image/jpeg"
+
+
+def _image_field_to_data_url(image_field) -> str:
+    """
+    ImageField/FileField を data URL に変換する。
+
+    重要:
+    - img.image.path は使わない
+    - S3保存では path が存在しないため、storage経由で open/read する
+    - ローカル保存でもS3保存でも同じコードで動く
+    """
+    if not image_field:
+        raise ValueError("画像ファイルが指定されていません。")
+
+    if not getattr(image_field, "name", None):
+        raise ValueError("画像ファイル名が空です。")
+
+    mime = _guess_mime_type(image_field)
+
+    try:
+        image_field.open("rb")
+        binary = image_field.read()
+    finally:
+        try:
+            image_field.close()
+        except Exception:
+            pass
+
+    if not binary:
+        raise ValueError(f"画像ファイルを読み込めませんでした: {image_field.name}")
+
+    encoded = base64.b64encode(binary).decode("utf-8")
     return f"data:{mime};base64,{encoded}"
 
 
@@ -162,7 +202,7 @@ def _build_image_content(assessment):
 
         content.append({
             "type": "input_image",
-            "image_url": _image_to_data_url(img.image.path),
+            "image_url": _image_field_to_data_url(img.image),
         })
 
     return content
@@ -171,11 +211,16 @@ def _build_image_content(assessment):
 def analyze_posture_assessment(assessment):
     """
     姿勢画像をAI分析し、JSONを返す。
+
     注意:
     - 医療診断ではない
     - 施術者の観察補助
     - 画像だけで断定しない
+    - S3保存/ローカル保存どちらでも動作する
     """
+    if not settings.OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY が設定されていません。")
+
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
     patient = assessment.patient
@@ -187,6 +232,7 @@ def analyze_posture_assessment(assessment):
 
     memo = assessment.memo or ""
     appointment_text = "-"
+
     if appointment and appointment.start_at:
         appointment_text = appointment.start_at.strftime("%Y-%m-%d %H:%M")
 
@@ -282,6 +328,7 @@ def analyze_posture_assessment(assessment):
         "assessment_id": assessment.id,
         "model": getattr(settings, "OPENAI_VISION_MODEL", "gpt-4o-mini"),
         "image_count": assessment.images.count(),
+        "storage_safe": True,
     }
 
     return result
