@@ -397,18 +397,17 @@
             style="display:inline;">
         {% csrf_token %}
 
-        <button type="submit"
-                class="pa-btn primary"
-                {% if not images %}disabled{% endif %}
-                onclick="this.disabled=true; this.innerText='AI分析中...'; this.form.submit();">
+      <button type="submit"
+              class="pa-btn primary js-ai-submit"
+              {% if not images or assessment.status == "analyzing" %}disabled{% endif %}>
         {% if assessment.status == "analyzing" %}
-            AI分析中...
+          AI分析中...
         {% elif summary %}
-            AI分析を再実行
+          AI分析を再実行
         {% else %}
-            AI分析を実行
+          AI分析を実行
         {% endif %}
-        </button>
+      </button>
     </form>
     </div>
   </header>
@@ -680,4 +679,22 @@
   </div>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const forms = document.querySelectorAll('form[action*="/analyze"]');
+
+  forms.forEach(form => {
+    form.addEventListener("submit", function(){
+      const btn = form.querySelector(".js-ai-submit");
+      if(!btn) return;
+
+      btn.disabled = true;
+      btn.textContent = "AI分析中...";
+    });
+  });
+})();
+</script>
 {% endblock %}
