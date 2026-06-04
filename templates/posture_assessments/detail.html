@@ -497,11 +497,11 @@
         姿勢傾向・負担部位・施術で確認すべきポイントを整理します
     </div>
 
-    {% if assessment.status == "failed" and assessment.error_message %}
-        <div class="analysis-empty" style="border-color:#fecaca; background:#fff1f2; color:#991b1b;">
+    {% if assessment.status == "failed" and assessment.ai_error_message %}
+      <div class="analysis-empty" style="border-color:#fecaca; background:#fff1f2; color:#991b1b;">
         AI分析に失敗しました。<br>
-        {{ assessment.error_message }}
-        </div>
+        {{ assessment.ai_error_message }}
+      </div>
     {% endif %}
 
     {% if summary %}

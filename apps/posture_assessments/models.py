@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 class PostureAssessment(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "下書き"
+        ANALYZING = "analyzing", "AI分析中"
         ANALYZED = "analyzed", "AI分析済み"
         CONFIRMED = "confirmed", "確定済み"
         FAILED = "failed", "失敗"

@@ -244,6 +244,8 @@ def _save_uploaded_images(assessment, upload_form, user):
 @staff_required
 @require_POST
 def posture_assessment_analyze_view(request, assessment_id):
+    import traceback
+
     clinic = get_current_clinic(request)
 
     assessment = get_object_or_404(
@@ -260,17 +262,33 @@ def posture_assessment_analyze_view(request, assessment_id):
 
     try:
         assessment.status = PostureAssessment.Status.ANALYZING
+        assessment.ai_error_message = ""
         assessment.updated_by = request.user
-        assessment.save(update_fields=["status", "updated_by", "updated_at"])
+        assessment.save(update_fields=[
+            "status",
+            "ai_error_message",
+            "updated_by",
+            "updated_at",
+        ])
 
         result = analyze_posture_assessment(assessment)
 
-        assessment.analysis_json = result
+        meta = result.get("meta", {}) if isinstance(result, dict) else {}
+        model_name = meta.get("model", "")
+
+        assessment.ai_summary_json = result
+        assessment.ai_model_name = model_name
         assessment.status = PostureAssessment.Status.ANALYZED
+        assessment.ai_error_message = ""
+        assessment.analyzed_at = timezone.now()
         assessment.updated_by = request.user
+
         assessment.save(update_fields=[
-            "analysis_json",
+            "ai_summary_json",
+            "ai_model_name",
             "status",
+            "ai_error_message",
+            "analyzed_at",
             "updated_by",
             "updated_at",
         ])
@@ -278,16 +296,25 @@ def posture_assessment_analyze_view(request, assessment_id):
         messages.success(request, "AI姿勢分析が完了しました。")
 
     except Exception as e:
-        assessment.status = PostureAssessment.Status.FAILED
-        assessment.error_message = str(e)
-        assessment.updated_by = request.user
-        assessment.save(update_fields=[
-            "status",
-            "error_message",
-            "updated_by",
-            "updated_at",
-        ])
+        error_text = str(e)[:1200]
 
-        messages.error(request, f"AI姿勢分析に失敗しました: {e}")
+        print("===== posture assessment analyze error =====")
+        print(traceback.format_exc())
+
+        try:
+            assessment.status = PostureAssessment.Status.FAILED
+            assessment.ai_error_message = error_text
+            assessment.updated_by = request.user
+            assessment.save(update_fields=[
+                "status",
+                "ai_error_message",
+                "updated_by",
+                "updated_at",
+            ])
+        except Exception:
+            print("===== failed to save posture assessment error state =====")
+            print(traceback.format_exc())
+
+        messages.error(request, f"AI姿勢分析に失敗しました: {error_text}")
 
     return redirect("posture_assessments:detail", assessment_id=assessment.id)
