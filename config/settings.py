@@ -15,34 +15,33 @@ def get_list_env(name: str, default: str = "") -> list[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
+# =========================================================
+# Basic
+# =========================================================
+
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
-# settings.py
+ALLOWED_HOSTS = get_list_env(
+    "DJANGO_ALLOWED_HOSTS",
+    "127.0.0.1,localhost,app.carefrow.com",
+)
 
-SESSION_COOKIE_AGE = 1800  # 30分
-SESSION_SAVE_EVERY_REQUEST = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+CSRF_TRUSTED_ORIGINS = get_list_env(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    "http://127.0.0.1:8000,http://localhost:8000,https://app.carefrow.com",
+)
 
-# セキュリティ強化もおすすめ
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SAMESITE = "Lax"
+if not DEBUG and not SECRET_KEY:
+    raise Exception("DJANGO_SECRET_KEY is required when DEBUG=False")
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    "app.carefrow.com",
-]
+if not DEBUG and not ALLOWED_HOSTS:
+    raise Exception("DJANGO_ALLOWED_HOSTS must not be empty when DEBUG=False")
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "http://localhost:8000",
-    "https://app.carefrow.com",
-]
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-USE_X_FORWARDED_HOST = True
+# =========================================================
+# Apps
+# =========================================================
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -51,6 +50,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    "storages",
+
     "apps.accounts.apps.AccountsConfig",
     "apps.clinics.apps.ClinicsConfig",
     "apps.patients.apps.PatientsConfig",
@@ -64,8 +66,12 @@ INSTALLED_APPS = [
     "apps.treatment_sessions.apps.TreatmentSessionsConfig",
     "apps.ai_usage.apps.AiUsageConfig",
     "apps.posture_assessments.apps.PostureAssessmentsConfig",
-    "storages",
 ]
+
+
+# =========================================================
+# Middleware
+# =========================================================
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -78,11 +84,25 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+
 ROOT_URLCONF = "config.urls"
+WSGI_APPLICATION = "config.wsgi.application"
+
+
+# =========================================================
+# Auth / Login
+# =========================================================
+
+AUTH_USER_MODEL = "accounts.User"
 
 LOGIN_URL = "/staff/login/"
 LOGIN_REDIRECT_URL = "/visits/"
 LOGOUT_REDIRECT_URL = "/"
+
+
+# =========================================================
+# Templates
+# =========================================================
 
 TEMPLATES = [
     {
@@ -104,7 +124,10 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "config.wsgi.application"
+
+# =========================================================
+# Database
+# =========================================================
 
 DATABASES = {
     "default": {
@@ -123,6 +146,11 @@ if not DEBUG:
         "sslmode": os.getenv("DB_SSLMODE", "require"),
     }
 
+
+# =========================================================
+# Password validation
+# =========================================================
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -130,39 +158,120 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+
+# =========================================================
+# Locale
+# =========================================================
+
 LANGUAGE_CODE = "ja"
 TIME_ZONE = "Asia/Tokyo"
 USE_I18N = True
 USE_TZ = True
 
+
+# =========================================================
+# Static / Media
+# =========================================================
+
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-AUTH_USER_MODEL = "accounts.User"
+USE_S3 = os.getenv("USE_S3", "False") == "True"
+
+if USE_S3:
+    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "")
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "ap-northeast-1")
+
+    if not AWS_STORAGE_BUCKET_NAME:
+        raise Exception("AWS_STORAGE_BUCKET_NAME is required when USE_S3=True")
+
+    # S3 private media 用
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = True
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    AWS_S3_ADDRESSING_STYLE = "virtual"
+
+    # SignatureDoesNotMatch 対策：東京リージョンを明示
+    AWS_S3_ENDPOINT_URL = f"https://s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+
+    # 医療系画像なので、ブラウザ・中間キャッシュを強めに抑制
+    AWS_S3_OBJECT_PARAMETERS = {
+        "CacheControl": "private, no-store, max-age=0",
+    }
+
+    STORAGES = {
+        # アップロード画像・音声・PDFなどの media は S3 private
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "region_name": AWS_S3_REGION_NAME,
+                "endpoint_url": AWS_S3_ENDPOINT_URL,
+                "signature_version": AWS_S3_SIGNATURE_VERSION,
+                "addressing_style": AWS_S3_ADDRESSING_STYLE,
+                "default_acl": None,
+                "querystring_auth": True,
+                "file_overwrite": False,
+                "location": "media",
+                "object_parameters": AWS_S3_OBJECT_PARAMETERS,
+            },
+        },
+
+        # static は今まで通り WhiteNoise
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+
+
+# =========================================================
+# OpenAI
+# =========================================================
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-
 OPENAI_VISION_MODEL = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
 
+
+# =========================================================
+# Security
+# =========================================================
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_AGE = 1800  # 30分
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = False  # Djangoでは実利が薄いのでFalseのままでOK
-SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = not DEBUG
 
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = False
+
+SECURE_SSL_REDIRECT = not DEBUG
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 SECURE_REFERRER_POLICY = os.getenv("DJANGO_SECURE_REFERRER_POLICY", "same-origin")
 
-# HTTPS完全運用に入ってから有効化
 if not DEBUG:
     SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000"))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
@@ -170,19 +279,10 @@ if not DEBUG:
     ) == "True"
     SECURE_HSTS_PRELOAD = os.getenv("DJANGO_SECURE_HSTS_PRELOAD", "False") == "True"
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
-if not DEBUG and not SECRET_KEY:
-    raise Exception("DJANGO_SECRET_KEY is required when DEBUG=False")
-
-if not DEBUG and not ALLOWED_HOSTS:
-    raise Exception("DJANGO_ALLOWED_HOSTS must not be empty when DEBUG=False")
-
-# ローカルではHTTP、本番ではHTTPSへリダイレクト
-SECURE_SSL_REDIRECT = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+# =========================================================
+# Email
+# =========================================================
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
@@ -195,36 +295,9 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = "Carefrow <no-reply@carefrow.com>"
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-USE_S3 = os.getenv("USE_S3", "False") == "True"
 
-if USE_S3:
-    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "ap-northeast-1")
+# =========================================================
+# Default
+# =========================================================
 
-    AWS_DEFAULT_ACL = None
-    AWS_QUERYSTRING_AUTH = True
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_S3_SIGNATURE_VERSION = "s3v4"
-
-    AWS_S3_OBJECT_PARAMETERS = {
-        "CacheControl": "max-age=86400",
-    }
-
-    STORAGES = {
-        "default": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-            "OPTIONS": {
-                "bucket_name": AWS_STORAGE_BUCKET_NAME,
-                "region_name": AWS_S3_REGION_NAME,
-                "location": "media",
-            },
-        },
-        "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        },
-    }
-
-    MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/media/"
-else:
-    MEDIA_URL = "/media/"
-    MEDIA_ROOT = BASE_DIR / "media"
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
