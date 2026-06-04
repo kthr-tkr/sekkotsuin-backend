@@ -99,8 +99,7 @@ body{
   height: 170px;
   border-radius: 12px;
   background:
-    linear-gradient(180deg, rgba(15,23,42,.0), rgba(15,23,42,.20)),
-    url("/static/staff/img/hero.jpg");
+    linear-gradient(135deg, #0f172a 0%, #1d4ed8 55%, #4f46e5 100%);
   background-size: cover;
   background-position:center;
   display:flex;
