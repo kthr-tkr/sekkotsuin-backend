@@ -554,6 +554,11 @@ def posture_delete_view(request, assessment_id):
 
     clinic = get_current_clinic(request)
 
+    print("===== posture_delete_view called =====")
+    print("assessment_id:", assessment_id)
+    print("clinic:", clinic)
+    print("user:", request.user)
+
     assessment = get_object_or_404(
         PostureAssessment.objects
         .select_related("clinic", "patient")
@@ -565,12 +570,19 @@ def posture_delete_view(request, assessment_id):
     patient_id = assessment.patient_id
     title = assessment.title
 
-    try:
-        # まずDBレコード削除だけ行う
-        # S3実ファイル削除は後で安全に追加する
-        assessment.delete()
+    print("delete target:", assessment.id, assessment.title, "patient:", patient_id)
+    print("image count:", assessment.images.count())
 
-        messages.success(request, f"姿勢分析「{title}」を削除しました。")
+    try:
+        deleted_count, deleted_objects = assessment.delete()
+
+        print("deleted_count:", deleted_count)
+        print("deleted_objects:", deleted_objects)
+
+        messages.success(
+            request,
+            f"姿勢分析「{title}」を削除しました。削除件数: {deleted_count}"
+        )
 
     except Exception as e:
         print("===== posture assessment delete error =====")
