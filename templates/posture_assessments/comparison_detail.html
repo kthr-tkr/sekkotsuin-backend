@@ -692,6 +692,112 @@
     display:none;
   }
 
+  .manual-line-toolbar{
+    position:absolute;
+    right:12px;
+    bottom:12px;
+    z-index:8;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .manual-line-btn{
+    min-height:34px;
+    padding:0 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.25);
+    background:rgba(15,23,42,.72);
+    color:#fff;
+    font-size:11px;
+    font-weight:900;
+    cursor:pointer;
+    backdrop-filter:blur(10px);
+  }
+
+  .manual-line-btn.save{
+    background:rgba(37,99,235,.88);
+  }
+
+  .manual-landmark-layer{
+    position:absolute;
+    inset:0;
+    z-index:7;
+    pointer-events:none;
+  }
+
+  .manual-landmark-layer.is-editing{
+    pointer-events:auto;
+  }
+
+  .manual-landmark-svg{
+    width:100%;
+    height:100%;
+    display:block;
+  }
+
+  .manual-line-path{
+    fill:none;
+    stroke:rgba(239,68,68,.95);
+    stroke-width:3.2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    filter:drop-shadow(0 1px 2px rgba(255,255,255,.85));
+  }
+
+  .manual-point{
+    cursor:grab;
+  }
+
+  .manual-point:active{
+    cursor:grabbing;
+  }
+
+  .manual-point-circle{
+    fill:#fff;
+    stroke:#ef4444;
+    stroke-width:2.4;
+    filter:drop-shadow(0 1px 2px rgba(15,23,42,.25));
+  }
+
+  .manual-point-dot{
+    fill:#ef4444;
+  }
+
+  .manual-point-label{
+    fill:#fff;
+    font-size:3.1px;
+    font-weight:900;
+    paint-order:stroke;
+    stroke:rgba(15,23,42,.75);
+    stroke-width:.75px;
+    stroke-linejoin:round;
+  }
+
+  .manual-line-status{
+    position:absolute;
+    left:12px;
+    top:44px;
+    z-index:8;
+    max-width:70%;
+    padding:7px 10px;
+    border-radius:999px;
+    background:rgba(15,23,42,.72);
+    color:#fff;
+    font-size:11px;
+    font-weight:900;
+    backdrop-filter:blur(10px);
+    display:none;
+  }
+
+  .manual-line-status.show{
+    display:inline-flex;
+  }
+
+  .manual-landmark-layer:not(.is-editing) .manual-point{
+    pointer-events:none;
+  }
+
   @media(max-width:980px){
     .ai-three-grid,
     .body-compare-grid{
@@ -826,20 +932,53 @@
                     <div class="posture-center-line"></div>
 
                     {% if pair.key == "side_right" %}
-                        <div class="posture-guide-line">
-                        <svg class="posture-guide-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <polyline
-                            class="posture-guide-path"
-                            points="56,18 52,32 50,50 50,68 50,86"
-                            />
-                            <circle class="posture-guide-point" cx="56" cy="18" r="1.6" />
-                            <circle class="posture-guide-point" cx="52" cy="32" r="1.6" />
-                            <circle class="posture-guide-point" cx="50" cy="50" r="1.6" />
-                            <circle class="posture-guide-point" cx="50" cy="68" r="1.6" />
-                            <circle class="posture-guide-point" cx="50" cy="86" r="1.6" />
+                    <div class="manual-landmark-layer js-manual-layer"
+                        data-image-id="{{ pair.before.id }}"
+                        data-save-url="{% url 'posture_assessments:image_landmarks_save' pair.before.id %}"
+                        data-landmarks='{{ pair.before_landmarks_json|escapejs }}'
+                        data-side="before">
+                        <svg class="manual-landmark-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <polyline class="manual-line-path js-manual-path" points="" />
+
+                        <g class="manual-point js-manual-point" data-key="ear">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">耳</text>
+                        </g>
+
+                        <g class="manual-point js-manual-point" data-key="shoulder">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">肩</text>
+                        </g>
+
+                        <g class="manual-point js-manual-point" data-key="hip">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">骨盤</text>
+                        </g>
+
+                        <g class="manual-point js-manual-point" data-key="knee">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">膝</text>
+                        </g>
+
+                        <g class="manual-point js-manual-point" data-key="ankle">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">足首</text>
+                        </g>
                         </svg>
-                        </div>
-                        <div class="posture-guide-label">姿勢ガイド</div>
+                    </div>
+
+                    <div class="posture-guide-label">手動姿勢ライン</div>
+                    <div class="manual-line-status js-manual-status">編集できます</div>
+
+                    <div class="manual-line-toolbar">
+                        <button type="button" class="manual-line-btn js-edit-manual-line">ライン編集</button>
+                        <button type="button" class="manual-line-btn save js-save-manual-line">保存</button>
+                    </div>
                     {% endif %}
                     </div>
                 {% else %}
@@ -862,20 +1001,53 @@
                     <div class="posture-center-line"></div>
 
                     {% if pair.key == "side_right" %}
-                        <div class="posture-guide-line">
-                        <svg class="posture-guide-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <polyline
-                            class="posture-guide-path"
-                            points="56,18 52,32 50,50 50,68 50,86"
-                            />
-                            <circle class="posture-guide-point" cx="56" cy="18" r="1.6" />
-                            <circle class="posture-guide-point" cx="52" cy="32" r="1.6" />
-                            <circle class="posture-guide-point" cx="50" cy="50" r="1.6" />
-                            <circle class="posture-guide-point" cx="50" cy="68" r="1.6" />
-                            <circle class="posture-guide-point" cx="50" cy="86" r="1.6" />
+                    <div class="manual-landmark-layer js-manual-layer"
+                        data-image-id="{{ pair.after.id }}"
+                        data-save-url="{% url 'posture_assessments:image_landmarks_save' pair.after.id %}"
+                        data-landmarks='{{ pair.after_landmarks_json|escapejs }}'
+                        data-side="after">
+                        <svg class="manual-landmark-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <polyline class="manual-line-path js-manual-path" points="" />
+
+                        <g class="manual-point js-manual-point" data-key="ear">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">耳</text>
+                        </g>
+
+                        <g class="manual-point js-manual-point" data-key="shoulder">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">肩</text>
+                        </g>
+
+                        <g class="manual-point js-manual-point" data-key="hip">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">骨盤</text>
+                        </g>
+
+                        <g class="manual-point js-manual-point" data-key="knee">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">膝</text>
+                        </g>
+
+                        <g class="manual-point js-manual-point" data-key="ankle">
+                            <circle class="manual-point-circle" r="2.4"></circle>
+                            <circle class="manual-point-dot" r=".7"></circle>
+                            <text class="manual-point-label" x="3" y="-2">足首</text>
+                        </g>
                         </svg>
-                        </div>
-                        <div class="posture-guide-label">姿勢ガイド</div>
+                    </div>
+
+                    <div class="posture-guide-label">手動姿勢ライン</div>
+                    <div class="manual-line-status js-manual-status">編集できます</div>
+
+                    <div class="manual-line-toolbar">
+                        <button type="button" class="manual-line-btn js-edit-manual-line">ライン編集</button>
+                        <button type="button" class="manual-line-btn save js-save-manual-line">保存</button>
+                    </div>
                     {% endif %}
                     </div>
                 {% else %}
@@ -1159,6 +1331,196 @@
       btn.textContent = "AI比較中...";
     });
   });
+})();
+</script>
+<script>
+(function(){
+  const defaultPoints = {
+    ear: {x: 56, y: 18},
+    shoulder: {x: 52, y: 32},
+    hip: {x: 50, y: 50},
+    knee: {x: 50, y: 68},
+    ankle: {x: 50, y: 86},
+  };
+
+  const order = ["ear", "shoulder", "hip", "knee", "ankle"];
+
+  function getCookie(name){
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if(parts.length === 2) return parts.pop().split(";").shift();
+    return "";
+  }
+
+  function parseLandmarks(raw){
+    if(!raw) return null;
+
+    try{
+      // escapejs済み文字列をJSONとして復元
+      const parsed = JSON.parse(raw);
+      if(parsed && parsed.points) return parsed.points;
+      return null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function clamp(value, min, max){
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function initLayer(layer){
+    const frame = layer.closest(".posture-overlay-frame");
+    const svg = layer.querySelector(".manual-landmark-svg");
+    const path = layer.querySelector(".js-manual-path");
+    const status = frame.querySelector(".js-manual-status");
+    const editBtn = frame.querySelector(".js-edit-manual-line");
+    const saveBtn = frame.querySelector(".js-save-manual-line");
+
+    let points = parseLandmarks(layer.dataset.landmarks) || JSON.parse(JSON.stringify(defaultPoints));
+    let editing = false;
+    let activeKey = null;
+
+    function render(){
+      order.forEach(key => {
+        const p = points[key];
+        const pointEl = layer.querySelector(`.js-manual-point[data-key="${key}"]`);
+        if(!pointEl || !p) return;
+        pointEl.setAttribute("transform", `translate(${p.x}, ${p.y})`);
+      });
+
+      const pointText = order
+        .map(key => points[key])
+        .filter(Boolean)
+        .map(p => `${p.x},${p.y}`)
+        .join(" ");
+
+      path.setAttribute("points", pointText);
+    }
+
+    function clientToSvgPoint(event){
+      const rect = svg.getBoundingClientRect();
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
+      const x = ((clientX - rect.left) / rect.width) * 100;
+      const y = ((clientY - rect.top) / rect.height) * 100;
+
+      return {
+        x: clamp(Number(x.toFixed(2)), 0, 100),
+        y: clamp(Number(y.toFixed(2)), 0, 100),
+      };
+    }
+
+    function setEditing(next){
+      editing = next;
+      layer.classList.toggle("is-editing", editing);
+
+      if(editBtn){
+        editBtn.textContent = editing ? "編集中" : "ライン編集";
+      }
+
+      if(status){
+        status.classList.toggle("show", editing);
+        status.textContent = editing
+          ? "点をドラッグして位置を調整できます"
+          : "";
+      }
+    }
+
+    layer.querySelectorAll(".js-manual-point").forEach(pointEl => {
+      pointEl.addEventListener("mousedown", function(event){
+        if(!editing) return;
+        event.preventDefault();
+        activeKey = pointEl.dataset.key;
+      });
+
+      pointEl.addEventListener("touchstart", function(event){
+        if(!editing) return;
+        event.preventDefault();
+        activeKey = pointEl.dataset.key;
+      }, {passive:false});
+    });
+
+    window.addEventListener("mousemove", function(event){
+      if(!editing || !activeKey) return;
+      points[activeKey] = clientToSvgPoint(event);
+      render();
+    });
+
+    window.addEventListener("touchmove", function(event){
+      if(!editing || !activeKey) return;
+      event.preventDefault();
+      points[activeKey] = clientToSvgPoint(event);
+      render();
+    }, {passive:false});
+
+    window.addEventListener("mouseup", function(){
+      activeKey = null;
+    });
+
+    window.addEventListener("touchend", function(){
+      activeKey = null;
+    });
+
+    if(editBtn){
+      editBtn.addEventListener("click", function(){
+        setEditing(!editing);
+      });
+    }
+
+    if(saveBtn){
+      saveBtn.addEventListener("click", async function(){
+        const url = layer.dataset.saveUrl;
+        if(!url) return;
+
+        saveBtn.disabled = true;
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = "保存中...";
+
+        try{
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: JSON.stringify({
+              points: points,
+            }),
+          });
+
+          const data = await response.json();
+
+          if(!response.ok || !data.ok){
+            throw new Error(data.message || "保存に失敗しました。");
+          }
+
+          if(status){
+            status.classList.add("show");
+            status.textContent = "保存しました";
+            setTimeout(() => {
+              if(!editing){
+                status.classList.remove("show");
+              }
+            }, 1800);
+          }
+
+          setEditing(false);
+
+        }catch(error){
+          alert(error.message || "保存に失敗しました。");
+        }finally{
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }
+      });
+    }
+
+    render();
+  }
+
+  document.querySelectorAll(".js-manual-layer").forEach(initLayer);
 })();
 </script>
 {% endblock %}
