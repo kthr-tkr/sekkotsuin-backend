@@ -554,10 +554,11 @@ def posture_delete_view(request, assessment_id):
 
     clinic = get_current_clinic(request)
 
-    print("===== posture_delete_view called =====")
-    print("assessment_id:", assessment_id)
-    print("clinic:", clinic)
-    print("user:", request.user)
+    print("===== posture_delete_view called =====", flush=True)
+    print("method:", request.method, flush=True)
+    print("assessment_id:", assessment_id, flush=True)
+    print("clinic:", clinic, flush=True)
+    print("user:", request.user, flush=True)
 
     assessment = get_object_or_404(
         PostureAssessment.objects
@@ -570,14 +571,21 @@ def posture_delete_view(request, assessment_id):
     patient_id = assessment.patient_id
     title = assessment.title
 
-    print("delete target:", assessment.id, assessment.title, "patient:", patient_id)
-    print("image count:", assessment.images.count())
+    print(
+        "delete target:",
+        assessment.id,
+        assessment.title,
+        "patient:",
+        patient_id,
+        flush=True,
+    )
+    print("image count:", assessment.images.count(), flush=True)
 
     try:
         deleted_count, deleted_objects = assessment.delete()
 
-        print("deleted_count:", deleted_count)
-        print("deleted_objects:", deleted_objects)
+        print("deleted_count:", deleted_count, flush=True)
+        print("deleted_objects:", deleted_objects, flush=True)
 
         messages.success(
             request,
@@ -585,8 +593,8 @@ def posture_delete_view(request, assessment_id):
         )
 
     except Exception as e:
-        print("===== posture assessment delete error =====")
-        print(traceback.format_exc())
+        print("===== posture assessment delete error =====", flush=True)
+        print(traceback.format_exc(), flush=True)
 
         messages.error(
             request,

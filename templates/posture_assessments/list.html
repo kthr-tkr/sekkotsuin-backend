@@ -643,9 +643,12 @@
                   <form method="post"
                         action="{% url 'posture_assessments:delete' assessment.id %}"
                         class="delete-form"
-                        onsubmit="return confirm('この姿勢分析を削除します。関連する画像・履歴も削除されます。よろしいですか？');">
+                        onclick="event.stopPropagation();"
+                        onsubmit="event.stopPropagation(); return confirm('この姿勢分析を削除します。関連する画像・履歴も削除されます。よろしいですか？');">
                     {% csrf_token %}
-                    <button type="submit" class="mini-btn danger">
+                    <button type="submit"
+                            class="mini-btn danger"
+                            onclick="event.stopPropagation();">
                       削除
                     </button>
                   </form>
