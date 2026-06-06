@@ -478,6 +478,112 @@
     display:inline;
   }
 
+  .compare-tray{
+    border:1px solid #dbeafe;
+    background:
+      radial-gradient(circle at 88% 12%, rgba(96,165,250,.14), transparent 26%),
+      linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+  }
+
+  .compare-tray-head{
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .compare-selection-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:16px;
+  }
+
+  .compare-slot{
+    border-radius:20px;
+    padding:16px;
+    background:#fff;
+    border:1px dashed #cbd5e1;
+    min-height:82px;
+  }
+
+  .compare-slot.selected{
+    border-style:solid;
+    border-color:#2563eb;
+    background:#eff6ff;
+  }
+
+  .compare-slot-label{
+    font-size:12px;
+    font-weight:900;
+    color:#64748b;
+    margin-bottom:8px;
+  }
+
+  .compare-slot-value{
+    color:#0f172a;
+    font-size:15px;
+    font-weight:900;
+    line-height:1.6;
+  }
+
+  .quick-compare-form{
+    margin-top:14px;
+    display:flex;
+    justify-content:flex-end;
+  }
+
+  #compareSubmitBtn:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+
+  .select-compare-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .mini-btn.before{
+    background:#eff6ff;
+    color:#1d4ed8;
+    border-color:#bfdbfe;
+  }
+
+  .mini-btn.after{
+    background:#eef2ff;
+    color:#4338ca;
+    border-color:#c7d2fe;
+  }
+
+  .mini-btn.selected-before{
+    background:#1d4ed8;
+    color:#fff;
+    border-color:#1d4ed8;
+  }
+
+  .mini-btn.selected-after{
+    background:#4338ca;
+    color:#fff;
+    border-color:#4338ca;
+  }
+
+  @media(max-width:760px){
+    .compare-selection-grid{
+      grid-template-columns:1fr;
+    }
+
+    .quick-compare-form{
+      justify-content:stretch;
+    }
+
+    .quick-compare-form .pa-btn{
+      width:100%;
+    }
+  }
+
   @media(max-width:1000px){
     .pa-item-v2{
       grid-template-columns:1fr;
@@ -563,6 +669,49 @@
     </div>
   </section>
 
+  <section class="pa-card compare-tray">
+    <div class="compare-tray-head">
+      <div>
+        <h3 class="pa-section-title">Before/After比較</h3>
+        <div class="pa-section-sub">
+          比較したい2つの姿勢分析を、一覧から直接選択できます。
+        </div>
+      </div>
+
+      <button type="button" class="mini-btn" id="clearCompareSelection">
+        選択をリセット
+      </button>
+    </div>
+
+    <div class="compare-selection-grid">
+      <div class="compare-slot" id="beforeSlot">
+        <div class="compare-slot-label">Before</div>
+        <div class="compare-slot-value">未選択</div>
+      </div>
+
+      <div class="compare-slot" id="afterSlot">
+        <div class="compare-slot-label">After</div>
+        <div class="compare-slot-value">未選択</div>
+      </div>
+    </div>
+
+    <form method="post"
+          action="{% url 'posture_assessments:comparison_create' patient.id %}"
+          id="quickCompareForm"
+          class="quick-compare-form">
+      {% csrf_token %}
+
+      <input type="hidden" name="title" value="姿勢Before/After比較">
+      <input type="hidden" name="before_assessment" id="beforeAssessmentInput">
+      <input type="hidden" name="after_assessment" id="afterAssessmentInput">
+      <input type="hidden" name="memo" value="一覧画面から作成したBefore/After比較">
+
+      <button type="submit" class="pa-btn primary" id="compareSubmitBtn" disabled>
+        この2件で比較する
+      </button>
+    </form>
+  </section>
+
   <section class="pa-card">
     <h3 class="pa-section-title">姿勢分析履歴</h3>
     <div class="pa-section-sub">撮影日ごとの姿勢分析を確認・比較・削除できます</div>
@@ -636,6 +785,23 @@
                 {% endif %}
 
                 <div class="pa-item-actions">
+
+                  <div class="select-compare-row">
+                    <button type="button"
+                            class="mini-btn before js-select-before"
+                            data-assessment-id="{{ assessment.id }}"
+                            data-label="{{ assessment.created_at|date:'Y-m-d H:i' }} / {{ assessment.title }} / {{ assessment.get_status_display }}">
+                      Beforeにする
+                    </button>
+
+                    <button type="button"
+                            class="mini-btn after js-select-after"
+                            data-assessment-id="{{ assessment.id }}"
+                            data-label="{{ assessment.created_at|date:'Y-m-d H:i' }} / {{ assessment.title }} / {{ assessment.get_status_display }}">
+                      Afterにする
+                    </button>
+                  </div>
+
                   <a href="{% url 'posture_assessments:detail' assessment.id %}" class="mini-btn primary">
                     詳細を見る
                   </a>
