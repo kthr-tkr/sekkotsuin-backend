@@ -104,15 +104,18 @@ class PostureComparisonCreateForm(forms.ModelForm):
         self.clinic = clinic
         self.patient = patient
 
-        assessments = (
-            PostureAssessment.objects
-            .filter(
-                clinic=clinic,
-                patient=patient,
+        if clinic is None or patient is None:
+            assessments = PostureAssessment.objects.none()
+        else:
+            assessments = (
+                PostureAssessment.objects
+                .filter(
+                    clinic=clinic,
+                    patient=patient,
+                )
+                .prefetch_related("images")
+                .order_by("-created_at")
             )
-            .prefetch_related("images")
-            .order_by("-created_at")
-        )
 
         self.fields["before_assessment"].queryset = assessments
         self.fields["after_assessment"].queryset = assessments
@@ -122,7 +125,8 @@ class PostureComparisonCreateForm(forms.ModelForm):
 
     def _assessment_label(self, obj):
         image_count = obj.images.count()
-        return f"{obj.created_at:%Y-%m-%d %H:%M} / {obj.title} / {obj.get_status_display()} / 画像{image_count}枚"
+        created_text = obj.created_at.strftime("%Y-%m-%d %H:%M") if obj.created_at else "-"
+        return f"{created_text} / {obj.title} / {obj.get_status_display()} / 画像{image_count}枚"
 
     def clean(self):
         cleaned_data = super().clean()
@@ -130,19 +134,24 @@ class PostureComparisonCreateForm(forms.ModelForm):
         before = cleaned_data.get("before_assessment")
         after = cleaned_data.get("after_assessment")
 
+        if not self.clinic or not self.patient:
+            raise forms.ValidationError("院情報または患者情報を取得できませんでした。")
+
         if before and after and before.id == after.id:
             raise forms.ValidationError("BeforeとAfterには別の姿勢分析を選択してください。")
 
-        if before and self.patient and before.patient_id != self.patient.id:
-            raise forms.ValidationError("Before分析の患者が一致していません。")
+        if before:
+            if before.clinic_id != self.clinic.id:
+                self.add_error("before_assessment", "Before分析の院情報が一致していません。")
 
-        if after and self.patient and after.patient_id != self.patient.id:
-            raise forms.ValidationError("After分析の患者が一致していません。")
+            if before.patient_id != self.patient.id:
+                self.add_error("before_assessment", "Before分析の患者と比較対象の患者が一致していません。")
 
-        if before and self.clinic and before.clinic_id != self.clinic.id:
-            raise forms.ValidationError("Before分析の院情報が一致していません。")
+        if after:
+            if after.clinic_id != self.clinic.id:
+                self.add_error("after_assessment", "After分析の院情報が一致していません。")
 
-        if after and self.clinic and after.clinic_id != self.clinic.id:
-            raise forms.ValidationError("After分析の院情報が一致していません。")
+            if after.patient_id != self.patient.id:
+                self.add_error("after_assessment", "After分析の患者と比較対象の患者が一致していません。")
 
         return cleaned_data
