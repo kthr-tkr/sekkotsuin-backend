@@ -82,3 +82,20 @@ def normalize_posture_image(uploaded_file, quality=88):
     filename = f"{uuid.uuid4().hex}.jpg"
 
     return ContentFile(output.read(), name=filename)
+
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
+
+def validate_posture_image(uploaded_file):
+    ext = get_file_extension(uploaded_file)
+
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError(
+            "対応していない画像形式です。jpg / png / webp / heic / heif を使用してください。"
+        )
+
+    size = getattr(uploaded_file, "size", 0) or 0
+    if size > MAX_UPLOAD_SIZE:
+        raise ValueError("画像サイズが大きすぎます。10MB以下の画像を使用してください。")
+
+    return True

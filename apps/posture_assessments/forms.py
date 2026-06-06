@@ -21,31 +21,31 @@ class PostureAssessmentCreateForm(forms.ModelForm):
 
 
 class PostureAssessmentImageUploadForm(forms.Form):
-    front_image = forms.ImageField(
+    front_image = forms.FileField(
         label="正面",
         required=False,
         widget=forms.FileInput(attrs={
-            "accept": "image/*",
+            "accept": ".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif",
             "capture": "environment",
             "class": "form-control",
         }),
     )
 
-    side_right_image = forms.ImageField(
+    side_right_image = forms.FileField(
         label="右側面",
         required=False,
         widget=forms.FileInput(attrs={
-            "accept": "image/*",
+            "accept": ".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif",
             "capture": "environment",
             "class": "form-control",
         }),
     )
 
-    back_image = forms.ImageField(
+    back_image = forms.FileField(
         label="背面",
         required=False,
         widget=forms.FileInput(attrs={
-            "accept": "image/*",
+            "accept": ".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif",
             "capture": "environment",
             "class": "form-control",
         }),

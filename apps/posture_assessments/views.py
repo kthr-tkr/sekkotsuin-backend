@@ -25,7 +25,7 @@ from .services.ai_analyzer import (
     analyze_posture_assessment,
     analyze_posture_comparison,
 )
-
+from .services.image_converter import normalize_posture_image
 
 def _same_clinic(user, clinic) -> bool:
     user_clinic = getattr(user, "clinic", None)
@@ -238,10 +238,12 @@ def _save_uploaded_images(assessment, upload_form, user):
             image_type=image_type,
         ).delete()
 
+        normalized_image = normalize_posture_image(image_file)
+
         PostureAssessmentImage.objects.create(
             assessment=assessment,
             image_type=image_type,
-            image=image_file,
+            image=normalized_image,
             order=order,
             uploaded_by=user,
         )

@@ -632,8 +632,8 @@
     <div class="pa-tools">
       <a href="{% url 'staff:patient_detail' patient.id %}" class="pa-btn">← 患者詳細へ戻る</a>
 
-      <a href="{% url 'posture_assessments:comparison_create' patient.id %}" class="pa-btn">
-        Before/After比較を作成
+      <a href="#compareTray" class="pa-btn">
+        比較する2件を選ぶ
       </a>
 
       <a href="{% url 'posture_assessments:create' patient.id %}" class="pa-btn primary">＋ 新しい姿勢分析</a>
@@ -669,7 +669,7 @@
     </div>
   </section>
 
-  <section class="pa-card compare-tray">
+  <section class="pa-card compare-tray" id="compareTray">
     <div class="compare-tray-head">
       <div>
         <h3 class="pa-section-title">Before/After比較</h3>
@@ -850,4 +850,116 @@
   </section>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  let beforeId = "";
+  let afterId = "";
+  let beforeLabel = "";
+  let afterLabel = "";
+
+  const beforeInput = document.getElementById("beforeAssessmentInput");
+  const afterInput = document.getElementById("afterAssessmentInput");
+  const beforeSlot = document.getElementById("beforeSlot");
+  const afterSlot = document.getElementById("afterSlot");
+  const submitBtn = document.getElementById("compareSubmitBtn");
+  const clearBtn = document.getElementById("clearCompareSelection");
+  const form = document.getElementById("quickCompareForm");
+
+  function updateUi(){
+    if(beforeId){
+      beforeInput.value = beforeId;
+      beforeSlot.classList.add("selected");
+      beforeSlot.querySelector(".compare-slot-value").textContent = beforeLabel;
+    }else{
+      beforeInput.value = "";
+      beforeSlot.classList.remove("selected");
+      beforeSlot.querySelector(".compare-slot-value").textContent = "未選択";
+    }
+
+    if(afterId){
+      afterInput.value = afterId;
+      afterSlot.classList.add("selected");
+      afterSlot.querySelector(".compare-slot-value").textContent = afterLabel;
+    }else{
+      afterInput.value = "";
+      afterSlot.classList.remove("selected");
+      afterSlot.querySelector(".compare-slot-value").textContent = "未選択";
+    }
+
+    document.querySelectorAll(".js-select-before").forEach(btn => {
+      btn.classList.toggle("selected-before", btn.dataset.assessmentId === beforeId);
+    });
+
+    document.querySelectorAll(".js-select-after").forEach(btn => {
+      btn.classList.toggle("selected-after", btn.dataset.assessmentId === afterId);
+    });
+
+    submitBtn.disabled = !(beforeId && afterId && beforeId !== afterId);
+  }
+
+  document.querySelectorAll(".js-select-before").forEach(btn => {
+    btn.addEventListener("click", function(event){
+      event.preventDefault();
+      event.stopPropagation();
+
+      beforeId = this.dataset.assessmentId;
+      beforeLabel = this.dataset.label;
+
+      if(afterId === beforeId){
+        afterId = "";
+        afterLabel = "";
+      }
+
+      updateUi();
+    });
+  });
+
+  document.querySelectorAll(".js-select-after").forEach(btn => {
+    btn.addEventListener("click", function(event){
+      event.preventDefault();
+      event.stopPropagation();
+
+      afterId = this.dataset.assessmentId;
+      afterLabel = this.dataset.label;
+
+      if(beforeId === afterId){
+        beforeId = "";
+        beforeLabel = "";
+      }
+
+      updateUi();
+    });
+  });
+
+  clearBtn.addEventListener("click", function(){
+    beforeId = "";
+    afterId = "";
+    beforeLabel = "";
+    afterLabel = "";
+    updateUi();
+  });
+
+  form.addEventListener("submit", function(event){
+    if(!beforeId || !afterId){
+      event.preventDefault();
+      alert("BeforeとAfterを選択してください。");
+      return;
+    }
+
+    if(beforeId === afterId){
+      event.preventDefault();
+      alert("BeforeとAfterには別の姿勢分析を選択してください。");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "比較を作成中...";
+  });
+
+  updateUi();
+})();
+</script>
 {% endblock %}
