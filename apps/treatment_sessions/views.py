@@ -403,7 +403,7 @@ def transcribe_session_chunk_view(request, chunk_id):
         session.save(update_fields=["status", "updated_by", "updated_at"])
 
         transcript_text, transcript_json = run_stt(
-            chunk.audio_file.path,
+            chunk.audio_file,
             chunk.mime_type,
         )
 

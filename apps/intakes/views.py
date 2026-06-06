@@ -448,7 +448,7 @@ def process_recording(request, recording_id):
         )
 
         # 1. 文字起こし
-        transcript_text, transcript_json = run_stt(rec.audio_file.path, rec.mime_type)
+        transcript_text, transcript_json = run_stt(rec.audio_file, rec.mime_type)
 
         rec.transcript_text = transcript_text
         rec.transcript_json = transcript_json or {}
