@@ -65,7 +65,7 @@ def posture_list_view(request, patient_id):
 
 
 @staff_required
-def posture_create_view(request, patient_id):
+def posture_comparison_create_view(request, patient_id):
     clinic = get_current_clinic(request)
 
     patient = get_object_or_404(
@@ -74,81 +74,84 @@ def posture_create_view(request, patient_id):
         clinic=clinic,
     )
 
-    now = timezone.now()
-
-    appointment = (
-        Appointment.objects
+    assessments = (
+        PostureAssessment.objects
         .filter(
             clinic=clinic,
             patient=patient,
-            start_at__gte=now,
         )
-        .order_by("start_at")
-        .first()
+        .prefetch_related("images")
+        .order_by("-created_at")
     )
 
-    if appointment is None:
-        appointment = (
-            Appointment.objects
-            .filter(
-                clinic=clinic,
-                patient=patient,
-            )
-            .order_by("-start_at")
-            .first()
-        )
+    if assessments.count() < 2:
+        messages.warning(request, "Before/After比較には、姿勢分析が2件以上必要です。")
+        return redirect("posture_assessments:list", patient_id=patient.id)
 
     if request.method == "POST":
-        form = PostureAssessmentCreateForm(request.POST)
-        upload_form = PostureAssessmentImageUploadForm(request.POST, request.FILES)
+        before_id = request.POST.get("before_assessment")
+        after_id = request.POST.get("after_assessment")
+        title = request.POST.get("title") or "姿勢Before/After比較"
+        memo = request.POST.get("memo") or ""
 
-        if form.is_valid() and upload_form.is_valid():
-            assessment = form.save(commit=False)
-            assessment.clinic = clinic
-            assessment.patient = patient
-            assessment.appointment = appointment
-            assessment.status = PostureAssessment.Status.DRAFT
-            assessment.created_by = request.user
-            assessment.updated_by = request.user
-            assessment.full_clean()
-            assessment.save()
+        if not before_id or not after_id:
+            messages.error(request, "BeforeとAfterを選択してください。")
+            return redirect("posture_assessments:list", patient_id=patient.id)
 
-        try:
-            _save_uploaded_images(
-                assessment=assessment,
-                upload_form=upload_form,
-                user=request.user,
-            )
-        except ValueError as e:
-            assessment.delete()
-            messages.error(request, str(e))
-            return render(request, "posture_assessments/form.html", {
-                "active": "patient_search",
-                "page_title": "AI姿勢分析作成",
-                "patient": patient,
-                "appointment": appointment,
-                "form": form,
-                "upload_form": upload_form,
-            })
+        if before_id == after_id:
+            messages.error(request, "BeforeとAfterには別の姿勢分析を選択してください。")
+            return redirect("posture_assessments:list", patient_id=patient.id)
 
-        messages.success(request, "AI姿勢分析を作成しました。")
-        return redirect("posture_assessments:detail", assessment_id=assessment.id)
+        before_assessment = get_object_or_404(
+            PostureAssessment,
+            pk=before_id,
+            clinic=clinic,
+            patient=patient,
+        )
 
-    else:
-        form = PostureAssessmentCreateForm(initial={
-            "title": "AI姿勢分析",
-        })
-        upload_form = PostureAssessmentImageUploadForm()
+        after_assessment = get_object_or_404(
+            PostureAssessment,
+            pk=after_id,
+            clinic=clinic,
+            patient=patient,
+        )
 
-    return render(request, "posture_assessments/form.html", {
+        comparison = PostureComparison(
+            clinic=clinic,
+            patient=patient,
+            title=title,
+            before_assessment=before_assessment,
+            after_assessment=after_assessment,
+            memo=memo,
+            status=PostureComparison.Status.DRAFT,
+            created_by=request.user,
+            updated_by=request.user,
+        )
+
+        comparison.full_clean()
+        comparison.save()
+
+        messages.success(request, "Before/After比較を作成しました。")
+        return redirect(
+            "posture_assessments:comparison_detail",
+            comparison_id=comparison.id,
+        )
+
+    form = PostureComparisonCreateForm(
+        clinic=clinic,
+        patient=patient,
+        initial={
+            "title": "姿勢Before/After比較",
+        },
+    )
+
+    return render(request, "posture_assessments/comparison_form.html", {
         "active": "patient_search",
-        "page_title": "AI姿勢分析作成",
+        "page_title": "姿勢Before/After比較作成",
         "patient": patient,
-        "appointment": appointment,
         "form": form,
-        "upload_form": upload_form,
+        "assessments": assessments,
     })
-
 
 @staff_required
 def posture_detail_view(request, assessment_id):
