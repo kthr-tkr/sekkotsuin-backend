@@ -8,6 +8,10 @@ from apps.patients.models import Patient
 from apps.staff.decorators import staff_required
 from apps.staff.views import get_current_clinic
 
+import json
+
+from django.http import JsonResponse
+
 from .forms import (
     PostureAssessmentCreateForm,
     PostureAssessmentImageUploadForm,
@@ -345,6 +349,45 @@ def posture_assessment_analyze_view(request, assessment_id):
     return redirect("posture_assessments:detail", assessment_id=assessment.id)
 
 @staff_required
+def posture_comparison_list_view(request, patient_id):
+    clinic = get_current_clinic(request)
+
+    patient = get_object_or_404(
+        Patient.objects.select_related("clinic"),
+        pk=patient_id,
+        clinic=clinic,
+    )
+
+    comparisons = (
+        PostureComparison.objects
+        .filter(
+            clinic=clinic,
+            patient=patient,
+        )
+        .select_related(
+            "before_assessment",
+            "after_assessment",
+            "created_by",
+            "updated_by",
+        )
+        .prefetch_related(
+            "before_assessment__images",
+            "after_assessment__images",
+        )
+        .order_by("-created_at")
+    )
+
+    latest_comparison = comparisons.first()
+
+    return render(request, "posture_assessments/comparison_list.html", {
+        "active": "patient_search",
+        "page_title": "姿勢比較分析一覧",
+        "patient": patient,
+        "comparisons": comparisons,
+        "latest_comparison": latest_comparison,
+    })
+
+@staff_required
 def posture_comparison_create_view(request, patient_id):
     clinic = get_current_clinic(request)
 
@@ -434,41 +477,6 @@ def posture_comparison_create_view(request, patient_id):
     })
 
 @staff_required
-def posture_comparison_list_view(request, patient_id):
-    clinic = get_current_clinic(request)
-
-    patient = get_object_or_404(
-        Patient.objects.select_related("clinic"),
-        pk=patient_id,
-        clinic=clinic,
-    )
-
-    comparisons = (
-        PostureComparison.objects
-        .filter(
-            clinic=clinic,
-            patient=patient,
-        )
-        .select_related(
-            "before_assessment",
-            "after_assessment",
-            "created_by",
-        )
-        .prefetch_related(
-            "before_assessment__images",
-            "after_assessment__images",
-        )
-        .order_by("-created_at")
-    )
-
-    return render(request, "posture_assessments/comparison_list.html", {
-        "active": "patient_search",
-        "page_title": "姿勢比較分析一覧",
-        "patient": patient,
-        "comparisons": comparisons,
-    })
-
-@staff_required
 def posture_comparison_detail_view(request, comparison_id):
     clinic = get_current_clinic(request)
 
@@ -504,6 +512,15 @@ def posture_comparison_detail_view(request, comparison_id):
         for image in after_images
     }
 
+    def serialize_landmarks(image):
+        if not image:
+            return "{}"
+
+        return json.dumps(
+            image.landmarks_json or {},
+            ensure_ascii=False,
+        )
+
     image_pairs = [
         {
             "key": PostureAssessmentImage.ImageType.FRONT,
@@ -524,6 +541,10 @@ def posture_comparison_detail_view(request, comparison_id):
             "after": after_image_map.get(PostureAssessmentImage.ImageType.BACK),
         },
     ]
+
+    for pair in image_pairs:
+        pair["before_landmarks_json"] = serialize_landmarks(pair["before"])
+        pair["after_landmarks_json"] = serialize_landmarks(pair["after"])
 
     summary = comparison.get_active_summary() or {}
 
@@ -648,3 +669,83 @@ def posture_delete_view(request, assessment_id):
 
     messages.success(request, f"姿勢分析「{title}」を削除しました。")
     return redirect("posture_assessments:list", patient_id=patient_id)
+
+@staff_required
+@require_POST
+def posture_image_landmarks_save_view(request, image_id):
+    clinic = get_current_clinic(request)
+
+    image = get_object_or_404(
+        PostureAssessmentImage.objects.select_related(
+            "assessment",
+            "assessment__clinic",
+            "assessment__patient",
+        ),
+        pk=image_id,
+        assessment__clinic=clinic,
+    )
+
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({
+            "ok": False,
+            "message": "JSONの形式が正しくありません。",
+        }, status=400)
+
+    points = payload.get("points") or {}
+
+    allowed_keys = {
+        "ear",
+        "shoulder",
+        "hip",
+        "knee",
+        "ankle",
+    }
+
+    cleaned_points = {}
+
+    for key, value in points.items():
+        if key not in allowed_keys:
+            continue
+
+        if not isinstance(value, dict):
+            continue
+
+        try:
+            x = float(value.get("x"))
+            y = float(value.get("y"))
+        except (TypeError, ValueError):
+            continue
+
+        if x < 0 or x > 100 or y < 0 or y > 100:
+            continue
+
+        cleaned_points[key] = {
+            "x": round(x, 2),
+            "y": round(y, 2),
+        }
+
+    required_keys = {"ear", "shoulder", "hip", "knee", "ankle"}
+
+    if not required_keys.issubset(cleaned_points.keys()):
+        return JsonResponse({
+            "ok": False,
+            "message": "耳・肩・骨盤・膝・足首の5点が必要です。",
+        }, status=400)
+
+    image.landmarks_json = {
+        "version": 1,
+        "mode": "manual",
+        "image_type": image.image_type,
+        "points": cleaned_points,
+        "updated_by": request.user.id,
+        "updated_at": timezone.now().isoformat(),
+    }
+    image.save(update_fields=["landmarks_json"])
+
+    return JsonResponse({
+        "ok": True,
+        "message": "姿勢ラインを保存しました。",
+        "landmarks": image.landmarks_json,
+    })

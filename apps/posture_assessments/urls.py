@@ -16,14 +16,14 @@ urlpatterns = [
         name="create",
     ),
     path(
-        "patients/<int:patient_id>/comparisons/new/",
-        views.posture_comparison_create_view,
-        name="comparison_create",
-    ),
-    path(
         "patients/<int:patient_id>/comparisons/",
         views.posture_comparison_list_view,
         name="comparison_list",
+    ),
+    path(
+        "patients/<int:patient_id>/comparisons/new/",
+        views.posture_comparison_create_view,
+        name="comparison_create",
     ),
     path(
         "<int:assessment_id>/",
@@ -54,5 +54,10 @@ urlpatterns = [
         "comparisons/<int:comparison_id>/analyze/",
         views.posture_comparison_analyze_view,
         name="comparison_analyze",
+    ),
+    path(
+        "images/<int:image_id>/landmarks/save/",
+        views.posture_image_landmarks_save_view,
+        name="image_landmarks_save",
     ),
 ]

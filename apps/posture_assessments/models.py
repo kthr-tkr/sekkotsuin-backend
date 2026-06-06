@@ -210,6 +210,25 @@ class PostureAssessmentImage(models.Model):
         blank=True,
     )
 
+    annotated_image = models.ImageField(
+        upload_to="posture/annotated/%Y/%m/",
+        null=True,
+        blank=True,
+        help_text="姿勢ラインや角度を描画した画像",
+    )
+
+    landmarks_json = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="耳・肩・骨盤・膝・足首などの座標情報",
+    )
+
+    measurements_json = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="角度・左右差・前方位などの計測値",
+    )
+
     order = models.PositiveIntegerField(default=0)
 
     uploaded_by = models.ForeignKey(
