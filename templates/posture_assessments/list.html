@@ -632,6 +632,10 @@
     <div class="pa-tools">
       <a href="{% url 'staff:patient_detail' patient.id %}" class="pa-btn">← 患者詳細へ戻る</a>
 
+      <a href="{% url 'posture_assessments:comparison_list' patient.id %}" class="pa-btn">
+        比較履歴
+      </a>
+
       <a href="#compareTray" class="pa-btn">
         比較する2件を選ぶ
       </a>

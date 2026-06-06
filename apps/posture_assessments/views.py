@@ -432,7 +432,42 @@ def posture_comparison_create_view(request, patient_id):
         "form": form,
         "assessments": assessments,
     })
-    
+
+@staff_required
+def posture_comparison_list_view(request, patient_id):
+    clinic = get_current_clinic(request)
+
+    patient = get_object_or_404(
+        Patient.objects.select_related("clinic"),
+        pk=patient_id,
+        clinic=clinic,
+    )
+
+    comparisons = (
+        PostureComparison.objects
+        .filter(
+            clinic=clinic,
+            patient=patient,
+        )
+        .select_related(
+            "before_assessment",
+            "after_assessment",
+            "created_by",
+        )
+        .prefetch_related(
+            "before_assessment__images",
+            "after_assessment__images",
+        )
+        .order_by("-created_at")
+    )
+
+    return render(request, "posture_assessments/comparison_list.html", {
+        "active": "patient_search",
+        "page_title": "姿勢比較分析一覧",
+        "patient": patient,
+        "comparisons": comparisons,
+    })
+
 @staff_required
 def posture_comparison_detail_view(request, comparison_id):
     clinic = get_current_clinic(request)

@@ -553,6 +553,55 @@
     font-weight:900;
   }
 
+  .posture-overlay-frame{
+    position:relative;
+    width:100%;
+    overflow:hidden;
+    background:#f8fafc;
+  }
+
+  .posture-overlay-frame img{
+    width:100%;
+    display:block;
+  }
+
+  .posture-grid{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background-image:
+      linear-gradient(to right, rgba(37,99,235,.16) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(37,99,235,.12) 1px, transparent 1px);
+    background-size:10% 10%;
+    opacity:.65;
+  }
+
+  .posture-center-line{
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:50%;
+    width:2px;
+    transform:translateX(-50%);
+    background:rgba(34,197,94,.85);
+    box-shadow:0 0 0 1px rgba(255,255,255,.7);
+    pointer-events:none;
+  }
+
+  .posture-center-line::before{
+    content:"CENTER";
+    position:absolute;
+    top:8px;
+    left:6px;
+    padding:4px 7px;
+    border-radius:999px;
+    background:rgba(22,163,74,.88);
+    color:#fff;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.06em;
+  }
+
   @media(max-width:980px){
     .ai-three-grid,
     .body-compare-grid{
@@ -672,7 +721,11 @@
 
               <div class="compare-image">
                 {% if pair.before %}
-                  <img src="{{ pair.before.image.url }}" alt="Before {{ pair.label }}">
+                    <div class="posture-overlay-frame">
+                    <img src="{{ pair.before.image.url }}" alt="Before {{ pair.label }}">
+                    <div class="posture-grid"></div>
+                    <div class="posture-center-line"></div>
+                    </div>
                 {% else %}
                   <div class="empty-image">Beforeの{{ pair.label }}画像がありません。</div>
                 {% endif %}
@@ -687,7 +740,11 @@
 
               <div class="compare-image">
                 {% if pair.after %}
-                  <img src="{{ pair.after.image.url }}" alt="After {{ pair.label }}">
+                    <div class="posture-overlay-frame">
+                    <img src="{{ pair.after.image.url }}" alt="After {{ pair.label }}">
+                    <div class="posture-grid"></div>
+                    <div class="posture-center-line"></div>
+                    </div>
                 {% else %}
                   <div class="empty-image">Afterの{{ pair.label }}画像がありません。</div>
                 {% endif %}

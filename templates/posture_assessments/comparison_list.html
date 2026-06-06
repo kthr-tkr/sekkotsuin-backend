@@ -1,0 +1,454 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | 姿勢比較分析一覧{% endblock %}
+
+{% block content %}
+<style>
+  .pc-list-page{
+    max-width:1280px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .pc-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+
+  .pc-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:12px;
+    font-weight:900;
+    margin-bottom:10px;
+  }
+
+  .pc-title{
+    margin:0;
+    color:#0b1220;
+    font-size:44px;
+    font-weight:900;
+    line-height:1.08;
+    letter-spacing:-.05em;
+  }
+
+  .pc-sub{
+    margin-top:8px;
+    color:#64748b;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .pc-tools{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .pc-btn{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    color:#0f172a;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:900;
+    box-shadow:0 10px 22px rgba(15,23,42,.04);
+  }
+
+  .pc-btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#0b1220 0%,#2563eb 100%);
+    box-shadow:0 16px 34px rgba(37,99,235,.22);
+  }
+
+  .pc-hero{
+    border-radius:30px;
+    padding:24px;
+    background:
+      radial-gradient(circle at 86% 20%, rgba(96,165,250,.24), transparent 28%),
+      linear-gradient(135deg,#060c19 0%,#111b36 45%,#2563eb 100%);
+    color:#fff;
+    box-shadow:0 24px 64px rgba(15,23,42,.16);
+  }
+
+  .pc-patient{
+    margin:0;
+    font-size:34px;
+    font-weight:900;
+    letter-spacing:-.04em;
+  }
+
+  .pc-hero-text{
+    margin-top:10px;
+    color:rgba(255,255,255,.76);
+    font-size:14px;
+    font-weight:700;
+    line-height:1.8;
+  }
+
+  .pc-card{
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.9);
+    border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 18px 42px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+  }
+
+  .pc-card-title{
+    margin:0;
+    color:#0f172a;
+    font-size:24px;
+    font-weight:900;
+    letter-spacing:-.03em;
+  }
+
+  .pc-card-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .comparison-list{
+    margin-top:18px;
+    display:grid;
+    gap:16px;
+  }
+
+  .comparison-item{
+    display:grid;
+    grid-template-columns:1fr 380px;
+    gap:18px;
+    border-radius:26px;
+    padding:18px;
+    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+    border:1px solid #e8eef7;
+    box-shadow:0 14px 30px rgba(15,23,42,.05);
+  }
+
+  .comparison-main{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .comparison-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .comparison-title{
+    color:#0f172a;
+    font-size:22px;
+    font-weight:900;
+    letter-spacing:-.03em;
+  }
+
+  .comparison-meta{
+    margin-top:5px;
+    color:#64748b;
+    font-size:12px;
+    font-weight:800;
+  }
+
+  .status-pill{
+    display:inline-flex;
+    align-items:center;
+    padding:7px 11px;
+    border-radius:999px;
+    background:#f1f5f9;
+    color:#475569;
+    font-size:12px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .status-pill.analyzed{
+    background:#dbeafe;
+    color:#1e3a8a;
+  }
+
+  .status-pill.confirmed{
+    background:#dcfce7;
+    color:#166534;
+  }
+
+  .pair-box{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .pair-card{
+    border-radius:18px;
+    padding:14px;
+    background:#fff;
+    border:1px solid #e8eef7;
+  }
+
+  .pair-label{
+    color:#64748b;
+    font-size:12px;
+    font-weight:900;
+    margin-bottom:6px;
+  }
+
+  .pair-value{
+    color:#0f172a;
+    font-size:14px;
+    font-weight:900;
+    line-height:1.6;
+  }
+
+  .summary-box{
+    border-radius:18px;
+    padding:14px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#334155;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.8;
+  }
+
+  .comparison-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    margin-top:auto;
+  }
+
+  .mini-btn{
+    min-height:38px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 13px;
+    border-radius:13px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    color:#0f172a;
+    text-decoration:none;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .mini-btn.primary{
+    background:#0f172a;
+    color:#fff;
+    border-color:#0f172a;
+  }
+
+  .image-preview-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    align-self:stretch;
+  }
+
+  .preview-side{
+    border-radius:20px;
+    overflow:hidden;
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+  }
+
+  .preview-side-head{
+    padding:10px 12px;
+    background:#fff;
+    border-bottom:1px solid #e2e8f0;
+    color:#0f172a;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .preview-img{
+    height:220px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#f8fafc;
+    color:#94a3b8;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .preview-img img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .empty-box{
+    margin-top:16px;
+    border:1px dashed #d6dfeb;
+    border-radius:20px;
+    padding:30px;
+    text-align:center;
+    color:#94a3b8;
+    background:#f8fafc;
+    font-size:14px;
+    font-weight:800;
+  }
+
+  @media(max-width:1000px){
+    .comparison-item{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media(max-width:760px){
+    .pair-box,
+    .image-preview-grid{
+      grid-template-columns:1fr;
+    }
+
+    .pc-title{
+      font-size:34px;
+    }
+  }
+</style>
+
+<div class="pc-list-page">
+
+  <header class="pc-head">
+    <div>
+      <div class="pc-eyebrow">Posture Comparison History</div>
+      <h1 class="pc-title">姿勢比較分析一覧</h1>
+      <div class="pc-sub">Before/After比較の履歴を見返せます</div>
+    </div>
+
+    <div class="pc-tools">
+      <a href="{% url 'posture_assessments:list' patient.id %}" class="pc-btn">← 姿勢分析一覧へ</a>
+      <a href="{% url 'posture_assessments:comparison_create' patient.id %}" class="pc-btn primary">＋ 比較を作成</a>
+    </div>
+  </header>
+
+  <section class="pc-hero">
+    <h2 class="pc-patient">{{ patient.last_name }} {{ patient.first_name }} 様</h2>
+    <div class="pc-hero-text">
+      過去のBefore/After比較を確認し、改善傾向・継続確認ポイント・患者説明に活用できます。
+    </div>
+  </section>
+
+  <section class="pc-card">
+    <h3 class="pc-card-title">比較履歴</h3>
+    <div class="pc-card-sub">作成済みの姿勢比較分析を確認できます。</div>
+
+    {% if comparisons %}
+      <div class="comparison-list">
+        {% for comparison in comparisons %}
+
+          {% with before_img=comparison.before_assessment.images.first after_img=comparison.after_assessment.images.first %}
+            <div class="comparison-item">
+
+              <div class="comparison-main">
+                <div class="comparison-top">
+                  <div>
+                    <div class="comparison-title">{{ comparison.title }}</div>
+                    <div class="comparison-meta">
+                      作成日：{{ comparison.created_at|date:"Y-m-d H:i" }}
+                      {% if comparison.created_by %}
+                        / {{ comparison.created_by }}
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <span class="status-pill {{ comparison.status }}">
+                    {{ comparison.get_status_display }}
+                  </span>
+                </div>
+
+                <div class="pair-box">
+                  <div class="pair-card">
+                    <div class="pair-label">Before</div>
+                    <div class="pair-value">
+                      {{ comparison.before_assessment.created_at|date:"Y-m-d H:i" }}<br>
+                      {{ comparison.before_assessment.title }}
+                    </div>
+                  </div>
+
+                  <div class="pair-card">
+                    <div class="pair-label">After</div>
+                    <div class="pair-value">
+                      {{ comparison.after_assessment.created_at|date:"Y-m-d H:i" }}<br>
+                      {{ comparison.after_assessment.title }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="summary-box">
+                  {% if comparison.ai_summary_json.overall_summary %}
+                    {{ comparison.ai_summary_json.overall_summary }}
+                  {% else %}
+                    まだAI比較分析は実行されていません。
+                  {% endif %}
+                </div>
+
+                <div class="comparison-actions">
+                  <a href="{% url 'posture_assessments:comparison_detail' comparison.id %}" class="mini-btn primary">
+                    詳細を見る
+                  </a>
+                </div>
+              </div>
+
+              <div class="image-preview-grid">
+                <div class="preview-side">
+                  <div class="preview-side-head">Before</div>
+                  <div class="preview-img">
+                    {% if before_img %}
+                      <img src="{{ before_img.image.url }}" alt="Before">
+                    {% else %}
+                      画像なし
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="preview-side">
+                  <div class="preview-side-head">After</div>
+                  <div class="preview-img">
+                    {% if after_img %}
+                      <img src="{{ after_img.image.url }}" alt="After">
+                    {% else %}
+                      画像なし
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          {% endwith %}
+
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-box">
+        まだ姿勢比較分析はありません。姿勢分析一覧からBefore/Afterを選択して比較を作成しましょう。
+      </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}
