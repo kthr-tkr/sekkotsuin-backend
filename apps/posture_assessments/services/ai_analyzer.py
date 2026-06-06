@@ -114,6 +114,92 @@ POSTURE_ANALYSIS_SCHEMA = {
     },
 }
 
+POSTURE_COMPARISON_SCHEMA = {
+    "name": "posture_comparison_analysis",
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "important_changes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Before/Afterで最初に確認すべき重要な変化。3〜6件。",
+            },
+            "overall_summary": {
+                "type": "string",
+                "description": "Before/After全体の比較サマリー。診断ではなく観察補助として記載する。",
+            },
+            "improved_points": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "改善している可能性がある姿勢傾向。",
+            },
+            "unchanged_points": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "大きな変化が見られない、または継続確認が必要な点。",
+            },
+            "worse_or_attention_points": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "悪化と断定せず、注意・再確認が必要な点。",
+            },
+            "body_area_comparison": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "head_neck": {"type": "string"},
+                    "shoulder": {"type": "string"},
+                    "spine": {"type": "string"},
+                    "pelvis": {"type": "string"},
+                    "knee": {"type": "string"},
+                    "foot": {"type": "string"},
+                    "balance": {"type": "string"},
+                },
+                "required": [
+                    "head_neck",
+                    "shoulder",
+                    "spine",
+                    "pelvis",
+                    "knee",
+                    "foot",
+                    "balance",
+                ],
+            },
+            "clinical_notes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "施術者向けの比較メモ。評価・触診・動作確認の観点。",
+            },
+            "next_focus": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "次回施術や次回撮影で重点的に確認すべきポイント。",
+            },
+            "patient_explanation": {
+                "type": "string",
+                "description": "患者さんにそのまま説明しやすい、前向きでやさしい比較説明。",
+            },
+            "risk_notes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "画像だけでは判断できない点、撮影条件差、断定回避など。",
+            },
+        },
+        "required": [
+            "important_changes",
+            "overall_summary",
+            "improved_points",
+            "unchanged_points",
+            "worse_or_attention_points",
+            "body_area_comparison",
+            "clinical_notes",
+            "next_focus",
+            "patient_explanation",
+            "risk_notes",
+        ],
+    },
+}
 
 IMAGE_TYPE_LABELS = {
     "front": "正面",
@@ -207,6 +293,68 @@ def _build_image_content(assessment):
 
     return content
 
+def _build_comparison_image_content(comparison):
+    content = []
+
+    before = comparison.before_assessment
+    after = comparison.after_assessment
+
+    before_images = list(
+        before.images.all().order_by("order", "image_type", "id")
+    )
+    after_images = list(
+        after.images.all().order_by("order", "image_type", "id")
+    )
+
+    if not before_images:
+        raise ValueError("Before側の姿勢画像が登録されていません。")
+
+    if not after_images:
+        raise ValueError("After側の姿勢画像が登録されていません。")
+
+    content.append({
+        "type": "input_text",
+        "text": "以下はBefore側の姿勢画像です。",
+    })
+
+    for img in before_images:
+        label = IMAGE_TYPE_LABELS.get(
+            img.image_type,
+            img.get_image_type_display(),
+        )
+
+        content.append({
+            "type": "input_text",
+            "text": f"【Before：{label}画像】",
+        })
+
+        content.append({
+            "type": "input_image",
+            "image_url": _image_field_to_data_url(img.image),
+        })
+
+    content.append({
+        "type": "input_text",
+        "text": "以下はAfter側の姿勢画像です。",
+    })
+
+    for img in after_images:
+        label = IMAGE_TYPE_LABELS.get(
+            img.image_type,
+            img.get_image_type_display(),
+        )
+
+        content.append({
+            "type": "input_text",
+            "text": f"【After：{label}画像】",
+        })
+
+        content.append({
+            "type": "input_image",
+            "image_url": _image_field_to_data_url(img.image),
+        })
+
+    return content
 
 def analyze_posture_assessment(assessment):
     """
@@ -328,6 +476,141 @@ def analyze_posture_assessment(assessment):
         "assessment_id": assessment.id,
         "model": getattr(settings, "OPENAI_VISION_MODEL", "gpt-4o-mini"),
         "image_count": assessment.images.count(),
+        "storage_safe": True,
+    }
+
+    return result
+
+def analyze_posture_comparison(comparison):
+    """
+    Before/After姿勢画像をAI比較分析し、JSONを返す。
+
+    注意:
+    - 医療診断ではない
+    - 改善/悪化を断定しない
+    - 撮影条件差を考慮する
+    - 施術者の観察補助として扱う
+    """
+    if not settings.OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY が設定されていません。")
+
+    client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+    patient = comparison.patient
+    patient_name = f"{patient.last_name} {patient.first_name}".strip()
+
+    before = comparison.before_assessment
+    after = comparison.after_assessment
+
+    image_content = _build_comparison_image_content(comparison)
+
+    before_summary = before.get_active_summary() or {}
+    after_summary = after.get_active_summary() or {}
+
+    prompt = f"""
+あなたは接骨院・整骨院向けの姿勢Before/After比較補助AIです。
+以下のBefore画像、After画像、既存のAI姿勢分析結果、比較メモをもとに、姿勢の変化を整理してください。
+
+# 患者情報
+- 患者名: {patient_name}
+
+# 比較情報
+- 比較タイトル: {comparison.title}
+- 比較メモ: {comparison.memo or "-"}
+
+# Before情報
+- Before撮影日: {before.created_at.strftime("%Y-%m-%d %H:%M")}
+- Beforeタイトル: {before.title}
+- Beforeメモ: {before.memo or "-"}
+- Before AI分析結果:
+{json.dumps(before_summary, ensure_ascii=False, indent=2)}
+
+# After情報
+- After撮影日: {after.created_at.strftime("%Y-%m-%d %H:%M")}
+- Afterタイトル: {after.title}
+- Afterメモ: {after.memo or "-"}
+- After AI分析結果:
+{json.dumps(after_summary, ensure_ascii=False, indent=2)}
+
+# 目的
+- 施術者がBefore/Afterの変化を短時間で把握できるようにする
+- 改善している可能性がある点を整理する
+- 大きく変化していない点を整理する
+- 引き続き確認すべき点を整理する
+- 患者さんに前向きに説明できる文章を作る
+
+# 必ず守るルール
+- 医療診断名を断定しない
+- 画像だけで原因を確定しない
+- 「改善しています」と断定せず「整ってきている可能性」「軽減しているように見える」などにする
+- 「悪化」と断定せず「引き続き確認が必要」「撮影条件の影響も考えられる」と表現する
+- 撮影角度、立ち位置、服装、距離、光の条件で見え方が変わることを考慮する
+- 患者説明は不安を煽らず、前向きでわかりやすくする
+- 施術者の判断を補助する表現にする
+
+# 比較観点
+- 頭部前方位
+- 首の傾き
+- 肩の左右差
+- 巻き肩傾向
+- 背中・猫背傾向
+- 骨盤の左右差、前傾・後傾、回旋傾向
+- 膝の向き、左右差、ニーイン傾向
+- 足部の向き、荷重傾向
+- 全体の重心バランス
+""".strip()
+
+    response = client.responses.create(
+        model=getattr(settings, "OPENAI_VISION_MODEL", "gpt-4o-mini"),
+        input=[
+            {
+                "role": "system",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": (
+                            "あなたは接骨院・整骨院向けの姿勢Before/After比較補助AIです。"
+                            "診断ではなく、施術者の観察・説明・記録を補助してください。"
+                        ),
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": prompt,
+                    },
+                    *image_content,
+                ],
+            },
+        ],
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": POSTURE_COMPARISON_SCHEMA["name"],
+                "schema": POSTURE_COMPARISON_SCHEMA["schema"],
+                "strict": True,
+            }
+        },
+    )
+
+    raw = response.output_text
+
+    try:
+        result = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"AI姿勢比較結果のJSON解析に失敗しました: {e}") from e
+
+    result["meta"] = {
+        "source": "posture_comparison",
+        "comparison_id": comparison.id,
+        "before_assessment_id": before.id,
+        "after_assessment_id": after.id,
+        "model": getattr(settings, "OPENAI_VISION_MODEL", "gpt-4o-mini"),
+        "before_image_count": before.images.count(),
+        "after_image_count": after.images.count(),
         "storage_safe": True,
     }
 

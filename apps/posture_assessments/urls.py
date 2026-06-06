@@ -40,4 +40,9 @@ urlpatterns = [
         views.posture_comparison_detail_view,
         name="comparison_detail",
     ),
+    path(
+        "comparisons/<int:comparison_id>/analyze/",
+        views.posture_comparison_analyze_view,
+        name="comparison_analyze",
+    ),
 ]

@@ -302,9 +302,27 @@
     </div>
 
     <div class="pc-tools">
-      <a href="{% url 'posture_assessments:list' patient.id %}" class="pc-btn">← 姿勢分析一覧へ</a>
-      <a href="{% url 'staff:patient_detail' patient.id %}" class="pc-btn">患者詳細へ</a>
-      <a href="{% url 'posture_assessments:comparison_create' patient.id %}" class="pc-btn primary">＋ 新しい比較</a>
+    <a href="{% url 'posture_assessments:list' patient.id %}" class="pc-btn">← 姿勢分析一覧へ</a>
+    <a href="{% url 'staff:patient_detail' patient.id %}" class="pc-btn">患者詳細へ</a>
+    <a href="{% url 'posture_assessments:comparison_create' patient.id %}" class="pc-btn">＋ 新しい比較</a>
+
+    <form method="post"
+            action="{% url 'posture_assessments:comparison_analyze' comparison.id %}"
+            style="display:inline;">
+        {% csrf_token %}
+
+        <button type="submit"
+                class="pc-btn primary js-ai-comparison-submit"
+                {% if comparison.status == "analyzing" %}disabled{% endif %}>
+        {% if comparison.status == "analyzing" %}
+            AI比較中...
+        {% elif summary %}
+            AI比較を再実行
+        {% else %}
+            AI比較分析を実行
+        {% endif %}
+        </button>
+    </form>
     </div>
   </header>
 
@@ -396,21 +414,191 @@
     </div>
   </section>
 
-  <section class="pc-card">
+    <section class="pc-card">
     <h3 class="pc-card-title">AI比較分析</h3>
-    <div class="pc-card-sub">次のステップで、変化点・改善傾向・次回方針をAIで整理します。</div>
+    <div class="pc-card-sub">Before/Afterの変化点・次回確認ポイントをAIが整理します。</div>
+
+    {% if comparison.status == "failed" and comparison.ai_error_message %}
+        <div class="summary-empty" style="border-color:#fecaca; background:#fff1f2; color:#991b1b;">
+        AI比較分析に失敗しました。<br>
+        {{ comparison.ai_error_message }}
+        </div>
+    {% endif %}
 
     {% if summary %}
-      <div class="memo-box">
-        {{ summary }}
-      </div>
+
+        <div class="memo-box">
+        <strong>全体サマリー</strong><br>
+        {{ summary.overall_summary|default:"-" }}
+        </div>
+
+        <div class="compare-block">
+
+        <div class="compare-section">
+            <div class="compare-section-head">
+            <div class="compare-section-title">重要な変化</div>
+            <div class="compare-section-note">最初に確認したいポイント</div>
+            </div>
+            <div class="memo-box">
+            {% if summary.important_changes %}
+                {% for item in summary.important_changes %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div class="compare-section">
+            <div class="compare-section-head">
+            <div class="compare-section-title">改善している可能性がある点</div>
+            <div class="compare-section-note">断定ではなく観察補助です</div>
+            </div>
+            <div class="memo-box">
+            {% if summary.improved_points %}
+                {% for item in summary.improved_points %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div class="compare-section">
+            <div class="compare-section-head">
+            <div class="compare-section-title">大きく変わっていない点</div>
+            <div class="compare-section-note">継続確認ポイント</div>
+            </div>
+            <div class="memo-box">
+            {% if summary.unchanged_points %}
+                {% for item in summary.unchanged_points %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div class="compare-section">
+            <div class="compare-section-head">
+            <div class="compare-section-title">注意・再確認が必要な点</div>
+            <div class="compare-section-note">撮影条件差も考慮します</div>
+            </div>
+            <div class="memo-box">
+            {% if summary.worse_or_attention_points %}
+                {% for item in summary.worse_or_attention_points %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div class="compare-section">
+            <div class="compare-section-head">
+            <div class="compare-section-title">部位別比較</div>
+            <div class="compare-section-note">頭部・肩・骨盤・膝など</div>
+            </div>
+            <div class="memo-box">
+            <strong>頭部・首：</strong>{{ summary.body_area_comparison.head_neck|default:"-" }}<br><br>
+            <strong>肩：</strong>{{ summary.body_area_comparison.shoulder|default:"-" }}<br><br>
+            <strong>背骨：</strong>{{ summary.body_area_comparison.spine|default:"-" }}<br><br>
+            <strong>骨盤：</strong>{{ summary.body_area_comparison.pelvis|default:"-" }}<br><br>
+            <strong>膝：</strong>{{ summary.body_area_comparison.knee|default:"-" }}<br><br>
+            <strong>足部：</strong>{{ summary.body_area_comparison.foot|default:"-" }}<br><br>
+            <strong>全体バランス：</strong>{{ summary.body_area_comparison.balance|default:"-" }}
+            </div>
+        </div>
+
+        <div class="compare-section">
+            <div class="compare-section-head">
+            <div class="compare-section-title">施術者向けメモ</div>
+            <div class="compare-section-note">評価・触診・動作確認</div>
+            </div>
+            <div class="memo-box">
+            {% if summary.clinical_notes %}
+                {% for item in summary.clinical_notes %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div class="compare-section">
+            <div class="compare-section-head">
+            <div class="compare-section-title">次回フォーカス</div>
+            <div class="compare-section-note">次回施術・次回撮影の確認項目</div>
+            </div>
+            <div class="memo-box">
+            {% if summary.next_focus %}
+                {% for item in summary.next_focus %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div class="compare-section">
+            <div class="compare-section-head">
+            <div class="compare-section-title">注意事項</div>
+            <div class="compare-section-note">画像だけでは判断できない点</div>
+            </div>
+            <div class="memo-box">
+            {% if summary.risk_notes %}
+                {% for item in summary.risk_notes %}
+                ・{{ item }}<br>
+                {% endfor %}
+            {% else %}
+                -
+            {% endif %}
+            </div>
+        </div>
+
+        <div class="compare-section">
+            <div class="compare-section-head">
+            <div class="compare-section-title">患者さんへの説明</div>
+            <div class="compare-section-note">そのまま説明に使える文章</div>
+            </div>
+            <div class="memo-box">
+            {{ summary.patient_explanation|default:"-" }}
+            </div>
+        </div>
+
+        </div>
+
     {% else %}
-      <div class="summary-empty">
+        <div class="summary-empty">
         まだAI比較分析は実行されていません。<br>
-        まずは画像比較画面として動作確認し、次にAI比較分析ボタンを追加します。
-      </div>
+        右上の「AI比較分析を実行」からBefore/Afterの変化を整理できます。
+        </div>
     {% endif %}
-  </section>
+    </section>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const forms = document.querySelectorAll('form[action*="/comparisons/"][action*="/analyze"]');
+
+  forms.forEach(form => {
+    form.addEventListener("submit", function(){
+      const btn = form.querySelector(".js-ai-comparison-submit");
+      if(!btn) return;
+
+      btn.disabled = true;
+      btn.textContent = "AI比較中...";
+    });
+  });
+})();
+</script>
 {% endblock %}

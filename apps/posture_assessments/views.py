@@ -21,7 +21,10 @@ from .models import (
 
 from django.views.decorators.http import require_POST
 
-from .services.ai_analyzer import analyze_posture_assessment
+from .services.ai_analyzer import (
+    analyze_posture_assessment,
+    analyze_posture_comparison,
+)
 
 
 def _same_clinic(user, clinic) -> bool:
@@ -453,3 +456,93 @@ def posture_comparison_detail_view(request, comparison_id):
         "image_pairs": image_pairs,
         "summary": summary,
     })
+
+@staff_required
+@require_POST
+def posture_comparison_analyze_view(request, comparison_id):
+    import traceback
+
+    clinic = get_current_clinic(request)
+
+    comparison = get_object_or_404(
+        PostureComparison.objects
+        .select_related(
+            "clinic",
+            "patient",
+            "before_assessment",
+            "after_assessment",
+        )
+        .prefetch_related(
+            "before_assessment__images",
+            "after_assessment__images",
+        ),
+        pk=comparison_id,
+        clinic=clinic,
+    )
+
+    if not comparison.before_assessment.images.exists():
+        messages.error(request, "Before側の姿勢画像が登録されていません。")
+        return redirect("posture_assessments:comparison_detail", comparison_id=comparison.id)
+
+    if not comparison.after_assessment.images.exists():
+        messages.error(request, "After側の姿勢画像が登録されていません。")
+        return redirect("posture_assessments:comparison_detail", comparison_id=comparison.id)
+
+    try:
+        comparison.status = PostureComparison.Status.ANALYZING
+        comparison.ai_error_message = ""
+        comparison.updated_by = request.user
+        comparison.save(update_fields=[
+            "status",
+            "ai_error_message",
+            "updated_by",
+            "updated_at",
+        ])
+
+        result = analyze_posture_comparison(comparison)
+
+        meta = result.get("meta", {}) if isinstance(result, dict) else {}
+        model_name = meta.get("model", "")
+
+        comparison.ai_summary_json = result
+        comparison.ai_model_name = model_name
+        comparison.status = PostureComparison.Status.ANALYZED
+        comparison.ai_error_message = ""
+        comparison.analyzed_at = timezone.now()
+        comparison.updated_by = request.user
+
+        comparison.save(update_fields=[
+            "ai_summary_json",
+            "ai_model_name",
+            "status",
+            "ai_error_message",
+            "analyzed_at",
+            "updated_by",
+            "updated_at",
+        ])
+
+        messages.success(request, "AI姿勢比較分析が完了しました。")
+
+    except Exception as e:
+        error_text = str(e)[:1200]
+
+        print("===== posture comparison analyze error =====")
+        print(traceback.format_exc())
+
+        try:
+            comparison.status = PostureComparison.Status.FAILED
+            comparison.ai_error_message = error_text
+            comparison.updated_by = request.user
+            comparison.save(update_fields=[
+                "status",
+                "ai_error_message",
+                "updated_by",
+                "updated_at",
+            ])
+        except Exception:
+            print("===== failed to save posture comparison error state =====")
+            print(traceback.format_exc())
+
+        messages.error(request, f"AI姿勢比較分析に失敗しました: {error_text}")
+
+    return redirect("posture_assessments:comparison_detail", comparison_id=comparison.id)
