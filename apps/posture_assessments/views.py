@@ -546,3 +546,22 @@ def posture_comparison_analyze_view(request, comparison_id):
         messages.error(request, f"AI姿勢比較分析に失敗しました: {error_text}")
 
     return redirect("posture_assessments:comparison_detail", comparison_id=comparison.id)
+
+@staff_required
+@require_POST
+def posture_delete_view(request, assessment_id):
+    clinic = get_current_clinic(request)
+
+    assessment = get_object_or_404(
+        PostureAssessment.objects.select_related("clinic", "patient"),
+        pk=assessment_id,
+        clinic=clinic,
+    )
+
+    patient_id = assessment.patient_id
+    title = assessment.title
+
+    assessment.delete()
+
+    messages.success(request, f"姿勢分析「{title}」を削除しました。")
+    return redirect("posture_assessments:list", patient_id=patient_id)

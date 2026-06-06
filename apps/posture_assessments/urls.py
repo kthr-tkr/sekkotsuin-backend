@@ -36,6 +36,11 @@ urlpatterns = [
         name="analyze",
     ),
     path(
+        "<int:assessment_id>/delete/",
+        views.posture_delete_view,
+        name="delete",
+    ),
+    path(
         "comparisons/<int:comparison_id>/",
         views.posture_comparison_detail_view,
         name="comparison_detail",
