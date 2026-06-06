@@ -550,10 +550,14 @@ def posture_comparison_analyze_view(request, comparison_id):
 @staff_required
 @require_POST
 def posture_delete_view(request, assessment_id):
+    import traceback
+
     clinic = get_current_clinic(request)
 
     assessment = get_object_or_404(
-        PostureAssessment.objects.select_related("clinic", "patient"),
+        PostureAssessment.objects
+        .select_related("clinic", "patient")
+        .prefetch_related("images"),
         pk=assessment_id,
         clinic=clinic,
     )
@@ -561,7 +565,20 @@ def posture_delete_view(request, assessment_id):
     patient_id = assessment.patient_id
     title = assessment.title
 
-    assessment.delete()
+    try:
+        # まずDBレコード削除だけ行う
+        # S3実ファイル削除は後で安全に追加する
+        assessment.delete()
 
-    messages.success(request, f"姿勢分析「{title}」を削除しました。")
+        messages.success(request, f"姿勢分析「{title}」を削除しました。")
+
+    except Exception as e:
+        print("===== posture assessment delete error =====")
+        print(traceback.format_exc())
+
+        messages.error(
+            request,
+            f"姿勢分析の削除に失敗しました: {str(e)[:500]}"
+        )
+
     return redirect("posture_assessments:list", patient_id=patient_id)
