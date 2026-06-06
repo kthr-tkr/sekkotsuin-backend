@@ -113,14 +113,27 @@ def posture_create_view(request, patient_id):
             assessment.full_clean()
             assessment.save()
 
+        try:
             _save_uploaded_images(
                 assessment=assessment,
                 upload_form=upload_form,
                 user=request.user,
             )
+        except ValueError as e:
+            assessment.delete()
+            messages.error(request, str(e))
+            return render(request, "posture_assessments/form.html", {
+                "active": "patient_search",
+                "page_title": "AI姿勢分析作成",
+                "patient": patient,
+                "appointment": appointment,
+                "form": form,
+                "upload_form": upload_form,
+            })
 
-            messages.success(request, "AI姿勢分析を作成しました。")
-            return redirect("posture_assessments:detail", assessment_id=assessment.id)
+        messages.success(request, "AI姿勢分析を作成しました。")
+        return redirect("posture_assessments:detail", assessment_id=assessment.id)
+
     else:
         form = PostureAssessmentCreateForm(initial={
             "title": "AI姿勢分析",
@@ -202,16 +215,20 @@ def posture_upload_images_view(request, assessment_id):
     upload_form = PostureAssessmentImageUploadForm(request.POST, request.FILES)
 
     if upload_form.is_valid():
-        _save_uploaded_images(
-            assessment=assessment,
-            upload_form=upload_form,
-            user=request.user,
-        )
+        try:
+            _save_uploaded_images(
+                assessment=assessment,
+                upload_form=upload_form,
+                user=request.user,
+            )
 
-        assessment.updated_by = request.user
-        assessment.save(update_fields=["updated_by", "updated_at"])
+            assessment.updated_by = request.user
+            assessment.save(update_fields=["updated_by", "updated_at"])
 
-        messages.success(request, "姿勢画像を更新しました。")
+            messages.success(request, "姿勢画像を更新しました。")
+
+        except ValueError as e:
+            messages.error(request, str(e))
     else:
         messages.error(request, "画像のアップロードに失敗しました。")
 
@@ -232,13 +249,14 @@ def _save_uploaded_images(assessment, upload_form, user):
         if not image_file:
             continue
 
-        # 同じ種類の画像は差し替え
+        # 先に変換する。失敗した場合、既存画像は消さない。
+        normalized_image = normalize_posture_image(image_file)
+
+        # 変換成功後に同じ種類の画像を差し替え
         PostureAssessmentImage.objects.filter(
             assessment=assessment,
             image_type=image_type,
         ).delete()
-
-        normalized_image = normalize_posture_image(image_file)
 
         PostureAssessmentImage.objects.create(
             assessment=assessment,
