@@ -1,0 +1,299 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | 姿勢Before/After比較作成{% endblock %}
+
+{% block content %}
+<style>
+  .pc-page{
+    max-width:1080px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .pc-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+
+  .pc-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:12px;
+    font-weight:900;
+    margin-bottom:10px;
+  }
+
+  .pc-title{
+    margin:0;
+    font-size:42px;
+    line-height:1.08;
+    font-weight:900;
+    letter-spacing:-.05em;
+    color:#0b1220;
+  }
+
+  .pc-sub{
+    margin-top:9px;
+    color:#64748b;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .pc-btn{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    color:#0f172a;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:900;
+    box-shadow:0 10px 22px rgba(15,23,42,.04);
+  }
+
+  .pc-btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#0b1220 0%,#2563eb 100%);
+    box-shadow:0 16px 34px rgba(37,99,235,.22);
+  }
+
+  .pc-hero{
+    border-radius:30px;
+    padding:24px;
+    background:
+      radial-gradient(circle at 86% 20%, rgba(96,165,250,.24), transparent 28%),
+      linear-gradient(135deg,#060c19 0%,#111b36 45%,#2563eb 100%);
+    color:#fff;
+    box-shadow:0 24px 64px rgba(15,23,42,.16);
+  }
+
+  .pc-patient{
+    margin:0;
+    font-size:34px;
+    font-weight:900;
+    letter-spacing:-.04em;
+  }
+
+  .pc-hero-text{
+    margin-top:10px;
+    color:rgba(255,255,255,.76);
+    font-size:14px;
+    font-weight:700;
+    line-height:1.8;
+  }
+
+  .pc-card{
+    border-radius:28px;
+    padding:24px;
+    background:rgba(255,255,255,.9);
+    border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 18px 42px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+  }
+
+  .pc-section-title{
+    margin:0;
+    font-size:24px;
+    font-weight:900;
+    color:#0f172a;
+    letter-spacing:-.03em;
+  }
+
+  .pc-section-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-top:18px;
+  }
+
+  .form-field{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+  }
+
+  .form-field.wide{
+    grid-column:1 / -1;
+  }
+
+  .form-field label{
+    color:#334155;
+    font-size:13px;
+    font-weight:900;
+  }
+
+  .form-control{
+    width:100%;
+    border:1px solid #dbe3ef;
+    border-radius:16px;
+    padding:12px 14px;
+    background:#fff;
+    color:#0f172a;
+    font-size:14px;
+    font-weight:700;
+    outline:none;
+  }
+
+  .form-control:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.10);
+  }
+
+  textarea.form-control{
+    resize:vertical;
+    min-height:120px;
+  }
+
+  .error-box{
+    margin-top:14px;
+    border-radius:18px;
+    padding:14px;
+    background:#fff1f2;
+    color:#991b1b;
+    border:1px solid #fecaca;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.7;
+  }
+
+  .submit-row{
+    margin-top:20px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .hint-box{
+    margin-top:18px;
+    border-radius:22px;
+    padding:18px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#475569;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.8;
+  }
+
+  @media(max-width:760px){
+    .form-grid{
+      grid-template-columns:1fr;
+    }
+
+    .form-field.wide{
+      grid-column:auto;
+    }
+
+    .pc-title{
+      font-size:32px;
+    }
+  }
+</style>
+
+<div class="pc-page">
+
+  <header class="pc-head">
+    <div>
+      <div class="pc-eyebrow">Posture Comparison</div>
+      <h1 class="pc-title">Before/After比較作成</h1>
+      <div class="pc-sub">過去の姿勢分析を2件選択して、変化を比較します。</div>
+    </div>
+
+    <a href="{% url 'posture_assessments:list' patient.id %}" class="pc-btn">← 姿勢分析一覧へ</a>
+  </header>
+
+  <section class="pc-hero">
+    <h2 class="pc-patient">{{ patient.last_name }} {{ patient.first_name }} 様</h2>
+    <div class="pc-hero-text">
+      BeforeとAfterを選択すると、正面・右側面・背面の画像を左右に並べて比較できます。<br>
+      まずは画面比較を作成し、次のステップでAI比較分析を追加します。
+    </div>
+  </section>
+
+  <section class="pc-card">
+    <h3 class="pc-section-title">比較情報</h3>
+    <div class="pc-section-sub">比較する2つの姿勢分析を選択してください。</div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="error-box">
+          {% for error in form.non_field_errors %}
+            {{ error }}<br>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-grid">
+
+        <div class="form-field wide">
+          <label for="{{ form.title.id_for_label }}">タイトル</label>
+          {{ form.title }}
+          {% if form.title.errors %}
+            <div class="error-box">{{ form.title.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-field">
+          <label for="{{ form.before_assessment.id_for_label }}">Before</label>
+          {{ form.before_assessment }}
+          {% if form.before_assessment.errors %}
+            <div class="error-box">{{ form.before_assessment.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-field">
+          <label for="{{ form.after_assessment.id_for_label }}">After</label>
+          {{ form.after_assessment }}
+          {% if form.after_assessment.errors %}
+            <div class="error-box">{{ form.after_assessment.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-field wide">
+          <label for="{{ form.memo.id_for_label }}">メモ</label>
+          {{ form.memo }}
+          {% if form.memo.errors %}
+            <div class="error-box">{{ form.memo.errors }}</div>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <div class="hint-box">
+        比較対象は同じ患者・同じ院の姿勢分析だけが選択できます。<br>
+        AI比較分析は次のステップで追加予定です。まずはBefore/After画像を安全に比較できる画面を作ります。
+      </div>
+
+      <div class="submit-row">
+        <a href="{% url 'posture_assessments:list' patient.id %}" class="pc-btn">キャンセル</a>
+        <button type="submit" class="pc-btn primary">比較を作成する</button>
+      </div>
+    </form>
+  </section>
+
+</div>
+{% endblock %}

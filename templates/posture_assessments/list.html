@@ -296,6 +296,11 @@
 
     <div class="pa-tools">
       <a href="{% url 'staff:patient_detail' patient.id %}" class="pa-btn">← 患者詳細へ戻る</a>
+
+      <a href="{% url 'posture_assessments:comparison_create' patient.id %}" class="pa-btn">
+        Before/After比較を作成
+      </a>
+
       <a href="{% url 'posture_assessments:create' patient.id %}" class="pa-btn primary">＋ 新しい姿勢分析</a>
     </div>
   </header>

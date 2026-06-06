@@ -1,0 +1,416 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | 姿勢Before/After比較{% endblock %}
+
+{% block content %}
+<style>
+  .pc-detail{
+    max-width:1280px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .pc-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+
+  .pc-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:12px;
+    font-weight:900;
+    margin-bottom:10px;
+  }
+
+  .pc-title{
+    margin:0;
+    font-size:42px;
+    font-weight:900;
+    letter-spacing:-.05em;
+    color:#0b1220;
+  }
+
+  .pc-sub{
+    margin-top:8px;
+    color:#64748b;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .pc-tools{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .pc-btn{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 16px;
+    border-radius:16px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    color:#0f172a;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:900;
+    box-shadow:0 10px 22px rgba(15,23,42,.04);
+  }
+
+  .pc-btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#0b1220 0%,#2563eb 100%);
+    box-shadow:0 16px 34px rgba(37,99,235,.22);
+  }
+
+  .pc-hero{
+    border-radius:30px;
+    padding:24px;
+    background:
+      radial-gradient(circle at 86% 20%, rgba(96,165,250,.24), transparent 28%),
+      linear-gradient(135deg,#060c19 0%,#111b36 45%,#2563eb 100%);
+    color:#fff;
+    box-shadow:0 24px 64px rgba(15,23,42,.16);
+  }
+
+  .pc-hero-grid{
+    display:grid;
+    grid-template-columns:1.2fr .8fr;
+    gap:18px;
+  }
+
+  .pc-patient{
+    margin:0;
+    font-size:34px;
+    font-weight:900;
+    letter-spacing:-.04em;
+  }
+
+  .pc-hero-text{
+    margin-top:10px;
+    color:rgba(255,255,255,.76);
+    font-size:14px;
+    font-weight:700;
+    line-height:1.8;
+  }
+
+  .pc-status-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+
+  .pc-status-box{
+    border-radius:20px;
+    padding:15px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.12);
+  }
+
+  .pc-status-label{
+    color:rgba(255,255,255,.66);
+    font-size:11px;
+    font-weight:900;
+    margin-bottom:8px;
+  }
+
+  .pc-status-value{
+    font-size:20px;
+    font-weight:900;
+  }
+
+  .pc-card{
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.9);
+    border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 18px 42px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+  }
+
+  .pc-card-title{
+    margin:0;
+    font-size:24px;
+    font-weight:900;
+    color:#0f172a;
+    letter-spacing:-.03em;
+  }
+
+  .pc-card-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .compare-block{
+    margin-top:18px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .compare-section{
+    border-radius:26px;
+    overflow:hidden;
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+  }
+
+  .compare-section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:14px 18px;
+    background:#fff;
+    border-bottom:1px solid #e2e8f0;
+  }
+
+  .compare-section-title{
+    font-size:18px;
+    font-weight:900;
+    color:#0f172a;
+  }
+
+  .compare-section-note{
+    color:#64748b;
+    font-size:12px;
+    font-weight:800;
+  }
+
+  .compare-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1px;
+    background:#e2e8f0;
+  }
+
+  .compare-pane{
+    background:#f8fafc;
+    min-height:360px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .compare-pane-head{
+    padding:12px 14px;
+    background:#fff;
+    border-bottom:1px solid #e2e8f0;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+  }
+
+  .compare-label{
+    font-size:14px;
+    font-weight:900;
+    color:#0f172a;
+  }
+
+  .compare-date{
+    font-size:12px;
+    font-weight:800;
+    color:#64748b;
+  }
+
+  .compare-image{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#f8fafc;
+  }
+
+  .compare-image img{
+    width:100%;
+    display:block;
+  }
+
+  .empty-image{
+    padding:40px 20px;
+    text-align:center;
+    color:#94a3b8;
+    font-size:13px;
+    font-weight:900;
+  }
+
+  .summary-empty{
+    border:1px dashed #d6dfeb;
+    border-radius:22px;
+    padding:30px;
+    text-align:center;
+    color:#94a3b8;
+    background:#f8fafc;
+    font-weight:800;
+    margin-top:16px;
+    line-height:1.8;
+  }
+
+  .memo-box{
+    margin-top:16px;
+    border-radius:20px;
+    padding:16px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#475569;
+    font-size:14px;
+    font-weight:800;
+    line-height:1.8;
+    white-space:pre-wrap;
+  }
+
+  @media(max-width:980px){
+    .pc-hero-grid,
+    .compare-grid{
+      grid-template-columns:1fr;
+    }
+
+    .pc-title{
+      font-size:32px;
+    }
+  }
+
+  @media(max-width:760px){
+    .pc-status-grid{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+<div class="pc-detail">
+
+  <header class="pc-head">
+    <div>
+      <div class="pc-eyebrow">Posture Comparison</div>
+      <h1 class="pc-title">{{ comparison.title }}</h1>
+      <div class="pc-sub">姿勢分析のBefore/Afterを比較します。</div>
+    </div>
+
+    <div class="pc-tools">
+      <a href="{% url 'posture_assessments:list' patient.id %}" class="pc-btn">← 姿勢分析一覧へ</a>
+      <a href="{% url 'staff:patient_detail' patient.id %}" class="pc-btn">患者詳細へ</a>
+      <a href="{% url 'posture_assessments:comparison_create' patient.id %}" class="pc-btn primary">＋ 新しい比較</a>
+    </div>
+  </header>
+
+  <section class="pc-hero">
+    <div class="pc-hero-grid">
+      <div>
+        <h2 class="pc-patient">{{ patient.last_name }} {{ patient.first_name }} 様</h2>
+        <div class="pc-hero-text">
+          作成日：{{ comparison.created_at|date:"Y-m-d H:i" }}<br>
+          {% if comparison.memo %}
+            メモ：{{ comparison.memo }}
+          {% else %}
+            メモ：-
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="pc-status-grid">
+        <div class="pc-status-box">
+          <div class="pc-status-label">状態</div>
+          <div class="pc-status-value">{{ comparison.get_status_display }}</div>
+        </div>
+
+        <div class="pc-status-box">
+          <div class="pc-status-label">比較対象</div>
+          <div class="pc-status-value">Before / After</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pc-card">
+    <h3 class="pc-card-title">比較対象</h3>
+    <div class="pc-card-sub">選択された2つの姿勢分析です。</div>
+
+    <div class="memo-box">
+      Before：{{ before_assessment.created_at|date:"Y-m-d H:i" }} / {{ before_assessment.title }} / {{ before_assessment.get_status_display }}<br>
+      After：{{ after_assessment.created_at|date:"Y-m-d H:i" }} / {{ after_assessment.title }} / {{ after_assessment.get_status_display }}
+    </div>
+  </section>
+
+  <section class="pc-card">
+    <h3 class="pc-card-title">Before / After画像比較</h3>
+    <div class="pc-card-sub">正面・右側面・背面の画像を左右に並べて確認します。</div>
+
+    <div class="compare-block">
+      {% for pair in image_pairs %}
+        <div class="compare-section">
+          <div class="compare-section-head">
+            <div class="compare-section-title">{{ pair.label }}</div>
+            <div class="compare-section-note">同じ方向の画像を比較します</div>
+          </div>
+
+          <div class="compare-grid">
+
+            <div class="compare-pane">
+              <div class="compare-pane-head">
+                <div class="compare-label">Before</div>
+                <div class="compare-date">{{ before_assessment.created_at|date:"Y-m-d H:i" }}</div>
+              </div>
+
+              <div class="compare-image">
+                {% if pair.before %}
+                  <img src="{{ pair.before.image.url }}" alt="Before {{ pair.label }}">
+                {% else %}
+                  <div class="empty-image">Beforeの{{ pair.label }}画像がありません。</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="compare-pane">
+              <div class="compare-pane-head">
+                <div class="compare-label">After</div>
+                <div class="compare-date">{{ after_assessment.created_at|date:"Y-m-d H:i" }}</div>
+              </div>
+
+              <div class="compare-image">
+                {% if pair.after %}
+                  <img src="{{ pair.after.image.url }}" alt="After {{ pair.label }}">
+                {% else %}
+                  <div class="empty-image">Afterの{{ pair.label }}画像がありません。</div>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="pc-card">
+    <h3 class="pc-card-title">AI比較分析</h3>
+    <div class="pc-card-sub">次のステップで、変化点・改善傾向・次回方針をAIで整理します。</div>
+
+    {% if summary %}
+      <div class="memo-box">
+        {{ summary }}
+      </div>
+    {% else %}
+      <div class="summary-empty">
+        まだAI比較分析は実行されていません。<br>
+        まずは画像比較画面として動作確認し、次にAI比較分析ボタンを追加します。
+      </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

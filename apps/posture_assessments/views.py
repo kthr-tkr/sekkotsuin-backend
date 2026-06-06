@@ -11,10 +11,12 @@ from apps.staff.views import get_current_clinic
 from .forms import (
     PostureAssessmentCreateForm,
     PostureAssessmentImageUploadForm,
+    PostureComparisonCreateForm,
 )
 from .models import (
     PostureAssessment,
     PostureAssessmentImage,
+    PostureComparison,
 )
 
 from django.views.decorators.http import require_POST
@@ -318,3 +320,136 @@ def posture_assessment_analyze_view(request, assessment_id):
         messages.error(request, f"AI姿勢分析に失敗しました: {error_text}")
 
     return redirect("posture_assessments:detail", assessment_id=assessment.id)
+
+@staff_required
+def posture_comparison_create_view(request, patient_id):
+    clinic = get_current_clinic(request)
+
+    patient = get_object_or_404(
+        Patient.objects.select_related("clinic"),
+        pk=patient_id,
+        clinic=clinic,
+    )
+
+    assessments = (
+        PostureAssessment.objects
+        .filter(
+            clinic=clinic,
+            patient=patient,
+        )
+        .prefetch_related("images")
+        .order_by("-created_at")
+    )
+
+    if assessments.count() < 2:
+        messages.warning(request, "Before/After比較には、姿勢分析が2件以上必要です。")
+        return redirect("posture_assessments:list", patient_id=patient.id)
+
+    if request.method == "POST":
+        form = PostureComparisonCreateForm(
+            request.POST,
+            clinic=clinic,
+            patient=patient,
+        )
+
+        if form.is_valid():
+            comparison = form.save(commit=False)
+            comparison.clinic = clinic
+            comparison.patient = patient
+            comparison.status = PostureComparison.Status.DRAFT
+            comparison.created_by = request.user
+            comparison.updated_by = request.user
+            comparison.full_clean()
+            comparison.save()
+
+            messages.success(request, "Before/After比較を作成しました。")
+            return redirect(
+                "posture_assessments:comparison_detail",
+                comparison_id=comparison.id,
+            )
+    else:
+        form = PostureComparisonCreateForm(
+            clinic=clinic,
+            patient=patient,
+            initial={
+                "title": "姿勢Before/After比較",
+            },
+        )
+
+    return render(request, "posture_assessments/comparison_form.html", {
+        "active": "patient_search",
+        "page_title": "姿勢Before/After比較作成",
+        "patient": patient,
+        "form": form,
+        "assessments": assessments,
+    })
+    
+@staff_required
+def posture_comparison_detail_view(request, comparison_id):
+    clinic = get_current_clinic(request)
+
+    comparison = get_object_or_404(
+        PostureComparison.objects
+        .select_related(
+            "clinic",
+            "patient",
+            "before_assessment",
+            "after_assessment",
+            "created_by",
+            "confirmed_by",
+            "updated_by",
+        )
+        .prefetch_related(
+            "before_assessment__images",
+            "after_assessment__images",
+        ),
+        pk=comparison_id,
+        clinic=clinic,
+    )
+
+    before_images = comparison.before_assessment.images.all()
+    after_images = comparison.after_assessment.images.all()
+
+    before_image_map = {
+        image.image_type: image
+        for image in before_images
+    }
+
+    after_image_map = {
+        image.image_type: image
+        for image in after_images
+    }
+
+    image_pairs = [
+        {
+            "key": PostureAssessmentImage.ImageType.FRONT,
+            "label": "正面",
+            "before": before_image_map.get(PostureAssessmentImage.ImageType.FRONT),
+            "after": after_image_map.get(PostureAssessmentImage.ImageType.FRONT),
+        },
+        {
+            "key": PostureAssessmentImage.ImageType.SIDE_RIGHT,
+            "label": "右側面",
+            "before": before_image_map.get(PostureAssessmentImage.ImageType.SIDE_RIGHT),
+            "after": after_image_map.get(PostureAssessmentImage.ImageType.SIDE_RIGHT),
+        },
+        {
+            "key": PostureAssessmentImage.ImageType.BACK,
+            "label": "背面",
+            "before": before_image_map.get(PostureAssessmentImage.ImageType.BACK),
+            "after": after_image_map.get(PostureAssessmentImage.ImageType.BACK),
+        },
+    ]
+
+    summary = comparison.get_active_summary() or {}
+
+    return render(request, "posture_assessments/comparison_detail.html", {
+        "active": "patient_search",
+        "page_title": "姿勢Before/After比較詳細",
+        "comparison": comparison,
+        "patient": comparison.patient,
+        "before_assessment": comparison.before_assessment,
+        "after_assessment": comparison.after_assessment,
+        "image_pairs": image_pairs,
+        "summary": summary,
+    })

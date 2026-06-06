@@ -257,3 +257,172 @@ class PostureAssessmentHistory(models.Model):
 
     def __str__(self):
         return f"PostureAssessmentHistory(assessment={self.assessment_id})"
+    
+class PostureComparison(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "下書き"
+        ANALYZING = "analyzing", "AI比較中"
+        ANALYZED = "analyzed", "AI比較済み"
+        CONFIRMED = "confirmed", "確定済み"
+        FAILED = "failed", "失敗"
+
+    clinic = models.ForeignKey(
+        "clinics.Clinic",
+        on_delete=models.CASCADE,
+        related_name="posture_comparisons",
+        db_index=True,
+    )
+
+    patient = models.ForeignKey(
+        "patients.Patient",
+        on_delete=models.CASCADE,
+        related_name="posture_comparisons",
+        db_index=True,
+    )
+
+    before_assessment = models.ForeignKey(
+        PostureAssessment,
+        on_delete=models.CASCADE,
+        related_name="before_comparisons",
+    )
+
+    after_assessment = models.ForeignKey(
+        PostureAssessment,
+        on_delete=models.CASCADE,
+        related_name="after_comparisons",
+    )
+
+    title = models.CharField(
+        max_length=120,
+        default="姿勢Before/After比較",
+    )
+
+    status = models.CharField(
+        max_length=30,
+        choices=Status.choices,
+        default=Status.DRAFT,
+        db_index=True,
+    )
+
+    memo = models.TextField(
+        blank=True,
+        default="",
+        help_text="比較時の補足メモ。例：初回施術前後、1か月後比較など",
+    )
+
+    comparison_json = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="角度差・左右差・画像比較などの構造化データ",
+    )
+
+    ai_summary_json = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="AI比較分析の結果",
+    )
+
+    confirmed_summary_json = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="施術者が確定した比較結果",
+    )
+
+    ai_model_name = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    ai_error_message = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    analyzed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    confirmed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_posture_comparisons",
+    )
+
+    confirmed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="confirmed_posture_comparisons",
+    )
+
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="updated_posture_comparisons",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["clinic", "patient", "status"]),
+            models.Index(fields=["clinic", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"PostureComparison(id={self.id}, patient={self.patient_id})"
+
+    def get_active_summary(self):
+        if self.confirmed_summary_json:
+            return self.confirmed_summary_json
+        return self.ai_summary_json or {}
+
+    @property
+    def is_confirmed(self):
+        return self.status == self.Status.CONFIRMED
+
+    def clean(self):
+        errors = {}
+
+        if self.patient_id and self.clinic_id:
+            patient_clinic_id = getattr(self.patient, "clinic_id", None)
+            if patient_clinic_id and patient_clinic_id != self.clinic_id:
+                errors["patient"] = "患者は同じ院に所属している必要があります。"
+
+        if self.before_assessment_id:
+            if self.before_assessment.clinic_id != self.clinic_id:
+                errors["before_assessment"] = "Before分析は同じ院に所属している必要があります。"
+
+            if self.before_assessment.patient_id != self.patient_id:
+                errors["before_assessment"] = "Before分析の患者と比較対象の患者が一致していません。"
+
+        if self.after_assessment_id:
+            if self.after_assessment.clinic_id != self.clinic_id:
+                errors["after_assessment"] = "After分析は同じ院に所属している必要があります。"
+
+            if self.after_assessment.patient_id != self.patient_id:
+                errors["after_assessment"] = "After分析の患者と比較対象の患者が一致していません。"
+
+        if (
+            self.before_assessment_id
+            and self.after_assessment_id
+            and self.before_assessment_id == self.after_assessment_id
+        ):
+            errors["after_assessment"] = "BeforeとAfterには別の姿勢分析を選択してください。"
+
+        if errors:
+            raise ValidationError(errors)
