@@ -602,6 +602,96 @@
     letter-spacing:.06em;
   }
 
+  .posture-guide-line{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:4;
+  }
+
+  .posture-guide-svg{
+    width:100%;
+    height:100%;
+    display:block;
+  }
+
+  .posture-guide-path{
+    fill:none;
+    stroke:rgba(239,68,68,.92);
+    stroke-width:3;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    filter:drop-shadow(0 1px 2px rgba(255,255,255,.85));
+  }
+
+  .posture-guide-point{
+    fill:#ef4444;
+    stroke:#fff;
+    stroke-width:2;
+    filter:drop-shadow(0 1px 2px rgba(15,23,42,.20));
+  }
+
+  .posture-guide-label{
+    position:absolute;
+    left:12px;
+    bottom:12px;
+    z-index:5;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 10px;
+    border-radius:999px;
+    background:rgba(15,23,42,.74);
+    color:#fff;
+    font-size:11px;
+    font-weight:900;
+    backdrop-filter:blur(10px);
+  }
+
+  .posture-guide-label::before{
+    content:"";
+    width:9px;
+    height:9px;
+    border-radius:999px;
+    background:#ef4444;
+  }
+
+  .overlay-toolbar{
+    margin-top:12px;
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .overlay-toggle-btn{
+    min-height:36px;
+    padding:0 12px;
+    border-radius:13px;
+    border:1px solid #dbe3ef;
+    background:#fff;
+    color:#0f172a;
+    font-size:12px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(15,23,42,.04);
+  }
+
+  .overlay-toggle-btn.is-active{
+    background:#0f172a;
+    color:#fff;
+    border-color:#0f172a;
+  }
+
+  .hide-guide .posture-guide-line,
+  .hide-guide .posture-guide-label{
+    display:none;
+  }
+
+  .hide-grid .posture-grid{
+    display:none;
+  }
+
   @media(max-width:980px){
     .ai-three-grid,
     .body-compare-grid{
@@ -703,6 +793,15 @@
     <h3 class="pc-card-title">Before / After画像比較</h3>
     <div class="pc-card-sub">正面・右側面・背面の画像を左右に並べて確認します。</div>
 
+    <div class="overlay-toolbar">
+    <button type="button" class="overlay-toggle-btn is-active" id="toggleGridBtn">
+        グリッドON
+    </button>
+    <button type="button" class="overlay-toggle-btn is-active" id="toggleGuideBtn">
+        姿勢ラインON
+    </button>
+    </div>
+
     <div class="compare-block">
       {% for pair in image_pairs %}
         <div class="compare-section">
@@ -725,6 +824,23 @@
                     <img src="{{ pair.before.image.url }}" alt="Before {{ pair.label }}">
                     <div class="posture-grid"></div>
                     <div class="posture-center-line"></div>
+
+                    {% if pair.key == "side_right" %}
+                        <div class="posture-guide-line">
+                        <svg class="posture-guide-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <polyline
+                            class="posture-guide-path"
+                            points="56,18 52,32 50,50 50,68 50,86"
+                            />
+                            <circle class="posture-guide-point" cx="56" cy="18" r="1.6" />
+                            <circle class="posture-guide-point" cx="52" cy="32" r="1.6" />
+                            <circle class="posture-guide-point" cx="50" cy="50" r="1.6" />
+                            <circle class="posture-guide-point" cx="50" cy="68" r="1.6" />
+                            <circle class="posture-guide-point" cx="50" cy="86" r="1.6" />
+                        </svg>
+                        </div>
+                        <div class="posture-guide-label">姿勢ガイド</div>
+                    {% endif %}
                     </div>
                 {% else %}
                   <div class="empty-image">Beforeの{{ pair.label }}画像がありません。</div>
@@ -744,6 +860,23 @@
                     <img src="{{ pair.after.image.url }}" alt="After {{ pair.label }}">
                     <div class="posture-grid"></div>
                     <div class="posture-center-line"></div>
+
+                    {% if pair.key == "side_right" %}
+                        <div class="posture-guide-line">
+                        <svg class="posture-guide-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <polyline
+                            class="posture-guide-path"
+                            points="56,18 52,32 50,50 50,68 50,86"
+                            />
+                            <circle class="posture-guide-point" cx="56" cy="18" r="1.6" />
+                            <circle class="posture-guide-point" cx="52" cy="32" r="1.6" />
+                            <circle class="posture-guide-point" cx="50" cy="50" r="1.6" />
+                            <circle class="posture-guide-point" cx="50" cy="68" r="1.6" />
+                            <circle class="posture-guide-point" cx="50" cy="86" r="1.6" />
+                        </svg>
+                        </div>
+                        <div class="posture-guide-label">姿勢ガイド</div>
+                    {% endif %}
                     </div>
                 {% else %}
                   <div class="empty-image">Afterの{{ pair.label }}画像がありません。</div>
@@ -975,6 +1108,49 @@
   const forms = document.querySelectorAll('form[action*="/comparisons/"][action*="/analyze"]');
 
   forms.forEach(form => {
+    form.addEventListener("submit", function(){
+      const btn = form.querySelector(".js-ai-comparison-submit");
+      if(!btn) return;
+
+      btn.disabled = true;
+      btn.textContent = "AI比較中...";
+    });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  const toggleGridBtn = document.getElementById("toggleGridBtn");
+  const toggleGuideBtn = document.getElementById("toggleGuideBtn");
+
+  if(toggleGridBtn){
+    toggleGridBtn.addEventListener("click", function(){
+      document.querySelectorAll(".posture-overlay-frame").forEach(frame => {
+        frame.classList.toggle("hide-grid");
+      });
+
+      const isHidden = document.querySelector(".posture-overlay-frame")?.classList.contains("hide-grid");
+      toggleGridBtn.classList.toggle("is-active", !isHidden);
+      toggleGridBtn.textContent = isHidden ? "グリッドOFF" : "グリッドON";
+    });
+  }
+
+  if(toggleGuideBtn){
+    toggleGuideBtn.addEventListener("click", function(){
+      document.querySelectorAll(".posture-overlay-frame").forEach(frame => {
+        frame.classList.toggle("hide-guide");
+      });
+
+      const isHidden = document.querySelector(".posture-overlay-                                                  frame")?.classList.contains("hide-guide");
+      toggleGuideBtn.classList.toggle("is-active", !isHidden);
+      toggleGuideBtn.textContent = isHidden ? "姿勢ラインOFF" : "姿勢ラインON";
+    });
+  }
+
+  const aiForms = document.querySelectorAll('form[action*="/comparisons/"][action*="/analyze"]');
+
+  aiForms.forEach(form => {
     form.addEventListener("submit", function(){
       const btn = form.querySelector(".js-ai-comparison-submit");
       if(!btn) return;
