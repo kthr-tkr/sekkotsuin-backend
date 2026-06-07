@@ -245,6 +245,90 @@ def posture_create_view(request, patient_id):
     })
 
 
+def _normalize_assessment_summary(summary):
+    summary = summary or {}
+    if not summary:
+        return {}
+
+    return {
+        **summary,
+        "important_points": summary.get("important_points") or [],
+        "overall_summary": summary.get("overall_summary") or "",
+        "posture_findings": summary.get("posture_findings") or {},
+        "suspected_load_areas": summary.get("suspected_load_areas") or [],
+        "clinical_notes": summary.get("clinical_notes") or [],
+        "treatment_suggestions": summary.get("treatment_suggestions") or [],
+        "home_care_suggestions": summary.get("home_care_suggestions") or [],
+        "next_check_points": summary.get("next_check_points") or [],
+        "risk_notes": summary.get("risk_notes") or [],
+        "patient_explanation": summary.get("patient_explanation") or "",
+    }
+
+
+def _build_assessment_image_cards(images):
+    image_map = {
+        image.image_type: image
+        for image in images
+    }
+
+    return [
+        {
+            "key": PostureAssessmentImage.ImageType.FRONT,
+            "label": "正面",
+            "description": "肩・骨盤・膝の左右差を確認します",
+            "image": image_map.get(PostureAssessmentImage.ImageType.FRONT),
+        },
+        {
+            "key": PostureAssessmentImage.ImageType.SIDE_RIGHT,
+            "label": "右側面",
+            "description": "頭部前方位や体幹の傾向を確認します",
+            "image": image_map.get(PostureAssessmentImage.ImageType.SIDE_RIGHT),
+        },
+        {
+            "key": PostureAssessmentImage.ImageType.BACK,
+            "label": "背面",
+            "description": "背面から肩・骨盤・重心の傾向を確認します",
+            "image": image_map.get(PostureAssessmentImage.ImageType.BACK),
+        },
+    ]
+
+
+def _build_assessment_score_context(summary):
+    if not summary:
+        return {
+            "has_score": False,
+            "score": None,
+            "label": "未算出",
+            "note": "AI分析後に、姿勢の確認ポイント数から参考値を表示します。",
+            "important_count": 0,
+            "risk_count": 0,
+            "load_count": 0,
+        }
+
+    important_count = len(summary.get("important_points") or [])
+    risk_count = len(summary.get("risk_notes") or [])
+    load_count = len(summary.get("suspected_load_areas") or [])
+    score = 86 - important_count * 5 - risk_count * 4 - load_count * 2
+    score = round(max(35, min(95, score)))
+
+    if score >= 76:
+        label = "安定傾向"
+    elif score >= 60:
+        label = "確認ポイントあり"
+    else:
+        label = "要確認"
+
+    return {
+        "has_score": True,
+        "score": score,
+        "label": label,
+        "note": "AI分析結果の重要ポイントや注意事項の数から作成した参考値です。診断ではありません。",
+        "important_count": important_count,
+        "risk_count": risk_count,
+        "load_count": load_count,
+    }
+
+
 @staff_required
 def posture_detail_view(request, assessment_id):
     clinic = get_current_clinic(request)
@@ -273,11 +357,13 @@ def posture_detail_view(request, assessment_id):
         for image in images
     }
 
-    summary = assessment.get_active_summary() or {}
+    summary = _normalize_assessment_summary(assessment.get_active_summary() or {})
     important_points = summary.get("important_points") or []
     posture_findings = summary.get("posture_findings") or {}
     recommended_checks = summary.get("recommended_checks") or []
     next_action = summary.get("next_action") or []
+    image_cards = _build_assessment_image_cards(images)
+    assessment_score = _build_assessment_score_context(summary)
 
     return render(request, "posture_assessments/detail.html", {
         "active": "patient_search",
@@ -291,6 +377,8 @@ def posture_detail_view(request, assessment_id):
         "posture_findings": posture_findings,
         "recommended_checks": recommended_checks,
         "next_action": next_action,
+        "image_cards": image_cards,
+        "assessment_score": assessment_score,
     })
 
 

@@ -4,680 +4,1051 @@
 {% block content %}
 <style>
   .pa-detail{
-    max-width:1280px;
+    max-width:1480px;
     margin:0 auto;
+    color:#152b3f;
+  }
+
+  .pa-hero{
+    overflow:hidden;
+    border-radius:30px;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(49,134,210,.22), transparent 30%),
+      linear-gradient(135deg,#f4f9ff 0%,#fbfdff 48%,#f3fffb 100%);
+    border:1px solid #dce8f2;
+    box-shadow:0 28px 80px rgba(21,48,75,.12);
+  }
+
+  .pa-hero-main{
+    display:grid;
+    grid-template-columns:1.1fr .95fr;
+    gap:16px;
+    padding:22px;
+  }
+
+  .pa-title-card,
+  .pa-meta-card,
+  .pa-score-card,
+  .pa-card,
+  .pa-image-card,
+  .pa-upload-card{
+    border-radius:24px;
+    background:#fff;
+    border:1px solid #dce8f2;
+    box-shadow:0 16px 40px rgba(23,64,100,.055);
+  }
+
+  .pa-title-card{
+    min-height:214px;
     display:flex;
     flex-direction:column;
-    gap:18px;
-  }
-
-  .pa-head{
-    display:flex;
     justify-content:space-between;
-    align-items:flex-start;
-    gap:16px;
-    flex-wrap:wrap;
+    padding:20px;
   }
 
-  .pa-eyebrow{
+  .pa-kicker{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:#2f72c5;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .pa-kicker-pill{
     display:inline-flex;
     align-items:center;
-    gap:8px;
-    padding:7px 12px;
+    justify-content:center;
+    min-height:29px;
+    padding:0 13px;
     border-radius:999px;
-    background:#eef2ff;
-    color:#3730a3;
+    color:#fff;
+    background:linear-gradient(135deg,#286fbe,#35b9b0);
     font-size:12px;
-    font-weight:900;
-    margin-bottom:10px;
+    font-weight:950;
   }
 
   .pa-title{
-    margin:0;
-    font-size:42px;
-    font-weight:900;
-    letter-spacing:-.05em;
-    color:#0b1220;
+    margin:12px 0 0;
+    color:#102b44;
+    font-size:clamp(34px,4vw,54px);
+    line-height:1.02;
+    letter-spacing:-.055em;
+    font-weight:950;
   }
 
-  .pa-sub{
+  .pa-subtitle{
+    margin:12px 0 0;
+    color:#596f82;
+    font-size:15px;
+    font-weight:800;
+    line-height:1.8;
+  }
+
+  .pa-brand{
+    color:#7890a4;
+    font-size:12px;
+    font-weight:950;
+    letter-spacing:.14em;
+  }
+
+  .pa-hero-side{
+    display:grid;
+    grid-template-rows:1fr auto;
+    gap:12px;
+  }
+
+  .pa-meta-card{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    overflow:hidden;
+  }
+
+  .pa-patient-box{
+    grid-column:1 / -1;
+    padding:18px;
+    border-bottom:1px solid #e5eef6;
+  }
+
+  .pa-label{
+    color:#6c8296;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .pa-patient-name{
     margin-top:8px;
-    color:#64748b;
-    font-size:14px;
-    font-weight:700;
+    color:#102b44;
+    font-size:30px;
+    font-weight:950;
+    letter-spacing:-.04em;
   }
 
-  .pa-tools{
+  .pa-meta-item{
+    padding:14px 18px;
+    border-right:1px solid #e5eef6;
+    border-bottom:1px solid #e5eef6;
+  }
+
+  .pa-meta-item:nth-child(odd){
+    border-right:0;
+  }
+
+  .pa-meta-item:nth-last-child(-n+2){
+    border-bottom:0;
+  }
+
+  .pa-meta-value{
+    margin-top:7px;
+    color:#14324d;
+    font-size:18px;
+    font-weight:950;
+  }
+
+  .pa-action-row{
     display:flex;
+    justify-content:flex-end;
+    align-items:center;
     gap:10px;
     flex-wrap:wrap;
   }
 
   .pa-btn{
-    min-height:44px;
+    min-height:42px;
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    padding:0 16px;
-    border-radius:16px;
-    border:1px solid #e2e8f0;
+    padding:0 15px;
+    border-radius:999px;
+    border:1px solid #d7e3ef;
     background:#fff;
-    color:#0f172a;
-    text-decoration:none;
-    font-size:14px;
+    color:#17324a;
+    font-size:13px;
     font-weight:900;
-    box-shadow:0 10px 22px rgba(15,23,42,.04);
+    text-decoration:none;
+    box-shadow:0 10px 24px rgba(19,45,70,.07);
+    cursor:pointer;
   }
 
   .pa-btn.primary{
     color:#fff;
     border-color:transparent;
-    background:linear-gradient(135deg,#0b1220 0%,#2563eb 100%);
-    box-shadow:0 16px 34px rgba(37,99,235,.22);
+    background:linear-gradient(135deg,#286fbe,#35b9b0);
+    box-shadow:0 16px 34px rgba(47,114,197,.22);
   }
 
-  .pa-hero{
-    border-radius:30px;
-    padding:24px;
+  .pa-btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+
+  .pa-score-strip{
+    display:grid;
+    grid-template-columns:1fr repeat(3,minmax(0,.52fr));
+    gap:12px;
+    padding:0 22px 22px;
+  }
+
+  .pa-score-card{
+    display:grid;
+    grid-template-columns:124px 1fr;
+    gap:16px;
+    align-items:center;
+    padding:18px;
     background:
-      radial-gradient(circle at 86% 20%, rgba(96,165,250,.24), transparent 28%),
-      linear-gradient(135deg,#060c19 0%,#111b36 45%,#2563eb 100%);
-    color:#fff;
-    box-shadow:0 24px 64px rgba(15,23,42,.16);
+      radial-gradient(circle at 12% 8%, rgba(49,134,210,.16), transparent 34%),
+      linear-gradient(135deg,#fff,#f4fbff);
   }
 
-  .pa-hero-grid{
+  .pa-score-ring{
+    --score:0;
+    width:112px;
+    height:112px;
     display:grid;
-    grid-template-columns:1.2fr .8fr;
-    gap:18px;
+    place-items:center;
+    border-radius:50%;
+    background:conic-gradient(#2f72c5 calc(var(--score) * 1%),#e1ebf3 0);
   }
 
-  .pa-patient{
-    margin:0;
-    font-size:34px;
-    font-weight:900;
-    letter-spacing:-.04em;
-  }
-
-  .pa-hero-text{
-    margin-top:10px;
-    color:rgba(255,255,255,.76);
-    font-size:14px;
-    font-weight:700;
-    line-height:1.8;
-  }
-
-  .pa-status-grid{
+  .pa-score-inner{
+    width:80px;
+    height:80px;
     display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:10px;
+    place-items:center;
+    border-radius:50%;
+    background:#fff;
+    box-shadow:inset 0 0 0 1px #e7eff6;
   }
 
-  .pa-status-box{
-    border-radius:20px;
-    padding:15px;
-    background:rgba(255,255,255,.12);
-    border:1px solid rgba(255,255,255,.12);
+  .pa-score-number{
+    color:#142b42;
+    font-size:32px;
+    font-weight:950;
+    line-height:1;
   }
 
-  .pa-status-label{
-    color:rgba(255,255,255,.66);
+  .pa-score-max{
+    color:#7890a4;
     font-size:11px;
     font-weight:900;
-    margin-bottom:8px;
   }
 
-  .pa-status-value{
-    font-size:20px;
+  .pa-score-title{
+    color:#142b42;
+    font-size:16px;
+    font-weight:950;
+  }
+
+  .pa-score-label{
+    margin-top:8px;
+    color:#1c7b6f;
+    font-size:23px;
+    font-weight:950;
+  }
+
+  .pa-score-note{
+    margin-top:8px;
+    color:#6f8295;
+    font-size:12px;
+    font-weight:780;
+    line-height:1.65;
+  }
+
+  .pa-count-card{
+    min-height:112px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:16px;
+    border-radius:24px;
+    background:#fff;
+    border:1px solid #dce8f2;
+    box-shadow:0 16px 40px rgba(23,64,100,.055);
+  }
+
+  .pa-count-label{
+    color:#526a80;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .pa-count-value{
+    margin-top:10px;
+    color:#152c42;
+    font-size:34px;
+    line-height:1;
+    font-weight:950;
+  }
+
+  .pa-count-unit{
+    margin-left:4px;
+    color:#536b80;
+    font-size:13px;
     font-weight:900;
   }
 
-  .pa-main-grid{
+  .pa-body{
     display:grid;
-    grid-template-columns:1.05fr .95fr;
-    gap:18px;
-    align-items:start;
+    gap:16px;
+    margin-top:18px;
+  }
+
+  .pa-section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:14px;
+    margin-bottom:12px;
+  }
+
+  .pa-section-kicker{
+    color:#2f72c5;
+    font-size:12px;
+    font-weight:950;
+    letter-spacing:.05em;
+  }
+
+  .pa-section-title{
+    margin-top:3px;
+    color:#132c43;
+    font-size:22px;
+    letter-spacing:-.035em;
+    font-weight:950;
+  }
+
+  .pa-section-note{
+    color:#72879b;
+    font-size:12px;
+    font-weight:850;
   }
 
   .pa-card{
-    border-radius:28px;
-    padding:22px;
-    background:rgba(255,255,255,.88);
-    border:1px solid rgba(255,255,255,.88);
-    box-shadow:0 18px 42px rgba(15,23,42,.06);
-    backdrop-filter:blur(16px);
+    padding:16px;
   }
 
-  .pa-card-title{
-    margin:0;
-    font-size:22px;
-    font-weight:900;
-    color:#0f172a;
-  }
-
-  .pa-card-sub{
-    margin-top:5px;
-    color:#64748b;
-    font-size:13px;
-    font-weight:700;
-  }
-
-  .image-grid{
+  .pa-image-grid{
     display:grid;
-    grid-template-columns:1fr;
-    gap:14px;
-    margin-top:16px;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
   }
 
-  .image-item{
-    border-radius:22px;
+  .pa-image-card{
     overflow:hidden;
-    border:1px solid #e2e8f0;
-    background:#f8fafc;
+    background:#f7fbff;
   }
 
-  .image-head{
+  .pa-image-head{
     display:flex;
     justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    padding:12px 14px;
-    background:#fff;
-    border-bottom:1px solid #e2e8f0;
-  }
-
-  .image-title{
-    color:#0f172a;
-    font-size:14px;
-    font-weight:900;
-  }
-
-  .image-body{
-    min-height:260px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#f8fafc;
-  }
-
-  .image-body img{
-    width:100%;
-    display:block;
-  }
-
-  .analysis-empty{
-    border:1px dashed #d6dfeb;
-    border-radius:22px;
-    padding:30px;
-    text-align:center;
-    color:#94a3b8;
-    background:#f8fafc;
-    font-weight:800;
-    margin-top:16px;
-  }
-
-  .critical-card{
-    margin-top:16px;
-    border-radius:26px;
-    padding:22px;
-    color:#fff;
-    background:
-      radial-gradient(circle at 88% 12%, rgba(96,165,250,.28), transparent 28%),
-      linear-gradient(145deg,#0b1020 0%,#14234d 56%,#3b5edb 100%);
-    box-shadow:0 24px 60px rgba(15,23,42,.16);
-  }
-
-  .critical-kicker{
-    color:rgba(255,255,255,.65);
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:.16em;
-    text-transform:uppercase;
-    margin-bottom:8px;
-  }
-
-  .critical-title{
-    font-size:24px;
-    font-weight:900;
-    margin-bottom:16px;
-  }
-
-  .critical-list{
-    display:grid;
-    gap:10px;
-  }
-
-  .critical-item{
-    display:flex;
-    gap:12px;
     align-items:flex-start;
-    border-radius:18px;
+    gap:10px;
     padding:12px 14px;
-    background:rgba(255,255,255,.10);
-    border:1px solid rgba(255,255,255,.12);
-    font-weight:800;
-    line-height:1.7;
+    background:linear-gradient(180deg,#f3f8ff,#eaf3fc);
+    border-bottom:1px solid #dbe8f2;
   }
 
-  .critical-num{
-    width:28px;
-    height:28px;
+  .pa-image-title{
+    color:#142e47;
+    font-size:16px;
+    font-weight:950;
+  }
+
+  .pa-image-desc{
+    margin-top:3px;
+    color:#6b8092;
+    font-size:11px;
+    font-weight:850;
+  }
+
+  .pa-image-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:24px;
+    padding:0 9px;
     border-radius:999px;
+    color:#137551;
+    background:#e5f8ef;
+    font-size:11px;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .pa-image-badge.empty{
+    color:#5d6873;
+    background:#eef1f4;
+  }
+
+  .pa-image-body{
+    min-height:360px;
     display:flex;
     align-items:center;
     justify-content:center;
-    background:rgba(255,255,255,.18);
-    flex-shrink:0;
+    background:#edf4f8;
+  }
+
+  .pa-image-body img{
+    width:100%;
+    height:360px;
+    display:block;
+    object-fit:contain;
+    background:#edf4f8;
+  }
+
+  .pa-no-image{
+    color:#8798a8;
     font-size:13px;
-    font-weight:900;
+    font-weight:950;
   }
 
-  .info-grid{
+  .pa-layout{
     display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-    margin-top:16px;
+    grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+    gap:16px;
+    align-items:start;
   }
 
-  .info-box{
-    border-radius:18px;
-    padding:15px;
-    background:#fff;
-    border:1px solid #e8eef7;
+  .pa-summary-card{
+    overflow:hidden;
+    padding:0;
   }
 
-  .info-box.wide{
-    grid-column:1 / -1;
+  .pa-summary-head{
+    padding:14px 18px;
+    color:#fff;
+    background:linear-gradient(135deg,#2f72c5,#31b9af);
+    font-size:19px;
+    font-weight:950;
   }
 
-  .info-label{
-    color:#64748b;
-    font-size:12px;
-    font-weight:900;
-    margin-bottom:8px;
+  .pa-summary-body{
+    padding:18px;
   }
 
-  .info-value{
-    color:#0f172a;
-    font-size:14px;
-    font-weight:800;
-    line-height:1.8;
+  .pa-summary-text{
+    margin:0;
+    color:#28445d;
+    font-size:15px;
+    font-weight:830;
+    line-height:1.9;
     white-space:pre-wrap;
   }
 
-  .upload-form{
-    margin-top:16px;
-    border-top:1px solid #e2e8f0;
-    padding-top:16px;
-  }
-
-  .upload-grid{
+  .pa-message-card{
+    margin-top:14px;
     display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
+    grid-template-columns:78px 1fr;
+    gap:15px;
+    align-items:center;
+    padding:18px;
+    border-radius:22px;
+    background:
+      radial-gradient(circle at 96% 0%, rgba(54,185,176,.18), transparent 28%),
+      linear-gradient(135deg,#fffaf4,#f4fffc);
+    border:1px solid #f2d7bd;
   }
 
-  .upload-field label{
+  .pa-message-symbol{
+    width:68px;
+    height:68px;
+    display:grid;
+    place-items:center;
+    border-radius:22px;
+    color:#d66a24;
+    background:#fff2e7;
+    font-size:28px;
+    font-weight:950;
+  }
+
+  .pa-message-title{
+    color:#17334d;
+    font-size:18px;
+    font-weight:950;
+  }
+
+  .pa-message-text{
+    margin:7px 0 0;
+    color:#425b72;
+    font-size:15px;
+    font-weight:800;
+    line-height:1.9;
+    white-space:pre-wrap;
+  }
+
+  .pa-insight-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  .pa-list-card{
+    padding:14px;
+    border-radius:20px;
+    background:#f8fbff;
+    border:1px solid #e0ebf4;
+  }
+
+  .pa-list-card.patient{
+    background:#f3fcf7;
+    border-color:#cfeedd;
+  }
+
+  .pa-list-card.attention{
+    background:#fff9ef;
+    border-color:#f7dfaa;
+  }
+
+  .pa-list-card.clinical{
+    background:#f4f8ff;
+    border-color:#cfe2f7;
+  }
+
+  .pa-list-title{
+    color:#17334d;
+    font-size:15px;
+    font-weight:950;
+    margin-bottom:9px;
+  }
+
+  .pa-list{
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:8px;
+    list-style:none;
+  }
+
+  .pa-list li{
+    position:relative;
+    padding-left:16px;
+    color:#3f5870;
+    font-size:13px;
+    font-weight:760;
+    line-height:1.65;
+  }
+
+  .pa-list li::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:.72em;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#7cb5dc;
+  }
+
+  .pa-finding-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .pa-finding-card{
+    min-height:132px;
+    padding:14px;
+    border-radius:20px;
+    background:#fff;
+    border:1px solid #dce8f2;
+  }
+
+  .pa-finding-card.wide{
+    grid-column:span 2;
+  }
+
+  .pa-finding-label{
+    color:#2f72c5;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .pa-finding-text{
+    margin-top:8px;
+    color:#3f5870;
+    font-size:13px;
+    font-weight:760;
+    line-height:1.7;
+    white-space:pre-wrap;
+  }
+
+  .pa-upload-card{
+    margin-top:16px;
+    padding:18px;
+  }
+
+  .pa-upload-alert{
+    margin-bottom:14px;
+    padding:13px 14px;
+    border-radius:18px;
+    color:#76552a;
+    background:#fffaf2;
+    border:1px solid #f3d4a7;
+    font-size:13px;
+    font-weight:850;
+    line-height:1.7;
+  }
+
+  .pa-upload-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .pa-upload-field{
+    padding:14px;
+    border-radius:18px;
+    background:#f8fbff;
+    border:1px solid #dce8f2;
+  }
+
+  .pa-upload-field label{
     display:block;
-    color:#334155;
-    font-size:12px;
-    font-weight:900;
-    margin-bottom:6px;
+    margin-bottom:8px;
+    color:#17334d;
+    font-size:13px;
+    font-weight:950;
   }
 
-  .upload-field input{
+  .pa-upload-field input{
     width:100%;
     font-size:12px;
   }
 
-  .upload-submit{
-    margin-top:12px;
-    min-height:42px;
-    padding:0 16px;
-    border:none;
-    border-radius:14px;
-    background:#0f172a;
+  .pa-upload-submit{
+    margin-top:14px;
+    min-height:44px;
+    padding:0 18px;
+    border:0;
+    border-radius:999px;
     color:#fff;
-    font-weight:900;
+    background:linear-gradient(135deg,#286fbe,#35b9b0);
+    font-size:13px;
+    font-weight:950;
     cursor:pointer;
   }
 
-    .pa-btn:disabled{
-    opacity:.55;
-    cursor:not-allowed;
-    transform:none;
-    }
+  .pa-empty{
+    margin-top:14px;
+    padding:28px;
+    border-radius:22px;
+    color:#7c8fa1;
+    background:#f8fbff;
+    border:1px dashed #cbd9e6;
+    text-align:center;
+    font-size:14px;
+    font-weight:850;
+    line-height:1.8;
+  }
 
-    .pa-btn.primary:disabled{
-    background:linear-gradient(135deg,#94a3b8 0%,#64748b 100%);
-    box-shadow:none;
-    }
+  .pa-error{
+    margin-top:14px;
+    padding:14px;
+    border-radius:18px;
+    color:#991b1b;
+    background:#fff1f2;
+    border:1px solid #fecaca;
+    font-size:13px;
+    font-weight:850;
+    line-height:1.7;
+  }
 
-  @media(max-width:1100px){
-    .pa-main-grid,
-    .pa-hero-grid{
+  @media(max-width:1180px){
+    .pa-hero-main,
+    .pa-score-strip,
+    .pa-layout,
+    .pa-image-grid,
+    .pa-finding-grid{
       grid-template-columns:1fr;
     }
   }
 
   @media(max-width:760px){
-    .upload-grid,
-    .info-grid,
-    .pa-status-grid{
+    .pa-hero-main,
+    .pa-score-strip{
+      padding:14px;
+    }
+
+    .pa-meta-card,
+    .pa-score-card,
+    .pa-message-card,
+    .pa-insight-grid,
+    .pa-upload-grid{
       grid-template-columns:1fr;
     }
 
-    .info-box.wide{
+    .pa-meta-item{
+      border-right:0;
+    }
+
+    .pa-action-row{
+      justify-content:flex-start;
+    }
+
+    .pa-finding-card.wide{
       grid-column:auto;
     }
 
-    .pa-title{
-      font-size:32px;
+    .pa-image-body,
+    .pa-image-body img{
+      height:280px;
+      min-height:280px;
     }
   }
 </style>
 
 <div class="pa-detail">
-
-  <header class="pa-head">
-    <div>
-      <div class="pa-eyebrow">AI Posture Analysis</div>
-      <h1 class="pa-title">{{ assessment.title }}</h1>
-      <div class="pa-sub">
-        姿勢画像・AI分析結果・次回確認項目を確認できます
-      </div>
-    </div>
-
-    <div class="pa-tools">
-    <a href="{% url 'posture_assessments:list' patient.id %}" class="pa-btn">← 一覧へ戻る</a>
-    <a href="{% url 'staff:patient_detail' patient.id %}" class="pa-btn">患者詳細へ</a>
-
-    <form method="post"
-            action="{% url 'posture_assessments:analyze' assessment.id %}"
-            style="display:inline;">
-        {% csrf_token %}
-
-      <button type="submit"
-              class="pa-btn primary js-ai-submit"
-              {% if not images or assessment.status == "analyzing" %}disabled{% endif %}>
-        {% if assessment.status == "analyzing" %}
-          AI分析中...
-        {% elif summary %}
-          AI分析を再実行
-        {% else %}
-          AI分析を実行
-        {% endif %}
-      </button>
-    </form>
-    </div>
-  </header>
-
   <section class="pa-hero">
-    <div class="pa-hero-grid">
-      <div>
-        <h2 class="pa-patient">{{ patient.last_name }} {{ patient.first_name }} 様</h2>
-        <div class="pa-hero-text">
-          作成日：{{ assessment.created_at|date:"Y-m-d H:i" }}<br>
-          {% if assessment.memo %}
-            メモ：{{ assessment.memo }}
-          {% else %}
-            メモ：-
-          {% endif %}
+    <div class="pa-hero-main">
+      <div class="pa-title-card">
+        <div>
+          <div class="pa-kicker">
+            <span class="pa-kicker-pill">AI姿勢分析</span>
+            <span>単体姿勢評価</span>
+          </div>
+          <h1 class="pa-title">{{ assessment.title }}</h1>
+          <p class="pa-subtitle">
+            姿勢画像とAI分析結果を、施術者の確認と患者さんへの説明に使いやすい形で整理しています。
+          </p>
+        </div>
+        <div class="pa-brand">CareFrow Posture Intelligence</div>
+      </div>
+
+      <div class="pa-hero-side">
+        <div class="pa-meta-card">
+          <div class="pa-patient-box">
+            <div class="pa-label">患者さん</div>
+            <div class="pa-patient-name">{{ patient.last_name }} {{ patient.first_name }} 様</div>
+          </div>
+          <div class="pa-meta-item">
+            <div class="pa-label">撮影日</div>
+            <div class="pa-meta-value">{{ assessment.created_at|date:"Y/m/d" }}</div>
+          </div>
+          <div class="pa-meta-item">
+            <div class="pa-label">状態</div>
+            <div class="pa-meta-value">{{ assessment.get_status_display }}</div>
+          </div>
+          <div class="pa-meta-item">
+            <div class="pa-label">画像数</div>
+            <div class="pa-meta-value">{{ images|length }}枚</div>
+          </div>
+          <div class="pa-meta-item">
+            <div class="pa-label">AI分析日時</div>
+            <div class="pa-meta-value">
+              {% if assessment.analyzed_at %}{{ assessment.analyzed_at|date:"Y/m/d" }}{% else %}-{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="pa-action-row">
+          <a href="{% url 'posture_assessments:list' patient.id %}" class="pa-btn">一覧へ戻る</a>
+          <a href="{% url 'staff:patient_detail' patient.id %}" class="pa-btn">患者詳細へ戻る</a>
+          <form method="post"
+                action="{% url 'posture_assessments:analyze' assessment.id %}"
+                style="display:inline;">
+            {% csrf_token %}
+            <button type="submit"
+                    class="pa-btn primary js-ai-submit"
+                    {% if not images or assessment.status == "analyzing" %}disabled{% endif %}>
+              {% if assessment.status == "analyzing" %}
+                AI分析中...
+              {% elif summary %}
+                AI分析を再実行
+              {% else %}
+                AI分析を実行
+              {% endif %}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="pa-score-strip">
+      <div class="pa-score-card">
+        <div class="pa-score-ring" style="--score:{{ assessment_score.score|default:0 }};">
+          <div class="pa-score-inner">
+            <div>
+              <div class="pa-score-number">
+                {% if assessment_score.has_score %}{{ assessment_score.score }}{% else %}--{% endif %}
+              </div>
+              <div class="pa-score-max">/100</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="pa-score-title">姿勢スコア風の参考表示</div>
+          <div class="pa-score-label">{{ assessment_score.label }}</div>
+          <div class="pa-score-note">{{ assessment_score.note }}</div>
         </div>
       </div>
 
-      <div class="pa-status-grid">
-        <div class="pa-status-box">
-          <div class="pa-status-label">状態</div>
-          <div class="pa-status-value">{{ assessment.get_status_display }}</div>
-        </div>
-
-        <div class="pa-status-box">
-          <div class="pa-status-label">画像数</div>
-          <div class="pa-status-value">{{ images|length }}枚</div>
-        </div>
+      <div class="pa-count-card">
+        <div class="pa-count-label">重要ポイント</div>
+        <div class="pa-count-value">{{ assessment_score.important_count }}<span class="pa-count-unit">件</span></div>
+      </div>
+      <div class="pa-count-card">
+        <div class="pa-count-label">負担の可能性</div>
+        <div class="pa-count-value">{{ assessment_score.load_count }}<span class="pa-count-unit">件</span></div>
+      </div>
+      <div class="pa-count-card">
+        <div class="pa-count-label">注意事項</div>
+        <div class="pa-count-value">{{ assessment_score.risk_count }}<span class="pa-count-unit">件</span></div>
       </div>
     </div>
   </section>
 
-  <div class="pa-main-grid">
-
+  <div class="pa-body">
     <section class="pa-card">
-      <h3 class="pa-card-title">姿勢画像</h3>
-      <div class="pa-card-sub">正面・側面・背面の画像を確認します</div>
+      <div class="pa-section-head">
+        <div>
+          <div class="pa-section-kicker">Posture Images</div>
+          <div class="pa-section-title">姿勢画像</div>
+        </div>
+        <div class="pa-section-note">正面・右側面・背面を大きく確認します</div>
+      </div>
 
-      <div class="image-grid">
-        {% for img in images %}
-          <div class="image-item">
-            <div class="image-head">
-              <div class="image-title">{{ img.get_image_type_display }}</div>
-              <div class="image-title">{{ img.created_at|date:"Y-m-d H:i" }}</div>
+      <div class="pa-image-grid">
+        {% for card in image_cards %}
+          <article class="pa-image-card">
+            <div class="pa-image-head">
+              <div>
+                <div class="pa-image-title">{{ card.label }}</div>
+                <div class="pa-image-desc">{{ card.description }}</div>
+              </div>
+              {% if card.image %}
+                <span class="pa-image-badge">登録済み</span>
+              {% else %}
+                <span class="pa-image-badge empty">未登録</span>
+              {% endif %}
             </div>
-            <div class="image-body">
-              <img src="{{ img.image.url }}" alt="{{ img.get_image_type_display }}">
+            <div class="pa-image-body">
+              {% if card.image %}
+                <img src="{{ card.image.image.url }}" alt="{{ card.label }}">
+              {% else %}
+                <div class="pa-no-image">画像なし</div>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="pa-layout">
+      <section class="pa-card pa-summary-card">
+        <div class="pa-summary-head">今回の姿勢サマリー</div>
+        <div class="pa-summary-body">
+          {% if assessment.status == "failed" and assessment.ai_error_message %}
+            <div class="pa-error">
+              AI分析に失敗しました。<br>
+              {{ assessment.ai_error_message }}
+            </div>
+          {% endif %}
+
+          {% if summary %}
+            <p class="pa-summary-text">
+              {% if summary.overall_summary %}
+                {{ summary.overall_summary }}
+              {% else %}
+                AI分析結果をもとに、姿勢の傾向と確認が必要なポイントを整理します。
+              {% endif %}
+            </p>
+
+            <div class="pa-message-card">
+              <div class="pa-message-symbol">+</div>
+              <div>
+                <div class="pa-message-title">患者さんへの説明</div>
+                <p class="pa-message-text">
+                  {% if summary.patient_explanation %}
+                    {{ summary.patient_explanation }}
+                  {% else %}
+                    姿勢の状態は、痛みの出方や日常の動きと合わせて確認していくことが大切です。気になる点を一緒に確認しながら、無理のない範囲で整えていきましょう。
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+          {% else %}
+            <div class="pa-empty">
+              {% if images %}
+                まだAI分析は実行されていません。画面上部の「AI分析を実行」から姿勢分析を開始できます。
+              {% else %}
+                まだ画像が登録されていません。正面・右側面・背面の画像を登録するとAI分析を実行できます。
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="pa-card">
+        <div class="pa-section-head">
+          <div>
+            <div class="pa-section-kicker">AI Findings</div>
+            <div class="pa-section-title">AI分析結果</div>
+          </div>
+          <div class="pa-section-note">患者向けと施術者向けに整理</div>
+        </div>
+
+        {% if summary %}
+          <div class="pa-insight-grid">
+            <div class="pa-list-card patient">
+              <div class="pa-list-title">重要ポイント</div>
+              <ul class="pa-list">
+                {% if summary.important_points %}
+                  {% for item in summary.important_points %}<li>{{ item }}</li>{% endfor %}
+                {% else %}
+                  <li>重要ポイントはまだ整理されていません。</li>
+                {% endif %}
+              </ul>
+            </div>
+
+            <div class="pa-list-card attention">
+              <div class="pa-list-title">負担が疑われる部位</div>
+              <ul class="pa-list">
+                {% if summary.suspected_load_areas %}
+                  {% for item in summary.suspected_load_areas %}<li>{{ item }}</li>{% endfor %}
+                {% else %}
+                  <li>負担が疑われる部位はまだ整理されていません。</li>
+                {% endif %}
+              </ul>
+            </div>
+
+            <div class="pa-list-card clinical">
+              <div class="pa-list-title">施術者向けメモ</div>
+              <ul class="pa-list">
+                {% if summary.clinical_notes %}
+                  {% for item in summary.clinical_notes %}<li>{{ item }}</li>{% endfor %}
+                {% else %}
+                  <li>施術者向けメモはまだ整理されていません。</li>
+                {% endif %}
+              </ul>
+            </div>
+
+            <div class="pa-list-card attention">
+              <div class="pa-list-title">注意事項</div>
+              <ul class="pa-list">
+                {% if summary.risk_notes %}
+                  {% for item in summary.risk_notes %}<li>{{ item }}</li>{% endfor %}
+                {% else %}
+                  <li>画像条件や立ち位置により評価に差が出る可能性があります。</li>
+                  <li>本分析は診断ではなく、施術者の評価補助として扱います。</li>
+                {% endif %}
+              </ul>
+            </div>
+
+            <div class="pa-list-card">
+              <div class="pa-list-title">施術提案</div>
+              <ul class="pa-list">
+                {% if summary.treatment_suggestions %}
+                  {% for item in summary.treatment_suggestions %}<li>{{ item }}</li>{% endfor %}
+                {% else %}
+                  <li>施術提案はまだ整理されていません。</li>
+                {% endif %}
+              </ul>
+            </div>
+
+            <div class="pa-list-card">
+              <div class="pa-list-title">セルフケア提案</div>
+              <ul class="pa-list">
+                {% if summary.home_care_suggestions %}
+                  {% for item in summary.home_care_suggestions %}<li>{{ item }}</li>{% endfor %}
+                {% else %}
+                  <li>スタッフの指示に合わせて、無理のない範囲で行ってください。</li>
+                {% endif %}
+              </ul>
+            </div>
+
+            <div class="pa-list-card clinical" style="grid-column:1 / -1;">
+              <div class="pa-list-title">次回チェックポイント</div>
+              <ul class="pa-list">
+                {% if summary.next_check_points %}
+                  {% for item in summary.next_check_points %}<li>{{ item }}</li>{% endfor %}
+                {% else %}
+                  <li>次回チェックポイントはまだ整理されていません。</li>
+                {% endif %}
+              </ul>
             </div>
           </div>
-        {% empty %}
-          <div class="analysis-empty">まだ画像が登録されていません。</div>
-        {% endfor %}
+        {% else %}
+          <div class="pa-empty">AI分析後に、重要ポイント・施術提案・セルフケア候補が表示されます。</div>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="pa-card">
+      <div class="pa-section-head">
+        <div>
+          <div class="pa-section-kicker">Body Area Review</div>
+          <div class="pa-section-title">部位別の姿勢傾向</div>
+        </div>
+        <div class="pa-section-note">断定ではなく、確認が必要な傾向として扱います</div>
+      </div>
+
+      <div class="pa-finding-grid">
+        <div class="pa-finding-card">
+          <div class="pa-finding-label">頭部・首</div>
+          <div class="pa-finding-text">{{ summary.posture_findings.head_neck|default:"AI分析後に表示されます。" }}</div>
+        </div>
+        <div class="pa-finding-card">
+          <div class="pa-finding-label">肩</div>
+          <div class="pa-finding-text">{{ summary.posture_findings.shoulder|default:"AI分析後に表示されます。" }}</div>
+        </div>
+        <div class="pa-finding-card">
+          <div class="pa-finding-label">背骨</div>
+          <div class="pa-finding-text">{{ summary.posture_findings.spine|default:"AI分析後に表示されます。" }}</div>
+        </div>
+        <div class="pa-finding-card">
+          <div class="pa-finding-label">骨盤</div>
+          <div class="pa-finding-text">{{ summary.posture_findings.pelvis|default:"AI分析後に表示されます。" }}</div>
+        </div>
+        <div class="pa-finding-card">
+          <div class="pa-finding-label">膝</div>
+          <div class="pa-finding-text">{{ summary.posture_findings.knee|default:"AI分析後に表示されます。" }}</div>
+        </div>
+        <div class="pa-finding-card">
+          <div class="pa-finding-label">足部</div>
+          <div class="pa-finding-text">{{ summary.posture_findings.foot|default:"AI分析後に表示されます。" }}</div>
+        </div>
+        <div class="pa-finding-card wide">
+          <div class="pa-finding-label">全体バランス</div>
+          <div class="pa-finding-text">{{ summary.posture_findings.balance|default:"AI分析後に表示されます。" }}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pa-upload-card">
+      <div class="pa-section-head">
+        <div>
+          <div class="pa-section-kicker">Image Update</div>
+          <div class="pa-section-title">画像追加・差し替え</div>
+        </div>
+        <div class="pa-section-note">上部の分析表示を邪魔しないよう下部に整理しています</div>
+      </div>
+
+      <div class="pa-upload-alert">
+        画像を更新すると、古いAI分析結果と画像内容が一致しなくなる可能性があります。画像更新後は、必要に応じてAI分析の再実行をおすすめします。
       </div>
 
       <form method="post"
             enctype="multipart/form-data"
-            action="{% url 'posture_assessments:upload' assessment.id %}"
-            class="upload-form">
+            action="{% url 'posture_assessments:upload' assessment.id %}">
         {% csrf_token %}
-
-        <div class="pa-card-sub">画像を追加・差し替え</div>
-
-        <div class="upload-grid">
-          <div class="upload-field">
-            <label>正面</label>
+        <div class="pa-upload-grid">
+          <div class="pa-upload-field">
+            <label>正面画像</label>
             <input type="file" name="front_image" accept="image/*" capture="environment">
           </div>
-
-          <div class="upload-field">
-            <label>右側面</label>
+          <div class="pa-upload-field">
+            <label>右側面画像</label>
             <input type="file" name="side_right_image" accept="image/*" capture="environment">
           </div>
-
-          <div class="upload-field">
-            <label>背面</label>
+          <div class="pa-upload-field">
+            <label>背面画像</label>
             <input type="file" name="back_image" accept="image/*" capture="environment">
           </div>
         </div>
-
-        <button type="submit" class="upload-submit">画像を更新する</button>
+        <button type="submit" class="pa-upload-submit">画像を更新する</button>
       </form>
     </section>
-
-    <section class="pa-card">
-    <h3 class="pa-card-title">AI分析結果</h3>
-    <div class="pa-card-sub">
-        姿勢傾向・負担部位・施術で確認すべきポイントを整理します
-    </div>
-
-    {% if assessment.status == "failed" and assessment.ai_error_message %}
-      <div class="analysis-empty" style="border-color:#fecaca; background:#fff1f2; color:#991b1b;">
-        AI分析に失敗しました。<br>
-        {{ assessment.ai_error_message }}
-      </div>
-    {% endif %}
-
-    {% if summary %}
-
-        {% if important_points %}
-        <div class="critical-card">
-            <div class="critical-kicker">AI Critical Points</div>
-            <div class="critical-title">姿勢分析の重要ポイント</div>
-
-            <div class="critical-list">
-            {% for p in important_points %}
-                <div class="critical-item">
-                <div class="critical-num">{{ forloop.counter }}</div>
-                <div>{{ p }}</div>
-                </div>
-            {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="info-grid">
-
-        <div class="info-box wide">
-            <div class="info-label">全体サマリー</div>
-            <div class="info-value">{{ summary.overall_summary|default:"-" }}</div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">頭部・首</div>
-            <div class="info-value">
-            {{ summary.posture_findings.head_neck|default:"-" }}
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">肩</div>
-            <div class="info-value">
-            {{ summary.posture_findings.shoulder|default:"-" }}
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">背骨</div>
-            <div class="info-value">
-            {{ summary.posture_findings.spine|default:"-" }}
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">骨盤</div>
-            <div class="info-value">
-            {{ summary.posture_findings.pelvis|default:"-" }}
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">膝</div>
-            <div class="info-value">
-            {{ summary.posture_findings.knee|default:"-" }}
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">足部</div>
-            <div class="info-value">
-            {{ summary.posture_findings.foot|default:"-" }}
-            </div>
-        </div>
-
-        <div class="info-box wide">
-            <div class="info-label">全体バランス</div>
-            <div class="info-value">
-            {{ summary.posture_findings.balance|default:"-" }}
-            </div>
-        </div>
-
-        <div class="info-box wide">
-            <div class="info-label">負担が疑われる部位</div>
-            <div class="info-value">
-            {% if summary.suspected_load_areas %}
-                {% for item in summary.suspected_load_areas %}
-                ・{{ item }}
-    {% endfor %}
-            {% else %}
-                -
-            {% endif %}
-            </div>
-        </div>
-
-        <div class="info-box wide">
-            <div class="info-label">施術者向けメモ</div>
-            <div class="info-value">
-            {% if summary.clinical_notes %}
-                {% for item in summary.clinical_notes %}
-                ・{{ item }}
-    {% endfor %}
-            {% else %}
-                -
-            {% endif %}
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">施術提案</div>
-            <div class="info-value">
-            {% if summary.treatment_suggestions %}
-                {% for item in summary.treatment_suggestions %}
-                ・{{ item }}
-    {% endfor %}
-            {% else %}
-                -
-            {% endif %}
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">セルフケア提案</div>
-            <div class="info-value">
-            {% if summary.home_care_suggestions %}
-                {% for item in summary.home_care_suggestions %}
-                ・{{ item }}
-    {% endfor %}
-            {% else %}
-                -
-            {% endif %}
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">次回チェックポイント</div>
-            <div class="info-value">
-            {% if summary.next_check_points %}
-                {% for item in summary.next_check_points %}
-                ・{{ item }}
-    {% endfor %}
-            {% else %}
-                -
-            {% endif %}
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-label">注意事項</div>
-            <div class="info-value">
-            {% if summary.risk_notes %}
-                {% for item in summary.risk_notes %}
-                ・{{ item }}
-    {% endfor %}
-            {% else %}
-                -
-            {% endif %}
-            </div>
-        </div>
-
-        <div class="info-box wide">
-            <div class="info-label">患者さんへの説明</div>
-            <div class="info-value">{{ summary.patient_explanation|default:"-" }}</div>
-        </div>
-
-        </div>
-
-    {% else %}
-        <div class="analysis-empty">
-        {% if images %}
-            まだAI分析は実行されていません。<br>
-            右上の「AI分析を実行」から姿勢分析を開始できます。
-        {% else %}
-            まだ画像が登録されていません。<br>
-            正面・側面・背面の画像を登録するとAI分析を実行できます。
-        {% endif %}
-        </div>
-    {% endif %}
-    </section>
-
   </div>
-
 </div>
 {% endblock %}
 
