@@ -1260,7 +1260,7 @@
             <div class="ai-summary-kicker">AI Comparison Summary</div>
             <div class="ai-summary-title">全体サマリー</div>
             <div class="ai-summary-text">
-            {{ summary.overall_summary|default:"-" }}
+            {{ summary.overall_comparison_summary|default:"-" }}
             </div>
         </div>
 
@@ -1327,8 +1327,8 @@
                 <div class="ai-mini-title">注意・再確認</div>
             </div>
             <ul class="ai-list">
-                {% if summary.worse_or_attention_points %}
-                {% for item in summary.worse_or_attention_points %}
+                {% if summary.worsened_or_remaining_points %}
+                {% for item in summary.worsened_or_remaining_points %}
                     <li>{{ item }}</li>
                 {% endfor %}
                 {% else %}
@@ -1339,6 +1339,30 @@
 
         </div>
 
+        <div class="ai-section-title-row">
+            <div class="ai-section-title">計測値ベースの所見</div>
+            <div class="ai-section-note">数値差分は施術者評価を補助する参考情報です</div>
+        </div>
+
+        <div class="important-change-card">
+            <div class="important-change-list">
+            {% if summary.measurement_based_findings %}
+                {% for item in summary.measurement_based_findings %}
+                <div class="important-change-item">
+                    <div class="important-num">{{ forloop.counter }}</div>
+                    <div class="important-text">{{ item }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="important-change-item">
+                <div class="important-num">-</div>
+                <div class="important-text">利用可能な計測値差分はありません。</div>
+                </div>
+            {% endif %}
+            </div>
+        </div>
+
+        {% if summary.body_area_comparison %}
         <div class="ai-section-title-row">
             <div class="ai-section-title">部位別比較</div>
             <div class="ai-section-note">頭部・肩・骨盤・膝などの変化を確認</div>
@@ -1380,6 +1404,7 @@
             <div class="body-compare-text">{{ summary.body_area_comparison.balance|default:"-" }}</div>
             </div>
         </div>
+        {% endif %}
 
         <div class="ai-three-grid">
 
@@ -1389,8 +1414,8 @@
                 <div class="ai-mini-title">施術者向けメモ</div>
             </div>
             <ul class="ai-list">
-                {% if summary.clinical_notes %}
-                {% for item in summary.clinical_notes %}
+                {% if summary.clinical_check_points %}
+                {% for item in summary.clinical_check_points %}
                     <li>{{ item }}</li>
                 {% endfor %}
                 {% else %}
@@ -1405,8 +1430,8 @@
                 <div class="ai-mini-title">次回フォーカス</div>
             </div>
             <ul class="ai-list">
-                {% if summary.next_focus %}
-                {% for item in summary.next_focus %}
+                {% if summary.next_session_check_points %}
+                {% for item in summary.next_session_check_points %}
                     <li>{{ item }}</li>
                 {% endfor %}
                 {% else %}
@@ -1427,6 +1452,42 @@
                 {% endfor %}
                 {% else %}
                 <li>注意事項はまだ整理されていません。</li>
+                {% endif %}
+            </ul>
+            </div>
+
+        </div>
+
+        <div class="ai-three-grid">
+
+            <div class="ai-mini-card">
+            <div class="ai-mini-head">
+                <div class="ai-icon">T</div>
+                <div class="ai-mini-title">施術フォーカス候補</div>
+            </div>
+            <ul class="ai-list">
+                {% if summary.treatment_focus_suggestions %}
+                {% for item in summary.treatment_focus_suggestions %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+                {% else %}
+                <li>施術フォーカス候補はまだ整理されていません。</li>
+                {% endif %}
+            </ul>
+            </div>
+
+            <div class="ai-mini-card">
+            <div class="ai-mini-head">
+                <div class="ai-icon">H</div>
+                <div class="ai-mini-title">セルフケア候補</div>
+            </div>
+            <ul class="ai-list">
+                {% if summary.home_care_suggestions %}
+                {% for item in summary.home_care_suggestions %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+                {% else %}
+                <li>セルフケア候補はまだ整理されていません。</li>
                 {% endif %}
             </ul>
             </div>

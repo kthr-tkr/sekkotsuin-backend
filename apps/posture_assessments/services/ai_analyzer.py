@@ -125,24 +125,29 @@ POSTURE_COMPARISON_SCHEMA = {
                 "items": {"type": "string"},
                 "description": "Before/Afterで最初に確認すべき重要な変化。3〜6件。",
             },
-            "overall_summary": {
+            "overall_comparison_summary": {
                 "type": "string",
-                "description": "Before/After全体の比較サマリー。診断ではなく観察補助として記載する。",
+                "description": "画像所見と計測値差分を統合した比較サマリー。診断ではなく観察補助として記載する。",
             },
             "improved_points": {
                 "type": "array",
                 "items": {"type": "string"},
                 "description": "改善している可能性がある姿勢傾向。",
             },
+            "worsened_or_remaining_points": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "悪化と断定せず、注意・再確認・継続対応が必要な姿勢傾向。",
+            },
             "unchanged_points": {
                 "type": "array",
                 "items": {"type": "string"},
                 "description": "大きな変化が見られない、または継続確認が必要な点。",
             },
-            "worse_or_attention_points": {
+            "measurement_based_findings": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "悪化と断定せず、注意・再確認が必要な点。",
+                "description": "comparison_jsonのbefore、after、delta、trendを根拠にした計測値ベースの所見。",
             },
             "body_area_comparison": {
                 "type": "object",
@@ -166,15 +171,25 @@ POSTURE_COMPARISON_SCHEMA = {
                     "balance",
                 ],
             },
-            "clinical_notes": {
+            "clinical_check_points": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "施術者向けの比較メモ。評価・触診・動作確認の観点。",
+                "description": "施術者が触診・動作評価・症状確認で確かめるべきポイント。",
             },
-            "next_focus": {
+            "treatment_focus_suggestions": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "次回施術や次回撮影で重点的に確認すべきポイント。",
+                "description": "施術方針の候補。断定せず施術者判断の補助として記載する。",
+            },
+            "home_care_suggestions": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "患者へ説明可能な安全な範囲のセルフケア候補。",
+            },
+            "next_session_check_points": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "次回施術・次回撮影で重点的に確認すべき姿勢、動作、症状。",
             },
             "patient_explanation": {
                 "type": "string",
@@ -188,13 +203,16 @@ POSTURE_COMPARISON_SCHEMA = {
         },
         "required": [
             "important_changes",
-            "overall_summary",
+            "overall_comparison_summary",
             "improved_points",
+            "worsened_or_remaining_points",
             "unchanged_points",
-            "worse_or_attention_points",
+            "measurement_based_findings",
             "body_area_comparison",
-            "clinical_notes",
-            "next_focus",
+            "clinical_check_points",
+            "treatment_focus_suggestions",
+            "home_care_suggestions",
+            "next_session_check_points",
             "patient_explanation",
             "risk_notes",
         ],
@@ -206,6 +224,46 @@ IMAGE_TYPE_LABELS = {
     "side_right": "右側面",
     "back": "背面",
 }
+
+REQUIRED_COMPARISON_RISK_NOTES = [
+    "画像解析は撮影角度・立ち位置・服装・カメラ距離の影響を受けるため、同条件での再確認が必要です。",
+    "計測値は診断ではなく、施術者による姿勢評価・触診・動作確認の補助として扱ってください。",
+    "痛みや神経症状が強い場合は画像だけで判断せず、問診・徒手検査・必要に応じた医療機関への相談を優先してください。",
+]
+
+
+def _sanitize_ai_context(value, patient):
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_ai_context(item, patient)
+            for key, item in value.items()
+            if key != "meta"
+        }
+
+    if isinstance(value, list):
+        return [_sanitize_ai_context(item, patient) for item in value]
+
+    if not isinstance(value, str):
+        return value
+
+    last_name = getattr(patient, "last_name", "") or ""
+    first_name = getattr(patient, "first_name", "") or ""
+    identifiers = {
+        last_name,
+        first_name,
+        f"{last_name} {first_name}".strip(),
+        f"{last_name}{first_name}".strip(),
+    }
+
+    sanitized = value
+    for identifier in sorted(
+        (item for item in identifiers if item),
+        key=len,
+        reverse=True,
+    ):
+        sanitized = sanitized.replace(identifier, "[匿名]")
+
+    return sanitized
 
 
 def _guess_mime_type(file_field) -> str:
@@ -497,56 +555,94 @@ def analyze_posture_comparison(comparison):
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
     patient = comparison.patient
-    patient_name = f"{patient.last_name} {patient.first_name}".strip()
-
     before = comparison.before_assessment
     after = comparison.after_assessment
 
     image_content = _build_comparison_image_content(comparison)
 
-    before_summary = before.get_active_summary() or {}
-    after_summary = after.get_active_summary() or {}
+    before_summary = _sanitize_ai_context(
+        before.get_active_summary() or {},
+        patient,
+    )
+    after_summary = _sanitize_ai_context(
+        after.get_active_summary() or {},
+        patient,
+    )
+    comparison_title = _sanitize_ai_context(comparison.title, patient)
+    comparison_memo = _sanitize_ai_context(comparison.memo or "-", patient)
+    before_title = _sanitize_ai_context(before.title, patient)
+    before_memo = _sanitize_ai_context(before.memo or "-", patient)
+    after_title = _sanitize_ai_context(after.title, patient)
+    after_memo = _sanitize_ai_context(after.memo or "-", patient)
+    comparison_data = comparison.comparison_json or {}
+    comparison_items = comparison_data.get("items") or {}
+    comparison_data_text = (
+        json.dumps(comparison_data, ensure_ascii=False, indent=2)
+        if comparison_items
+        else "計測値差分データなし。画像と既存AI分析結果を中心に比較してください。"
+    )
 
     prompt = f"""
 あなたは接骨院・整骨院向けの姿勢Before/After比較補助AIです。
-以下のBefore画像、After画像、既存のAI姿勢分析結果、比較メモをもとに、姿勢の変化を整理してください。
+以下のBefore画像、After画像、既存のAI姿勢分析結果、計測値差分、比較メモをもとに、姿勢の変化を整理してください。
 
 # 患者情報
-- 患者名: {patient_name}
+- 匿名患者として扱い、氏名などの個人情報は出力しない
 
 # 比較情報
-- 比較タイトル: {comparison.title}
-- 比較メモ: {comparison.memo or "-"}
+- 比較タイトル: {comparison_title}
+- 比較メモ: {comparison_memo}
 
 # Before情報
 - Before撮影日: {before.created_at.strftime("%Y-%m-%d %H:%M")}
-- Beforeタイトル: {before.title}
-- Beforeメモ: {before.memo or "-"}
+- Beforeタイトル: {before_title}
+- Beforeメモ: {before_memo}
 - Before AI分析結果:
 {json.dumps(before_summary, ensure_ascii=False, indent=2)}
 
 # After情報
 - After撮影日: {after.created_at.strftime("%Y-%m-%d %H:%M")}
-- Afterタイトル: {after.title}
-- Afterメモ: {after.memo or "-"}
+- Afterタイトル: {after_title}
+- Afterメモ: {after_memo}
 - After AI分析結果:
 {json.dumps(after_summary, ensure_ascii=False, indent=2)}
 
+# Before/After計測値差分
+{comparison_data_text}
+
+# 計測値差分の読み方
+- before / after は各撮影時の参考計測値
+- delta は after - before
+- trend が improved の場合は、絶対値が小さくなった参考判定
+- trend が worsened の場合は、絶対値が大きくなった参考判定
+- trend が unchanged の場合は、閾値内で大きな差を確認しにくい参考判定
+- trend が unknown の場合は、数値だけでは判断できない
+- trendをそのまま医学的改善・悪化と断定せず、画像所見と施術者評価を合わせて解釈する
+
 # 目的
 - 施術者がBefore/Afterの変化を短時間で把握できるようにする
+- 計測値差分と画像所見が一致する点、不一致の可能性がある点を整理する
 - 改善している可能性がある点を整理する
 - 大きく変化していない点を整理する
-- 引き続き確認すべき点を整理する
+- 施術者が触診・動作評価・症状確認で確かめるべき点を整理する
+- 次回施術の重点候補と安全なセルフケア候補を整理する
 - 患者さんに前向きに説明できる文章を作る
 
 # 必ず守るルール
 - 医療診断名を断定しない
 - 画像だけで原因を確定しない
+- 計測値は診断値ではなく、姿勢観察と施術者評価を補助する参考値として扱う
 - 「改善しています」と断定せず「整ってきている可能性」「軽減しているように見える」などにする
 - 「悪化」と断定せず「引き続き確認が必要」「撮影条件の影響も考えられる」と表現する
-- 撮影角度、立ち位置、服装、距離、光の条件で見え方が変わることを考慮する
+- 撮影角度、立ち位置、服装、カメラ距離、光の条件で画像と計測値に誤差が出ることを考慮する
 - 患者説明は不安を煽らず、前向きでわかりやすくする
 - 施術者の判断を補助する表現にする
+- measurement_based_findingsには、利用可能なcomparison_jsonの具体的な項目名・方向・trendを根拠として含める
+- comparison_jsonが空の場合はmeasurement_based_findingsを空配列にし、画像と既存AI分析結果だけで比較する
+- risk_notesには必ず次の3点を含める
+  1. 画像解析は撮影角度・立ち位置・服装・カメラ距離の影響を受ける
+  2. 数値は診断ではなく、施術者の評価補助として扱う
+  3. 痛みや神経症状が強い場合は画像だけで判断しない
 
 # 比較観点
 - 頭部前方位
@@ -558,6 +654,13 @@ def analyze_posture_comparison(comparison):
 - 膝の向き、左右差、ニーイン傾向
 - 足部の向き、荷重傾向
 - 全体の重心バランス
+
+# 出力品質
+- overall_comparison_summaryは画像所見と計測値差分を統合して簡潔にまとめる
+- measurement_based_findingsは数値を過大評価せず「傾向」「可能性」「確認が必要」を用いる
+- clinical_check_pointsは施術者が現場で確認できる具体的な評価項目にする
+- treatment_focus_suggestionsは施術方針の候補として記載する
+- patient_explanationは改善の可能性と継続確認点を患者さんに説明しやすい表現にする
 """.strip()
 
     response = client.responses.create(
@@ -603,6 +706,18 @@ def analyze_posture_comparison(comparison):
     except json.JSONDecodeError as e:
         raise ValueError(f"AI姿勢比較結果のJSON解析に失敗しました: {e}") from e
 
+    if not comparison_items:
+        result["measurement_based_findings"] = []
+
+    risk_notes = result.get("risk_notes")
+    if not isinstance(risk_notes, list):
+        risk_notes = []
+
+    for required_note in REQUIRED_COMPARISON_RISK_NOTES:
+        if required_note not in risk_notes:
+            risk_notes.append(required_note)
+
+    result["risk_notes"] = risk_notes
     result["meta"] = {
         "source": "posture_comparison",
         "comparison_id": comparison.id,
@@ -611,6 +726,7 @@ def analyze_posture_comparison(comparison):
         "model": getattr(settings, "OPENAI_VISION_MODEL", "gpt-4o-mini"),
         "before_image_count": before.images.count(),
         "after_image_count": after.images.count(),
+        "measurement_comparison_available": bool(comparison_items),
         "storage_safe": True,
     }
 

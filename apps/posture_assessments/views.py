@@ -721,6 +721,39 @@ def posture_comparison_detail_view(request, comparison_id):
             })
 
     summary = comparison.get_active_summary() or {}
+    if summary:
+        summary = {
+            **summary,
+            "overall_comparison_summary": (
+                summary.get("overall_comparison_summary")
+                or summary.get("overall_summary")
+                or ""
+            ),
+            "worsened_or_remaining_points": (
+                summary.get("worsened_or_remaining_points")
+                or summary.get("worse_or_attention_points")
+                or []
+            ),
+            "clinical_check_points": (
+                summary.get("clinical_check_points")
+                or summary.get("clinical_notes")
+                or []
+            ),
+            "next_session_check_points": (
+                summary.get("next_session_check_points")
+                or summary.get("next_focus")
+                or []
+            ),
+            "measurement_based_findings": (
+                summary.get("measurement_based_findings") or []
+            ),
+            "treatment_focus_suggestions": (
+                summary.get("treatment_focus_suggestions") or []
+            ),
+            "home_care_suggestions": (
+                summary.get("home_care_suggestions") or []
+            ),
+        }
 
     return render(request, "posture_assessments/comparison_detail.html", {
         "active": "patient_search",
