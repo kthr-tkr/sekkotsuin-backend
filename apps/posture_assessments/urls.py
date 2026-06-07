@@ -51,6 +51,11 @@ urlpatterns = [
         name="comparison_detail",
     ),
     path(
+        "comparisons/<int:comparison_id>/report/",
+        views.posture_comparison_report_view,
+        name="comparison_report",
+    ),
+    path(
         "comparisons/<int:comparison_id>/analyze/",
         views.posture_comparison_analyze_view,
         name="comparison_analyze",

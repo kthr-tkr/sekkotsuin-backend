@@ -1,0 +1,940 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | 姿勢評価レポート{% endblock %}
+
+{% block content %}
+<style>
+  .report-shell{
+    max-width:1120px;
+    margin:0 auto;
+    color:#163044;
+  }
+
+  .report-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+
+  .report-btn{
+    min-height:42px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 14px;
+    border-radius:14px;
+    border:1px solid #dbe6ee;
+    background:#fff;
+    color:#17324a;
+    font-size:13px;
+    font-weight:900;
+    box-shadow:0 10px 24px rgba(22,48,68,.06);
+    cursor:pointer;
+  }
+
+  .report-btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#0d7067,#1bb7a4);
+  }
+
+  .report-page{
+    overflow:hidden;
+    border-radius:30px;
+    background:#fff;
+    border:1px solid #e4ecf3;
+    box-shadow:0 24px 70px rgba(18,45,66,.10);
+  }
+
+  .report-hero{
+    position:relative;
+    padding:34px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 82% 10%, rgba(119,238,222,.28), transparent 31%),
+      linear-gradient(135deg,#071a28 0%,#0f4c5b 55%,#13a391 100%);
+  }
+
+  .report-hero::after{
+    content:"";
+    position:absolute;
+    right:-70px;
+    bottom:-110px;
+    width:300px;
+    height:300px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.16);
+    box-shadow:0 0 0 42px rgba(255,255,255,.04);
+  }
+
+  .report-brand{
+    position:relative;
+    z-index:1;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:28px;
+  }
+
+  .brand-mark-report{
+    width:50px;
+    height:50px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:16px;
+    color:#07343f;
+    background:#9cf7ed;
+    font-size:17px;
+    font-weight:950;
+  }
+
+  .brand-name-report{
+    margin-top:8px;
+    color:rgba(255,255,255,.72);
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.14em;
+  }
+
+  .report-date{
+    color:rgba(255,255,255,.72);
+    font-size:12px;
+    font-weight:800;
+    text-align:right;
+  }
+
+  .report-title{
+    position:relative;
+    z-index:1;
+    margin:0;
+    max-width:780px;
+    font-size:clamp(32px,5vw,54px);
+    line-height:1.05;
+    letter-spacing:-.055em;
+    font-weight:950;
+  }
+
+  .report-subtitle{
+    position:relative;
+    z-index:1;
+    margin-top:12px;
+    color:rgba(255,255,255,.76);
+    font-size:15px;
+    font-weight:800;
+    line-height:1.8;
+  }
+
+  .patient-strip{
+    position:relative;
+    z-index:1;
+    margin-top:28px;
+    display:grid;
+    grid-template-columns:1.4fr .7fr .7fr repeat(3,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .patient-chip{
+    padding:14px;
+    border-radius:18px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.14);
+    backdrop-filter:blur(12px);
+  }
+
+  .chip-label{
+    color:rgba(255,255,255,.58);
+    font-size:10px;
+    font-weight:900;
+  }
+
+  .chip-value{
+    margin-top:6px;
+    color:#fff;
+    font-size:17px;
+    font-weight:950;
+  }
+
+  .report-body{
+    padding:26px;
+    display:grid;
+    gap:22px;
+  }
+
+  .score-row{
+    display:grid;
+    grid-template-columns:1.2fr repeat(4,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .score-card,
+  .mini-score{
+    padding:18px;
+    border-radius:24px;
+    background:#f8fbfc;
+    border:1px solid #e3edf2;
+  }
+
+  .score-card{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    background:
+      radial-gradient(circle at 92% 10%, rgba(32,185,159,.16), transparent 34%),
+      linear-gradient(135deg,#f8fffd,#eefaf8);
+  }
+
+  .score-ring{
+    --score:0;
+    width:100px;
+    height:100px;
+    display:grid;
+    place-items:center;
+    flex:0 0 auto;
+    border-radius:50%;
+    background:conic-gradient(#16a394 calc(var(--score) * 1%),#dce8ea 0);
+  }
+
+  .score-inner{
+    width:76px;
+    height:76px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:#fff;
+    color:#0b4650;
+    font-size:27px;
+    font-weight:950;
+    box-shadow:0 8px 22px rgba(14,79,82,.10);
+  }
+
+  .score-title,
+  .mini-label{
+    color:#647887;
+    font-size:11px;
+    font-weight:900;
+  }
+
+  .score-state{
+    margin-top:8px;
+    color:#0c6e67;
+    font-size:21px;
+    font-weight:950;
+  }
+
+  .score-note{
+    margin-top:6px;
+    color:#708391;
+    font-size:11px;
+    font-weight:750;
+    line-height:1.6;
+  }
+
+  .mini-value{
+    margin-top:12px;
+    color:#18324a;
+    font-size:32px;
+    line-height:1;
+    font-weight:950;
+  }
+
+  .mini-score.good{background:#f0fdf9;border-color:#bdeade;}
+  .mini-score.warn{background:#fff7ef;border-color:#ffd8b8;}
+  .mini-score.keep{background:#f4f8ff;border-color:#ccdcfa;}
+  .mini-score.hold{background:#faf7ff;border-color:#ded1fa;}
+
+  .report-section{
+    padding:22px;
+    border-radius:26px;
+    background:#fff;
+    border:1px solid #e4ecf3;
+    box-shadow:0 12px 30px rgba(20,46,66,.045);
+  }
+
+  .section-head-report{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:16px;
+  }
+
+  .section-number{
+    width:36px;
+    height:36px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+    border-radius:13px;
+    color:#fff;
+    background:linear-gradient(135deg,#0d7067,#1bb7a4);
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .section-title-report{
+    color:#10263b;
+    font-size:22px;
+    letter-spacing:-.03em;
+    font-weight:950;
+  }
+
+  .section-sub-report{
+    margin-top:3px;
+    color:#7a8996;
+    font-size:12px;
+    font-weight:800;
+  }
+
+  .summary-panel{
+    padding:20px;
+    border-radius:22px;
+    color:#fff;
+    background:linear-gradient(135deg,#10263b,#116c73);
+  }
+
+  .summary-panel p{
+    margin:0;
+    color:rgba(255,255,255,.88);
+    font-size:15px;
+    font-weight:760;
+    line-height:1.9;
+    white-space:pre-wrap;
+  }
+
+  .photo-report-grid{
+    display:grid;
+    gap:16px;
+  }
+
+  .photo-report-card{
+    overflow:hidden;
+    border-radius:22px;
+    border:1px solid #e2ebf1;
+    background:#f7fafb;
+  }
+
+  .photo-report-title{
+    padding:13px 16px;
+    color:#10263b;
+    background:#fff;
+    border-bottom:1px solid #e2ebf1;
+    font-size:15px;
+    font-weight:950;
+  }
+
+  .photo-pair{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1px;
+    background:#e2ebf1;
+  }
+
+  .photo-box{
+    background:#f8fafc;
+  }
+
+  .photo-label{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    color:#536575;
+    background:#fff;
+    font-size:11px;
+    font-weight:900;
+  }
+
+  .photo-box img{
+    width:100%;
+    height:310px;
+    display:block;
+    object-fit:contain;
+    background:#edf3f5;
+  }
+
+  .no-photo{
+    height:310px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#8b9baa;
+    background:#edf3f5;
+    font-size:13px;
+    font-weight:900;
+  }
+
+  .report-list{
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:10px;
+    list-style:none;
+  }
+
+  .report-list li{
+    position:relative;
+    padding:13px 14px 13px 38px;
+    border-radius:16px;
+    color:#334b61;
+    background:#f8fafc;
+    border:1px solid #e6edf3;
+    font-size:13px;
+    font-weight:760;
+    line-height:1.75;
+  }
+
+  .report-list li::before{
+    content:"";
+    position:absolute;
+    top:20px;
+    left:18px;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#19aa99;
+  }
+
+  .two-column{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+
+  .step-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:14px;
+  }
+
+  .step-card{
+    padding:17px;
+    border-radius:20px;
+    background:linear-gradient(180deg,#fff,#f7fbfb);
+    border:1px solid #e2ebf1;
+  }
+
+  .step-label{
+    color:#0d8175;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .step-text{
+    margin-top:9px;
+    color:#365066;
+    font-size:13px;
+    font-weight:760;
+    line-height:1.75;
+  }
+
+  .metric-table-wrap{
+    overflow:auto;
+    border-radius:20px;
+    border:1px solid #e2ebf1;
+  }
+
+  .metric-table{
+    width:100%;
+    min-width:680px;
+    border-collapse:collapse;
+    background:#fff;
+    font-size:12px;
+  }
+
+  .metric-table th,
+  .metric-table td{
+    padding:11px 12px;
+    border-bottom:1px solid #e8eef4;
+    text-align:left;
+  }
+
+  .metric-table th{
+    color:#607486;
+    background:#f8fafc;
+    font-weight:950;
+  }
+
+  .trend-badge{
+    display:inline-flex;
+    padding:5px 9px;
+    border-radius:999px;
+    color:#596978;
+    background:#f1f5f9;
+    font-size:11px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .trend-badge.improved{color:#0f766e;background:#dcfce7;}
+  .trend-badge.worsened{color:#9a3412;background:#ffedd5;}
+  .trend-badge.unchanged{color:#245cac;background:#eaf2ff;}
+
+  .message-card{
+    padding:24px;
+    border-radius:26px;
+    color:#0f3e43;
+    background:
+      radial-gradient(circle at 96% 0%, rgba(79,214,194,.22), transparent 30%),
+      linear-gradient(135deg,#effffc,#f6fbff);
+    border:1px solid #bdeade;
+  }
+
+  .message-card p{
+    margin:0;
+    color:#255b60;
+    font-size:16px;
+    font-weight:800;
+    line-height:1.95;
+    white-space:pre-wrap;
+  }
+
+  .footer-note{
+    padding:18px 22px 24px;
+    color:#778899;
+    font-size:11px;
+    font-weight:750;
+    line-height:1.8;
+  }
+
+  @media(max-width:980px){
+    .patient-strip,
+    .score-row,
+    .two-column,
+    .step-grid{
+      grid-template-columns:1fr;
+    }
+
+    .photo-pair{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media(max-width:640px){
+    .report-hero,
+    .report-body{
+      padding:20px;
+    }
+
+    .report-section{
+      padding:18px;
+    }
+
+    .report-brand,
+    .report-actions{
+      align-items:flex-start;
+      flex-direction:column;
+    }
+
+    .report-date{
+      text-align:left;
+    }
+
+    .photo-box img,
+    .no-photo{
+      height:230px;
+    }
+  }
+
+  @page{
+    size:A4;
+    margin:10mm;
+  }
+
+  @media print{
+    body{
+      background:#fff !important;
+    }
+
+    .sidebar,
+    .sidebar-overlay,
+    .mobile-topbar,
+    .report-actions{
+      display:none !important;
+    }
+
+    .app{
+      display:block !important;
+      min-height:auto !important;
+    }
+
+    .main{
+      padding:0 !important;
+    }
+
+    .content,
+    .report-shell{
+      max-width:none !important;
+      margin:0 !important;
+    }
+
+    .report-page{
+      border:none !important;
+      border-radius:0 !important;
+      box-shadow:none !important;
+    }
+
+    .report-hero{
+      border-radius:0 !important;
+      print-color-adjust:exact;
+      -webkit-print-color-adjust:exact;
+    }
+
+    .report-section,
+    .photo-report-card,
+    .step-card,
+    .message-card{
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+
+    .report-body{
+      padding:16px 0 0 !important;
+      gap:14px !important;
+    }
+
+    .photo-box img,
+    .no-photo{
+      height:210px;
+    }
+  }
+</style>
+
+<div class="report-shell">
+  <div class="report-actions">
+    <a href="{% url 'posture_assessments:comparison_detail' comparison.id %}" class="report-btn">
+      比較詳細へ戻る
+    </a>
+    <button type="button" class="report-btn primary" id="printReportBtn">
+      印刷 / PDF保存
+    </button>
+  </div>
+
+  <article class="report-page">
+    <header class="report-hero">
+      <div class="report-brand">
+        <div>
+          <div class="brand-mark-report">CF</div>
+          <div class="brand-name-report">CareFrow Posture Report</div>
+        </div>
+        <div class="report-date">
+          作成日：{{ report_created_at|date:"Y.m.d" }}<br>
+          比較ID：{{ comparison.id }}
+        </div>
+      </div>
+
+      <h1 class="report-title">姿勢評価レポート / 改善プラン</h1>
+      <div class="report-subtitle">
+        Before / Afterの画像と計測値をもとに、姿勢の変化傾向とこれからのケア方針を分かりやすくまとめています。
+      </div>
+
+      <div class="patient-strip">
+        <div class="patient-chip">
+          <div class="chip-label">患者さん</div>
+          <div class="chip-value">{{ patient.last_name }} {{ patient.first_name }} 様</div>
+        </div>
+        <div class="patient-chip">
+          <div class="chip-label">年齢</div>
+          <div class="chip-value">
+            {% if patient_age is not None %}{{ patient_age }}歳{% else %}-{% endif %}
+          </div>
+        </div>
+        <div class="patient-chip">
+          <div class="chip-label">性別</div>
+          <div class="chip-value">{{ patient_gender|default:"-" }}</div>
+        </div>
+        <div class="patient-chip">
+          <div class="chip-label">Before撮影日</div>
+          <div class="chip-value">{{ before_assessment.created_at|date:"Y.m.d" }}</div>
+        </div>
+        <div class="patient-chip">
+          <div class="chip-label">After撮影日</div>
+          <div class="chip-value">{{ after_assessment.created_at|date:"Y.m.d" }}</div>
+        </div>
+        <div class="patient-chip">
+          <div class="chip-label">ステータス</div>
+          <div class="chip-value">{{ comparison.get_status_display }}</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="report-body">
+      <section class="score-row">
+        <div class="score-card">
+          <div class="score-ring" style="--score:{{ comparison_overview.score|default:0 }};">
+            <div class="score-inner">
+              {% if comparison_overview.has_score %}
+                {{ comparison_overview.score }}
+              {% else %}
+                --
+              {% endif %}
+            </div>
+          </div>
+          <div>
+            <div class="score-title">姿勢変化スコア</div>
+            <div class="score-state">{{ comparison_overview.score_label }}</div>
+            <div class="score-note">
+              計測値の傾向から算出した参考指標です。診断ではなく、施術者の評価と合わせて判断します。
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-score good">
+          <div class="mini-label">改善傾向</div>
+          <div class="mini-value">{{ comparison_overview.trend_counts.improved }}</div>
+        </div>
+        <div class="mini-score warn">
+          <div class="mini-label">要確認</div>
+          <div class="mini-value">{{ comparison_overview.trend_counts.worsened }}</div>
+        </div>
+        <div class="mini-score keep">
+          <div class="mini-label">大きな変化なし</div>
+          <div class="mini-value">{{ comparison_overview.trend_counts.unchanged }}</div>
+        </div>
+        <div class="mini-score hold">
+          <div class="mini-label">判定保留</div>
+          <div class="mini-value">{{ comparison_overview.trend_counts.unknown }}</div>
+        </div>
+      </section>
+
+      <section class="report-section">
+        <div class="section-head-report">
+          <div class="section-number">1</div>
+          <div>
+            <div class="section-title-report">今回の変化サマリー</div>
+            <div class="section-sub-report">まず全体像を確認します</div>
+          </div>
+        </div>
+        <div class="summary-panel">
+          <p>
+            {% if summary.overall_comparison_summary %}
+              {{ summary.overall_comparison_summary }}
+            {% else %}
+              AI比較分析を実行すると、今回の姿勢変化を分かりやすく整理して表示します。
+            {% endif %}
+          </p>
+        </div>
+      </section>
+
+      <section class="report-section">
+        <div class="section-head-report">
+          <div class="section-number">2</div>
+          <div>
+            <div class="section-title-report">Before / After画像</div>
+            <div class="section-sub-report">正面・右側面・背面を並べて確認します</div>
+          </div>
+        </div>
+
+        <div class="photo-report-grid">
+          {% for pair in image_pairs %}
+            <div class="photo-report-card">
+              <div class="photo-report-title">{{ pair.label }}</div>
+              <div class="photo-pair">
+                <div class="photo-box">
+                  <div class="photo-label">
+                    <span>Before</span>
+                    <span>{{ before_assessment.created_at|date:"Y.m.d" }}</span>
+                  </div>
+                  {% if pair.before %}
+                    <img src="{{ pair.before.image.url }}" alt="Before {{ pair.label }}">
+                  {% else %}
+                    <div class="no-photo">画像なし</div>
+                  {% endif %}
+                </div>
+
+                <div class="photo-box">
+                  <div class="photo-label">
+                    <span>After</span>
+                    <span>{{ after_assessment.created_at|date:"Y.m.d" }}</span>
+                  </div>
+                  {% if pair.after %}
+                    <img src="{{ pair.after.image.url }}" alt="After {{ pair.label }}">
+                  {% else %}
+                    <div class="no-photo">画像なし</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="two-column">
+        <div class="report-section">
+          <div class="section-head-report">
+            <div class="section-number">3</div>
+            <div>
+              <div class="section-title-report">良くなっている可能性がある点</div>
+              <div class="section-sub-report">前向きな変化の候補</div>
+            </div>
+          </div>
+          <ul class="report-list">
+            {% if summary.improved_points %}
+              {% for item in summary.improved_points %}<li>{{ item }}</li>{% endfor %}
+            {% else %}
+              <li>改善傾向はまだ整理されていません。施術者の評価と合わせて確認します。</li>
+            {% endif %}
+          </ul>
+        </div>
+
+        <div class="report-section">
+          <div class="section-head-report">
+            <div class="section-number">4</div>
+            <div>
+              <div class="section-title-report">まだ確認が必要な点</div>
+              <div class="section-sub-report">今後も見ていきたいポイント</div>
+            </div>
+          </div>
+          <ul class="report-list">
+            {% if summary.worsened_or_remaining_points %}
+              {% for item in summary.worsened_or_remaining_points %}<li>{{ item }}</li>{% endfor %}
+            {% else %}
+              <li>要確認の点はまだ整理されていません。症状や動きと合わせて確認します。</li>
+            {% endif %}
+          </ul>
+        </div>
+      </section>
+
+      <section class="report-section">
+        <div class="section-head-report">
+          <div class="section-number">5</div>
+          <div>
+            <div class="section-title-report">計測値から見た変化</div>
+            <div class="section-sub-report">数値は参考情報として扱います</div>
+          </div>
+        </div>
+
+        {% if summary.measurement_based_findings %}
+          <ul class="report-list" style="margin-bottom:16px;">
+            {% for item in summary.measurement_based_findings %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+
+        {% if comparison_diff_groups %}
+          <div class="metric-table-wrap">
+            <table class="metric-table">
+              <thead>
+                <tr>
+                  <th>画像</th>
+                  <th>項目</th>
+                  <th>Before</th>
+                  <th>After</th>
+                  <th>差分</th>
+                  <th>傾向</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for group in comparison_diff_groups %}
+                  {% for row in group.rows %}
+                    <tr>
+                      <td>{{ group.label }}</td>
+                      <td>{{ row.label }}</td>
+                      <td>{{ row.before }}{{ row.unit }}</td>
+                      <td>{{ row.after }}{{ row.unit }}</td>
+                      <td>
+                        {% if row.delta is not None %}
+                          {{ row.delta }}{{ row.unit }}
+                        {% else %}
+                          -
+                        {% endif %}
+                      </td>
+                      <td><span class="trend-badge {{ row.trend }}">{{ row.trend_label }}</span></td>
+                    </tr>
+                  {% endfor %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <ul class="report-list">
+            <li>計測値差分はまだ生成されていません。姿勢ライン保存後に比較分析を行うと表示されます。</li>
+          </ul>
+        {% endif %}
+      </section>
+
+      <section class="report-section">
+        <div class="section-head-report">
+          <div class="section-number">6</div>
+          <div>
+            <div class="section-title-report">これからのステップ</div>
+            <div class="section-sub-report">改善に向けた進め方</div>
+          </div>
+        </div>
+        <div class="step-grid">
+          {% for step in report_steps %}
+            <div class="step-card">
+              <div class="step-label">{{ step.title }}</div>
+              <div class="step-text">{{ step.text }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="two-column">
+        <div class="report-section">
+          <div class="section-head-report">
+            <div class="section-number">7</div>
+            <div>
+              <div class="section-title-report">自宅でできるセルフケア候補</div>
+              <div class="section-sub-report">無理のない範囲で行います</div>
+            </div>
+          </div>
+          <ul class="report-list">
+            {% for item in home_care_items %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        </div>
+
+        <div class="report-section">
+          <div class="section-head-report">
+            <div class="section-number">8</div>
+            <div>
+              <div class="section-title-report">注意事項</div>
+              <div class="section-sub-report">安全に活用するために</div>
+            </div>
+          </div>
+          <ul class="report-list">
+            {% for item in risk_notes %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        </div>
+      </section>
+
+      <section class="message-card">
+        <div class="section-head-report">
+          <div class="section-number">9</div>
+          <div>
+            <div class="section-title-report">患者さんへのメッセージ</div>
+            <div class="section-sub-report">一緒に変化を確認していきましょう</div>
+          </div>
+        </div>
+        <p>
+          {% if summary.patient_explanation %}
+            {{ summary.patient_explanation }}
+          {% else %}
+            姿勢の変化は、痛みの出方や日常の動きと合わせて確認していくことが大切です。無理のない範囲でケアを続けながら、次回も変化を一緒に確認していきましょう。
+          {% endif %}
+        </p>
+      </section>
+    </div>
+
+    <div class="footer-note">
+      このレポートは画像と計測値をもとに姿勢の傾向を分かりやすく整理したものです。医療診断ではありません。痛みやしびれなどの症状が強い場合は、施術者の評価や必要に応じた医療機関での確認と合わせて判断します。
+    </div>
+  </article>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const btn = document.getElementById("printReportBtn");
+  if(!btn) return;
+
+  btn.addEventListener("click", function(){
+    window.print();
+  });
+})();
+</script>
+{% endblock %}

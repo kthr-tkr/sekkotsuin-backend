@@ -999,8 +999,7 @@
   }
 
   .cf-report-btn{
-    cursor:not-allowed;
-    opacity:.7;
+    cursor:pointer;
   }
 
   .cf-analyze-btn{
@@ -1785,12 +1784,10 @@
       </div>
 
       <div class="cf-hero-actions">
-        <button type="button"
-                class="cf-report-btn"
-                disabled
-                title="患者向けレポート機能は今後追加予定です">
+        <a href="{% url 'posture_assessments:comparison_report' comparison.id %}"
+           class="cf-report-btn">
           患者向けレポート
-        </button>
+        </a>
         <form method="post"
               action="{% url 'posture_assessments:comparison_analyze' comparison.id %}">
           {% csrf_token %}

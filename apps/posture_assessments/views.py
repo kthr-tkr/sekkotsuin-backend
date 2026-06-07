@@ -567,6 +567,195 @@ def posture_comparison_create_view(request, patient_id):
         "assessments": assessments,
     })
 
+
+def _normalize_comparison_summary(summary):
+    summary = summary or {}
+    if not summary:
+        return {}
+
+    return {
+        **summary,
+        "overall_comparison_summary": (
+            summary.get("overall_comparison_summary")
+            or summary.get("overall_summary")
+            or ""
+        ),
+        "worsened_or_remaining_points": (
+            summary.get("worsened_or_remaining_points")
+            or summary.get("worse_or_attention_points")
+            or []
+        ),
+        "clinical_check_points": (
+            summary.get("clinical_check_points")
+            or summary.get("clinical_notes")
+            or []
+        ),
+        "next_session_check_points": (
+            summary.get("next_session_check_points")
+            or summary.get("next_focus")
+            or []
+        ),
+        "measurement_based_findings": (
+            summary.get("measurement_based_findings") or []
+        ),
+        "treatment_focus_suggestions": (
+            summary.get("treatment_focus_suggestions") or []
+        ),
+        "home_care_suggestions": (
+            summary.get("home_care_suggestions") or []
+        ),
+    }
+
+
+def _build_report_image_pairs(comparison):
+    before_image_map = {
+        image.image_type: image
+        for image in comparison.before_assessment.images.all()
+    }
+    after_image_map = {
+        image.image_type: image
+        for image in comparison.after_assessment.images.all()
+    }
+
+    return [
+        {
+            "key": PostureAssessmentImage.ImageType.FRONT,
+            "label": "正面",
+            "before": before_image_map.get(PostureAssessmentImage.ImageType.FRONT),
+            "after": after_image_map.get(PostureAssessmentImage.ImageType.FRONT),
+        },
+        {
+            "key": PostureAssessmentImage.ImageType.SIDE_RIGHT,
+            "label": "右側面",
+            "before": before_image_map.get(PostureAssessmentImage.ImageType.SIDE_RIGHT),
+            "after": after_image_map.get(PostureAssessmentImage.ImageType.SIDE_RIGHT),
+        },
+        {
+            "key": PostureAssessmentImage.ImageType.BACK,
+            "label": "背面",
+            "before": before_image_map.get(PostureAssessmentImage.ImageType.BACK),
+            "after": after_image_map.get(PostureAssessmentImage.ImageType.BACK),
+        },
+    ]
+
+
+def _build_comparison_overview_context(comparison):
+    image_type_labels = {
+        PostureAssessmentImage.ImageType.FRONT: "正面",
+        PostureAssessmentImage.ImageType.SIDE_RIGHT: "右側面",
+        PostureAssessmentImage.ImageType.BACK: "背面",
+    }
+    measurement_labels = {
+        "shoulder_slope_deg": ("肩の傾き", "°"),
+        "pelvis_slope_deg": ("骨盤の傾き", "°"),
+        "left_knee_medial_shift_pct": ("左膝の内外側偏位", "%"),
+        "right_knee_medial_shift_pct": ("右膝の内外側偏位", "%"),
+        "forward_head_shift_pct": ("頭部前方偏位", "%"),
+        "ear_shoulder_angle_deg": ("耳・肩角度", "°"),
+        "trunk_lean_deg": ("体幹傾斜", "°"),
+        "back_shoulder_slope_deg": ("肩の傾き", "°"),
+        "back_pelvis_slope_deg": ("骨盤の傾き", "°"),
+        "head_to_pelvis_center_shift_pct": ("頭部・骨盤中心偏位", "%"),
+    }
+    trend_labels = {
+        "improved": "改善傾向",
+        "worsened": "要確認",
+        "unchanged": "大きな変化なし",
+        "unknown": "判定保留",
+    }
+    trend_counts = {
+        "improved": 0,
+        "worsened": 0,
+        "unchanged": 0,
+        "unknown": 0,
+    }
+    comparison_diff_groups = []
+
+    for image_type, items in (
+        (comparison.comparison_json or {}).get("items") or {}
+    ).items():
+        rows = []
+
+        for key, values in items.items():
+            label, unit = measurement_labels.get(key, (key, ""))
+            trend = values.get("trend") or "unknown"
+            if trend not in trend_counts:
+                trend = "unknown"
+            trend_counts[trend] += 1
+            rows.append({
+                "key": key,
+                "label": label,
+                "unit": unit,
+                "before": values.get("before"),
+                "after": values.get("after"),
+                "delta": values.get("delta"),
+                "trend": trend,
+                "trend_label": trend_labels.get(
+                    trend,
+                    trend_labels["unknown"],
+                ),
+            })
+
+        if rows:
+            comparison_diff_groups.append({
+                "image_type": image_type,
+                "label": image_type_labels.get(image_type, image_type),
+                "rows": rows,
+            })
+
+    known_trend_count = (
+        trend_counts["improved"]
+        + trend_counts["worsened"]
+        + trend_counts["unchanged"]
+    )
+    posture_score = None
+    posture_score_label = "未算出"
+
+    if known_trend_count:
+        score = 50 + (
+            (trend_counts["improved"] - trend_counts["worsened"])
+            / known_trend_count
+            * 50
+        )
+        posture_score = round(max(0, min(100, score)))
+
+        if posture_score >= 65:
+            posture_score_label = "改善傾向"
+        elif posture_score >= 45:
+            posture_score_label = "安定傾向"
+        else:
+            posture_score_label = "要確認"
+
+    return comparison_diff_groups, {
+        "trend_counts": trend_counts,
+        "score": posture_score,
+        "has_score": posture_score is not None,
+        "score_label": posture_score_label,
+        "measurement_count": sum(trend_counts.values()),
+    }
+
+
+def _get_patient_age(patient):
+    birth_date = getattr(patient, "birth_date", None)
+    if not birth_date:
+        return None
+
+    today = timezone.localdate()
+    return (
+        today.year
+        - birth_date.year
+        - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    )
+
+
+def _get_patient_gender_display(patient):
+    if hasattr(patient, "get_gender_display"):
+        return patient.get_gender_display()
+    if hasattr(patient, "get_sex_display"):
+        return patient.get_sex_display()
+    return getattr(patient, "gender", "") or getattr(patient, "sex", "") or ""
+
+
 @staff_required
 def posture_comparison_detail_view(request, comparison_id):
     clinic = get_current_clinic(request)
@@ -808,6 +997,95 @@ def posture_comparison_detail_view(request, comparison_id):
         "comparison_overview": comparison_overview,
         "summary": summary,
     })
+
+
+@staff_required
+def posture_comparison_report_view(request, comparison_id):
+    clinic = get_current_clinic(request)
+
+    comparison = get_object_or_404(
+        PostureComparison.objects
+        .select_related(
+            "clinic",
+            "patient",
+            "before_assessment",
+            "after_assessment",
+            "created_by",
+            "updated_by",
+        )
+        .prefetch_related(
+            "before_assessment__images",
+            "after_assessment__images",
+        ),
+        pk=comparison_id,
+        clinic=clinic,
+    )
+
+    image_pairs = _build_report_image_pairs(comparison)
+    comparison_diff_groups, comparison_overview = _build_comparison_overview_context(
+        comparison
+    )
+    summary = _normalize_comparison_summary(comparison.get_active_summary() or {})
+
+    ai_steps = []
+    for text in summary.get("treatment_focus_suggestions") or []:
+        ai_steps.append({
+            "title": "施術フォーカス",
+            "text": text,
+        })
+
+    for text in summary.get("next_session_check_points") or []:
+        ai_steps.append({
+            "title": "次回確認",
+            "text": text,
+        })
+
+    if not ai_steps:
+        ai_steps = [
+            {
+                "title": "Step1 痛み・負担の管理",
+                "text": "痛みや違和感の出方を確認し、日常生活で負担が強くなりやすい動きを整理します。",
+            },
+            {
+                "title": "Step2 姿勢改善・筋肉ケア",
+                "text": "姿勢の傾向に合わせて、筋肉の緊張や関節の動きを無理のない範囲で整えていきます。",
+            },
+            {
+                "title": "Step3 再発予防・パフォーマンスアップ",
+                "text": "動作のくせや生活習慣を確認し、良い状態を保ちやすい体づくりを目指します。",
+            },
+        ]
+
+    home_care_items = summary.get("home_care_suggestions") or [
+        "スタッフの指示に合わせて、無理のない範囲で行ってください。",
+    ]
+
+    risk_notes = summary.get("risk_notes") or [
+        "画像評価は撮影角度・立ち位置・服装・カメラ距離の影響を受けるため、施術者の評価と合わせて判断します。",
+        "数値は診断ではなく、姿勢の傾向を確認するための参考情報です。",
+        "痛みや神経症状が強い場合は、画像だけで判断せず詳しい確認が必要です。",
+    ]
+
+    return render(request, "posture_assessments/comparison_report.html", {
+        "active": "patient_search",
+        "page_title": "姿勢評価レポート",
+        "comparison": comparison,
+        "patient": comparison.patient,
+        "patient_age": _get_patient_age(comparison.patient),
+        "patient_gender": _get_patient_gender_display(comparison.patient),
+        "report_created_at": timezone.now(),
+        "before_assessment": comparison.before_assessment,
+        "after_assessment": comparison.after_assessment,
+        "image_pairs": image_pairs,
+        "summary": summary,
+        "comparison_json": comparison.comparison_json or {},
+        "comparison_diff_groups": comparison_diff_groups,
+        "comparison_overview": comparison_overview,
+        "report_steps": ai_steps[:6],
+        "home_care_items": home_care_items,
+        "risk_notes": risk_notes,
+    })
+
 
 @staff_required
 @require_POST
