@@ -112,6 +112,10 @@ class PostureComparisonCreateForm(forms.ModelForm):
                 .filter(
                     clinic=clinic,
                     patient=patient,
+                    status__in=[
+                        PostureAssessment.Status.ANALYZED,
+                        PostureAssessment.Status.CONFIRMED,
+                    ],
                 )
                 .prefetch_related("images")
                 .order_by("-created_at")

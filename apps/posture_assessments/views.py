@@ -31,6 +31,94 @@ from .services.ai_analyzer import (
 )
 from .services.image_converter import normalize_posture_image
 
+from .services.measurements import build_measurements_for_image
+
+LANDMARK_KEYS_BY_IMAGE_TYPE = {
+    PostureAssessmentImage.ImageType.FRONT: {
+        "nose",
+        "chin",
+        "left_ear",
+        "right_ear",
+        "left_shoulder",
+        "right_shoulder",
+        "left_elbow",
+        "right_elbow",
+        "left_wrist",
+        "right_wrist",
+        "left_hip",
+        "right_hip",
+        "left_knee",
+        "right_knee",
+        "left_ankle",
+        "right_ankle",
+        "left_foot",
+        "right_foot",
+        "left_big_toe",
+        "right_big_toe",
+    },
+    PostureAssessmentImage.ImageType.SIDE_RIGHT: {
+        "ear",
+        "shoulder",
+        "elbow",
+        "wrist",
+        "hip",
+        "knee",
+        "ankle",
+        "heel",
+        "toe",
+    },
+    PostureAssessmentImage.ImageType.BACK: {
+        "head_center",
+        "neck_center",
+        "left_shoulder",
+        "right_shoulder",
+        "left_scapula",
+        "right_scapula",
+        "spine_upper",
+        "spine_mid",
+        "spine_lower",
+        "left_hip",
+        "right_hip",
+        "left_knee",
+        "right_knee",
+        "left_ankle",
+        "right_ankle",
+        "left_heel",
+        "right_heel",
+    },
+}
+
+REQUIRED_LANDMARK_KEYS_BY_IMAGE_TYPE = {
+    PostureAssessmentImage.ImageType.FRONT: {
+        "left_shoulder",
+        "right_shoulder",
+        "left_hip",
+        "right_hip",
+        "left_knee",
+        "right_knee",
+        "left_ankle",
+        "right_ankle",
+    },
+    PostureAssessmentImage.ImageType.SIDE_RIGHT: {
+        "ear",
+        "shoulder",
+        "hip",
+        "knee",
+        "ankle",
+    },
+    PostureAssessmentImage.ImageType.BACK: {
+        "head_center",
+        "left_shoulder",
+        "right_shoulder",
+        "left_hip",
+        "right_hip",
+        "left_knee",
+        "right_knee",
+        "left_ankle",
+        "right_ankle",
+    },
+}
+
 def _same_clinic(user, clinic) -> bool:
     user_clinic = getattr(user, "clinic", None)
 
@@ -117,26 +205,28 @@ def posture_create_view(request, patient_id):
             assessment.full_clean()
             assessment.save()
 
-        try:
-            _save_uploaded_images(
-                assessment=assessment,
-                upload_form=upload_form,
-                user=request.user,
-            )
-        except ValueError as e:
-            assessment.delete()
-            messages.error(request, str(e))
-            return render(request, "posture_assessments/form.html", {
-                "active": "patient_search",
-                "page_title": "AI姿勢分析作成",
-                "patient": patient,
-                "appointment": appointment,
-                "form": form,
-                "upload_form": upload_form,
-            })
+            try:
+                _save_uploaded_images(
+                    assessment=assessment,
+                    upload_form=upload_form,
+                    user=request.user,
+                )
+            except ValueError as e:
+                assessment.delete()
+                messages.error(request, str(e))
+                return render(request, "posture_assessments/form.html", {
+                    "active": "patient_search",
+                    "page_title": "AI姿勢分析作成",
+                    "patient": patient,
+                    "appointment": appointment,
+                    "form": form,
+                    "upload_form": upload_form,
+                })
 
-        messages.success(request, "AI姿勢分析を作成しました。")
-        return redirect("posture_assessments:detail", assessment_id=assessment.id)
+            messages.success(request, "AI姿勢分析を作成しました。")
+            return redirect("posture_assessments:detail", assessment_id=assessment.id)
+
+        messages.error(request, "入力内容を確認してください。")
 
     else:
         form = PostureAssessmentCreateForm(initial={
@@ -512,14 +602,43 @@ def posture_comparison_detail_view(request, comparison_id):
         for image in after_images
     }
 
-    def serialize_landmarks(image):
-        if not image:
-            return "{}"
+    measurement_specs = {
+        PostureAssessmentImage.ImageType.FRONT: [
+            ("shoulder_slope_deg", "肩の傾き", "°"),
+            ("pelvis_slope_deg", "骨盤の傾き", "°"),
+            ("left_knee_medial_shift_pct", "左膝の内外側偏位", "%"),
+            ("right_knee_medial_shift_pct", "右膝の内外側偏位", "%"),
+        ],
+        PostureAssessmentImage.ImageType.SIDE_RIGHT: [
+            ("forward_head_shift_pct", "頭部前方偏位", "%"),
+            ("ear_shoulder_angle_deg", "耳・肩角度", "°"),
+            ("trunk_lean_deg", "体幹傾斜", "°"),
+        ],
+        PostureAssessmentImage.ImageType.BACK: [
+            ("back_shoulder_slope_deg", "肩の傾き", "°"),
+            ("back_pelvis_slope_deg", "骨盤の傾き", "°"),
+            ("head_to_pelvis_center_shift_pct", "頭部・骨盤中心偏位", "%"),
+        ],
+    }
 
-        return json.dumps(
-            image.landmarks_json or {},
-            ensure_ascii=False,
-        )
+    def build_measurement_rows(image):
+        if not image:
+            return []
+
+        items = (image.measurements_json or {}).get("items") or {}
+        return [
+            {
+                "key": key,
+                "label": label,
+                "unit": unit,
+                "display_value": (
+                    "未計測"
+                    if items.get(key) is None
+                    else f"{items[key]}{unit}"
+                ),
+            }
+            for key, label, unit in measurement_specs.get(image.image_type, [])
+        ]
 
     image_pairs = [
         {
@@ -543,8 +662,16 @@ def posture_comparison_detail_view(request, comparison_id):
     ]
 
     for pair in image_pairs:
-        pair["before_landmarks_json"] = serialize_landmarks(pair["before"])
-        pair["after_landmarks_json"] = serialize_landmarks(pair["after"])
+        before_image = pair["before"]
+        after_image = pair["after"]
+        pair["before_landmarks_script_id"] = (
+            f"posture-landmarks-{before_image.id}" if before_image else ""
+        )
+        pair["after_landmarks_script_id"] = (
+            f"posture-landmarks-{after_image.id}" if after_image else ""
+        )
+        pair["before_measurement_rows"] = build_measurement_rows(before_image)
+        pair["after_measurement_rows"] = build_measurement_rows(after_image)
 
     summary = comparison.get_active_summary() or {}
 
@@ -695,13 +822,21 @@ def posture_image_landmarks_save_view(request, image_id):
 
     points = payload.get("points") or {}
 
-    allowed_keys = {
-        "ear",
-        "shoulder",
-        "hip",
-        "knee",
-        "ankle",
-    }
+    allowed_keys = LANDMARK_KEYS_BY_IMAGE_TYPE.get(
+        image.image_type,
+        set(),
+    )
+
+    required_keys = REQUIRED_LANDMARK_KEYS_BY_IMAGE_TYPE.get(
+        image.image_type,
+        set(),
+    )
+
+    if not allowed_keys:
+        return JsonResponse({
+            "ok": False,
+            "message": "この画像種別はランドマーク保存に対応していません。",
+        }, status=400)
 
     cleaned_points = {}
 
@@ -726,26 +861,46 @@ def posture_image_landmarks_save_view(request, image_id):
             "y": round(y, 2),
         }
 
-    required_keys = {"ear", "shoulder", "hip", "knee", "ankle"}
-
     if not required_keys.issubset(cleaned_points.keys()):
+        missing = sorted(required_keys - cleaned_points.keys())
+
         return JsonResponse({
             "ok": False,
-            "message": "耳・肩・骨盤・膝・足首の5点が必要です。",
+            "message": f"必要なランドマークが不足しています: {', '.join(missing)}",
         }, status=400)
 
     image.landmarks_json = {
-        "version": 1,
-        "mode": "manual",
+        "version": 2,
+        "mode": payload.get("mode") or "manual",
         "image_type": image.image_type,
+        "unit": "percent",
         "points": cleaned_points,
         "updated_by": request.user.id,
         "updated_at": timezone.now().isoformat(),
     }
-    image.save(update_fields=["landmarks_json"])
+
+    try:
+        image_width = image.image.width
+        image_height = image.image.height
+    except Exception:
+        image_width = None
+        image_height = None
+
+    image.measurements_json = build_measurements_for_image(
+        image_type=image.image_type,
+        points=cleaned_points,
+        image_width=image_width,
+        image_height=image_height,
+    )
+
+    image.save(update_fields=[
+        "landmarks_json",
+        "measurements_json",
+    ])
 
     return JsonResponse({
         "ok": True,
         "message": "姿勢ラインを保存しました。",
         "landmarks": image.landmarks_json,
+        "measurements": image.measurements_json,
     })

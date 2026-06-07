@@ -328,3 +328,4 @@ class TreatmentSessionChunk(models.Model):
 
     def __str__(self) -> str:
         return f"session={self.session_id} / chunk={self.chunk_index}"
+

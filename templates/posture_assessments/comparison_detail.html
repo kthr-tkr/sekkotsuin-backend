@@ -231,6 +231,7 @@
   .compare-image{
     flex:1;
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
     background:#f8fafc;
@@ -798,6 +799,46 @@
     pointer-events:none;
   }
 
+  .measurement-panel{
+    width:100%;
+    padding:14px;
+    background:#fff;
+    border-top:1px solid #e2e8f0;
+  }
+
+  .measurement-title{
+    margin-bottom:10px;
+    color:#475569;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .measurement-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+  }
+
+  .measurement-item{
+    padding:10px;
+    border-radius:12px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+  }
+
+  .measurement-label{
+    color:#64748b;
+    font-size:10px;
+    font-weight:800;
+  }
+
+  .measurement-value{
+    margin-top:4px;
+    color:#0f172a;
+    font-size:13px;
+    font-weight:900;
+  }
+
   @media(max-width:980px){
     .ai-three-grid,
     .body-compare-grid{
@@ -935,7 +976,7 @@
                     <div class="manual-landmark-layer js-manual-layer"
                         data-image-id="{{ pair.before.id }}"
                         data-save-url="{% url 'posture_assessments:image_landmarks_save' pair.before.id %}"
-                        data-landmarks='{{ pair.before_landmarks_json|escapejs }}'
+                        data-landmarks-id="{{ pair.before_landmarks_script_id }}"
                         data-side="before">
                         <svg class="manual-landmark-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
                         <polyline class="manual-line-path js-manual-path" points="" />
@@ -981,6 +1022,22 @@
                     </div>
                     {% endif %}
                     </div>
+                    {{ pair.before.landmarks_json|json_script:pair.before_landmarks_script_id }}
+
+                    <div class="measurement-panel js-measurement-panel"
+                         data-image-id="{{ pair.before.id }}">
+                      <div class="measurement-title">計測値</div>
+                      <div class="measurement-grid">
+                        {% for row in pair.before_measurement_rows %}
+                          <div class="measurement-item">
+                            <div class="measurement-label">{{ row.label }}</div>
+                            <div class="measurement-value"
+                                 data-measurement-key="{{ row.key }}"
+                                 data-unit="{{ row.unit }}">{{ row.display_value }}</div>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    </div>
                 {% else %}
                   <div class="empty-image">Beforeの{{ pair.label }}画像がありません。</div>
                 {% endif %}
@@ -1004,7 +1061,7 @@
                     <div class="manual-landmark-layer js-manual-layer"
                         data-image-id="{{ pair.after.id }}"
                         data-save-url="{% url 'posture_assessments:image_landmarks_save' pair.after.id %}"
-                        data-landmarks='{{ pair.after_landmarks_json|escapejs }}'
+                        data-landmarks-id="{{ pair.after_landmarks_script_id }}"
                         data-side="after">
                         <svg class="manual-landmark-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
                         <polyline class="manual-line-path js-manual-path" points="" />
@@ -1049,6 +1106,22 @@
                         <button type="button" class="manual-line-btn save js-save-manual-line">保存</button>
                     </div>
                     {% endif %}
+                    </div>
+                    {{ pair.after.landmarks_json|json_script:pair.after_landmarks_script_id }}
+
+                    <div class="measurement-panel js-measurement-panel"
+                         data-image-id="{{ pair.after.id }}">
+                      <div class="measurement-title">計測値</div>
+                      <div class="measurement-grid">
+                        {% for row in pair.after_measurement_rows %}
+                          <div class="measurement-item">
+                            <div class="measurement-label">{{ row.label }}</div>
+                            <div class="measurement-value"
+                                 data-measurement-key="{{ row.key }}"
+                                 data-unit="{{ row.unit }}">{{ row.display_value }}</div>
+                          </div>
+                        {% endfor %}
+                      </div>
                     </div>
                 {% else %}
                   <div class="empty-image">Afterの{{ pair.label }}画像がありません。</div>
@@ -1314,7 +1387,7 @@
         frame.classList.toggle("hide-guide");
       });
 
-      const isHidden = document.querySelector(".posture-overlay-                                                  frame")?.classList.contains("hide-guide");
+      const isHidden = document.querySelector(".posture-overlay-frame")?.classList.contains("hide-guide");
       toggleGuideBtn.classList.toggle("is-active", !isHidden);
       toggleGuideBtn.textContent = isHidden ? "姿勢ラインOFF" : "姿勢ラインON";
     });
@@ -1352,17 +1425,34 @@
     return "";
   }
 
-  function parseLandmarks(raw){
-    if(!raw) return null;
+  function parseLandmarks(scriptId){
+    if(!scriptId) return null;
+
+    const script = document.getElementById(scriptId);
+    if(!script) return null;
 
     try{
-      // escapejs済み文字列をJSONとして復元
-      const parsed = JSON.parse(raw);
+      const parsed = JSON.parse(script.textContent);
       if(parsed && parsed.points) return parsed.points;
       return null;
     }catch(e){
       return null;
     }
+  }
+
+  function updateMeasurements(frame, measurements){
+    const panel = frame.closest(".compare-image")?.querySelector(".js-measurement-panel");
+    const items = measurements && measurements.items ? measurements.items : {};
+    if(!panel) return;
+
+    panel.querySelectorAll("[data-measurement-key]").forEach(valueEl => {
+      const key = valueEl.dataset.measurementKey;
+      const unit = valueEl.dataset.unit || "";
+      const value = items[key];
+      valueEl.textContent = value === undefined || value === null
+        ? "未計測"
+        : `${value}${unit}`;
+    });
   }
 
   function clamp(value, min, max){
@@ -1377,7 +1467,7 @@
     const editBtn = frame.querySelector(".js-edit-manual-line");
     const saveBtn = frame.querySelector(".js-save-manual-line");
 
-    let points = parseLandmarks(layer.dataset.landmarks) || JSON.parse(JSON.stringify(defaultPoints));
+    let points = parseLandmarks(layer.dataset.landmarksId) || JSON.parse(JSON.stringify(defaultPoints));
     let editing = false;
     let activeKey = null;
 
@@ -1506,6 +1596,7 @@
             }, 1800);
           }
 
+          updateMeasurements(frame, data.measurements);
           setEditing(false);
 
         }catch(error){
