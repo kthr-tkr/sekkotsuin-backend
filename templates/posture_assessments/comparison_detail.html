@@ -689,6 +689,11 @@
     display:none;
   }
 
+  .hide-guide .manual-landmark-layer,
+  .hide-guide .manual-line-toolbar{
+    display:none;
+  }
+
   .hide-grid .posture-grid{
     display:none;
   }
@@ -916,283 +921,1230 @@
       grid-template-columns:1fr;
     }
   }
+
+  /* CareFrow posture comparison report */
+  .pc-detail{
+    max-width:1440px;
+    gap:22px;
+    color:#14213d;
+  }
+
+  .cf-compare-hero{
+    position:relative;
+    overflow:hidden;
+    border-radius:34px;
+    padding:28px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 82% 12%, rgba(69,230,214,.24), transparent 28%),
+      radial-gradient(circle at 8% 92%, rgba(103,137,255,.26), transparent 34%),
+      linear-gradient(135deg,#081425 0%,#102d4f 48%,#126f7a 100%);
+    box-shadow:0 30px 80px rgba(12,35,64,.24);
+  }
+
+  .cf-compare-hero::after{
+    content:"";
+    position:absolute;
+    right:-90px;
+    bottom:-120px;
+    width:340px;
+    height:340px;
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:50%;
+    box-shadow:
+      0 0 0 42px rgba(255,255,255,.035),
+      0 0 0 84px rgba(255,255,255,.025);
+    pointer-events:none;
+  }
+
+  .cf-hero-nav,
+  .cf-hero-main{
+    position:relative;
+    z-index:1;
+  }
+
+  .cf-hero-nav{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:30px;
+  }
+
+  .cf-back-links,
+  .cf-hero-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .cf-ghost-link,
+  .cf-report-btn,
+  .cf-analyze-btn{
+    min-height:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:0 16px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.18);
+    color:#fff;
+    background:rgba(255,255,255,.08);
+    text-decoration:none;
+    font-size:13px;
+    font-weight:900;
+    backdrop-filter:blur(12px);
+  }
+
+  .cf-report-btn{
+    cursor:not-allowed;
+    opacity:.7;
+  }
+
+  .cf-analyze-btn{
+    border-color:rgba(255,255,255,.72);
+    color:#0b2435;
+    background:#fff;
+    box-shadow:0 14px 34px rgba(1,19,34,.22);
+    cursor:pointer;
+  }
+
+  .cf-analyze-btn:disabled{
+    cursor:wait;
+    opacity:.72;
+  }
+
+  .cf-hero-main{
+    display:grid;
+    grid-template-columns:minmax(0,1.3fr) minmax(330px,.7fr);
+    gap:28px;
+    align-items:end;
+  }
+
+  .cf-hero-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    margin-bottom:12px;
+    color:#a8f5eb;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+
+  .cf-hero-kicker::before{
+    content:"";
+    width:24px;
+    height:2px;
+    background:#45e6d6;
+  }
+
+  .cf-hero-title{
+    margin:0;
+    max-width:850px;
+    font-size:clamp(34px,5vw,62px);
+    line-height:1.04;
+    letter-spacing:-.055em;
+    font-weight:950;
+  }
+
+  .cf-hero-comparison-title{
+    margin-top:13px;
+    color:rgba(255,255,255,.68);
+    font-size:15px;
+    font-weight:800;
+  }
+
+  .cf-patient-row{
+    margin-top:28px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    flex-wrap:wrap;
+  }
+
+  .cf-patient-avatar{
+    width:48px;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+    border-radius:17px;
+    color:#083344;
+    background:linear-gradient(135deg,#d5fff9,#7cecdf);
+    font-size:18px;
+    font-weight:950;
+  }
+
+  .cf-patient-label{
+    color:rgba(255,255,255,.58);
+    font-size:11px;
+    font-weight:900;
+  }
+
+  .cf-patient-name{
+    margin-top:3px;
+    font-size:22px;
+    font-weight:950;
+  }
+
+  .cf-status-pill{
+    margin-left:auto;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 13px;
+    border-radius:999px;
+    color:#eafffb;
+    background:rgba(3,25,39,.32);
+    border:1px solid rgba(255,255,255,.16);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .cf-status-pill::before{
+    content:"";
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#45e6d6;
+    box-shadow:0 0 0 5px rgba(69,230,214,.14);
+  }
+
+  .cf-date-flow{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:12px;
+    padding:18px;
+    border-radius:24px;
+    background:rgba(4,24,39,.30);
+    border:1px solid rgba(255,255,255,.13);
+    backdrop-filter:blur(14px);
+  }
+
+  .cf-date-card{
+    min-width:0;
+  }
+
+  .cf-date-tag{
+    color:#8ddfd7;
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.1em;
+  }
+
+  .cf-date-value{
+    margin-top:6px;
+    font-size:17px;
+    font-weight:950;
+  }
+
+  .cf-date-title{
+    margin-top:4px;
+    overflow:hidden;
+    color:rgba(255,255,255,.57);
+    font-size:11px;
+    font-weight:800;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .cf-date-arrow{
+    width:38px;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    color:#0a3341;
+    background:#80eadf;
+    font-size:18px;
+    font-weight:950;
+  }
+
+  .cf-overview-grid{
+    display:grid;
+    grid-template-columns:1.35fr repeat(4,minmax(0,1fr));
+    gap:14px;
+  }
+
+  .cf-score-card,
+  .cf-stat-card{
+    min-height:154px;
+    padding:20px;
+    border-radius:25px;
+    background:#fff;
+    border:1px solid #e7edf4;
+    box-shadow:0 16px 42px rgba(22,43,73,.07);
+  }
+
+  .cf-score-card{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    background:
+      radial-gradient(circle at 96% 12%, rgba(50,207,188,.18), transparent 35%),
+      linear-gradient(145deg,#ffffff,#f3fcfb);
+  }
+
+  .cf-score-ring{
+    --score:0;
+    width:108px;
+    height:108px;
+    display:grid;
+    place-items:center;
+    flex:0 0 auto;
+    border-radius:50%;
+    background:conic-gradient(#18aa9b calc(var(--score) * 1%),#dfe9eb 0);
+    box-shadow:inset 0 0 0 1px rgba(8,77,79,.05);
+  }
+
+  .cf-score-inner{
+    width:82px;
+    height:82px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:#fff;
+    box-shadow:0 8px 24px rgba(19,76,80,.10);
+  }
+
+  .cf-score-value{
+    color:#0c3d46;
+    font-size:29px;
+    line-height:1;
+    font-weight:950;
+  }
+
+  .cf-score-unit{
+    margin-top:3px;
+    color:#7a9196;
+    font-size:10px;
+    font-weight:900;
+  }
+
+  .cf-score-label,
+  .cf-stat-label{
+    color:#6b7d8d;
+    font-size:11px;
+    font-weight:900;
+  }
+
+  .cf-score-state{
+    margin-top:7px;
+    color:#0e7069;
+    font-size:20px;
+    font-weight:950;
+  }
+
+  .cf-score-note{
+    margin-top:7px;
+    color:#82909d;
+    font-size:11px;
+    font-weight:750;
+    line-height:1.55;
+  }
+
+  .cf-stat-card{
+    position:relative;
+    overflow:hidden;
+  }
+
+  .cf-stat-card::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:4px;
+    background:#94a3b8;
+  }
+
+  .cf-stat-card.improved::before{background:#20b99f;}
+  .cf-stat-card.worsened::before{background:#f59e62;}
+  .cf-stat-card.unchanged::before{background:#4f86e8;}
+  .cf-stat-card.unknown::before{background:#94a3b8;}
+
+  .cf-stat-icon{
+    width:36px;
+    height:36px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    color:#0d5f59;
+    background:#e5faf6;
+    font-size:16px;
+    font-weight:950;
+  }
+
+  .cf-stat-card.worsened .cf-stat-icon{color:#9a4a16;background:#fff1e6;}
+  .cf-stat-card.unchanged .cf-stat-icon{color:#245cac;background:#eaf2ff;}
+  .cf-stat-card.unknown .cf-stat-icon{color:#596978;background:#f1f5f9;}
+
+  .cf-stat-value{
+    margin-top:17px;
+    color:#10243b;
+    font-size:32px;
+    line-height:1;
+    font-weight:950;
+  }
+
+  .cf-stat-label{
+    margin-top:8px;
+  }
+
+  .cf-patient-message{
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    gap:18px;
+    align-items:start;
+    padding:24px 26px;
+    border-radius:28px;
+    background:
+      radial-gradient(circle at 96% 0%, rgba(87,221,197,.18), transparent 32%),
+      linear-gradient(135deg,#edfffa 0%,#f8fffd 52%,#eef8ff 100%);
+    border:1px solid #beeade;
+    box-shadow:0 18px 44px rgba(17,120,107,.09);
+  }
+
+  .cf-message-icon{
+    width:54px;
+    height:54px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:18px;
+    color:#fff;
+    background:linear-gradient(135deg,#0d776d,#21b8a6);
+    font-size:22px;
+    font-weight:950;
+    box-shadow:0 12px 26px rgba(20,154,139,.24);
+  }
+
+  .cf-message-kicker{
+    color:#148477;
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+
+  .cf-message-title{
+    margin-top:5px;
+    color:#103b43;
+    font-size:22px;
+    font-weight:950;
+  }
+
+  .cf-message-text{
+    margin-top:9px;
+    color:#315b60;
+    font-size:15px;
+    font-weight:750;
+    line-height:1.9;
+    white-space:pre-wrap;
+  }
+
+  .cf-section{
+    padding:24px;
+    border-radius:29px;
+    background:rgba(255,255,255,.94);
+    border:1px solid #e7edf4;
+    box-shadow:0 18px 48px rgba(18,42,70,.065);
+  }
+
+  .cf-section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+
+  .cf-section-kicker{
+    color:#159487;
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.13em;
+    text-transform:uppercase;
+  }
+
+  .cf-section-title{
+    margin:5px 0 0;
+    color:#10243b;
+    font-size:27px;
+    letter-spacing:-.035em;
+    font-weight:950;
+  }
+
+  .cf-section-note{
+    margin-top:6px;
+    color:#718191;
+    font-size:13px;
+    font-weight:750;
+  }
+
+  .cf-insight-grid,
+  .cf-report-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+  }
+
+  .cf-insight-card{
+    padding:22px;
+    border-radius:23px;
+    background:#f8fafc;
+    border:1px solid #e7edf4;
+  }
+
+  .cf-insight-card.primary{
+    color:#fff;
+    background:linear-gradient(135deg,#10243b,#176c78);
+    border-color:transparent;
+  }
+
+  .cf-insight-label{
+    color:#718191;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .cf-insight-card.primary .cf-insight-label{color:#95e8de;}
+
+  .cf-insight-text{
+    margin-top:10px;
+    color:#263b52;
+    font-size:14px;
+    font-weight:780;
+    line-height:1.85;
+    white-space:pre-wrap;
+  }
+
+  .cf-insight-card.primary .cf-insight-text{color:rgba(255,255,255,.88);}
+
+  .compare-section{
+    border-radius:25px;
+    border-color:#dfe8ef;
+    background:#f4f8fa;
+    box-shadow:0 12px 32px rgba(18,48,70,.055);
+  }
+
+  .compare-section-head{
+    padding:16px 18px;
+  }
+
+  .compare-section-title{
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+
+  .compare-section-title::before{
+    content:"";
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:#22b8a5;
+    box-shadow:0 0 0 5px #e4faf6;
+  }
+
+  .compare-pane{
+    min-height:0;
+    background:#f7fafb;
+  }
+
+  .compare-pane-head{
+    padding:13px 15px;
+  }
+
+  .compare-label{
+    display:inline-flex;
+    padding:6px 10px;
+    border-radius:999px;
+    color:#32576c;
+    background:#eaf1f5;
+    font-size:11px;
+  }
+
+  .compare-pane.after .compare-label{
+    color:#087266;
+    background:#dcf8f2;
+  }
+
+  .posture-overlay-frame{
+    min-height:320px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      linear-gradient(45deg,#edf3f5 25%,transparent 25%),
+      linear-gradient(-45deg,#edf3f5 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#edf3f5 75%),
+      linear-gradient(-45deg,transparent 75%,#edf3f5 75%);
+    background-size:20px 20px;
+    background-position:0 0,0 10px,10px -10px,-10px 0;
+  }
+
+  .posture-overlay-frame img{
+    max-height:620px;
+    object-fit:contain;
+  }
+
+  .measurement-panel{
+    padding:15px;
+  }
+
+  .measurement-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .measurement-title::after{
+    content:"専門家向け";
+    padding:4px 7px;
+    border-radius:999px;
+    color:#687987;
+    background:#eef3f6;
+    font-size:9px;
+    letter-spacing:.06em;
+  }
+
+  .comparison-diff-group{
+    border-radius:20px;
+  }
+
+  .comparison-diff-title{
+    padding:14px 16px;
+    color:#143c4b;
+    background:#edf9f7;
+  }
+
+  .comparison-diff-table th{
+    background:#fbfcfd;
+  }
+
+  .trend-label{
+    white-space:nowrap;
+  }
+
+  .trend-label.unchanged{
+    color:#245cac;
+    background:#eaf2ff;
+  }
+
+  .trend-label.unknown{
+    color:#596978;
+    background:#f1f5f9;
+  }
+
+  .cf-ai-column{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .cf-list-card{
+    padding:21px;
+    border-radius:23px;
+    border:1px solid #e4ebf1;
+    background:#fff;
+    box-shadow:0 12px 28px rgba(17,42,68,.045);
+  }
+
+  .cf-list-card.improved{background:#f1fdf9;border-color:#beeade;}
+  .cf-list-card.attention{background:#fff8f2;border-color:#fed7b6;}
+  .cf-list-card.stable{background:#f3f7ff;border-color:#ccdcfa;}
+  .cf-list-card.measurement{background:#f5fbfc;border-color:#cde8eb;}
+  .cf-list-card.risk{background:#fafafa;border-color:#e5e7eb;}
+
+  .cf-list-head{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    margin-bottom:14px;
+  }
+
+  .cf-list-icon{
+    width:35px;
+    height:35px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    color:#176b64;
+    background:#ddf8f3;
+    font-size:14px;
+    font-weight:950;
+  }
+
+  .cf-list-card.attention .cf-list-icon{color:#a44d13;background:#ffead7;}
+  .cf-list-card.stable .cf-list-icon{color:#2e62ad;background:#e4edff;}
+  .cf-list-card.risk .cf-list-icon{color:#606b76;background:#eceff2;}
+
+  .cf-list-title{
+    color:#172d45;
+    font-size:17px;
+    font-weight:950;
+  }
+
+  .cf-list-sub{
+    margin-top:2px;
+    color:#7b8996;
+    font-size:10px;
+    font-weight:800;
+  }
+
+  .cf-list{
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:10px;
+    list-style:none;
+  }
+
+  .cf-list li{
+    position:relative;
+    padding-left:17px;
+    color:#385067;
+    font-size:13px;
+    font-weight:760;
+    line-height:1.75;
+  }
+
+  .cf-list li::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:.7em;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#21ad9e;
+  }
+
+  .cf-list-card.attention .cf-list li::before{background:#ed8a45;}
+  .cf-list-card.stable .cf-list li::before{background:#5485d8;}
+  .cf-list-card.risk .cf-list li::before{background:#8b98a4;}
+
+  .cf-body-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:11px;
+  }
+
+  .cf-body-item{
+    padding:16px;
+    border-radius:18px;
+    background:#f8fafc;
+    border:1px solid #e7edf4;
+  }
+
+  .cf-body-label{
+    color:#168d81;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .cf-body-text{
+    margin-top:7px;
+    color:#3b5267;
+    font-size:12px;
+    font-weight:750;
+    line-height:1.7;
+  }
+
+  @media(max-width:1180px){
+    .cf-overview-grid{
+      grid-template-columns:repeat(4,minmax(0,1fr));
+    }
+
+    .cf-score-card{
+      grid-column:1 / -1;
+    }
+  }
+
+  @media(max-width:980px){
+    .cf-hero-main,
+    .cf-insight-grid,
+    .cf-report-grid{
+      grid-template-columns:1fr;
+    }
+
+    .cf-hero-main{
+      align-items:start;
+    }
+
+    .cf-body-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+  }
+
+  @media(max-width:760px){
+    .cf-compare-hero,
+    .cf-section{
+      padding:19px;
+      border-radius:24px;
+    }
+
+    .cf-hero-nav{
+      align-items:flex-start;
+      flex-direction:column;
+      margin-bottom:22px;
+    }
+
+    .cf-hero-actions,
+    .cf-back-links{
+      width:100%;
+    }
+
+    .cf-analyze-btn,
+    .cf-report-btn{
+      flex:1 1 150px;
+    }
+
+    .cf-hero-title{
+      font-size:36px;
+    }
+
+    .cf-status-pill{
+      margin-left:0;
+    }
+
+    .cf-date-flow{
+      grid-template-columns:1fr;
+    }
+
+    .cf-date-arrow{
+      transform:rotate(90deg);
+      justify-self:center;
+    }
+
+    .cf-overview-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .cf-score-card{
+      grid-column:1 / -1;
+    }
+
+    .cf-stat-card{
+      min-height:132px;
+      padding:16px;
+    }
+
+    .cf-patient-message{
+      grid-template-columns:1fr;
+      padding:21px;
+    }
+
+    .cf-section-head{
+      margin-bottom:16px;
+    }
+
+    .cf-section-title{
+      font-size:23px;
+    }
+
+    .compare-grid,
+    .cf-body-grid{
+      grid-template-columns:1fr;
+    }
+
+    .measurement-grid{
+      grid-template-columns:1fr 1fr;
+    }
+
+    .comparison-diff-group{
+      overflow-x:auto;
+    }
+
+    .comparison-diff-table{
+      min-width:650px;
+    }
+  }
 </style>
 
 <div class="pc-detail">
 
-  <header class="pc-head">
-    <div>
-      <div class="pc-eyebrow">Posture Comparison</div>
-      <h1 class="pc-title">{{ comparison.title }}</h1>
-      <div class="pc-sub">姿勢分析のBefore/Afterを比較します。</div>
-    </div>
+  <section class="cf-compare-hero">
+    <div class="cf-hero-nav">
+      <div class="cf-back-links">
+        <a href="{% url 'posture_assessments:list' patient.id %}" class="cf-ghost-link">姿勢分析一覧</a>
+        <a href="{% url 'staff:patient_detail' patient.id %}" class="cf-ghost-link">患者詳細</a>
+      </div>
 
-    <div class="pc-tools">
-    <a href="{% url 'posture_assessments:list' patient.id %}" class="pc-btn">← 姿勢分析一覧へ</a>
-    <a href="{% url 'staff:patient_detail' patient.id %}" class="pc-btn">患者詳細へ</a>
-    <a href="{% url 'posture_assessments:comparison_create' patient.id %}" class="pc-btn">＋ 新しい比較</a>
-
-    <form method="post"
-            action="{% url 'posture_assessments:comparison_analyze' comparison.id %}"
-            style="display:inline;">
-        {% csrf_token %}
-
-        <button type="submit"
-                class="pc-btn primary js-ai-comparison-submit"
-                {% if comparison.status == "analyzing" %}disabled{% endif %}>
-        {% if comparison.status == "analyzing" %}
-            AI比較中...
-        {% elif summary %}
-            AI比較を再実行
-        {% else %}
-            AI比較分析を実行
-        {% endif %}
+      <div class="cf-hero-actions">
+        <button type="button"
+                class="cf-report-btn"
+                disabled
+                title="患者向けレポート機能は今後追加予定です">
+          患者向けレポート
         </button>
-    </form>
+        <form method="post"
+              action="{% url 'posture_assessments:comparison_analyze' comparison.id %}">
+          {% csrf_token %}
+          <button type="submit"
+                  class="cf-analyze-btn js-ai-comparison-submit"
+                  {% if comparison.status == "analyzing" %}disabled{% endif %}>
+            {% if comparison.status == "analyzing" %}
+              AI比較中...
+            {% elif summary %}
+              AI比較を再分析
+            {% else %}
+              AI比較分析を実行
+            {% endif %}
+          </button>
+        </form>
+      </div>
     </div>
-  </header>
 
-  <section class="pc-hero">
-    <div class="pc-hero-grid">
+    <div class="cf-hero-main">
       <div>
-        <h2 class="pc-patient">{{ patient.last_name }} {{ patient.first_name }} 様</h2>
-        <div class="pc-hero-text">
-          作成日：{{ comparison.created_at|date:"Y-m-d H:i" }}<br>
-          {% if comparison.memo %}
-            メモ：{{ comparison.memo }}
+        <div class="cf-hero-kicker">CareFrow Posture Intelligence</div>
+        <h1 class="cf-hero-title">AI姿勢Before/After比較</h1>
+        <div class="cf-hero-comparison-title">{{ comparison.title }}</div>
+
+        <div class="cf-patient-row">
+          <div class="cf-patient-avatar">
+            {{ patient.last_name|slice:":1" }}{{ patient.first_name|slice:":1" }}
+          </div>
+          <div>
+            <div class="cf-patient-label">患者</div>
+            <div class="cf-patient-name">{{ patient.last_name }} {{ patient.first_name }} 様</div>
+          </div>
+          <div class="cf-status-pill">{{ comparison.get_status_display }}</div>
+        </div>
+      </div>
+
+      <div class="cf-date-flow">
+        <div class="cf-date-card">
+          <div class="cf-date-tag">BEFORE</div>
+          <div class="cf-date-value">{{ before_assessment.created_at|date:"Y.m.d" }}</div>
+          <div class="cf-date-title">{{ before_assessment.title }}</div>
+        </div>
+        <div class="cf-date-arrow">→</div>
+        <div class="cf-date-card">
+          <div class="cf-date-tag">AFTER</div>
+          <div class="cf-date-value">{{ after_assessment.created_at|date:"Y.m.d" }}</div>
+          <div class="cf-date-title">{{ after_assessment.title }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cf-overview-grid" aria-label="姿勢比較サマリー">
+    <div class="cf-score-card">
+      <div class="cf-score-ring"
+           style="--score:{{ comparison_overview.score|default:0 }};">
+        <div class="cf-score-inner">
+          <div class="cf-score-value">
+            {% if comparison_overview.has_score %}
+              {{ comparison_overview.score }}
+            {% else %}
+              --
+            {% endif %}
+          </div>
+          <div class="cf-score-unit">/ 100</div>
+        </div>
+      </div>
+      <div>
+        <div class="cf-score-label">簡易姿勢変化スコア</div>
+        <div class="cf-score-state">{{ comparison_overview.score_label }}</div>
+        <div class="cf-score-note">
+          計測値の変化件数から算出した表示用の参考指標です。診断値ではありません。
+        </div>
+      </div>
+    </div>
+
+    <div class="cf-stat-card improved">
+      <div class="cf-stat-icon">↑</div>
+      <div class="cf-stat-value">{{ comparison_overview.trend_counts.improved }}</div>
+      <div class="cf-stat-label">改善傾向</div>
+    </div>
+
+    <div class="cf-stat-card worsened">
+      <div class="cf-stat-icon">!</div>
+      <div class="cf-stat-value">{{ comparison_overview.trend_counts.worsened }}</div>
+      <div class="cf-stat-label">要確認</div>
+    </div>
+
+    <div class="cf-stat-card unchanged">
+      <div class="cf-stat-icon">→</div>
+      <div class="cf-stat-value">{{ comparison_overview.trend_counts.unchanged }}</div>
+      <div class="cf-stat-label">大きな変化なし</div>
+    </div>
+
+    <div class="cf-stat-card unknown">
+      <div class="cf-stat-icon">?</div>
+      <div class="cf-stat-value">{{ comparison_overview.trend_counts.unknown }}</div>
+      <div class="cf-stat-label">判定保留</div>
+    </div>
+  </section>
+
+  <section class="cf-patient-message">
+    <div class="cf-message-icon">CF</div>
+    <div>
+      <div class="cf-message-kicker">Patient Communication</div>
+      <div class="cf-message-title">患者さんへのご説明</div>
+      <div class="cf-message-text">
+        {% if summary.patient_explanation %}
+          {{ summary.patient_explanation }}
+        {% else %}
+          AI比較分析を実行すると、今回の変化を患者さんへ伝えやすい表現で整理します。
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="cf-section">
+    <div class="cf-section-head">
+      <div>
+        <div class="cf-section-kicker">At A Glance</div>
+        <h2 class="cf-section-title">今回の変化をひと目で確認</h2>
+        <div class="cf-section-note">画像、計測値、AI所見を合わせて確認してください。</div>
+      </div>
+    </div>
+
+    <div class="cf-insight-grid">
+      <div class="cf-insight-card primary">
+        <div class="cf-insight-label">AI全体サマリー</div>
+        <div class="cf-insight-text">
+          {% if summary.overall_comparison_summary %}
+            {{ summary.overall_comparison_summary }}
           {% else %}
-            メモ：-
+            AI比較分析はまだ実行されていません。画像比較と計測値を確認し、必要に応じてAI分析を実行してください。
           {% endif %}
         </div>
       </div>
 
-      <div class="pc-status-grid">
-        <div class="pc-status-box">
-          <div class="pc-status-label">状態</div>
-          <div class="pc-status-value">{{ comparison.get_status_display }}</div>
-        </div>
-
-        <div class="pc-status-box">
-          <div class="pc-status-label">比較対象</div>
-          <div class="pc-status-value">Before / After</div>
-        </div>
+      <div class="cf-insight-card">
+        <div class="cf-insight-label">重要な変化</div>
+        <ul class="cf-list" style="margin-top:12px;">
+          {% if summary.important_changes %}
+            {% for item in summary.important_changes %}
+              <li>{{ item }}</li>
+            {% endfor %}
+          {% else %}
+            <li>重要な変化はまだ整理されていません。</li>
+          {% endif %}
+        </ul>
       </div>
     </div>
+
+    {% if comparison.memo %}
+      <div class="memo-box">比較メモ：{{ comparison.memo }}</div>
+    {% endif %}
   </section>
 
-  <section class="pc-card">
-    <h3 class="pc-card-title">比較対象</h3>
-    <div class="pc-card-sub">選択された2つの姿勢分析です。</div>
-
-    <div class="memo-box">
-      Before：{{ before_assessment.created_at|date:"Y-m-d H:i" }} / {{ before_assessment.title }} / {{ before_assessment.get_status_display }}<br>
-      After：{{ after_assessment.created_at|date:"Y-m-d H:i" }} / {{ after_assessment.title }} / {{ after_assessment.get_status_display }}
-    </div>
-  </section>
-
-  <section class="pc-card">
-    <h3 class="pc-card-title">Before / After画像比較</h3>
-    <div class="pc-card-sub">正面・右側面・背面の画像を左右に並べて確認します。</div>
-
-    <div class="overlay-toolbar">
-    <button type="button" class="overlay-toggle-btn is-active" id="toggleGridBtn">
-        グリッドON
-    </button>
-    <button type="button" class="overlay-toggle-btn is-active" id="toggleGuideBtn">
-        姿勢ラインON
-    </button>
+  <section class="cf-section">
+    <div class="cf-section-head">
+      <div>
+        <div class="cf-section-kicker">Visual Comparison</div>
+        <h2 class="cf-section-title">Before / After画像比較</h2>
+        <div class="cf-section-note">同じ撮影方向を並べ、姿勢ラインと計測値を確認します。</div>
+      </div>
+      <div class="overlay-toolbar">
+        <button type="button" class="overlay-toggle-btn is-active" id="toggleGridBtn">
+          グリッドON
+        </button>
+        <button type="button" class="overlay-toggle-btn is-active" id="toggleGuideBtn">
+          姿勢ラインON
+        </button>
+      </div>
     </div>
 
     <div class="compare-block">
       {% for pair in image_pairs %}
-        <div class="compare-section">
+        <article class="compare-section">
           <div class="compare-section-head">
             <div class="compare-section-title">{{ pair.label }}</div>
-            <div class="compare-section-note">同じ方向の画像を比較します</div>
+            <div class="compare-section-note">Before / After 同条件での確認を推奨</div>
           </div>
 
           <div class="compare-grid">
-
-            <div class="compare-pane">
+            <div class="compare-pane before">
               <div class="compare-pane-head">
                 <div class="compare-label">Before</div>
-                <div class="compare-date">{{ before_assessment.created_at|date:"Y-m-d H:i" }}</div>
+                <div class="compare-date">{{ before_assessment.created_at|date:"Y.m.d H:i" }}</div>
               </div>
 
               <div class="compare-image">
                 {% if pair.before %}
-                    <div class="posture-overlay-frame">
+                  <div class="posture-overlay-frame">
                     <img src="{{ pair.before.image.url }}" alt="Before {{ pair.label }}">
                     <div class="posture-grid"></div>
                     <div class="posture-center-line"></div>
 
                     {% if pair.key == "side_right" %}
-                    <div class="manual-landmark-layer js-manual-layer"
-                        data-image-id="{{ pair.before.id }}"
-                        data-save-url="{% url 'posture_assessments:image_landmarks_save' pair.before.id %}"
-                        data-landmarks-id="{{ pair.before_landmarks_script_id }}"
-                        data-side="before">
+                      <div class="manual-landmark-layer js-manual-layer"
+                           data-image-id="{{ pair.before.id }}"
+                           data-save-url="{% url 'posture_assessments:image_landmarks_save' pair.before.id %}"
+                           data-landmarks-id="{{ pair.before_landmarks_script_id }}"
+                           data-side="before">
                         <svg class="manual-landmark-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <polyline class="manual-line-path js-manual-path" points="" />
-
-                        <g class="manual-point js-manual-point" data-key="ear">
+                          <polyline class="manual-line-path js-manual-path" points="" />
+                          <g class="manual-point js-manual-point" data-key="ear">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">耳</text>
-                        </g>
-
-                        <g class="manual-point js-manual-point" data-key="shoulder">
+                          </g>
+                          <g class="manual-point js-manual-point" data-key="shoulder">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">肩</text>
-                        </g>
-
-                        <g class="manual-point js-manual-point" data-key="hip">
+                          </g>
+                          <g class="manual-point js-manual-point" data-key="hip">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">骨盤</text>
-                        </g>
-
-                        <g class="manual-point js-manual-point" data-key="knee">
+                          </g>
+                          <g class="manual-point js-manual-point" data-key="knee">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">膝</text>
-                        </g>
-
-                        <g class="manual-point js-manual-point" data-key="ankle">
+                          </g>
+                          <g class="manual-point js-manual-point" data-key="ankle">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">足首</text>
-                        </g>
+                          </g>
                         </svg>
-                    </div>
+                      </div>
 
-                    <div class="posture-guide-label">手動姿勢ライン</div>
-                    <div class="manual-line-status js-manual-status">編集できます</div>
-
-                    <div class="manual-line-toolbar">
+                      <div class="posture-guide-label">手動姿勢ライン</div>
+                      <div class="manual-line-status js-manual-status">編集できます</div>
+                      <div class="manual-line-toolbar">
                         <button type="button" class="manual-line-btn js-edit-manual-line">ライン編集</button>
                         <button type="button" class="manual-line-btn save js-save-manual-line">保存</button>
-                    </div>
-                    {% endif %}
-                    </div>
-                    {{ pair.before.landmarks_json|json_script:pair.before_landmarks_script_id }}
-
-                    <div class="measurement-panel js-measurement-panel"
-                         data-image-id="{{ pair.before.id }}">
-                      <div class="measurement-title">計測値</div>
-                      <div class="measurement-grid">
-                        {% for row in pair.before_measurement_rows %}
-                          <div class="measurement-item">
-                            <div class="measurement-label">{{ row.label }}</div>
-                            <div class="measurement-value"
-                                 data-measurement-key="{{ row.key }}"
-                                 data-unit="{{ row.unit }}">{{ row.display_value }}</div>
-                          </div>
-                        {% endfor %}
                       </div>
+                    {% endif %}
+                  </div>
+                  {{ pair.before.landmarks_json|json_script:pair.before_landmarks_script_id }}
+
+                  <div class="measurement-panel js-measurement-panel"
+                       data-image-id="{{ pair.before.id }}">
+                    <div class="measurement-title">Before計測値</div>
+                    <div class="measurement-grid">
+                      {% for row in pair.before_measurement_rows %}
+                        <div class="measurement-item">
+                          <div class="measurement-label">{{ row.label }}</div>
+                          <div class="measurement-value"
+                               data-measurement-key="{{ row.key }}"
+                               data-unit="{{ row.unit }}">{{ row.display_value }}</div>
+                        </div>
+                      {% endfor %}
                     </div>
+                  </div>
                 {% else %}
                   <div class="empty-image">Beforeの{{ pair.label }}画像がありません。</div>
                 {% endif %}
               </div>
             </div>
 
-            <div class="compare-pane">
+            <div class="compare-pane after">
               <div class="compare-pane-head">
                 <div class="compare-label">After</div>
-                <div class="compare-date">{{ after_assessment.created_at|date:"Y-m-d H:i" }}</div>
+                <div class="compare-date">{{ after_assessment.created_at|date:"Y.m.d H:i" }}</div>
               </div>
 
               <div class="compare-image">
                 {% if pair.after %}
-                    <div class="posture-overlay-frame">
+                  <div class="posture-overlay-frame">
                     <img src="{{ pair.after.image.url }}" alt="After {{ pair.label }}">
                     <div class="posture-grid"></div>
                     <div class="posture-center-line"></div>
 
                     {% if pair.key == "side_right" %}
-                    <div class="manual-landmark-layer js-manual-layer"
-                        data-image-id="{{ pair.after.id }}"
-                        data-save-url="{% url 'posture_assessments:image_landmarks_save' pair.after.id %}"
-                        data-landmarks-id="{{ pair.after_landmarks_script_id }}"
-                        data-side="after">
+                      <div class="manual-landmark-layer js-manual-layer"
+                           data-image-id="{{ pair.after.id }}"
+                           data-save-url="{% url 'posture_assessments:image_landmarks_save' pair.after.id %}"
+                           data-landmarks-id="{{ pair.after_landmarks_script_id }}"
+                           data-side="after">
                         <svg class="manual-landmark-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <polyline class="manual-line-path js-manual-path" points="" />
-
-                        <g class="manual-point js-manual-point" data-key="ear">
+                          <polyline class="manual-line-path js-manual-path" points="" />
+                          <g class="manual-point js-manual-point" data-key="ear">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">耳</text>
-                        </g>
-
-                        <g class="manual-point js-manual-point" data-key="shoulder">
+                          </g>
+                          <g class="manual-point js-manual-point" data-key="shoulder">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">肩</text>
-                        </g>
-
-                        <g class="manual-point js-manual-point" data-key="hip">
+                          </g>
+                          <g class="manual-point js-manual-point" data-key="hip">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">骨盤</text>
-                        </g>
-
-                        <g class="manual-point js-manual-point" data-key="knee">
+                          </g>
+                          <g class="manual-point js-manual-point" data-key="knee">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">膝</text>
-                        </g>
-
-                        <g class="manual-point js-manual-point" data-key="ankle">
+                          </g>
+                          <g class="manual-point js-manual-point" data-key="ankle">
                             <circle class="manual-point-circle" r="2.4"></circle>
                             <circle class="manual-point-dot" r=".7"></circle>
                             <text class="manual-point-label" x="3" y="-2">足首</text>
-                        </g>
+                          </g>
                         </svg>
-                    </div>
+                      </div>
 
-                    <div class="posture-guide-label">手動姿勢ライン</div>
-                    <div class="manual-line-status js-manual-status">編集できます</div>
-
-                    <div class="manual-line-toolbar">
+                      <div class="posture-guide-label">手動姿勢ライン</div>
+                      <div class="manual-line-status js-manual-status">編集できます</div>
+                      <div class="manual-line-toolbar">
                         <button type="button" class="manual-line-btn js-edit-manual-line">ライン編集</button>
                         <button type="button" class="manual-line-btn save js-save-manual-line">保存</button>
-                    </div>
-                    {% endif %}
-                    </div>
-                    {{ pair.after.landmarks_json|json_script:pair.after_landmarks_script_id }}
-
-                    <div class="measurement-panel js-measurement-panel"
-                         data-image-id="{{ pair.after.id }}">
-                      <div class="measurement-title">計測値</div>
-                      <div class="measurement-grid">
-                        {% for row in pair.after_measurement_rows %}
-                          <div class="measurement-item">
-                            <div class="measurement-label">{{ row.label }}</div>
-                            <div class="measurement-value"
-                                 data-measurement-key="{{ row.key }}"
-                                 data-unit="{{ row.unit }}">{{ row.display_value }}</div>
-                          </div>
-                        {% endfor %}
                       </div>
+                    {% endif %}
+                  </div>
+                  {{ pair.after.landmarks_json|json_script:pair.after_landmarks_script_id }}
+
+                  <div class="measurement-panel js-measurement-panel"
+                       data-image-id="{{ pair.after.id }}">
+                    <div class="measurement-title">After計測値</div>
+                    <div class="measurement-grid">
+                      {% for row in pair.after_measurement_rows %}
+                        <div class="measurement-item">
+                          <div class="measurement-label">{{ row.label }}</div>
+                          <div class="measurement-value"
+                               data-measurement-key="{{ row.key }}"
+                               data-unit="{{ row.unit }}">{{ row.display_value }}</div>
+                        </div>
+                      {% endfor %}
                     </div>
+                  </div>
                 {% else %}
                   <div class="empty-image">Afterの{{ pair.label }}画像がありません。</div>
                 {% endif %}
               </div>
             </div>
-
           </div>
-        </div>
+        </article>
       {% endfor %}
     </div>
   </section>
 
-  <section class="pc-card">
-    <h3 class="pc-card-title">計測値差分</h3>
-    <div class="pc-card-sub">
-      Before / Afterの絶対値変化を0.5の閾値で簡易判定します。
+  <section class="cf-section">
+    <div class="cf-section-head">
+      <div>
+        <div class="cf-section-kicker">Professional Metrics</div>
+        <h2 class="cf-section-title">専門家向け計測差分</h2>
+        <div class="cf-section-note">
+          数値は撮影条件の影響を受けるため、施術者の評価補助として確認してください。
+        </div>
+      </div>
     </div>
 
     {% if comparison_diff_groups %}
@@ -1205,8 +2157,8 @@
                 <th>計測項目</th>
                 <th>Before</th>
                 <th>After</th>
-                <th>Delta</th>
-                <th>Trend</th>
+                <th>差分</th>
+                <th>判定</th>
               </tr>
             </thead>
             <tbody>
@@ -1223,9 +2175,7 @@
                     {% endif %}
                   </td>
                   <td>
-                    <span class="trend-label {{ row.trend }}">
-                      {{ row.trend_label }}
-                    </span>
+                    <span class="trend-label {{ row.trend }}">{{ row.trend_label }}</span>
                   </td>
                 </tr>
               {% endfor %}
@@ -1235,301 +2185,237 @@
       {% endfor %}
     {% else %}
       <div class="summary-empty">
-        計測値差分はまだ生成されていません。AI比較分析を実行すると保存されます。
+        計測差分はまだ生成されていません。ランドマーク保存後にAI比較分析を実行してください。
       </div>
     {% endif %}
   </section>
 
-    <section class="pc-card">
-    <h3 class="pc-card-title">AI比較分析</h3>
-    <div class="pc-card-sub">
-        Before/Afterの変化点・次回確認ポイントをAIが整理します。
+  <section class="cf-section">
+    <div class="cf-section-head">
+      <div>
+        <div class="cf-section-kicker">AI Clinical Report</div>
+        <h2 class="cf-section-title">AI比較レポート</h2>
+        <div class="cf-section-note">改善の可能性、残存課題、次回方針を整理します。</div>
+      </div>
     </div>
 
     {% if comparison.status == "failed" and comparison.ai_error_message %}
-        <div class="summary-empty" style="border-color:#fecaca; background:#fff1f2; color:#991b1b;">
+      <div class="summary-empty" style="border-color:#fecaca;background:#fff1f2;color:#991b1b;">
         AI比較分析に失敗しました。<br>
         {{ comparison.ai_error_message }}
-        </div>
+      </div>
     {% endif %}
 
     {% if summary %}
-        <div class="ai-report">
-
-        <div class="ai-summary-card">
-            <div class="ai-summary-kicker">AI Comparison Summary</div>
-            <div class="ai-summary-title">全体サマリー</div>
-            <div class="ai-summary-text">
-            {{ summary.overall_comparison_summary|default:"-" }}
+      <div class="cf-report-grid">
+        <div class="cf-ai-column">
+          <div class="cf-list-card improved">
+            <div class="cf-list-head">
+              <div class="cf-list-icon">↑</div>
+              <div>
+                <div class="cf-list-title">改善傾向の可能性</div>
+                <div class="cf-list-sub">患者さんへ伝えやすい前向きな変化</div>
+              </div>
             </div>
-        </div>
-
-        <div class="important-change-card">
-            <div class="important-change-head">
-            <div class="important-change-title">重要な変化</div>
-            <div class="important-change-sub">最初に確認したいポイント</div>
-            </div>
-
-            <div class="important-change-list">
-            {% if summary.important_changes %}
-                {% for item in summary.important_changes %}
-                <div class="important-change-item">
-                    <div class="important-num">{{ forloop.counter }}</div>
-                    <div class="important-text">{{ item }}</div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="important-change-item">
-                <div class="important-num">-</div>
-                <div class="important-text">重要な変化はまだ整理されていません。</div>
-                </div>
-            {% endif %}
-            </div>
-        </div>
-
-        <div class="ai-three-grid">
-
-            <div class="ai-mini-card good">
-            <div class="ai-mini-head">
-                <div class="ai-icon">↑</div>
-                <div class="ai-mini-title">改善傾向</div>
-            </div>
-            <ul class="ai-list">
-                {% if summary.improved_points %}
-                {% for item in summary.improved_points %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-                {% else %}
+            <ul class="cf-list">
+              {% if summary.improved_points %}
+                {% for item in summary.improved_points %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
                 <li>改善傾向はまだ整理されていません。</li>
-                {% endif %}
+              {% endif %}
             </ul>
-            </div>
+          </div>
 
-            <div class="ai-mini-card keep">
-            <div class="ai-mini-head">
-                <div class="ai-icon">→</div>
-                <div class="ai-mini-title">継続確認</div>
+          <div class="cf-list-card stable">
+            <div class="cf-list-head">
+              <div class="cf-list-icon">→</div>
+              <div>
+                <div class="cf-list-title">大きな変化がない点</div>
+                <div class="cf-list-sub">継続して確認したい姿勢傾向</div>
+              </div>
             </div>
-            <ul class="ai-list">
-                {% if summary.unchanged_points %}
-                {% for item in summary.unchanged_points %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-                {% else %}
+            <ul class="cf-list">
+              {% if summary.unchanged_points %}
+                {% for item in summary.unchanged_points %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
                 <li>大きな変化がない点はまだ整理されていません。</li>
-                {% endif %}
+              {% endif %}
             </ul>
-            </div>
+          </div>
 
-            <div class="ai-mini-card attention">
-            <div class="ai-mini-head">
-                <div class="ai-icon">!</div>
-                <div class="ai-mini-title">注意・再確認</div>
+          <div class="cf-list-card measurement">
+            <div class="cf-list-head">
+              <div class="cf-list-icon">#</div>
+              <div>
+                <div class="cf-list-title">計測値ベースの所見</div>
+                <div class="cf-list-sub">数値差分から読み取れる参考情報</div>
+              </div>
             </div>
-            <ul class="ai-list">
-                {% if summary.worsened_or_remaining_points %}
-                {% for item in summary.worsened_or_remaining_points %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-                {% else %}
-                <li>注意点はまだ整理されていません。</li>
-                {% endif %}
+            <ul class="cf-list">
+              {% if summary.measurement_based_findings %}
+                {% for item in summary.measurement_based_findings %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
+                <li>利用可能な計測値差分はありません。</li>
+              {% endif %}
             </ul>
+          </div>
+
+          <div class="cf-list-card">
+            <div class="cf-list-head">
+              <div class="cf-list-icon">T</div>
+              <div>
+                <div class="cf-list-title">施術フォーカス候補</div>
+                <div class="cf-list-sub">施術者判断を補助する方針候補</div>
+              </div>
             </div>
-
-        </div>
-
-        <div class="ai-section-title-row">
-            <div class="ai-section-title">計測値ベースの所見</div>
-            <div class="ai-section-note">数値差分は施術者評価を補助する参考情報です</div>
-        </div>
-
-        <div class="important-change-card">
-            <div class="important-change-list">
-            {% if summary.measurement_based_findings %}
-                {% for item in summary.measurement_based_findings %}
-                <div class="important-change-item">
-                    <div class="important-num">{{ forloop.counter }}</div>
-                    <div class="important-text">{{ item }}</div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="important-change-item">
-                <div class="important-num">-</div>
-                <div class="important-text">利用可能な計測値差分はありません。</div>
-                </div>
-            {% endif %}
-            </div>
-        </div>
-
-        {% if summary.body_area_comparison %}
-        <div class="ai-section-title-row">
-            <div class="ai-section-title">部位別比較</div>
-            <div class="ai-section-note">頭部・肩・骨盤・膝などの変化を確認</div>
-        </div>
-
-        <div class="body-compare-grid">
-            <div class="body-compare-item">
-            <div class="body-compare-label">頭部・首</div>
-            <div class="body-compare-text">{{ summary.body_area_comparison.head_neck|default:"-" }}</div>
-            </div>
-
-            <div class="body-compare-item">
-            <div class="body-compare-label">肩</div>
-            <div class="body-compare-text">{{ summary.body_area_comparison.shoulder|default:"-" }}</div>
-            </div>
-
-            <div class="body-compare-item">
-            <div class="body-compare-label">背骨</div>
-            <div class="body-compare-text">{{ summary.body_area_comparison.spine|default:"-" }}</div>
-            </div>
-
-            <div class="body-compare-item">
-            <div class="body-compare-label">骨盤</div>
-            <div class="body-compare-text">{{ summary.body_area_comparison.pelvis|default:"-" }}</div>
-            </div>
-
-            <div class="body-compare-item">
-            <div class="body-compare-label">膝</div>
-            <div class="body-compare-text">{{ summary.body_area_comparison.knee|default:"-" }}</div>
-            </div>
-
-            <div class="body-compare-item">
-            <div class="body-compare-label">足部</div>
-            <div class="body-compare-text">{{ summary.body_area_comparison.foot|default:"-" }}</div>
-            </div>
-
-            <div class="body-compare-item">
-            <div class="body-compare-label">全体バランス</div>
-            <div class="body-compare-text">{{ summary.body_area_comparison.balance|default:"-" }}</div>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="ai-three-grid">
-
-            <div class="ai-mini-card">
-            <div class="ai-mini-head">
-                <div class="ai-icon">M</div>
-                <div class="ai-mini-title">施術者向けメモ</div>
-            </div>
-            <ul class="ai-list">
-                {% if summary.clinical_check_points %}
-                {% for item in summary.clinical_check_points %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-                {% else %}
-                <li>施術者向けメモはまだ整理されていません。</li>
-                {% endif %}
-            </ul>
-            </div>
-
-            <div class="ai-mini-card">
-            <div class="ai-mini-head">
-                <div class="ai-icon">N</div>
-                <div class="ai-mini-title">次回フォーカス</div>
-            </div>
-            <ul class="ai-list">
-                {% if summary.next_session_check_points %}
-                {% for item in summary.next_session_check_points %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-                {% else %}
-                <li>次回フォーカスはまだ整理されていません。</li>
-                {% endif %}
-            </ul>
-            </div>
-
-            <div class="ai-mini-card">
-            <div class="ai-mini-head">
-                <div class="ai-icon">R</div>
-                <div class="ai-mini-title">注意事項</div>
-            </div>
-            <ul class="ai-list">
-                {% if summary.risk_notes %}
-                {% for item in summary.risk_notes %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-                {% else %}
-                <li>注意事項はまだ整理されていません。</li>
-                {% endif %}
-            </ul>
-            </div>
-
-        </div>
-
-        <div class="ai-three-grid">
-
-            <div class="ai-mini-card">
-            <div class="ai-mini-head">
-                <div class="ai-icon">T</div>
-                <div class="ai-mini-title">施術フォーカス候補</div>
-            </div>
-            <ul class="ai-list">
-                {% if summary.treatment_focus_suggestions %}
-                {% for item in summary.treatment_focus_suggestions %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-                {% else %}
+            <ul class="cf-list">
+              {% if summary.treatment_focus_suggestions %}
+                {% for item in summary.treatment_focus_suggestions %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
                 <li>施術フォーカス候補はまだ整理されていません。</li>
-                {% endif %}
+              {% endif %}
             </ul>
-            </div>
+          </div>
 
-            <div class="ai-mini-card">
-            <div class="ai-mini-head">
-                <div class="ai-icon">H</div>
-                <div class="ai-mini-title">セルフケア候補</div>
+          <div class="cf-list-card">
+            <div class="cf-list-head">
+              <div class="cf-list-icon">H</div>
+              <div>
+                <div class="cf-list-title">セルフケア候補</div>
+                <div class="cf-list-sub">患者さんへ案内しやすい日常ケア</div>
+              </div>
             </div>
-            <ul class="ai-list">
-                {% if summary.home_care_suggestions %}
-                {% for item in summary.home_care_suggestions %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-                {% else %}
+            <ul class="cf-list">
+              {% if summary.home_care_suggestions %}
+                {% for item in summary.home_care_suggestions %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
                 <li>セルフケア候補はまだ整理されていません。</li>
-                {% endif %}
+              {% endif %}
             </ul>
+          </div>
+        </div>
+
+        <div class="cf-ai-column">
+          <div class="cf-list-card attention">
+            <div class="cf-list-head">
+              <div class="cf-list-icon">!</div>
+              <div>
+                <div class="cf-list-title">残存課題・要確認</div>
+                <div class="cf-list-sub">悪化と断定せず再確認が必要な点</div>
+              </div>
             </div>
+            <ul class="cf-list">
+              {% if summary.worsened_or_remaining_points %}
+                {% for item in summary.worsened_or_remaining_points %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
+                <li>要確認事項はまだ整理されていません。</li>
+              {% endif %}
+            </ul>
+          </div>
 
-        </div>
-
-        <div class="patient-explain-card">
-            <div class="patient-explain-title">患者さんへの説明</div>
-            <div class="patient-explain-text">
-            {{ summary.patient_explanation|default:"-" }}
+          <div class="cf-list-card">
+            <div class="cf-list-head">
+              <div class="cf-list-icon">C</div>
+              <div>
+                <div class="cf-list-title">施術者の確認ポイント</div>
+                <div class="cf-list-sub">触診・動作・症状と合わせて確認</div>
+              </div>
             </div>
+            <ul class="cf-list">
+              {% if summary.clinical_check_points %}
+                {% for item in summary.clinical_check_points %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
+                <li>確認ポイントはまだ整理されていません。</li>
+              {% endif %}
+            </ul>
+          </div>
+
+          <div class="cf-list-card">
+            <div class="cf-list-head">
+              <div class="cf-list-icon">N</div>
+              <div>
+                <div class="cf-list-title">次回セッション確認項目</div>
+                <div class="cf-list-sub">次回施術・再撮影で追跡するポイント</div>
+              </div>
+            </div>
+            <ul class="cf-list">
+              {% if summary.next_session_check_points %}
+                {% for item in summary.next_session_check_points %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
+                <li>次回確認項目はまだ整理されていません。</li>
+              {% endif %}
+            </ul>
+          </div>
+
+          <div class="cf-list-card risk">
+            <div class="cf-list-head">
+              <div class="cf-list-icon">R</div>
+              <div>
+                <div class="cf-list-title">分析上の注意事項</div>
+                <div class="cf-list-sub">撮影条件と画像評価の限界</div>
+              </div>
+            </div>
+            <ul class="cf-list">
+              {% if summary.risk_notes %}
+                {% for item in summary.risk_notes %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
+                <li>注意事項はまだ整理されていません。</li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {% if summary.body_area_comparison %}
+        <div class="cf-section-head" style="margin-top:24px;">
+          <div>
+            <div class="cf-section-kicker">Body Area Review</div>
+            <h3 class="cf-section-title">部位別比較</h3>
+          </div>
         </div>
 
+        <div class="cf-body-grid">
+          <div class="cf-body-item">
+            <div class="cf-body-label">頭部・首</div>
+            <div class="cf-body-text">{{ summary.body_area_comparison.head_neck|default:"-" }}</div>
+          </div>
+          <div class="cf-body-item">
+            <div class="cf-body-label">肩</div>
+            <div class="cf-body-text">{{ summary.body_area_comparison.shoulder|default:"-" }}</div>
+          </div>
+          <div class="cf-body-item">
+            <div class="cf-body-label">背骨</div>
+            <div class="cf-body-text">{{ summary.body_area_comparison.spine|default:"-" }}</div>
+          </div>
+          <div class="cf-body-item">
+            <div class="cf-body-label">骨盤</div>
+            <div class="cf-body-text">{{ summary.body_area_comparison.pelvis|default:"-" }}</div>
+          </div>
+          <div class="cf-body-item">
+            <div class="cf-body-label">膝</div>
+            <div class="cf-body-text">{{ summary.body_area_comparison.knee|default:"-" }}</div>
+          </div>
+          <div class="cf-body-item">
+            <div class="cf-body-label">足部</div>
+            <div class="cf-body-text">{{ summary.body_area_comparison.foot|default:"-" }}</div>
+          </div>
+          <div class="cf-body-item">
+            <div class="cf-body-label">全体バランス</div>
+            <div class="cf-body-text">{{ summary.body_area_comparison.balance|default:"-" }}</div>
+          </div>
         </div>
+      {% endif %}
     {% else %}
-        <div class="summary-empty">
-        まだAI比較分析は実行されていません。<br>
-        右上の「AI比較分析を実行」からBefore/Afterの変化を整理できます。
-        </div>
+      <div class="summary-empty">
+        AI比較分析はまだ実行されていません。画面上部のボタンから、改善の可能性・残存課題・次回方針を整理できます。
+      </div>
     {% endif %}
-    </section>
+  </section>
 
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-(function(){
-  const forms = document.querySelectorAll('form[action*="/comparisons/"][action*="/analyze"]');
-
-  forms.forEach(form => {
-    form.addEventListener("submit", function(){
-      const btn = form.querySelector(".js-ai-comparison-submit");
-      if(!btn) return;
-
-      btn.disabled = true;
-      btn.textContent = "AI比較中...";
-    });
-  });
-})();
-</script>
-
 <script>
 (function(){
   const toggleGridBtn = document.getElementById("toggleGridBtn");

@@ -686,9 +686,15 @@ def posture_comparison_detail_view(request, comparison_id):
     }
     trend_labels = {
         "improved": "改善傾向",
-        "worsened": "注意",
-        "unchanged": "変化小",
-        "unknown": "判定不可",
+        "worsened": "要確認",
+        "unchanged": "大きな変化なし",
+        "unknown": "判定保留",
+    }
+    trend_counts = {
+        "improved": 0,
+        "worsened": 0,
+        "unchanged": 0,
+        "unknown": 0,
     }
     comparison_diff_groups = []
 
@@ -699,6 +705,10 @@ def posture_comparison_detail_view(request, comparison_id):
 
         for key, values in items.items():
             label, unit = measurement_labels.get(key, (key, ""))
+            trend = values.get("trend") or "unknown"
+            if trend not in trend_counts:
+                trend = "unknown"
+            trend_counts[trend] += 1
             rows.append({
                 "key": key,
                 "label": label,
@@ -706,9 +716,9 @@ def posture_comparison_detail_view(request, comparison_id):
                 "before": values.get("before"),
                 "after": values.get("after"),
                 "delta": values.get("delta"),
-                "trend": values.get("trend") or "unknown",
+                "trend": trend,
                 "trend_label": trend_labels.get(
-                    values.get("trend"),
+                    trend,
                     trend_labels["unknown"],
                 ),
             })
@@ -719,6 +729,37 @@ def posture_comparison_detail_view(request, comparison_id):
                 "label": image_type_labels.get(image_type, image_type),
                 "rows": rows,
             })
+
+    known_trend_count = (
+        trend_counts["improved"]
+        + trend_counts["worsened"]
+        + trend_counts["unchanged"]
+    )
+    posture_score = None
+    posture_score_label = "未算出"
+
+    if known_trend_count:
+        score = 50 + (
+            (trend_counts["improved"] - trend_counts["worsened"])
+            / known_trend_count
+            * 50
+        )
+        posture_score = round(max(0, min(100, score)))
+
+        if posture_score >= 65:
+            posture_score_label = "改善傾向"
+        elif posture_score >= 45:
+            posture_score_label = "安定傾向"
+        else:
+            posture_score_label = "要確認"
+
+    comparison_overview = {
+        "trend_counts": trend_counts,
+        "score": posture_score,
+        "has_score": posture_score is not None,
+        "score_label": posture_score_label,
+        "measurement_count": sum(trend_counts.values()),
+    }
 
     summary = comparison.get_active_summary() or {}
     if summary:
@@ -764,6 +805,7 @@ def posture_comparison_detail_view(request, comparison_id):
         "after_assessment": comparison.after_assessment,
         "image_pairs": image_pairs,
         "comparison_diff_groups": comparison_diff_groups,
+        "comparison_overview": comparison_overview,
         "summary": summary,
     })
 
