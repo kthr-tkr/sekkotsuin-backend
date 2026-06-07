@@ -29,6 +29,7 @@ from .services.ai_analyzer import (
     analyze_posture_assessment,
     analyze_posture_comparison,
 )
+from .services.comparison_builder import build_posture_comparison_json
 from .services.image_converter import normalize_posture_image
 
 from .services.measurements import build_measurements_for_image
@@ -673,6 +674,52 @@ def posture_comparison_detail_view(request, comparison_id):
         pair["before_measurement_rows"] = build_measurement_rows(before_image)
         pair["after_measurement_rows"] = build_measurement_rows(after_image)
 
+    image_type_labels = {
+        PostureAssessmentImage.ImageType.FRONT: "正面",
+        PostureAssessmentImage.ImageType.SIDE_RIGHT: "右側面",
+        PostureAssessmentImage.ImageType.BACK: "背面",
+    }
+    measurement_labels = {
+        key: (label, unit)
+        for specs in measurement_specs.values()
+        for key, label, unit in specs
+    }
+    trend_labels = {
+        "improved": "改善傾向",
+        "worsened": "注意",
+        "unchanged": "変化小",
+        "unknown": "判定不可",
+    }
+    comparison_diff_groups = []
+
+    for image_type, items in (
+        (comparison.comparison_json or {}).get("items") or {}
+    ).items():
+        rows = []
+
+        for key, values in items.items():
+            label, unit = measurement_labels.get(key, (key, ""))
+            rows.append({
+                "key": key,
+                "label": label,
+                "unit": unit,
+                "before": values.get("before"),
+                "after": values.get("after"),
+                "delta": values.get("delta"),
+                "trend": values.get("trend") or "unknown",
+                "trend_label": trend_labels.get(
+                    values.get("trend"),
+                    trend_labels["unknown"],
+                ),
+            })
+
+        if rows:
+            comparison_diff_groups.append({
+                "image_type": image_type,
+                "label": image_type_labels.get(image_type, image_type),
+                "rows": rows,
+            })
+
     summary = comparison.get_active_summary() or {}
 
     return render(request, "posture_assessments/comparison_detail.html", {
@@ -683,6 +730,7 @@ def posture_comparison_detail_view(request, comparison_id):
         "before_assessment": comparison.before_assessment,
         "after_assessment": comparison.after_assessment,
         "image_pairs": image_pairs,
+        "comparison_diff_groups": comparison_diff_groups,
         "summary": summary,
     })
 
@@ -718,10 +766,12 @@ def posture_comparison_analyze_view(request, comparison_id):
         return redirect("posture_assessments:comparison_detail", comparison_id=comparison.id)
 
     try:
+        comparison.comparison_json = build_posture_comparison_json(comparison)
         comparison.status = PostureComparison.Status.ANALYZING
         comparison.ai_error_message = ""
         comparison.updated_by = request.user
         comparison.save(update_fields=[
+            "comparison_json",
             "status",
             "ai_error_message",
             "updated_by",
