@@ -4,9 +4,9 @@
 {% block content %}
 <style>
   .report-shell{
-    max-width:1120px;
+    max-width:1500px;
     margin:0 auto;
-    color:#163044;
+    color:#152b3f;
   }
 
   .report-actions{
@@ -14,7 +14,7 @@
     justify-content:space-between;
     align-items:center;
     gap:12px;
-    margin-bottom:16px;
+    margin-bottom:14px;
     flex-wrap:wrap;
   }
 
@@ -23,423 +23,653 @@
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    padding:0 14px;
-    border-radius:14px;
-    border:1px solid #dbe6ee;
+    padding:0 16px;
+    border-radius:999px;
+    border:1px solid #d7e3ef;
     background:#fff;
     color:#17324a;
     font-size:13px;
     font-weight:900;
-    box-shadow:0 10px 24px rgba(22,48,68,.06);
+    box-shadow:0 10px 24px rgba(19,45,70,.07);
     cursor:pointer;
   }
 
   .report-btn.primary{
     color:#fff;
     border-color:transparent;
-    background:linear-gradient(135deg,#0d7067,#1bb7a4);
+    background:linear-gradient(135deg,#286fbe,#35b9b0);
   }
 
-  .report-page{
+  .landscape-report{
     overflow:hidden;
-    border-radius:30px;
-    background:#fff;
-    border:1px solid #e4ecf3;
-    box-shadow:0 24px 70px rgba(18,45,66,.10);
+    border-radius:28px;
+    background:#fbfdff;
+    border:1px solid #dce8f2;
+    box-shadow:0 28px 80px rgba(21,48,75,.12);
   }
 
-  .report-hero{
-    position:relative;
-    padding:34px;
-    color:#fff;
+  .report-top{
+    padding:22px;
     background:
-      radial-gradient(circle at 82% 10%, rgba(119,238,222,.28), transparent 31%),
-      linear-gradient(135deg,#071a28 0%,#0f4c5b 55%,#13a391 100%);
+      radial-gradient(circle at 5% 0%, rgba(67,151,222,.18), transparent 28%),
+      linear-gradient(135deg,#eef7ff 0%,#f8fbff 46%,#f2fffb 100%);
+    border-bottom:1px solid #dce8f2;
   }
 
-  .report-hero::after{
-    content:"";
-    position:absolute;
-    right:-70px;
-    bottom:-110px;
-    width:300px;
-    height:300px;
-    border-radius:50%;
-    border:1px solid rgba(255,255,255,.16);
-    box-shadow:0 0 0 42px rgba(255,255,255,.04);
+  .top-grid{
+    display:grid;
+    grid-template-columns:1.15fr .92fr .64fr;
+    gap:16px;
+    align-items:stretch;
   }
 
-  .report-brand{
-    position:relative;
-    z-index:1;
+  .report-heading{
+    min-height:180px;
     display:flex;
+    flex-direction:column;
     justify-content:space-between;
-    align-items:flex-start;
-    gap:18px;
-    margin-bottom:28px;
+    padding:18px;
+    border-radius:24px;
+    color:#0e2b45;
+    background:#fff;
+    border:1px solid rgba(203,220,235,.9);
+    box-shadow:0 16px 40px rgba(23,64,100,.06);
   }
 
-  .brand-mark-report{
-    width:50px;
-    height:50px;
+  .report-kicker{
     display:flex;
     align-items:center;
+    gap:10px;
+    color:#286fbe;
+    font-size:13px;
+    font-weight:950;
+    letter-spacing:.02em;
+  }
+
+  .kicker-pill{
+    display:inline-flex;
+    align-items:center;
     justify-content:center;
-    border-radius:16px;
-    color:#07343f;
-    background:#9cf7ed;
-    font-size:17px;
+    min-height:28px;
+    padding:0 13px;
+    border-radius:999px;
+    color:#fff;
+    background:linear-gradient(135deg,#2f72c5,#30b7af);
+    font-size:12px;
     font-weight:950;
   }
 
-  .brand-name-report{
-    margin-top:8px;
-    color:rgba(255,255,255,.72);
-    font-size:12px;
-    font-weight:900;
-    letter-spacing:.14em;
-  }
-
-  .report-date{
-    color:rgba(255,255,255,.72);
-    font-size:12px;
-    font-weight:800;
-    text-align:right;
-  }
-
   .report-title{
-    position:relative;
-    z-index:1;
-    margin:0;
-    max-width:780px;
-    font-size:clamp(32px,5vw,54px);
-    line-height:1.05;
+    margin:10px 0 0;
+    font-size:clamp(32px,4vw,52px);
+    line-height:1.02;
     letter-spacing:-.055em;
     font-weight:950;
   }
 
-  .report-subtitle{
-    position:relative;
-    z-index:1;
-    margin-top:12px;
-    color:rgba(255,255,255,.76);
+  .report-lead{
+    margin:12px 0 0;
+    color:#546b80;
     font-size:15px;
     font-weight:800;
     line-height:1.8;
   }
 
-  .patient-strip{
-    position:relative;
-    z-index:1;
-    margin-top:28px;
+  .carefrow-name{
+    color:#7890a4;
+    font-size:12px;
+    font-weight:950;
+    letter-spacing:.14em;
+  }
+
+  .patient-panel,
+  .date-panel,
+  .score-main-card,
+  .summary-count-card,
+  .report-card{
+    border-radius:24px;
+    background:#fff;
+    border:1px solid #dce8f2;
+    box-shadow:0 16px 40px rgba(23,64,100,.055);
+  }
+
+  .patient-panel{
     display:grid;
-    grid-template-columns:1.4fr .7fr .7fr repeat(3,minmax(0,1fr));
-    gap:10px;
+    grid-template-columns:1fr 1fr;
+    gap:0;
+    overflow:hidden;
   }
 
-  .patient-chip{
-    padding:14px;
-    border-radius:18px;
-    background:rgba(255,255,255,.12);
-    border:1px solid rgba(255,255,255,.14);
-    backdrop-filter:blur(12px);
+  .patient-main{
+    grid-column:1 / -1;
+    padding:18px 18px 14px;
+    border-bottom:1px solid #e5eef6;
   }
 
-  .chip-label{
-    color:rgba(255,255,255,.58);
-    font-size:10px;
-    font-weight:900;
+  .panel-label{
+    color:#6c8296;
+    font-size:11px;
+    font-weight:950;
   }
 
-  .chip-value{
-    margin-top:6px;
-    color:#fff;
+  .patient-name{
+    margin-top:8px;
+    color:#102b44;
+    font-size:30px;
+    font-weight:950;
+    letter-spacing:-.04em;
+  }
+
+  .patient-sub{
+    margin-top:7px;
+    color:#445b70;
+    font-size:14px;
+    font-weight:850;
+  }
+
+  .patient-meta{
+    padding:14px 18px;
+    border-right:1px solid #e5eef6;
+  }
+
+  .patient-meta:last-child{
+    border-right:0;
+  }
+
+  .meta-value{
+    margin-top:8px;
+    color:#0f2b45;
     font-size:17px;
     font-weight:950;
   }
 
-  .report-body{
-    padding:26px;
+  .date-panel{
     display:grid;
-    gap:22px;
+    overflow:hidden;
   }
 
-  .score-row{
+  .date-panel-head{
+    padding:14px 16px;
+    color:#286fbe;
+    background:#f3f8ff;
+    border-bottom:1px solid #dce8f2;
+    font-size:13px;
+    font-weight:950;
+    text-align:center;
+  }
+
+  .date-row{
     display:grid;
-    grid-template-columns:1.2fr repeat(4,minmax(0,1fr));
-    gap:12px;
-  }
-
-  .score-card,
-  .mini-score{
-    padding:18px;
-    border-radius:24px;
-    background:#f8fbfc;
-    border:1px solid #e3edf2;
-  }
-
-  .score-card{
-    display:flex;
+    grid-template-columns:68px 1fr;
     align-items:center;
+    gap:10px;
+    padding:13px 16px;
+    border-bottom:1px solid #e5eef6;
+  }
+
+  .date-row:last-child{
+    border-bottom:0;
+  }
+
+  .date-tag{
+    display:inline-flex;
+    min-height:26px;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    color:#fff;
+    background:#9baec0;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .date-tag.after{
+    background:#2f72c5;
+  }
+
+  .date-value{
+    color:#14324d;
+    font-size:18px;
+    font-weight:950;
+  }
+
+  .date-sub{
+    padding:12px 16px 14px;
+    color:#6b8092;
+    font-size:12px;
+    font-weight:850;
+    line-height:1.6;
+  }
+
+  .score-strip{
+    display:grid;
+    grid-template-columns:1.1fr repeat(4,minmax(0,1fr));
+    gap:12px;
+    margin-top:14px;
+  }
+
+  .score-main-card{
+    display:grid;
+    grid-template-columns:128px 1fr;
     gap:16px;
+    align-items:center;
+    padding:18px;
     background:
-      radial-gradient(circle at 92% 10%, rgba(32,185,159,.16), transparent 34%),
-      linear-gradient(135deg,#f8fffd,#eefaf8);
+      radial-gradient(circle at 12% 8%, rgba(49,134,210,.16), transparent 34%),
+      linear-gradient(135deg,#fff,#f4fbff);
   }
 
   .score-ring{
     --score:0;
-    width:100px;
-    height:100px;
+    width:118px;
+    height:118px;
     display:grid;
     place-items:center;
-    flex:0 0 auto;
     border-radius:50%;
-    background:conic-gradient(#16a394 calc(var(--score) * 1%),#dce8ea 0);
+    background:conic-gradient(#2f72c5 calc(var(--score) * 1%),#e1ebf3 0);
   }
 
-  .score-inner{
-    width:76px;
-    height:76px;
+  .score-ring-inner{
+    width:86px;
+    height:86px;
     display:grid;
     place-items:center;
     border-radius:50%;
     background:#fff;
-    color:#0b4650;
-    font-size:27px;
-    font-weight:950;
-    box-shadow:0 8px 22px rgba(14,79,82,.10);
+    box-shadow:inset 0 0 0 1px #e7eff6;
   }
 
-  .score-title,
-  .mini-label{
-    color:#647887;
+  .score-number{
+    color:#142b42;
+    font-size:34px;
+    font-weight:950;
+    line-height:1;
+  }
+
+  .score-max{
+    color:#7890a4;
     font-size:11px;
     font-weight:900;
   }
 
-  .score-state{
-    margin-top:8px;
-    color:#0c6e67;
-    font-size:21px;
+  .score-title{
+    color:#142b42;
+    font-size:16px;
     font-weight:950;
   }
 
-  .score-note{
-    margin-top:6px;
-    color:#708391;
-    font-size:11px;
-    font-weight:750;
-    line-height:1.6;
+  .score-change{
+    margin-top:8px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:baseline;
   }
 
-  .mini-value{
+  .score-small{
+    color:#5b7286;
+    font-size:13px;
+    font-weight:900;
+  }
+
+  .score-delta{
+    color:#687f92;
+    font-size:26px;
+    font-weight:950;
+  }
+
+  .score-delta.up{
+    color:#18895f;
+  }
+
+  .score-delta.down{
+    color:#c05a1f;
+  }
+
+  .score-note{
+    margin-top:8px;
+    color:#6f8295;
+    font-size:12px;
+    font-weight:780;
+    line-height:1.65;
+  }
+
+  .summary-count-card{
+    min-height:112px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:16px;
+  }
+
+  .count-top{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:#4b6378;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .count-icon{
+    width:34px;
+    height:34px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    color:#fff;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .count-icon.good{background:#4fb77d;}
+  .count-icon.warn{background:#f2bd50;}
+  .count-icon.keep{background:#6bb7e0;}
+  .count-icon.hold{background:#9ca5af;}
+
+  .count-value{
     margin-top:12px;
-    color:#18324a;
-    font-size:32px;
+    color:#152c42;
+    font-size:36px;
     line-height:1;
     font-weight:950;
   }
 
-  .mini-score.good{background:#f0fdf9;border-color:#bdeade;}
-  .mini-score.warn{background:#fff7ef;border-color:#ffd8b8;}
-  .mini-score.keep{background:#f4f8ff;border-color:#ccdcfa;}
-  .mini-score.hold{background:#faf7ff;border-color:#ded1fa;}
-
-  .report-section{
-    padding:22px;
-    border-radius:26px;
-    background:#fff;
-    border:1px solid #e4ecf3;
-    box-shadow:0 12px 30px rgba(20,46,66,.045);
+  .count-unit{
+    margin-left:4px;
+    color:#536b80;
+    font-size:14px;
+    font-weight:900;
   }
 
-  .section-head-report{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:16px;
-  }
-
-  .section-number{
-    width:36px;
-    height:36px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex:0 0 auto;
-    border-radius:13px;
-    color:#fff;
-    background:linear-gradient(135deg,#0d7067,#1bb7a4);
-    font-size:13px;
-    font-weight:950;
-  }
-
-  .section-title-report{
-    color:#10263b;
-    font-size:22px;
-    letter-spacing:-.03em;
-    font-weight:950;
-  }
-
-  .section-sub-report{
-    margin-top:3px;
-    color:#7a8996;
-    font-size:12px;
-    font-weight:800;
-  }
-
-  .summary-panel{
-    padding:20px;
-    border-radius:22px;
-    color:#fff;
-    background:linear-gradient(135deg,#10263b,#116c73);
-  }
-
-  .summary-panel p{
-    margin:0;
-    color:rgba(255,255,255,.88);
-    font-size:15px;
-    font-weight:760;
-    line-height:1.9;
-    white-space:pre-wrap;
-  }
-
-  .photo-report-grid{
+  .report-body{
+    padding:18px;
     display:grid;
     gap:16px;
   }
 
-  .photo-report-card{
-    overflow:hidden;
-    border-radius:22px;
-    border:1px solid #e2ebf1;
-    background:#f7fafb;
+  .main-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.48fr) minmax(360px,.82fr);
+    gap:16px;
   }
 
-  .photo-report-title{
-    padding:13px 16px;
-    color:#10263b;
-    background:#fff;
-    border-bottom:1px solid #e2ebf1;
+  .section-title-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:14px;
+    margin-bottom:12px;
+  }
+
+  .section-kicker{
+    color:#2f72c5;
+    font-size:12px;
+    font-weight:950;
+    letter-spacing:.05em;
+  }
+
+  .section-title{
+    margin-top:3px;
+    color:#132c43;
+    font-size:20px;
+    letter-spacing:-.035em;
+    font-weight:950;
+  }
+
+  .section-note{
+    color:#72879b;
+    font-size:12px;
+    font-weight:850;
+  }
+
+  .photo-board{
+    padding:14px;
+  }
+
+  .photo-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .photo-card{
+    overflow:hidden;
+    border-radius:18px;
+    background:#f7fbff;
+    border:1px solid #dbe8f2;
+  }
+
+  .photo-card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    padding:10px 12px;
+    background:linear-gradient(180deg,#f3f8ff,#eaf3fc);
+    border-bottom:1px solid #dbe8f2;
+  }
+
+  .photo-title{
+    color:#142e47;
     font-size:15px;
     font-weight:950;
   }
+
+  .image-trend{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:24px;
+    padding:0 9px;
+    border-radius:999px;
+    color:#687b8d;
+    background:#eef3f8;
+    font-size:11px;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .image-trend.improved{color:#137551;background:#e5f8ef;}
+  .image-trend.worsened{color:#9a4b14;background:#fff1d6;}
+  .image-trend.unchanged{color:#2365a8;background:#e8f3ff;}
+  .image-trend.unknown{color:#5d6873;background:#eef1f4;}
 
   .photo-pair{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:1px;
-    background:#e2ebf1;
+    background:#dbe8f2;
   }
 
-  .photo-box{
-    background:#f8fafc;
+  .photo-slot{
+    min-width:0;
+    background:#fff;
   }
 
-  .photo-label{
+  .photo-slot-label{
     display:flex;
     justify-content:space-between;
-    gap:10px;
-    padding:10px 12px;
-    color:#536575;
-    background:#fff;
+    gap:8px;
+    padding:8px 9px;
+    color:#536b80;
+    border-bottom:1px solid #eef3f8;
     font-size:11px;
-    font-weight:900;
+    font-weight:950;
   }
 
-  .photo-box img{
+  .photo-slot img{
     width:100%;
-    height:310px;
+    height:330px;
     display:block;
     object-fit:contain;
-    background:#edf3f5;
+    background:#edf4f8;
   }
 
   .no-photo{
-    height:310px;
+    height:330px;
     display:flex;
     align-items:center;
     justify-content:center;
-    color:#8b9baa;
-    background:#edf3f5;
+    color:#8798a8;
+    background:#edf4f8;
     font-size:13px;
+    font-weight:950;
+  }
+
+  .legend-row{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    flex-wrap:wrap;
+    padding:12px 8px 0;
+    color:#63798c;
+    font-size:12px;
     font-weight:900;
   }
 
-  .report-list{
+  .legend-item{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+  }
+
+  .legend-dot{
+    width:11px;
+    height:11px;
+    border-radius:50%;
+  }
+
+  .legend-dot.good{background:#4fb77d;}
+  .legend-dot.warn{background:#f2bd50;}
+  .legend-dot.keep{background:#6bb7e0;}
+  .legend-dot.hold{background:#9ca5af;}
+
+  .summary-card{
+    overflow:hidden;
+  }
+
+  .summary-head{
+    padding:13px 16px;
+    color:#fff;
+    background:linear-gradient(135deg,#2f72c5,#31b9af);
+    font-size:18px;
+    font-weight:950;
+  }
+
+  .summary-body{
+    padding:16px;
+  }
+
+  .summary-text{
     margin:0;
-    padding:0;
+    color:#28445d;
+    font-size:15px;
+    font-weight:830;
+    line-height:1.9;
+    white-space:pre-wrap;
+  }
+
+  .insight-stack{
     display:grid;
     gap:10px;
-    list-style:none;
+    margin-top:12px;
   }
 
-  .report-list li{
-    position:relative;
-    padding:13px 14px 13px 38px;
-    border-radius:16px;
-    color:#334b61;
-    background:#f8fafc;
-    border:1px solid #e6edf3;
-    font-size:13px;
-    font-weight:760;
-    line-height:1.75;
+  .insight-card{
+    padding:13px;
+    border-radius:18px;
+    background:#f8fbff;
+    border:1px solid #e0ebf4;
   }
 
-  .report-list li::before{
-    content:"";
-    position:absolute;
-    top:20px;
-    left:18px;
-    width:8px;
-    height:8px;
+  .insight-card.good{background:#f3fcf7;border-color:#cfeedd;}
+  .insight-card.warn{background:#fff9ef;border-color:#f7dfaa;}
+  .insight-card.keep{background:#f3f8ff;border-color:#cfe2f7;}
+  .insight-card.hold{background:#f7f8fa;border-color:#dde4ea;}
+
+  .insight-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:8px;
+  }
+
+  .insight-mark{
+    width:28px;
+    height:28px;
+    display:grid;
+    place-items:center;
+    flex:0 0 auto;
     border-radius:50%;
-    background:#19aa99;
-  }
-
-  .two-column{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px;
-  }
-
-  .step-grid{
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:14px;
-  }
-
-  .step-card{
-    padding:17px;
-    border-radius:20px;
-    background:linear-gradient(180deg,#fff,#f7fbfb);
-    border:1px solid #e2ebf1;
-  }
-
-  .step-label{
-    color:#0d8175;
+    color:#fff;
     font-size:12px;
     font-weight:950;
   }
 
-  .step-text{
-    margin-top:9px;
-    color:#365066;
+  .insight-card.good .insight-mark{background:#4fb77d;}
+  .insight-card.warn .insight-mark{background:#f2bd50;}
+  .insight-card.keep .insight-mark{background:#6bb7e0;}
+  .insight-card.hold .insight-mark{background:#9ca5af;}
+
+  .insight-title{
+    color:#17334d;
+    font-size:14px;
+    font-weight:950;
+  }
+
+  .patient-list{
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:7px;
+    list-style:none;
+  }
+
+  .patient-list li{
+    position:relative;
+    padding-left:15px;
+    color:#3f5870;
     font-size:13px;
     font-weight:760;
-    line-height:1.75;
+    line-height:1.65;
+  }
+
+  .patient-list li::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:.72em;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#7cb5dc;
+  }
+
+  .wide-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(320px,.7fr);
+    gap:16px;
+  }
+
+  .metric-card,
+  .balance-card,
+  .step-card-wrap,
+  .care-card-wrap,
+  .message-card,
+  .notice-card{
+    padding:14px;
   }
 
   .metric-table-wrap{
     overflow:auto;
-    border-radius:20px;
-    border:1px solid #e2ebf1;
+    border-radius:16px;
+    border:1px solid #dbe8f2;
   }
 
   .metric-table{
     width:100%;
-    min-width:680px;
+    min-width:720px;
     border-collapse:collapse;
     background:#fff;
     font-size:12px;
@@ -447,104 +677,454 @@
 
   .metric-table th,
   .metric-table td{
-    padding:11px 12px;
-    border-bottom:1px solid #e8eef4;
+    padding:10px 12px;
+    border-bottom:1px solid #e7eef5;
     text-align:left;
   }
 
   .metric-table th{
-    color:#607486;
-    background:#f8fafc;
+    color:#526a80;
+    background:#f2f7fc;
     font-weight:950;
+  }
+
+  .metric-name{
+    color:#16334e;
+    font-weight:950;
+  }
+
+  .metric-image{
+    margin-top:3px;
+    color:#7b8f9f;
+    font-size:11px;
+    font-weight:850;
   }
 
   .trend-badge{
     display:inline-flex;
-    padding:5px 9px;
+    align-items:center;
+    justify-content:center;
+    min-height:25px;
+    padding:0 10px;
     border-radius:999px;
-    color:#596978;
-    background:#f1f5f9;
+    color:#687b8d;
+    background:#eef3f8;
     font-size:11px;
-    font-weight:900;
+    font-weight:950;
     white-space:nowrap;
   }
 
-  .trend-badge.improved{color:#0f766e;background:#dcfce7;}
-  .trend-badge.worsened{color:#9a3412;background:#ffedd5;}
-  .trend-badge.unchanged{color:#245cac;background:#eaf2ff;}
+  .trend-badge.improved{color:#137551;background:#e5f8ef;}
+  .trend-badge.worsened{color:#9a4b14;background:#fff1d6;}
+  .trend-badge.unchanged{color:#2365a8;background:#e8f3ff;}
+  .trend-badge.unknown{color:#5d6873;background:#eef1f4;}
 
-  .message-card{
-    padding:24px;
-    border-radius:26px;
-    color:#0f3e43;
-    background:
-      radial-gradient(circle at 96% 0%, rgba(79,214,194,.22), transparent 30%),
-      linear-gradient(135deg,#effffc,#f6fbff);
-    border:1px solid #bdeade;
+  .balance-stage{
+    display:grid;
+    grid-template-columns:1fr 44px 1fr;
+    gap:12px;
+    align-items:center;
+    min-height:230px;
+    padding:12px;
+    border-radius:18px;
+    background:linear-gradient(180deg,#f8fbff,#f2f7fb);
+    border:1px solid #e0ebf4;
   }
 
-  .message-card p{
-    margin:0;
-    color:#255b60;
-    font-size:16px;
+  .balance-arrow{
+    display:grid;
+    place-items:center;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    color:#2f72c5;
+    background:#e4f1ff;
+    font-size:26px;
+    font-weight:950;
+  }
+
+  .figure-panel{
+    position:relative;
+    height:214px;
+    border-radius:16px;
+    background:#fff;
+    border:1px solid #e2ebf3;
+  }
+
+  .figure-label{
+    position:absolute;
+    top:9px;
+    left:10px;
+    z-index:2;
+    display:inline-flex;
+    min-height:24px;
+    align-items:center;
+    padding:0 10px;
+    border-radius:999px;
+    color:#fff;
+    background:#9baec0;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .figure-label.after{
+    background:#2f72c5;
+  }
+
+  .body-line{
+    position:absolute;
+    left:50%;
+    top:45px;
+    width:2px;
+    height:140px;
+    background:#39a470;
+    transform-origin:50% 100%;
+  }
+
+  .body-line.before{
+    transform:translateX(-50%) rotate(-6deg);
+  }
+
+  .body-line.after{
+    transform:translateX(-50%) rotate(-1deg);
+  }
+
+  .shoulder-line,
+  .pelvis-line,
+  .knee-line{
+    position:absolute;
+    left:50%;
+    width:92px;
+    height:3px;
+    border-radius:999px;
+    transform:translateX(-50%);
+  }
+
+  .shoulder-line{
+    top:75px;
+    background:#f08c48;
+  }
+
+  .pelvis-line{
+    top:130px;
+    background:#4fb77d;
+  }
+
+  .knee-line{
+    top:172px;
+    width:72px;
+    background:#4d89cf;
+  }
+
+  .before .shoulder-line{
+    transform:translateX(-50%) rotate(5deg);
+  }
+
+  .before .pelvis-line{
+    transform:translateX(-50%) rotate(-5deg);
+  }
+
+  .after .shoulder-line{
+    transform:translateX(-50%) rotate(1deg);
+  }
+
+  .after .pelvis-line{
+    transform:translateX(-50%) rotate(-1deg);
+  }
+
+  .body-shape{
+    position:absolute;
+    left:50%;
+    top:44px;
+    width:62px;
+    height:142px;
+    transform:translateX(-50%);
+  }
+
+  .body-head{
+    position:absolute;
+    left:50%;
+    top:0;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:#c8d0d8;
+    transform:translateX(-50%);
+  }
+
+  .body-torso{
+    position:absolute;
+    left:50%;
+    top:31px;
+    width:45px;
+    height:70px;
+    border-radius:22px 22px 16px 16px;
+    background:linear-gradient(180deg,#d8dde3,#bec8d2);
+    transform:translateX(-50%);
+  }
+
+  .body-leg{
+    position:absolute;
+    top:96px;
+    width:13px;
+    height:50px;
+    border-radius:999px;
+    background:#c7d0d8;
+  }
+
+  .body-leg.left{
+    left:17px;
+  }
+
+  .body-leg.right{
+    right:17px;
+  }
+
+  .balance-legend{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px 12px;
+    margin-top:10px;
+    color:#536b80;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .line-sample{
+    width:22px;
+    height:3px;
+    border-radius:999px;
+  }
+
+  .line-sample.head{background:#39a470;}
+  .line-sample.shoulder{background:#f08c48;}
+  .line-sample.pelvis{background:#4fb77d;}
+  .line-sample.knee{background:#4d89cf;}
+
+  .step-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .plan-step{
+    position:relative;
+    overflow:hidden;
+    min-height:168px;
+    padding:16px;
+    border-radius:20px;
+    background:linear-gradient(180deg,#fff,#f7fbff);
+    border:1px solid #dce8f2;
+  }
+
+  .plan-step::after{
+    content:"";
+    position:absolute;
+    right:-28px;
+    bottom:-36px;
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    background:rgba(47,114,197,.08);
+  }
+
+  .step-number{
+    width:42px;
+    height:42px;
+    display:grid;
+    place-items:center;
+    border-radius:15px;
+    color:#fff;
+    background:#2f72c5;
+    font-size:18px;
+    font-weight:950;
+  }
+
+  .step-title{
+    margin-top:12px;
+    color:#17334d;
+    font-size:15px;
+    font-weight:950;
+  }
+
+  .step-text{
+    margin-top:8px;
+    color:#50677d;
+    font-size:13px;
+    font-weight:760;
+    line-height:1.7;
+  }
+
+  .care-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .care-card{
+    min-height:122px;
+    padding:14px;
+    border-radius:18px;
+    background:#fff;
+    border:1px solid #dce8f2;
+  }
+
+  .care-icon{
+    width:36px;
+    height:36px;
+    display:grid;
+    place-items:center;
+    border-radius:13px;
+    color:#2f72c5;
+    background:#e8f3ff;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .care-text{
+    margin-top:10px;
+    color:#3f5870;
+    font-size:13px;
+    font-weight:780;
+    line-height:1.65;
+  }
+
+  .message-card{
+    display:grid;
+    grid-template-columns:86px 1fr;
+    gap:16px;
+    align-items:center;
+    background:
+      radial-gradient(circle at 96% 0%, rgba(54,185,176,.18), transparent 28%),
+      linear-gradient(135deg,#fffaf4,#f4fffc);
+    border-color:#f2d7bd;
+  }
+
+  .message-symbol{
+    width:76px;
+    height:76px;
+    display:grid;
+    place-items:center;
+    border-radius:24px;
+    color:#d66a24;
+    background:#fff2e7;
+    font-size:30px;
+    font-weight:950;
+  }
+
+  .message-title{
+    color:#17334d;
+    font-size:20px;
+    font-weight:950;
+  }
+
+  .message-text{
+    margin:8px 0 0;
+    color:#425b72;
+    font-size:15px;
     font-weight:800;
-    line-height:1.95;
+    line-height:1.9;
     white-space:pre-wrap;
   }
 
-  .footer-note{
-    padding:18px 22px 24px;
-    color:#778899;
-    font-size:11px;
-    font-weight:750;
-    line-height:1.8;
+  .notice-card{
+    background:#fffaf2;
+    border-color:#f3d4a7;
   }
 
-  @media(max-width:980px){
-    .patient-strip,
-    .score-row,
-    .two-column,
-    .step-grid{
+  .notice-list{
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:7px;
+    list-style:none;
+  }
+
+  .notice-list li{
+    color:#76552a;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.7;
+  }
+
+  .footer-meta{
+    display:flex;
+    justify-content:flex-end;
+    gap:24px;
+    padding:0 4px;
+    color:#63798c;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  @media(max-width:1180px){
+    .top-grid,
+    .score-strip,
+    .main-layout,
+    .wide-layout{
       grid-template-columns:1fr;
     }
 
-    .photo-pair{
+    .photo-grid,
+    .step-grid,
+    .care-grid{
       grid-template-columns:1fr;
+    }
+
+    .photo-slot img,
+    .no-photo{
+      height:260px;
     }
   }
 
-  @media(max-width:640px){
-    .report-hero,
+  @media(max-width:680px){
+    .report-top,
     .report-body{
-      padding:20px;
+      padding:14px;
     }
 
-    .report-section{
-      padding:18px;
-    }
-
-    .report-brand,
     .report-actions{
       align-items:flex-start;
       flex-direction:column;
     }
 
-    .report-date{
-      text-align:left;
+    .patient-panel,
+    .score-main-card,
+    .message-card,
+    .balance-stage{
+      grid-template-columns:1fr;
     }
 
-    .photo-box img,
-    .no-photo{
-      height:230px;
+    .patient-meta{
+      border-right:0;
+      border-bottom:1px solid #e5eef6;
+    }
+
+    .patient-meta:last-child{
+      border-bottom:0;
+    }
+
+    .photo-pair{
+      grid-template-columns:1fr;
+    }
+
+    .balance-arrow{
+      margin:0 auto;
+      transform:rotate(90deg);
     }
   }
 
   @page{
-    size:A4;
-    margin:10mm;
+    size:A4 landscape;
+    margin:8mm;
   }
 
   @media print{
+    *{
+      print-color-adjust:exact;
+      -webkit-print-color-adjust:exact;
+    }
+
     body{
       background:#fff !important;
     }
@@ -571,35 +1151,152 @@
       margin:0 !important;
     }
 
-    .report-page{
-      border:none !important;
+    .landscape-report{
+      border:0 !important;
       border-radius:0 !important;
       box-shadow:none !important;
     }
 
-    .report-hero{
-      border-radius:0 !important;
-      print-color-adjust:exact;
-      -webkit-print-color-adjust:exact;
+    .report-top{
+      padding:10px !important;
     }
 
-    .report-section,
-    .photo-report-card,
-    .step-card,
-    .message-card{
+    .report-body{
+      padding:10px !important;
+      gap:10px !important;
+    }
+
+    .top-grid{
+      grid-template-columns:1.12fr .9fr .6fr !important;
+      gap:8px !important;
+    }
+
+    .score-strip{
+      grid-template-columns:1.05fr repeat(4,minmax(0,1fr)) !important;
+      gap:8px !important;
+      margin-top:8px !important;
+    }
+
+    .main-layout{
+      grid-template-columns:1.45fr .83fr !important;
+      gap:10px !important;
+    }
+
+    .wide-layout{
+      grid-template-columns:1fr .68fr !important;
+      gap:10px !important;
+    }
+
+    .photo-grid,
+    .step-grid,
+    .care-grid{
+      grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+      gap:7px !important;
+    }
+
+    .report-heading{
+      min-height:140px !important;
+      padding:12px !important;
+    }
+
+    .report-title{
+      font-size:32px !important;
+    }
+
+    .report-lead,
+    .summary-text,
+    .message-text{
+      font-size:12px !important;
+      line-height:1.55 !important;
+    }
+
+    .patient-name{
+      font-size:22px !important;
+    }
+
+    .score-ring{
+      width:86px !important;
+      height:86px !important;
+    }
+
+    .score-ring-inner{
+      width:62px !important;
+      height:62px !important;
+    }
+
+    .score-number{
+      font-size:25px !important;
+    }
+
+    .photo-slot img,
+    .no-photo{
+      height:205px !important;
+    }
+
+    .summary-count-card{
+      min-height:82px !important;
+      padding:10px !important;
+    }
+
+    .count-value{
+      font-size:26px !important;
+    }
+
+    .report-card,
+    .metric-card,
+    .balance-card,
+    .step-card-wrap,
+    .care-card-wrap,
+    .message-card,
+    .notice-card{
+      box-shadow:none !important;
       break-inside:avoid;
       page-break-inside:avoid;
     }
 
-    .report-body{
-      padding:16px 0 0 !important;
-      gap:14px !important;
+    .section-title{
+      font-size:16px !important;
     }
 
-    .photo-box img,
-    .no-photo{
-      height:210px;
+    .patient-list li,
+    .step-text,
+    .care-text,
+    .notice-list li{
+      font-size:11px !important;
+      line-height:1.5 !important;
     }
+
+    .metric-table{
+      min-width:0 !important;
+      font-size:10px !important;
+    }
+
+    .metric-table th,
+    .metric-table td{
+      padding:6px 7px !important;
+    }
+
+    .balance-stage{
+      min-height:178px !important;
+    }
+
+    .figure-panel{
+      height:168px !important;
+    }
+
+    .body-shape{
+      top:36px !important;
+      transform:translateX(-50%) scale(.78) !important;
+    }
+
+    .body-line{
+      top:38px !important;
+      height:110px !important;
+    }
+
+    .shoulder-line{top:62px !important;}
+    .pelvis-line{top:105px !important;}
+    .knee-line{top:136px !important;}
   }
 </style>
 
@@ -613,315 +1310,444 @@
     </button>
   </div>
 
-  <article class="report-page">
-    <header class="report-hero">
-      <div class="report-brand">
-        <div>
-          <div class="brand-mark-report">CF</div>
-          <div class="brand-name-report">CareFrow Posture Report</div>
-        </div>
-        <div class="report-date">
-          作成日：{{ report_created_at|date:"Y.m.d" }}<br>
-          比較ID：{{ comparison.id }}
-        </div>
-      </div>
-
-      <h1 class="report-title">姿勢評価レポート / 改善プラン</h1>
-      <div class="report-subtitle">
-        Before / Afterの画像と計測値をもとに、姿勢の変化傾向とこれからのケア方針を分かりやすくまとめています。
-      </div>
-
-      <div class="patient-strip">
-        <div class="patient-chip">
-          <div class="chip-label">患者さん</div>
-          <div class="chip-value">{{ patient.last_name }} {{ patient.first_name }} 様</div>
-        </div>
-        <div class="patient-chip">
-          <div class="chip-label">年齢</div>
-          <div class="chip-value">
-            {% if patient_age is not None %}{{ patient_age }}歳{% else %}-{% endif %}
+  <article class="landscape-report">
+    <header class="report-top">
+      <div class="top-grid">
+        <section class="report-heading">
+          <div>
+            <div class="report-kicker">
+              <span class="kicker-pill">AI姿勢分析</span>
+              <span>姿勢評価レポート</span>
+            </div>
+            <h1 class="report-title">姿勢評価レポート</h1>
+            <p class="report-lead">
+              あなたのからだの状態とBefore / Afterの変化を、分かりやすくまとめました。
+            </p>
           </div>
-        </div>
-        <div class="patient-chip">
-          <div class="chip-label">性別</div>
-          <div class="chip-value">{{ patient_gender|default:"-" }}</div>
-        </div>
-        <div class="patient-chip">
-          <div class="chip-label">Before撮影日</div>
-          <div class="chip-value">{{ before_assessment.created_at|date:"Y.m.d" }}</div>
-        </div>
-        <div class="patient-chip">
-          <div class="chip-label">After撮影日</div>
-          <div class="chip-value">{{ after_assessment.created_at|date:"Y.m.d" }}</div>
-        </div>
-        <div class="patient-chip">
-          <div class="chip-label">ステータス</div>
-          <div class="chip-value">{{ comparison.get_status_display }}</div>
-        </div>
-      </div>
-    </header>
+          <div class="carefrow-name">CareFrow</div>
+        </section>
 
-    <div class="report-body">
-      <section class="score-row">
-        <div class="score-card">
-          <div class="score-ring" style="--score:{{ comparison_overview.score|default:0 }};">
-            <div class="score-inner">
-              {% if comparison_overview.has_score %}
-                {{ comparison_overview.score }}
-              {% else %}
-                --
-              {% endif %}
+        <section class="patient-panel" aria-label="患者情報">
+          <div class="patient-main">
+            <div class="panel-label">患者さん</div>
+            <div class="patient-name">{{ patient.last_name }} {{ patient.first_name }} 様</div>
+            <div class="patient-sub">
+              {% if patient_age is not None %}{{ patient_age }}歳{% else %}年齢未登録{% endif %}
+              ・
+              {{ patient_gender|default:"性別未登録" }}
+            </div>
+          </div>
+          <div class="patient-meta">
+            <div class="panel-label">作成日</div>
+            <div class="meta-value">{{ report_created_at|date:"Y/m/d" }}</div>
+          </div>
+          <div class="patient-meta">
+            <div class="panel-label">比較ステータス</div>
+            <div class="meta-value">{{ comparison.get_status_display }}</div>
+          </div>
+        </section>
+
+        <section class="date-panel" aria-label="比較期間">
+          <div class="date-panel-head">比較期間</div>
+          <div class="date-row">
+            <span class="date-tag">前回</span>
+            <span class="date-value">{{ before_assessment.created_at|date:"Y/m/d" }}</span>
+          </div>
+          <div class="date-row">
+            <span class="date-tag after">今回</span>
+            <span class="date-value">{{ after_assessment.created_at|date:"Y/m/d" }}</span>
+          </div>
+          <div class="date-sub">
+            {% if comparison_period_days is not None %}
+              前回から{{ comparison_period_days }}日後の比較です。
+            {% else %}
+              Before日付とAfter日付をもとに比較します。
+            {% endif %}
+          </div>
+        </section>
+      </div>
+
+      <section class="score-strip" aria-label="姿勢スコアと変化件数">
+        <div class="score-main-card">
+          <div class="score-ring" style="--score:{{ score_summary.after|default:0 }};">
+            <div class="score-ring-inner">
+              <div>
+                <div class="score-number">
+                  {% if score_summary.after is not None %}{{ score_summary.after }}{% else %}--{% endif %}
+                </div>
+                <div class="score-max">/100</div>
+              </div>
             </div>
           </div>
           <div>
             <div class="score-title">姿勢変化スコア</div>
-            <div class="score-state">{{ comparison_overview.score_label }}</div>
+            <div class="score-change">
+              <span class="score-small">
+                前回 {% if score_summary.before is not None %}{{ score_summary.before }}{% else %}--{% endif %}
+              </span>
+              <span class="score-small">→</span>
+              <span class="score-small">
+                今回 {% if score_summary.after is not None %}{{ score_summary.after }}{% else %}--{% endif %}
+              </span>
+              <span class="score-delta {{ score_summary.delta_class }}">
+                {{ score_summary.delta_label }}
+              </span>
+            </div>
             <div class="score-note">
-              計測値の傾向から算出した参考指標です。診断ではなく、施術者の評価と合わせて判断します。
+              比較差分から作成した参考スコアです。診断ではなく、施術者の評価と合わせて判断します。
             </div>
           </div>
         </div>
 
-        <div class="mini-score good">
-          <div class="mini-label">改善傾向</div>
-          <div class="mini-value">{{ comparison_overview.trend_counts.improved }}</div>
+        <div class="summary-count-card">
+          <div class="count-top"><span class="count-icon good">OK</span>改善傾向</div>
+          <div class="count-value">{{ comparison_overview.trend_counts.improved }}<span class="count-unit">項目</span></div>
         </div>
-        <div class="mini-score warn">
-          <div class="mini-label">要確認</div>
-          <div class="mini-value">{{ comparison_overview.trend_counts.worsened }}</div>
+        <div class="summary-count-card">
+          <div class="count-top"><span class="count-icon warn">!</span>要確認</div>
+          <div class="count-value">{{ comparison_overview.trend_counts.worsened }}<span class="count-unit">項目</span></div>
         </div>
-        <div class="mini-score keep">
-          <div class="mini-label">大きな変化なし</div>
-          <div class="mini-value">{{ comparison_overview.trend_counts.unchanged }}</div>
+        <div class="summary-count-card">
+          <div class="count-top"><span class="count-icon keep">~</span>大きな変化なし</div>
+          <div class="count-value">{{ comparison_overview.trend_counts.unchanged }}<span class="count-unit">項目</span></div>
         </div>
-        <div class="mini-score hold">
-          <div class="mini-label">判定保留</div>
-          <div class="mini-value">{{ comparison_overview.trend_counts.unknown }}</div>
+        <div class="summary-count-card">
+          <div class="count-top"><span class="count-icon hold">?</span>判定保留</div>
+          <div class="count-value">{{ comparison_overview.trend_counts.unknown }}<span class="count-unit">項目</span></div>
         </div>
       </section>
+    </header>
 
-      <section class="report-section">
-        <div class="section-head-report">
-          <div class="section-number">1</div>
-          <div>
-            <div class="section-title-report">今回の変化サマリー</div>
-            <div class="section-sub-report">まず全体像を確認します</div>
+    <main class="report-body">
+      <div class="main-layout">
+        <section class="report-card photo-board">
+          <div class="section-title-row">
+            <div>
+              <div class="section-kicker">Before / After</div>
+              <div class="section-title">姿勢写真の比較</div>
+            </div>
+            <div class="section-note">正面・右側面・背面を並べて確認します</div>
           </div>
-        </div>
-        <div class="summary-panel">
-          <p>
-            {% if summary.overall_comparison_summary %}
-              {{ summary.overall_comparison_summary }}
+
+          <div class="photo-grid">
+            {% for pair in image_pairs %}
+              <article class="photo-card">
+                <div class="photo-card-head">
+                  <div class="photo-title">{{ pair.label }}</div>
+                  <span class="image-trend {{ pair.trend }}">{{ pair.trend_label }}</span>
+                </div>
+                <div class="photo-pair">
+                  <div class="photo-slot">
+                    <div class="photo-slot-label">
+                      <span>前回</span>
+                      <span>{{ before_assessment.created_at|date:"m/d" }}</span>
+                    </div>
+                    {% if pair.before %}
+                      <img src="{{ pair.before.image.url }}" alt="前回 {{ pair.label }}">
+                    {% else %}
+                      <div class="no-photo">画像なし</div>
+                    {% endif %}
+                  </div>
+                  <div class="photo-slot">
+                    <div class="photo-slot-label">
+                      <span>今回</span>
+                      <span>{{ after_assessment.created_at|date:"m/d" }}</span>
+                    </div>
+                    {% if pair.after %}
+                      <img src="{{ pair.after.image.url }}" alt="今回 {{ pair.label }}">
+                    {% else %}
+                      <div class="no-photo">画像なし</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+
+          <div class="legend-row">
+            <span class="legend-item"><span class="legend-dot good"></span>改善傾向</span>
+            <span class="legend-item"><span class="legend-dot warn"></span>要確認</span>
+            <span class="legend-item"><span class="legend-dot keep"></span>大きな変化なし</span>
+            <span class="legend-item"><span class="legend-dot hold"></span>判定保留</span>
+          </div>
+        </section>
+
+        <aside class="report-card summary-card">
+          <div class="summary-head">今回の変化サマリー</div>
+          <div class="summary-body">
+            <p class="summary-text">
+              {% if summary.overall_comparison_summary %}
+                {{ summary.overall_comparison_summary }}
+              {% else %}
+                AI比較分析を実行すると、姿勢の変化傾向と確認ポイントを患者さん向けに整理して表示します。
+              {% endif %}
+            </p>
+
+            <div class="insight-stack">
+              <div class="insight-card good">
+                <div class="insight-head">
+                  <span class="insight-mark">OK</span>
+                  <div class="insight-title">良くなっている可能性がある点</div>
+                </div>
+                <ul class="patient-list">
+                  {% if summary.improved_points %}
+                    {% for item in summary.improved_points %}<li>{{ item }}</li>{% endfor %}
+                  {% elif comparison_overview.trend_rows.improved %}
+                    {% for row in comparison_overview.trend_rows.improved %}
+                      <li>{{ row.image_label }}の{{ row.label }}は改善傾向の可能性があります。</li>
+                    {% endfor %}
+                  {% else %}
+                    <li>改善傾向はまだ整理されていません。施術者の評価と合わせて確認します。</li>
+                  {% endif %}
+                </ul>
+              </div>
+
+              <div class="insight-card warn">
+                <div class="insight-head">
+                  <span class="insight-mark">!</span>
+                  <div class="insight-title">まだ確認が必要な点</div>
+                </div>
+                <ul class="patient-list">
+                  {% if summary.worsened_or_remaining_points %}
+                    {% for item in summary.worsened_or_remaining_points %}<li>{{ item }}</li>{% endfor %}
+                  {% elif comparison_overview.trend_rows.worsened %}
+                    {% for row in comparison_overview.trend_rows.worsened %}
+                      <li>{{ row.image_label }}の{{ row.label }}は確認が必要な傾向があります。</li>
+                    {% endfor %}
+                  {% else %}
+                    <li>要確認の点はまだ整理されていません。症状や動きと合わせて確認します。</li>
+                  {% endif %}
+                </ul>
+              </div>
+
+              <div class="insight-card keep">
+                <div class="insight-head">
+                  <span class="insight-mark">~</span>
+                  <div class="insight-title">大きな変化なし</div>
+                </div>
+                <ul class="patient-list">
+                  {% if summary.unchanged_points %}
+                    {% for item in summary.unchanged_points %}<li>{{ item }}</li>{% endfor %}
+                  {% elif comparison_overview.trend_rows.unchanged %}
+                    {% for row in comparison_overview.trend_rows.unchanged %}
+                      <li>{{ row.image_label }}の{{ row.label }}は大きな変化が確認しにくい状態です。</li>
+                    {% endfor %}
+                  {% else %}
+                    <li>大きな変化なしの点はまだ整理されていません。</li>
+                  {% endif %}
+                </ul>
+              </div>
+
+              <div class="insight-card hold">
+                <div class="insight-head">
+                  <span class="insight-mark">?</span>
+                  <div class="insight-title">判定が難しい点</div>
+                </div>
+                <ul class="patient-list">
+                  {% if comparison_overview.trend_rows.unknown %}
+                    {% for row in comparison_overview.trend_rows.unknown %}
+                      <li>{{ row.image_label }}の{{ row.label }}は画像条件などを含めて確認が必要です。</li>
+                    {% endfor %}
+                  {% elif risk_notes %}
+                    {% for item in risk_notes %}<li>{{ item }}</li>{% endfor %}
+                  {% else %}
+                    <li>判定が難しい点は、撮影条件や立ち位置も含めて確認します。</li>
+                  {% endif %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="wide-layout">
+        <section class="report-card metric-card">
+          <div class="section-title-row">
+            <div>
+              <div class="section-kicker">Measurements</div>
+              <div class="section-title">主な測定の変化</div>
+            </div>
+            <div class="section-note">数値は参考値として扱います</div>
+          </div>
+
+          {% if summary.measurement_based_findings %}
+            <ul class="patient-list" style="margin-bottom:12px;">
+              {% for item in summary.measurement_based_findings %}<li>{{ item }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+
+          {% if comparison_diff_groups %}
+            <div class="metric-table-wrap">
+              <table class="metric-table">
+                <thead>
+                  <tr>
+                    <th>計測項目</th>
+                    <th>前回</th>
+                    <th>今回</th>
+                    <th>変化</th>
+                    <th>評価</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for group in comparison_diff_groups %}
+                    {% for row in group.rows %}
+                      <tr>
+                        <td>
+                          <div class="metric-name">{{ row.label }}</div>
+                          <div class="metric-image">{{ group.label }}</div>
+                        </td>
+                        <td>
+                          {% if row.before is not None %}{{ row.before }}{{ row.unit }}{% else %}-{% endif %}
+                        </td>
+                        <td>
+                          {% if row.after is not None %}{{ row.after }}{{ row.unit }}{% else %}-{% endif %}
+                        </td>
+                        <td>
+                          {% if row.delta is not None %}{{ row.delta }}{{ row.unit }}{% else %}-{% endif %}
+                        </td>
+                        <td><span class="trend-badge {{ row.trend }}">{{ row.trend_label }}</span></td>
+                      </tr>
+                    {% endfor %}
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <ul class="patient-list">
+              <li>主な測定の変化はまだ生成されていません。姿勢ライン保存後に比較分析を行うと表示されます。</li>
+            </ul>
+          {% endif %}
+        </section>
+
+        <section class="report-card balance-card">
+          <div class="section-title-row">
+            <div>
+              <div class="section-kicker">Balance Image</div>
+              <div class="section-title">姿勢バランスのイメージ</div>
+            </div>
+          </div>
+
+          <div class="balance-stage" aria-label="姿勢ラインのイメージ">
+            <div class="figure-panel before">
+              <span class="figure-label">前回</span>
+              <div class="body-shape">
+                <div class="body-head"></div>
+                <div class="body-torso"></div>
+                <div class="body-leg left"></div>
+                <div class="body-leg right"></div>
+              </div>
+              <div class="body-line before"></div>
+              <div class="shoulder-line"></div>
+              <div class="pelvis-line"></div>
+              <div class="knee-line"></div>
+            </div>
+
+            <div class="balance-arrow">→</div>
+
+            <div class="figure-panel after">
+              <span class="figure-label after">今回</span>
+              <div class="body-shape">
+                <div class="body-head"></div>
+                <div class="body-torso"></div>
+                <div class="body-leg left"></div>
+                <div class="body-leg right"></div>
+              </div>
+              <div class="body-line after"></div>
+              <div class="shoulder-line"></div>
+              <div class="pelvis-line"></div>
+              <div class="knee-line"></div>
+            </div>
+          </div>
+
+          <div class="balance-legend">
+            <span class="legend-item"><span class="line-sample head"></span>重心ライン</span>
+            <span class="legend-item"><span class="line-sample shoulder"></span>肩のライン</span>
+            <span class="legend-item"><span class="line-sample pelvis"></span>骨盤のライン</span>
+            <span class="legend-item"><span class="line-sample knee"></span>膝のライン</span>
+          </div>
+          <div class="section-note" style="margin-top:10px;">
+            図は姿勢変化を理解しやすくするためのイメージです。
+          </div>
+        </section>
+      </div>
+
+      <div class="wide-layout">
+        <section class="report-card step-card-wrap">
+          <div class="section-title-row">
+            <div>
+              <div class="section-kicker">Next Steps</div>
+              <div class="section-title">これからのステップ</div>
+            </div>
+            <div class="section-note">無理のない順番で進めます</div>
+          </div>
+          <div class="step-grid">
+            {% for step in report_steps %}
+              <article class="plan-step">
+                <div class="step-number">{{ forloop.counter }}</div>
+                <div class="step-title">{{ step.title }}</div>
+                <div class="step-text">{{ step.text }}</div>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="report-card care-card-wrap">
+          <div class="section-title-row">
+            <div>
+              <div class="section-kicker">Home Care</div>
+              <div class="section-title">自宅でできるセルフケア例</div>
+            </div>
+          </div>
+          <div class="care-grid">
+            {% for item in home_care_items %}
+              <article class="care-card">
+                <div class="care-icon">HC</div>
+                <div class="care-text">{{ item }}</div>
+              </article>
+            {% endfor %}
+          </div>
+          <div class="section-note" style="margin-top:10px;">
+            痛みや違和感が強い場合は無理をせず、スタッフへ相談してください。
+          </div>
+        </section>
+      </div>
+
+      <section class="report-card message-card">
+        <div class="message-symbol">+</div>
+        <div>
+          <div class="message-title">患者さんへのメッセージ</div>
+          <p class="message-text">
+            {% if summary.patient_explanation %}
+              {{ summary.patient_explanation }}
             {% else %}
-              AI比較分析を実行すると、今回の姿勢変化を分かりやすく整理して表示します。
+              姿勢の変化は、痛みの出方や日常の動きと合わせて確認していくことが大切です。無理のない範囲でケアを続けながら、次回も変化を一緒に確認していきましょう。
             {% endif %}
           </p>
         </div>
       </section>
 
-      <section class="report-section">
-        <div class="section-head-report">
-          <div class="section-number">2</div>
+      <section class="report-card notice-card">
+        <div class="section-title-row">
           <div>
-            <div class="section-title-report">Before / After画像</div>
-            <div class="section-sub-report">正面・右側面・背面を並べて確認します</div>
+            <div class="section-kicker">Notes</div>
+            <div class="section-title">注意事項</div>
           </div>
         </div>
-
-        <div class="photo-report-grid">
-          {% for pair in image_pairs %}
-            <div class="photo-report-card">
-              <div class="photo-report-title">{{ pair.label }}</div>
-              <div class="photo-pair">
-                <div class="photo-box">
-                  <div class="photo-label">
-                    <span>Before</span>
-                    <span>{{ before_assessment.created_at|date:"Y.m.d" }}</span>
-                  </div>
-                  {% if pair.before %}
-                    <img src="{{ pair.before.image.url }}" alt="Before {{ pair.label }}">
-                  {% else %}
-                    <div class="no-photo">画像なし</div>
-                  {% endif %}
-                </div>
-
-                <div class="photo-box">
-                  <div class="photo-label">
-                    <span>After</span>
-                    <span>{{ after_assessment.created_at|date:"Y.m.d" }}</span>
-                  </div>
-                  {% if pair.after %}
-                    <img src="{{ pair.after.image.url }}" alt="After {{ pair.label }}">
-                  {% else %}
-                    <div class="no-photo">画像なし</div>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
+        <ul class="notice-list">
+          <li>本レポートは姿勢評価の参考情報であり、診断ではありません。</li>
+          <li>痛みやしびれが強い場合はスタッフへ相談してください。</li>
+          <li>画像条件、立ち位置、服装、カメラ距離により評価に差が出る可能性があります。</li>
+          {% for item in risk_notes %}
+            <li>{{ item }}</li>
           {% endfor %}
-        </div>
+        </ul>
       </section>
 
-      <section class="two-column">
-        <div class="report-section">
-          <div class="section-head-report">
-            <div class="section-number">3</div>
-            <div>
-              <div class="section-title-report">良くなっている可能性がある点</div>
-              <div class="section-sub-report">前向きな変化の候補</div>
-            </div>
-          </div>
-          <ul class="report-list">
-            {% if summary.improved_points %}
-              {% for item in summary.improved_points %}<li>{{ item }}</li>{% endfor %}
-            {% else %}
-              <li>改善傾向はまだ整理されていません。施術者の評価と合わせて確認します。</li>
-            {% endif %}
-          </ul>
-        </div>
-
-        <div class="report-section">
-          <div class="section-head-report">
-            <div class="section-number">4</div>
-            <div>
-              <div class="section-title-report">まだ確認が必要な点</div>
-              <div class="section-sub-report">今後も見ていきたいポイント</div>
-            </div>
-          </div>
-          <ul class="report-list">
-            {% if summary.worsened_or_remaining_points %}
-              {% for item in summary.worsened_or_remaining_points %}<li>{{ item }}</li>{% endfor %}
-            {% else %}
-              <li>要確認の点はまだ整理されていません。症状や動きと合わせて確認します。</li>
-            {% endif %}
-          </ul>
-        </div>
-      </section>
-
-      <section class="report-section">
-        <div class="section-head-report">
-          <div class="section-number">5</div>
-          <div>
-            <div class="section-title-report">計測値から見た変化</div>
-            <div class="section-sub-report">数値は参考情報として扱います</div>
-          </div>
-        </div>
-
-        {% if summary.measurement_based_findings %}
-          <ul class="report-list" style="margin-bottom:16px;">
-            {% for item in summary.measurement_based_findings %}<li>{{ item }}</li>{% endfor %}
-          </ul>
-        {% endif %}
-
-        {% if comparison_diff_groups %}
-          <div class="metric-table-wrap">
-            <table class="metric-table">
-              <thead>
-                <tr>
-                  <th>画像</th>
-                  <th>項目</th>
-                  <th>Before</th>
-                  <th>After</th>
-                  <th>差分</th>
-                  <th>傾向</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for group in comparison_diff_groups %}
-                  {% for row in group.rows %}
-                    <tr>
-                      <td>{{ group.label }}</td>
-                      <td>{{ row.label }}</td>
-                      <td>{{ row.before }}{{ row.unit }}</td>
-                      <td>{{ row.after }}{{ row.unit }}</td>
-                      <td>
-                        {% if row.delta is not None %}
-                          {{ row.delta }}{{ row.unit }}
-                        {% else %}
-                          -
-                        {% endif %}
-                      </td>
-                      <td><span class="trend-badge {{ row.trend }}">{{ row.trend_label }}</span></td>
-                    </tr>
-                  {% endfor %}
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <ul class="report-list">
-            <li>計測値差分はまだ生成されていません。姿勢ライン保存後に比較分析を行うと表示されます。</li>
-          </ul>
-        {% endif %}
-      </section>
-
-      <section class="report-section">
-        <div class="section-head-report">
-          <div class="section-number">6</div>
-          <div>
-            <div class="section-title-report">これからのステップ</div>
-            <div class="section-sub-report">改善に向けた進め方</div>
-          </div>
-        </div>
-        <div class="step-grid">
-          {% for step in report_steps %}
-            <div class="step-card">
-              <div class="step-label">{{ step.title }}</div>
-              <div class="step-text">{{ step.text }}</div>
-            </div>
-          {% endfor %}
-        </div>
-      </section>
-
-      <section class="two-column">
-        <div class="report-section">
-          <div class="section-head-report">
-            <div class="section-number">7</div>
-            <div>
-              <div class="section-title-report">自宅でできるセルフケア候補</div>
-              <div class="section-sub-report">無理のない範囲で行います</div>
-            </div>
-          </div>
-          <ul class="report-list">
-            {% for item in home_care_items %}<li>{{ item }}</li>{% endfor %}
-          </ul>
-        </div>
-
-        <div class="report-section">
-          <div class="section-head-report">
-            <div class="section-number">8</div>
-            <div>
-              <div class="section-title-report">注意事項</div>
-              <div class="section-sub-report">安全に活用するために</div>
-            </div>
-          </div>
-          <ul class="report-list">
-            {% for item in risk_notes %}<li>{{ item }}</li>{% endfor %}
-          </ul>
-        </div>
-      </section>
-
-      <section class="message-card">
-        <div class="section-head-report">
-          <div class="section-number">9</div>
-          <div>
-            <div class="section-title-report">患者さんへのメッセージ</div>
-            <div class="section-sub-report">一緒に変化を確認していきましょう</div>
-          </div>
-        </div>
-        <p>
-          {% if summary.patient_explanation %}
-            {{ summary.patient_explanation }}
-          {% else %}
-            姿勢の変化は、痛みの出方や日常の動きと合わせて確認していくことが大切です。無理のない範囲でケアを続けながら、次回も変化を一緒に確認していきましょう。
-          {% endif %}
-        </p>
-      </section>
-    </div>
-
-    <div class="footer-note">
-      このレポートは画像と計測値をもとに姿勢の傾向を分かりやすく整理したものです。医療診断ではありません。痛みやしびれなどの症状が強い場合は、施術者の評価や必要に応じた医療機関での確認と合わせて判断します。
-    </div>
+      <div class="footer-meta">
+        <span>作成日：{{ report_created_at|date:"Y/m/d" }}</span>
+        <span>次回の目安：施術者の評価に合わせて確認</span>
+      </div>
+    </main>
   </article>
 </div>
 {% endblock %}

@@ -575,6 +575,9 @@ def _normalize_comparison_summary(summary):
 
     return {
         **summary,
+        "improved_points": summary.get("improved_points") or [],
+        "unchanged_points": summary.get("unchanged_points") or [],
+        "important_changes": summary.get("important_changes") or [],
         "overall_comparison_summary": (
             summary.get("overall_comparison_summary")
             or summary.get("overall_summary")
@@ -604,6 +607,8 @@ def _normalize_comparison_summary(summary):
         "home_care_suggestions": (
             summary.get("home_care_suggestions") or []
         ),
+        "risk_notes": summary.get("risk_notes") or [],
+        "patient_explanation": summary.get("patient_explanation") or "",
     }
 
 
@@ -669,6 +674,12 @@ def _build_comparison_overview_context(comparison):
         "unchanged": 0,
         "unknown": 0,
     }
+    trend_rows = {
+        "improved": [],
+        "worsened": [],
+        "unchanged": [],
+        "unknown": [],
+    }
     comparison_diff_groups = []
 
     for image_type, items in (
@@ -682,7 +693,7 @@ def _build_comparison_overview_context(comparison):
             if trend not in trend_counts:
                 trend = "unknown"
             trend_counts[trend] += 1
-            rows.append({
+            row = {
                 "key": key,
                 "label": label,
                 "unit": unit,
@@ -694,6 +705,12 @@ def _build_comparison_overview_context(comparison):
                     trend,
                     trend_labels["unknown"],
                 ),
+            }
+            rows.append(row)
+            trend_rows[trend].append({
+                **row,
+                "image_type": image_type,
+                "image_label": image_type_labels.get(image_type, image_type),
             })
 
         if rows:
@@ -726,11 +743,31 @@ def _build_comparison_overview_context(comparison):
         else:
             posture_score_label = "要確認"
 
+    score_summary = {
+        "before": 50 if posture_score is not None else None,
+        "after": posture_score,
+        "delta": posture_score - 50 if posture_score is not None else None,
+        "delta_class": "neutral",
+        "delta_label": "未算出",
+    }
+
+    if score_summary["delta"] is not None:
+        if score_summary["delta"] > 0:
+            score_summary["delta_class"] = "up"
+            score_summary["delta_label"] = f"+{score_summary['delta']}pt"
+        elif score_summary["delta"] < 0:
+            score_summary["delta_class"] = "down"
+            score_summary["delta_label"] = f"{score_summary['delta']}pt"
+        else:
+            score_summary["delta_label"] = "±0pt"
+
     return comparison_diff_groups, {
         "trend_counts": trend_counts,
+        "trend_rows": trend_rows,
         "score": posture_score,
         "has_score": posture_score is not None,
         "score_label": posture_score_label,
+        "score_summary": score_summary,
         "measurement_count": sum(trend_counts.values()),
     }
 
@@ -1027,6 +1064,57 @@ def posture_comparison_report_view(request, comparison_id):
     )
     summary = _normalize_comparison_summary(comparison.get_active_summary() or {})
 
+    pair_trend_map = {}
+    for group in comparison_diff_groups:
+        counts = {
+            "improved": 0,
+            "worsened": 0,
+            "unchanged": 0,
+            "unknown": 0,
+        }
+        for row in group["rows"]:
+            trend = row.get("trend") or "unknown"
+            if trend not in counts:
+                trend = "unknown"
+            counts[trend] += 1
+
+        if counts["worsened"]:
+            trend = "worsened"
+            trend_label = "確認が必要"
+        elif counts["improved"]:
+            trend = "improved"
+            trend_label = "改善傾向"
+        elif counts["unchanged"]:
+            trend = "unchanged"
+            trend_label = "大きな変化なし"
+        elif counts["unknown"]:
+            trend = "unknown"
+            trend_label = "判定保留"
+        else:
+            trend = "unknown"
+            trend_label = "未計測"
+
+        pair_trend_map[group["image_type"]] = {
+            "trend": trend,
+            "trend_label": trend_label,
+        }
+
+    for pair in image_pairs:
+        pair.update(pair_trend_map.get(pair["key"], {
+            "trend": "unknown",
+            "trend_label": "未計測",
+        }))
+
+    comparison_period_days = None
+    if comparison.before_assessment.created_at and comparison.after_assessment.created_at:
+        before_date = timezone.localtime(
+            comparison.before_assessment.created_at
+        ).date()
+        after_date = timezone.localtime(
+            comparison.after_assessment.created_at
+        ).date()
+        comparison_period_days = (after_date - before_date).days
+
     ai_steps = []
     for text in summary.get("treatment_focus_suggestions") or []:
         ai_steps.append({
@@ -1040,21 +1128,25 @@ def posture_comparison_report_view(request, comparison_id):
             "text": text,
         })
 
-    if not ai_steps:
-        ai_steps = [
-            {
-                "title": "Step1 痛み・負担の管理",
-                "text": "痛みや違和感の出方を確認し、日常生活で負担が強くなりやすい動きを整理します。",
-            },
-            {
-                "title": "Step2 姿勢改善・筋肉ケア",
-                "text": "姿勢の傾向に合わせて、筋肉の緊張や関節の動きを無理のない範囲で整えていきます。",
-            },
-            {
-                "title": "Step3 再発予防・パフォーマンスアップ",
-                "text": "動作のくせや生活習慣を確認し、良い状態を保ちやすい体づくりを目指します。",
-            },
-        ]
+    fallback_steps = [
+        {
+            "title": "Step1 痛み・負担の管理",
+            "text": "痛みや違和感の出方を確認し、日常生活で負担が強くなりやすい動きを整理します。",
+        },
+        {
+            "title": "Step2 姿勢改善・筋肉ケア",
+            "text": "姿勢の傾向に合わせて、筋肉の緊張や関節の動きを無理のない範囲で整えていきます。",
+        },
+        {
+            "title": "Step3 再発予防・パフォーマンスアップ",
+            "text": "動作のくせや生活習慣を確認し、良い状態を保ちやすい体づくりを目指します。",
+        },
+    ]
+
+    for fallback_step in fallback_steps:
+        if len(ai_steps) >= 3:
+            break
+        ai_steps.append(fallback_step)
 
     home_care_items = summary.get("home_care_suggestions") or [
         "スタッフの指示に合わせて、無理のない範囲で行ってください。",
@@ -1081,7 +1173,9 @@ def posture_comparison_report_view(request, comparison_id):
         "comparison_json": comparison.comparison_json or {},
         "comparison_diff_groups": comparison_diff_groups,
         "comparison_overview": comparison_overview,
-        "report_steps": ai_steps[:6],
+        "comparison_period_days": comparison_period_days,
+        "score_summary": comparison_overview["score_summary"],
+        "report_steps": ai_steps[:3],
         "home_care_items": home_care_items,
         "risk_notes": risk_notes,
     })
