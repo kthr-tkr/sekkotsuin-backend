@@ -250,11 +250,49 @@ def _normalize_assessment_summary(summary):
     if not summary:
         return {}
 
+    posture_findings = {
+        **(summary.get("posture_findings") or {}),
+    }
+    ankle_foot = (
+        posture_findings.get("ankle_foot")
+        or posture_findings.get("foot")
+        or ""
+    )
+    posture_findings["ankle_foot"] = ankle_foot
+    posture_findings["foot"] = ankle_foot
+
+    view_summaries = summary.get("view_summaries") or {}
+    joint_assessments = summary.get("joint_assessments") or {}
+    alignment_observations = summary.get("alignment_observations") or {}
+
     return {
         **summary,
         "important_points": summary.get("important_points") or [],
         "overall_summary": summary.get("overall_summary") or "",
-        "posture_findings": summary.get("posture_findings") or {},
+        "view_summaries": {
+            "front": view_summaries.get("front") or "",
+            "side_right": view_summaries.get("side_right") or "",
+            "back": view_summaries.get("back") or "",
+        },
+        "posture_findings": posture_findings,
+        "joint_assessments": joint_assessments,
+        "alignment_observations": {
+            "frontal_plane": (
+                alignment_observations.get("frontal_plane") or []
+            ),
+            "sagittal_plane": (
+                alignment_observations.get("sagittal_plane") or []
+            ),
+            "posterior_view": (
+                alignment_observations.get("posterior_view") or []
+            ),
+            "center_of_gravity": (
+                alignment_observations.get("center_of_gravity") or []
+            ),
+        },
+        "symptom_relation_hypotheses": (
+            summary.get("symptom_relation_hypotheses") or []
+        ),
         "suspected_load_areas": summary.get("suspected_load_areas") or [],
         "clinical_notes": summary.get("clinical_notes") or [],
         "treatment_suggestions": summary.get("treatment_suggestions") or [],
@@ -262,7 +300,89 @@ def _normalize_assessment_summary(summary):
         "next_check_points": summary.get("next_check_points") or [],
         "risk_notes": summary.get("risk_notes") or [],
         "patient_explanation": summary.get("patient_explanation") or "",
+        "report_summary_for_patient": (
+            summary.get("report_summary_for_patient")
+            or summary.get("patient_explanation")
+            or ""
+        ),
     }
+
+
+def _build_view_summary_cards(summary):
+    view_summaries = summary.get("view_summaries") or {}
+    return [
+        {
+            "key": "front",
+            "label": "正面評価",
+            "text": view_summaries.get("front") or "新しいAI分析後に表示されます。",
+        },
+        {
+            "key": "side_right",
+            "label": "右側面評価",
+            "text": (
+                view_summaries.get("side_right")
+                or "新しいAI分析後に表示されます。"
+            ),
+        },
+        {
+            "key": "back",
+            "label": "背面評価",
+            "text": view_summaries.get("back") or "新しいAI分析後に表示されます。",
+        },
+    ]
+
+
+def _build_joint_assessment_cards(summary):
+    joint_assessments = summary.get("joint_assessments") or {}
+    specs = [
+        ("head", "頭部"),
+        ("neck", "頚部"),
+        ("shoulder", "肩・肩甲帯"),
+        ("thoracic_spine", "胸椎・胸郭"),
+        ("lumbar_pelvis", "腰椎・骨盤帯"),
+        ("hip", "股関節"),
+        ("knee", "膝関節"),
+        ("ankle_foot", "足関節・足部"),
+    ]
+
+    cards = []
+    for key, label in specs:
+        item = joint_assessments.get(key) or {}
+        cards.append({
+            "key": key,
+            "label": label,
+            "summary": item.get("summary") or "新しいAI分析後に表示されます。",
+            "possible_findings": item.get("possible_findings") or [],
+            "check_points": item.get("check_points") or [],
+        })
+
+    return cards
+
+
+def _build_alignment_groups(summary):
+    observations = summary.get("alignment_observations") or {}
+    return [
+        {
+            "key": "frontal_plane",
+            "label": "前額面・正面",
+            "items": observations.get("frontal_plane") or [],
+        },
+        {
+            "key": "sagittal_plane",
+            "label": "矢状面・右側面",
+            "items": observations.get("sagittal_plane") or [],
+        },
+        {
+            "key": "posterior_view",
+            "label": "背面",
+            "items": observations.get("posterior_view") or [],
+        },
+        {
+            "key": "center_of_gravity",
+            "label": "重心・荷重",
+            "items": observations.get("center_of_gravity") or [],
+        },
+    ]
 
 
 def _build_assessment_image_cards(images):
@@ -364,6 +484,9 @@ def posture_detail_view(request, assessment_id):
     next_action = summary.get("next_action") or []
     image_cards = _build_assessment_image_cards(images)
     assessment_score = _build_assessment_score_context(summary)
+    view_summary_cards = _build_view_summary_cards(summary)
+    joint_assessment_cards = _build_joint_assessment_cards(summary)
+    alignment_groups = _build_alignment_groups(summary)
 
     return render(request, "posture_assessments/detail.html", {
         "active": "patient_search",
@@ -379,6 +502,9 @@ def posture_detail_view(request, assessment_id):
         "next_action": next_action,
         "image_cards": image_cards,
         "assessment_score": assessment_score,
+        "view_summary_cards": view_summary_cards,
+        "joint_assessment_cards": joint_assessment_cards,
+        "alignment_groups": alignment_groups,
     })
 
 
@@ -458,7 +584,13 @@ def posture_assessment_analyze_view(request, assessment_id):
 
     assessment = get_object_or_404(
         PostureAssessment.objects
-        .select_related("clinic", "patient")
+        .select_related(
+            "clinic",
+            "patient",
+            "appointment",
+            "treatment_session",
+            "clinical_note",
+        )
         .prefetch_related("images"),
         pk=assessment_id,
         clinic=clinic,

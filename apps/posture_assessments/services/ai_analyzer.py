@@ -1,9 +1,34 @@
 import base64
 import json
 import mimetypes
+import re
 
 from django.conf import settings
 from openai import OpenAI
+
+
+def _joint_assessment_schema(description):
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "description": description,
+        "properties": {
+            "summary": {"type": "string"},
+            "possible_findings": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+            "check_points": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+        },
+        "required": [
+            "summary",
+            "possible_findings",
+            "check_points",
+        ],
+    }
 
 
 POSTURE_ANALYSIS_SCHEMA = {
@@ -19,7 +44,21 @@ POSTURE_ANALYSIS_SCHEMA = {
             },
             "overall_summary": {
                 "type": "string",
-                "description": "姿勢画像とメモから見た全体サマリー。断定診断ではなく観察補助として記載する。",
+                "description": "三方向画像と主訴情報を統合した施術者向け全体サマリー。",
+            },
+            "view_summaries": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "front": {"type": "string"},
+                    "side_right": {"type": "string"},
+                    "back": {"type": "string"},
+                },
+                "required": [
+                    "front",
+                    "side_right",
+                    "back",
+                ],
             },
             "posture_findings": {
                 "type": "object",
@@ -41,13 +80,21 @@ POSTURE_ANALYSIS_SCHEMA = {
                         "type": "string",
                         "description": "骨盤の左右差、前傾・後傾、回旋傾向。",
                     },
+                    "hip": {
+                        "type": "string",
+                        "description": "股関節周囲のアライメント、左右差、荷重傾向。",
+                    },
                     "knee": {
                         "type": "string",
                         "description": "膝の向き、左右差、ニーイン・ニーアウト傾向。",
                     },
+                    "ankle_foot": {
+                        "type": "string",
+                        "description": "足関節、足部、踵の向き、接地、左右差の傾向。",
+                    },
                     "foot": {
                         "type": "string",
-                        "description": "足部の向き、荷重、接地傾向。",
+                        "description": "既存画面互換用。ankle_footと同じ内容を簡潔に記載する。",
                     },
                     "balance": {
                         "type": "string",
@@ -59,10 +106,85 @@ POSTURE_ANALYSIS_SCHEMA = {
                     "shoulder",
                     "spine",
                     "pelvis",
+                    "hip",
                     "knee",
+                    "ankle_foot",
                     "foot",
                     "balance",
                 ],
+            },
+            "joint_assessments": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "head": _joint_assessment_schema(
+                        "頭部位置、傾き、重心線との関係。"
+                    ),
+                    "neck": _joint_assessment_schema(
+                        "頚部アライメントと負担の可能性。"
+                    ),
+                    "shoulder": _joint_assessment_schema(
+                        "肩甲帯、肩関節周囲の左右差と位置関係。"
+                    ),
+                    "thoracic_spine": _joint_assessment_schema(
+                        "胸椎後弯、体幹上部、胸郭の姿勢傾向。"
+                    ),
+                    "lumbar_pelvis": _joint_assessment_schema(
+                        "腰椎・骨盤帯の傾き、偏位、負担の可能性。"
+                    ),
+                    "hip": _joint_assessment_schema(
+                        "股関節と下肢ライン、荷重の左右差。"
+                    ),
+                    "knee": _joint_assessment_schema(
+                        "膝関節の向き、過伸展、屈曲、内外反傾向。"
+                    ),
+                    "ankle_foot": _joint_assessment_schema(
+                        "足関節・足部・踵の向き、接地、支持性の傾向。"
+                    ),
+                },
+                "required": [
+                    "head",
+                    "neck",
+                    "shoulder",
+                    "thoracic_spine",
+                    "lumbar_pelvis",
+                    "hip",
+                    "knee",
+                    "ankle_foot",
+                ],
+            },
+            "alignment_observations": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "frontal_plane": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "sagittal_plane": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "posterior_view": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "center_of_gravity": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                },
+                "required": [
+                    "frontal_plane",
+                    "sagittal_plane",
+                    "posterior_view",
+                    "center_of_gravity",
+                ],
+            },
+            "symptom_relation_hypotheses": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "主訴情報がある場合の、姿勢所見と症状の関連仮説。因果関係は断定しない。",
             },
             "suspected_load_areas": {
                 "type": "array",
@@ -98,11 +220,41 @@ POSTURE_ANALYSIS_SCHEMA = {
                 "type": "string",
                 "description": "患者さんにそのまま説明しやすい、やさしい表現。",
             },
+            "report_summary_for_patient": {
+                "type": "string",
+                "description": "患者向けレポートに使える、前向きで簡潔な姿勢評価まとめ。",
+            },
+            "meta": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "source": {"type": "string"},
+                    "assessment_id": {"type": "integer"},
+                    "model": {"type": "string"},
+                    "image_count": {"type": "integer"},
+                    "schema_version": {"type": "integer"},
+                    "privacy_mode": {"type": "string"},
+                    "storage_safe": {"type": "boolean"},
+                },
+                "required": [
+                    "source",
+                    "assessment_id",
+                    "model",
+                    "image_count",
+                    "schema_version",
+                    "privacy_mode",
+                    "storage_safe",
+                ],
+            },
         },
         "required": [
             "important_points",
             "overall_summary",
+            "view_summaries",
             "posture_findings",
+            "joint_assessments",
+            "alignment_observations",
+            "symptom_relation_hypotheses",
             "suspected_load_areas",
             "clinical_notes",
             "treatment_suggestions",
@@ -110,6 +262,8 @@ POSTURE_ANALYSIS_SCHEMA = {
             "next_check_points",
             "risk_notes",
             "patient_explanation",
+            "report_summary_for_patient",
+            "meta",
         ],
     },
 }
@@ -225,11 +379,51 @@ IMAGE_TYPE_LABELS = {
     "back": "背面",
 }
 
+REQUIRED_ASSESSMENT_RISK_NOTES = [
+    "画像解析は撮影角度、立ち位置、服装、カメラ距離の影響を受けます。",
+    "本結果は診断ではなく、施術者の評価補助として扱ってください。",
+    "痛み、しびれ、筋力低下、夜間痛などがある場合は画像だけで判断せず、問診・徒手検査・必要に応じた医療機関への相談を優先してください。",
+]
+
 REQUIRED_COMPARISON_RISK_NOTES = [
     "画像解析は撮影角度・立ち位置・服装・カメラ距離の影響を受けるため、同条件での再確認が必要です。",
     "計測値は診断ではなく、施術者による姿勢評価・触診・動作確認の補助として扱ってください。",
     "痛みや神経症状が強い場合は画像だけで判断せず、問診・徒手検査・必要に応じた医療機関への相談を優先してください。",
 ]
+
+PRIVATE_CONTEXT_KEYS = {
+    "name",
+    "full_name",
+    "patient_name",
+    "first_name",
+    "last_name",
+    "kana",
+    "phone",
+    "phone_number",
+    "email",
+    "address",
+    "postal_code",
+    "birth_date",
+    "birthday",
+    "dob",
+    "patient_id",
+    "user_id",
+    "氏名",
+    "名前",
+    "患者名",
+    "ふりがな",
+    "電話",
+    "電話番号",
+    "メール",
+    "住所",
+    "郵便番号",
+    "生年月日",
+}
+
+
+def _is_private_context_key(key):
+    normalized = str(key).strip().lower()
+    return normalized in PRIVATE_CONTEXT_KEYS
 
 
 def _sanitize_ai_context(value, patient):
@@ -237,11 +431,14 @@ def _sanitize_ai_context(value, patient):
         return {
             key: _sanitize_ai_context(item, patient)
             for key, item in value.items()
-            if key != "meta"
+            if key != "meta" and not _is_private_context_key(key)
         }
 
     if isinstance(value, list):
-        return [_sanitize_ai_context(item, patient) for item in value]
+        return [
+            _sanitize_ai_context(item, patient)
+            for item in value[:30]
+        ]
 
     if not isinstance(value, str):
         return value
@@ -263,7 +460,175 @@ def _sanitize_ai_context(value, patient):
     ):
         sanitized = sanitized.replace(identifier, "[匿名]")
 
-    return sanitized
+    sanitized = re.sub(
+        r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b",
+        "[メール情報省略]",
+        sanitized,
+        flags=re.IGNORECASE,
+    )
+    sanitized = re.sub(
+        r"(?<!\d)(?:0\d{1,4}[-ー－]?\d{1,4}[-ー－]?\d{3,4})(?!\d)",
+        "[電話情報省略]",
+        sanitized,
+    )
+
+    return sanitized[:3000]
+
+
+def _select_context_fields(data, allowed_keys):
+    if not isinstance(data, dict):
+        return {}
+
+    return {
+        key: data.get(key)
+        for key in allowed_keys
+        if data.get(key) not in (None, "", [], {})
+    }
+
+
+def _build_assessment_clinical_context(assessment):
+    patient = assessment.patient
+    context = {}
+
+    if assessment.memo:
+        context["assessment_memo"] = assessment.memo
+
+    appointment = assessment.appointment
+    if appointment:
+        appointment_context = {
+            "menu": appointment.menu,
+            "notes": appointment.notes,
+        }
+        context["appointment"] = {
+            key: value
+            for key, value in appointment_context.items()
+            if value
+        }
+
+    treatment_session = assessment.treatment_session
+    if treatment_session:
+        session_summary = treatment_session.active_summary or {}
+        if not isinstance(session_summary, dict):
+            session_summary = {}
+
+        context["treatment_session"] = {
+            "title": treatment_session.title or "",
+            "memo": treatment_session.memo or "",
+            "session_summary": _select_context_fields(
+                session_summary.get("session_summary") or {},
+                [
+                    "chief_complaint",
+                    "overall_summary",
+                    "progress_change",
+                ],
+            ),
+            "clinical_assessment": _select_context_fields(
+                session_summary.get("clinical_assessment") or {},
+                [
+                    "checked_areas",
+                    "pain_areas",
+                    "movement_tests",
+                    "findings",
+                    "suspected_causes",
+                    "treatment_intent",
+                ],
+            ),
+            "soap": _select_context_fields(
+                session_summary.get("soap") or {},
+                ["S", "O", "A", "P"],
+            ),
+        }
+
+    clinical_note = assessment.clinical_note
+    if clinical_note:
+        extract = clinical_note.extract_json or {}
+        soap = clinical_note.soap_json or {}
+        web_snapshot = clinical_note.web_intake_snapshot or {}
+        if not isinstance(extract, dict):
+            extract = {}
+        if not isinstance(soap, dict):
+            soap = {}
+        if not isinstance(web_snapshot, dict):
+            web_snapshot = {}
+
+        snapshot_payload = web_snapshot.get("payload") or {}
+        if not isinstance(snapshot_payload, dict):
+            snapshot_payload = {}
+
+        context["clinical_note"] = {
+            "extract": _select_context_fields(
+                extract,
+                [
+                    "chief_complaint",
+                    "overall_summary",
+                    "progress_change",
+                    "symptom_type",
+                    "severity_0_10",
+                    "locations",
+                    "qualities",
+                    "symptom_details",
+                    "worse_when",
+                    "better_when",
+                    "checked_areas",
+                    "pain_areas",
+                    "movement_tests",
+                    "findings",
+                    "suspected_causes",
+                    "treatment_intent",
+                ],
+            ),
+            "soap": _select_context_fields(
+                soap,
+                ["S", "O", "A", "P"],
+            ),
+            "followups": clinical_note.followups_json or [],
+            "web_intake": {
+                **_select_context_fields(
+                    web_snapshot,
+                    [
+                        "chief_complaint",
+                        "onset",
+                        "symptom_type",
+                    ],
+                ),
+                "extract": _select_context_fields(
+                    snapshot_payload.get("extract") or {},
+                    [
+                        "chief_complaint",
+                        "severity_0_10",
+                        "locations",
+                        "qualities",
+                        "symptom_details",
+                        "worse_when",
+                        "better_when",
+                    ],
+                ),
+                "symptoms": _select_context_fields(
+                    snapshot_payload.get("symptoms") or {},
+                    [
+                        "areas",
+                        "severity",
+                        "qualities",
+                        "symptom_details",
+                        "worse_when",
+                        "better_when",
+                        "free_text",
+                    ],
+                ),
+            },
+        }
+
+    return _sanitize_ai_context(context, patient)
+
+
+def _has_meaningful_context(value):
+    if isinstance(value, dict):
+        return any(_has_meaningful_context(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_has_meaningful_context(item) for item in value)
+    if isinstance(value, str):
+        return bool(value.strip())
+    return value not in (None, False)
 
 
 def _guess_mime_type(file_field) -> str:
@@ -416,12 +781,13 @@ def _build_comparison_image_content(comparison):
 
 def analyze_posture_assessment(assessment):
     """
-    姿勢画像をAI分析し、JSONを返す。
+    姿勢画像と匿名化した主訴情報をAI分析し、構造化JSONを返す。
 
     注意:
     - 医療診断ではない
     - 施術者の観察補助
     - 画像だけで断定しない
+    - 患者氏名など不要な個人情報を送らない
     - S3保存/ローカル保存どちらでも動作する
     """
     if not settings.OPENAI_API_KEY:
@@ -430,64 +796,109 @@ def analyze_posture_assessment(assessment):
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
     patient = assessment.patient
-    appointment = assessment.appointment
-
-    patient_name = f"{patient.last_name} {patient.first_name}".strip()
-
     image_content = _build_image_content(assessment)
-
-    memo = assessment.memo or ""
-    appointment_text = "-"
-
-    if appointment and appointment.start_at:
-        appointment_text = appointment.start_at.strftime("%Y-%m-%d %H:%M")
+    image_count = assessment.images.count()
+    model_name = getattr(settings, "OPENAI_VISION_MODEL", "gpt-4o-mini")
+    clinical_context = _build_assessment_clinical_context(assessment)
+    has_clinical_context = _has_meaningful_context(clinical_context)
+    clinical_context_text = (
+        json.dumps(clinical_context, ensure_ascii=False, indent=2)
+        if has_clinical_context
+        else "主訴・施術メモ情報なし。画像所見のみで整理してください。"
+    )
 
     prompt = f"""
-あなたは接骨院・整骨院向けの姿勢観察補助AIです。
-以下の正面・右側面・背面画像とメモをもとに、姿勢傾向を整理してください。
+あなたは接骨院・整体院の施術者を支援する、姿勢観察・アライメント評価補助AIです。
+以下の正面・右側面・背面画像と、匿名化された主訴・施術情報をもとに、現場で確認しやすい構造化分析を作成してください。
 
-# 患者情報
-- 患者名: {patient_name}
-- 予約日時: {appointment_text}
-- 撮影メモ・主訴メモ: {memo or "-"}
+# プライバシー
+- 匿名患者として扱う
+- 氏名、連絡先、住所などの個人情報を推測・出力しない
+- meta.privacy_mode は "no_patient_name" とする
+
+# 匿名化された主訴・施術情報
+{clinical_context_text}
 
 # 目的
-- 施術者が短時間で姿勢傾向を把握できるようにする
-- 主訴やメモと姿勢傾向の関連を考える
-- 施術前の確認ポイントを整理する
-- 患者説明に使える文章を作る
+- 正面・右側面・背面の各画像を分けて評価する
+- 関節・部位ごとに観察所見、可能性、施術者が確認すべき点を整理する
+- 前額面・矢状面・背面・重心の観点でアライメントを整理する
+- 主訴情報がある場合のみ、姿勢所見との関連仮説を整理する
+- 施術前の触診、可動域、筋力、動作、神経学的所見の確認ポイントを示す
+- 患者さんへ不安を煽らず説明できる文章を作る
 
 # 必ず守るルール
 - 医療診断名を断定しない
-- 画像だけで病名や原因を確定しない
-- 「可能性」「傾向」「確認が必要」という表現を使う
-- 画像から見えないことは無理に書かない
+- 画像だけで病名、原因、骨格変形、筋力低下を確定しない
+- 「傾向があります」「可能性があります」「確認が必要です」「施術者の評価と合わせて判断します」を使う
+- 画像から確認できない触診所見、可動域、筋力、疼痛誘発、神経症状は推測で確定しない
 - 危険な断定、治療保証、改善保証はしない
 - 施術者の判断を補助する表現にする
-- 患者説明は不安を煽らず、前向きでわかりやすくする
+- 左右や前後の方向を記載する場合は、画像上で確認できる範囲に限定する
+- 撮影条件による見え方の差を考慮する
 
-# 重点観察ポイント
+# 正面画像の評価観点
+- 頭部の左右傾き
+- 肩の高さ差
+- 体幹の左右偏位
+- 骨盤の高さ差
+- 膝の向き、ニーイン・ニーアウト傾向
+- 足部の向きと左右差
+- 左右荷重の偏りの可能性
+- 正面から見た全体バランス
+
+# 右側面画像の評価観点
 - 頭部前方位
-- 首の傾き
-- 肩の左右差
-- 巻き肩傾向
-- 背中・猫背傾向
-- 骨盤の左右差、前傾・後傾、回旋傾向
-- 膝の向き、左右差、ニーイン傾向
-- 足部の向き、荷重傾向
-- 全体の重心バランス
-- 主訴との関連がありそうな負担部位
+- 耳・肩・股関節・膝・足首の位置関係
+- 猫背傾向、胸椎後弯傾向
+- 骨盤前傾・後傾の可能性
+- 膝の過伸展・軽度屈曲傾向
+- 重心の前後偏位
+- 首・肩・腰・膝への負担の可能性
+
+# 背面画像の評価観点
+- 後頭部・首の傾き
+- 肩甲帯の左右差
+- 肩甲骨位置の左右差
+- 背部ライン、脊柱偏位の可能性
+- 骨盤の左右差
+- 下肢ラインの左右差
+- 足部・踵の傾きの可能性
+
+# 関節別評価
+joint_assessments の各部位について、次の3項目を必ず記載してください。
+- summary: 画像上の位置関係と全体要約
+- possible_findings: 考えられる姿勢傾向。診断名ではなく仮説
+- check_points: 施術者が問診・触診・可動域・筋力・動作評価で確認すべき具体項目
+
+# 主訴との関連
+- 主訴・症状情報がある場合、symptom_relation_hypotheses に姿勢所見との関連仮説を記載する
+- 因果関係は断定しない
+- 主訴情報がない場合、symptom_relation_hypotheses は空配列にする
+- 症状と画像所見が一致しない可能性も明記する
+
+# 必須の注意事項
+risk_notes には、少なくとも次の内容を必ず含めてください。
+1. 画像解析は撮影角度、立ち位置、服装、カメラ距離の影響を受ける
+2. 本結果は診断ではなく、施術者の評価補助である
+3. 痛み、しびれ、筋力低下、夜間痛などがある場合は画像だけで判断しない
 
 # 出力品質
-- important_points は現場で最初に見るべき内容にする
-- clinical_notes は施術者が評価時に使える内容にする
-- treatment_suggestions は「候補」として書く
-- home_care_suggestions は患者に伝えても安全な範囲にする
-- risk_notes には「画像だけでは判断できないこと」も含める
+- important_points は施術者が最初に確認すべき内容を3〜6件に絞る
+- view_summaries は画像ごとの所見を簡潔にまとめる。画像がない方向は評価不可とする
+- posture_findings は部位別の全体傾向をまとめる
+- alignment_observations は観察事実と仮説を混同しない
+- clinical_notes は施術者が現場で使える確認項目にする
+- treatment_suggestions は施術方針の候補として書く
+- home_care_suggestions は症状を悪化させない安全な候補に限定する
+- patient_explanation は会話でそのまま使える、やさしく前向きな文章にする
+- report_summary_for_patient は患者向けレポートに載せられる簡潔な文章にする
+- meta は source="posture_assessment"、assessment_id={assessment.id}、model="{model_name}"、
+  image_count={image_count}、schema_version=2、privacy_mode="no_patient_name" とする
 """.strip()
 
     response = client.responses.create(
-        model=getattr(settings, "OPENAI_VISION_MODEL", "gpt-4o-mini"),
+        model=model_name,
         input=[
             {
                 "role": "system",
@@ -495,8 +906,9 @@ def analyze_posture_assessment(assessment):
                     {
                         "type": "input_text",
                         "text": (
-                            "あなたは接骨院・整骨院向けの姿勢観察補助AIです。"
-                            "診断ではなく、施術者の観察・説明・記録を補助してください。"
+                            "あなたは接骨院・整体院向けの姿勢観察・アライメント評価補助AIです。"
+                            "診断ではなく、施術者の問診・触診・動作評価・患者説明を補助してください。"
+                            "患者氏名など不要な個人情報を出力しないでください。"
                         ),
                     }
                 ],
@@ -529,11 +941,48 @@ def analyze_posture_assessment(assessment):
     except json.JSONDecodeError as e:
         raise ValueError(f"AI姿勢分析結果のJSON解析に失敗しました: {e}") from e
 
+    result = _sanitize_ai_context(result, patient)
+
+    if not has_clinical_context:
+        result["symptom_relation_hypotheses"] = []
+
+    posture_findings = result.get("posture_findings")
+    if not isinstance(posture_findings, dict):
+        posture_findings = {}
+
+    ankle_foot = (
+        posture_findings.get("ankle_foot")
+        or posture_findings.get("foot")
+        or ""
+    )
+    posture_findings["ankle_foot"] = ankle_foot
+    posture_findings["foot"] = ankle_foot
+    result["posture_findings"] = posture_findings
+
+    risk_notes = result.get("risk_notes")
+    if not isinstance(risk_notes, list):
+        risk_notes = []
+
+    for required_note in REQUIRED_ASSESSMENT_RISK_NOTES:
+        if required_note not in risk_notes:
+            risk_notes.append(required_note)
+
+    result["risk_notes"] = risk_notes
+    result["patient_explanation"] = (
+        result.get("patient_explanation")
+        or "画像から確認できる姿勢の傾向を整理しました。症状や動き方も一緒に確認しながら、無理のない範囲で整えていきましょう。"
+    )
+    result["report_summary_for_patient"] = (
+        result.get("report_summary_for_patient")
+        or result["patient_explanation"]
+    )
     result["meta"] = {
         "source": "posture_assessment",
         "assessment_id": assessment.id,
-        "model": getattr(settings, "OPENAI_VISION_MODEL", "gpt-4o-mini"),
-        "image_count": assessment.images.count(),
+        "model": model_name,
+        "image_count": image_count,
+        "schema_version": 2,
+        "privacy_mode": "no_patient_name",
         "storage_safe": True,
     }
 

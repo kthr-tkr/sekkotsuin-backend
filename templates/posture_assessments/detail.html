@@ -476,6 +476,29 @@
     white-space:pre-wrap;
   }
 
+  .pa-report-summary{
+    margin-top:14px;
+    padding:14px;
+    border-radius:18px;
+    color:#28545b;
+    background:#effcf9;
+    border:1px solid #ccece4;
+  }
+
+  .pa-report-summary-title{
+    color:#16786e;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .pa-report-summary-text{
+    margin-top:7px;
+    font-size:14px;
+    font-weight:800;
+    line-height:1.8;
+    white-space:pre-wrap;
+  }
+
   .pa-insight-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -543,6 +566,104 @@
     display:grid;
     grid-template-columns:repeat(4,minmax(0,1fr));
     gap:12px;
+  }
+
+  .pa-view-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .pa-view-card{
+    min-height:148px;
+    padding:15px;
+    border-radius:20px;
+    background:linear-gradient(180deg,#fff,#f7fbff);
+    border:1px solid #dce8f2;
+  }
+
+  .pa-view-label{
+    color:#2f72c5;
+    font-size:14px;
+    font-weight:950;
+  }
+
+  .pa-view-text{
+    margin-top:9px;
+    color:#3f5870;
+    font-size:13px;
+    font-weight:760;
+    line-height:1.75;
+    white-space:pre-wrap;
+  }
+
+  .pa-alignment-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  .pa-alignment-card{
+    padding:14px;
+    border-radius:20px;
+    background:#f8fbff;
+    border:1px solid #dce8f2;
+  }
+
+  .pa-alignment-title{
+    color:#17334d;
+    font-size:14px;
+    font-weight:950;
+    margin-bottom:9px;
+  }
+
+  .pa-joint-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .pa-joint-card{
+    padding:15px;
+    border-radius:22px;
+    background:#fff;
+    border:1px solid #dce8f2;
+  }
+
+  .pa-joint-title{
+    color:#17334d;
+    font-size:16px;
+    font-weight:950;
+  }
+
+  .pa-joint-summary{
+    margin-top:8px;
+    color:#3f5870;
+    font-size:13px;
+    font-weight:780;
+    line-height:1.7;
+    white-space:pre-wrap;
+  }
+
+  .pa-joint-detail{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+  }
+
+  .pa-joint-box{
+    padding:11px;
+    border-radius:16px;
+    background:#f7faff;
+    border:1px solid #e3edf5;
+  }
+
+  .pa-joint-box-title{
+    margin-bottom:7px;
+    color:#2f72c5;
+    font-size:11px;
+    font-weight:950;
   }
 
   .pa-finding-card{
@@ -673,7 +794,11 @@
     .pa-score-card,
     .pa-message-card,
     .pa-insight-grid,
-    .pa-upload-grid{
+    .pa-upload-grid,
+    .pa-view-grid,
+    .pa-alignment-grid,
+    .pa-joint-grid,
+    .pa-joint-detail{
       grid-template-columns:1fr;
     }
 
@@ -833,6 +958,25 @@
       </div>
     </section>
 
+    <section class="pa-card">
+      <div class="pa-section-head">
+        <div>
+          <div class="pa-section-kicker">Three View Assessment</div>
+          <div class="pa-section-title">三方向別の評価</div>
+        </div>
+        <div class="pa-section-note">正面・右側面・背面を分けて整理</div>
+      </div>
+
+      <div class="pa-view-grid">
+        {% for card in view_summary_cards %}
+          <article class="pa-view-card">
+            <div class="pa-view-label">{{ card.label }}</div>
+            <div class="pa-view-text">{{ card.text }}</div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
     <div class="pa-layout">
       <section class="pa-card pa-summary-card">
         <div class="pa-summary-head">今回の姿勢サマリー</div>
@@ -864,6 +1008,16 @@
                     姿勢の状態は、痛みの出方や日常の動きと合わせて確認していくことが大切です。気になる点を一緒に確認しながら、無理のない範囲で整えていきましょう。
                   {% endif %}
                 </p>
+                <div class="pa-report-summary">
+                  <div class="pa-report-summary-title">患者向けレポート要約</div>
+                  <div class="pa-report-summary-text">
+                    {% if summary.report_summary_for_patient %}
+                      {{ summary.report_summary_for_patient }}
+                    {% else %}
+                      姿勢にはいくつか確認したい傾向がありますが、画像だけで判断せず、動きや症状と合わせて無理のない改善方法を考えていきます。
+                    {% endif %}
+                  </div>
+                </div>
               </div>
             </div>
           {% else %}
@@ -973,6 +1127,53 @@
       </section>
     </div>
 
+    <div class="pa-layout">
+      <section class="pa-card">
+        <div class="pa-section-head">
+          <div>
+            <div class="pa-section-kicker">Alignment Observations</div>
+            <div class="pa-section-title">アライメント観察</div>
+          </div>
+          <div class="pa-section-note">面別・重心別に確認</div>
+        </div>
+
+        <div class="pa-alignment-grid">
+          {% for group in alignment_groups %}
+            <article class="pa-alignment-card">
+              <div class="pa-alignment-title">{{ group.label }}</div>
+              <ul class="pa-list">
+                {% if group.items %}
+                  {% for item in group.items %}<li>{{ item }}</li>{% endfor %}
+                {% else %}
+                  <li>新しいAI分析後に表示されます。</li>
+                {% endif %}
+              </ul>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="pa-card">
+        <div class="pa-section-head">
+          <div>
+            <div class="pa-section-kicker">Symptom Relation</div>
+            <div class="pa-section-title">主訴との関連仮説</div>
+          </div>
+          <div class="pa-section-note">因果関係は断定しません</div>
+        </div>
+
+        <div class="pa-list-card attention">
+          <ul class="pa-list">
+            {% if summary.symptom_relation_hypotheses %}
+              {% for item in summary.symptom_relation_hypotheses %}<li>{{ item }}</li>{% endfor %}
+            {% else %}
+              <li>主訴情報がない場合、または旧形式の分析結果では表示されません。症状と姿勢の関係は施術者の評価と合わせて判断します。</li>
+            {% endif %}
+          </ul>
+        </div>
+      </section>
+    </div>
+
     <section class="pa-card">
       <div class="pa-section-head">
         <div>
@@ -1000,17 +1201,62 @@
           <div class="pa-finding-text">{{ summary.posture_findings.pelvis|default:"AI分析後に表示されます。" }}</div>
         </div>
         <div class="pa-finding-card">
+          <div class="pa-finding-label">股関節</div>
+          <div class="pa-finding-text">{{ summary.posture_findings.hip|default:"AI分析後に表示されます。" }}</div>
+        </div>
+        <div class="pa-finding-card">
           <div class="pa-finding-label">膝</div>
           <div class="pa-finding-text">{{ summary.posture_findings.knee|default:"AI分析後に表示されます。" }}</div>
         </div>
         <div class="pa-finding-card">
-          <div class="pa-finding-label">足部</div>
-          <div class="pa-finding-text">{{ summary.posture_findings.foot|default:"AI分析後に表示されます。" }}</div>
+          <div class="pa-finding-label">足関節・足部</div>
+          <div class="pa-finding-text">{{ summary.posture_findings.ankle_foot|default:"AI分析後に表示されます。" }}</div>
         </div>
         <div class="pa-finding-card wide">
           <div class="pa-finding-label">全体バランス</div>
           <div class="pa-finding-text">{{ summary.posture_findings.balance|default:"AI分析後に表示されます。" }}</div>
         </div>
+      </div>
+    </section>
+
+    <section class="pa-card">
+      <div class="pa-section-head">
+        <div>
+          <div class="pa-section-kicker">Joint Assessment</div>
+          <div class="pa-section-title">関節別評価と施術者確認ポイント</div>
+        </div>
+        <div class="pa-section-note">画像所見を触診・可動域・動作評価につなげます</div>
+      </div>
+
+      <div class="pa-joint-grid">
+        {% for joint in joint_assessment_cards %}
+          <article class="pa-joint-card">
+            <div class="pa-joint-title">{{ joint.label }}</div>
+            <div class="pa-joint-summary">{{ joint.summary }}</div>
+            <div class="pa-joint-detail">
+              <div class="pa-joint-box">
+                <div class="pa-joint-box-title">考えられる傾向</div>
+                <ul class="pa-list">
+                  {% if joint.possible_findings %}
+                    {% for item in joint.possible_findings %}<li>{{ item }}</li>{% endfor %}
+                  {% else %}
+                    <li>新しいAI分析後に表示されます。</li>
+                  {% endif %}
+                </ul>
+              </div>
+              <div class="pa-joint-box">
+                <div class="pa-joint-box-title">施術者の確認ポイント</div>
+                <ul class="pa-list">
+                  {% if joint.check_points %}
+                    {% for item in joint.check_points %}<li>{{ item }}</li>{% endfor %}
+                  {% else %}
+                    <li>新しいAI分析後に表示されます。</li>
+                  {% endif %}
+                </ul>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
       </div>
     </section>
 
