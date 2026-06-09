@@ -1,4 +1,5 @@
 {% extends "staff/_layout.html" %}
+{% load static %}
 {% block title %}CareFrow | 姿勢評価レポート / 改善プラン{% endblock %}
 
 {% block content %}
@@ -587,41 +588,58 @@
     line-height:1.55;
   }
 
-  .ar-body-map-figure-wrap{
+  .body-map-figure{
+    width:300px;
+    margin:0;
     display:grid;
     justify-items:center;
     gap:8px;
   }
 
-  .ar-body-map-figure{
-    width:300px;
-    padding:3px 0;
+  .body-map-figure__stage{
+    position:relative;
+    width:100%;
     border-radius:145px 145px 28px 28px;
     background:
       radial-gradient(circle at 50% 42%,#fff 0,#f5f9fc 58%,transparent 59%);
     border-bottom:1px solid #d8e4ed;
   }
 
-  .ar-body-map-svg{
+  .body-map-figure__artwork,
+  .body-map-figure__overlay{
     width:100%;
     height:auto;
     display:block;
     overflow:visible;
   }
 
-  .ar-body-map-silhouette{
+  .body-map-figure__artwork{
+    position:relative;
+    z-index:1;
+    aspect-ratio:300 / 430;
+    object-fit:contain;
+  }
+
+  .body-map-figure__overlay{
+    position:absolute;
+    inset:0;
+    z-index:2;
+    pointer-events:none;
+  }
+
+  .body-map-figure__silhouette{
     fill:url(#bodyMapSkin);
     stroke:#9bb1c0;
     stroke-width:1.05;
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-soft-shade{
+  .body-map-figure__soft-shade{
     fill:rgba(255,255,255,.18);
     stroke:none;
   }
 
-  .ar-body-map-contour{
+  .body-map-figure__contour{
     fill:none;
     stroke:#91aabd;
     stroke-width:.85;
@@ -631,7 +649,7 @@
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-anatomy{
+  .body-map-figure__anatomy{
     fill:none;
     stroke:#7798ae;
     stroke-width:.75;
@@ -641,11 +659,11 @@
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-anatomy.soft{
+  .body-map-figure__anatomy.soft{
     opacity:.24;
   }
 
-  .ar-body-map-spine-node{
+  .body-map-figure__spine-node{
     fill:#f8fbfd;
     stroke:#7798ae;
     stroke-width:.7;
@@ -653,7 +671,7 @@
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-region{
+  .body-map-figure__region{
     fill:rgba(255,255,255,.13);
     stroke:#8ca7b9;
     stroke-width:.72;
@@ -661,18 +679,18 @@
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-joint{
+  .body-map-figure__joint{
     fill:rgba(255,255,255,.9);
     stroke:#7e9db2;
     stroke-width:1.1;
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-joint.warm{
+  .body-map-figure__joint.warm{
     stroke:#c89a43;
   }
 
-  .ar-body-map-guide{
+  .body-map-figure__guide{
     fill:none;
     stroke:#6f91aa;
     stroke-width:.8;
@@ -681,12 +699,12 @@
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-guide.level{
+  .body-map-figure__guide.level{
     stroke-dasharray:none;
     opacity:.25;
   }
 
-  .ar-body-map-target .ar-body-map-link{
+  .body-map-figure__target .body-map-figure__link{
     fill:none;
     stroke:#9aa9b6;
     stroke-width:1.45;
@@ -694,47 +712,47 @@
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-target .ar-body-map-target-ring{
+  .body-map-figure__target .body-map-figure__target-ring{
     fill:rgba(154,169,182,.16);
     stroke:#9aa9b6;
     stroke-width:1.2;
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-target .ar-body-map-target-dot{
+  .body-map-figure__target .body-map-figure__target-dot{
     fill:#9aa9b6;
     stroke:#fff;
     stroke-width:2;
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-target.good .ar-body-map-link{
+  .body-map-figure__target.good .body-map-figure__link{
     stroke:#3c8b78;
   }
 
-  .ar-body-map-target.good .ar-body-map-target-ring{
+  .body-map-figure__target.good .body-map-figure__target-ring{
     fill:rgba(60,139,120,.15);
     stroke:#3c8b78;
   }
 
-  .ar-body-map-target.good .ar-body-map-target-dot{
+  .body-map-figure__target.good .body-map-figure__target-dot{
     fill:#3c8b78;
   }
 
-  .ar-body-map-target.check .ar-body-map-link{
+  .body-map-figure__target.check .body-map-figure__link{
     stroke:#d5a23d;
   }
 
-  .ar-body-map-target.check .ar-body-map-target-ring{
+  .body-map-figure__target.check .body-map-figure__target-ring{
     fill:rgba(213,162,61,.17);
     stroke:#d5a23d;
   }
 
-  .ar-body-map-target.check .ar-body-map-target-dot{
+  .body-map-figure__target.check .body-map-figure__target-dot{
     fill:#d5a23d;
   }
 
-  .ar-body-map-caption{
+  .body-map-figure__caption{
     color:#74889a;
     font-size:10px;
     font-weight:850;
@@ -1168,7 +1186,7 @@
       display:none;
     }
 
-    .ar-body-map-figure-wrap{
+    .body-map-figure{
       grid-row:1;
     }
 
@@ -1215,14 +1233,14 @@
       grid-template-columns:1fr;
     }
 
-    .ar-body-map-figure{
+    .body-map-figure{
       width:100%;
       max-width:300px;
       margin:0;
       transform:none;
     }
 
-    .ar-body-map-target .ar-body-map-link{
+    .body-map-figure__target .body-map-figure__link{
       display:none;
     }
   }
@@ -1311,11 +1329,11 @@
       display:block !important;
     }
 
-    .ar-body-map-figure-wrap{
+    .body-map-figure{
       grid-row:auto !important;
     }
 
-    .ar-body-map-figure{
+    .body-map-figure{
       width:225px !important;
       margin:0 !important;
       transform:none !important;
@@ -1599,10 +1617,12 @@
               {% endfor %}
             </div>
 
-            <div class="ar-body-map-figure-wrap cf-body-map__figure">
-              <div class="ar-body-map-figure">
+            <figure class="body-map-figure cf-body-map__figure">
+              <div class="body-map-figure__stage">
+                {# 外部SVGも viewBox="0 0 300 430" 相当で作成すると注釈座標を維持できます。 #}
+                {# <img class="body-map-figure__artwork" src="{% static 'posture/img/body_front.svg' %}" alt=""> #}
                 <svg
-                  class="ar-body-map-svg"
+                  class="body-map-figure__artwork"
                   viewBox="0 0 300 430"
                   role="img"
                   aria-labelledby="assessmentBodyMapTitle assessmentBodyMapDesc"
@@ -1627,35 +1647,35 @@
                   <rect x="35" y="5" width="230" height="414" rx="112" fill="url(#bodyMapHalo)"></rect>
 
                   <g aria-hidden="true">
-                    <line class="ar-body-map-guide" x1="150" y1="14" x2="150" y2="414"></line>
-                    <line class="ar-body-map-guide level" x1="76" y1="116" x2="224" y2="116"></line>
-                    <line class="ar-body-map-guide level" x1="96" y1="239" x2="204" y2="239"></line>
-                    <line class="ar-body-map-guide level" x1="101" y1="326" x2="199" y2="326"></line>
-                    <line class="ar-body-map-guide level" x1="86" y1="397" x2="214" y2="397"></line>
+                    <line class="body-map-figure__guide" x1="150" y1="14" x2="150" y2="414"></line>
+                    <line class="body-map-figure__guide level" x1="76" y1="116" x2="224" y2="116"></line>
+                    <line class="body-map-figure__guide level" x1="96" y1="239" x2="204" y2="239"></line>
+                    <line class="body-map-figure__guide level" x1="101" y1="326" x2="199" y2="326"></line>
+                    <line class="body-map-figure__guide level" x1="86" y1="397" x2="214" y2="397"></line>
                   </g>
 
                   <g aria-hidden="true">
-                    <path class="ar-body-map-silhouette" d="M150 25 C132 25 120 39 120 58 C120 74 127 87 139 93 C142 95 145 97 150 98 C155 97 158 95 161 93 C173 87 180 74 180 58 C180 39 168 25 150 25 Z"></path>
-                    <ellipse class="ar-body-map-silhouette" cx="120" cy="60" rx="3.7" ry="7"></ellipse>
-                    <ellipse class="ar-body-map-silhouette" cx="180" cy="60" rx="3.7" ry="7"></ellipse>
+                    <path class="body-map-figure__silhouette" d="M150 25 C132 25 120 39 120 58 C120 74 127 87 139 93 C142 95 145 97 150 98 C155 97 158 95 161 93 C173 87 180 74 180 58 C180 39 168 25 150 25 Z"></path>
+                    <ellipse class="body-map-figure__silhouette" cx="120" cy="60" rx="3.7" ry="7"></ellipse>
+                    <ellipse class="body-map-figure__silhouette" cx="180" cy="60" rx="3.7" ry="7"></ellipse>
 
-                    <path class="ar-body-map-silhouette" d="M138 88 C138 98 135 103 124 107 C116 110 108 113 102 118 C96 123 93 132 94 143 C96 159 102 176 107 190 C112 204 113 217 109 229 C106 238 101 247 99 254 C111 263 127 268 150 268 C173 268 189 263 201 254 C199 247 194 238 191 229 C187 217 188 204 193 190 C198 176 204 159 206 143 C207 132 204 123 198 118 C192 113 184 110 176 107 C165 103 162 98 162 88 C156 94 144 94 138 88 Z"></path>
+                    <path class="body-map-figure__silhouette" d="M138 88 C138 98 135 103 124 107 C116 110 108 113 102 118 C96 123 93 132 94 143 C96 159 102 176 107 190 C112 204 113 217 109 229 C106 238 101 247 99 254 C111 263 127 268 150 268 C173 268 189 263 201 254 C199 247 194 238 191 229 C187 217 188 204 193 190 C198 176 204 159 206 143 C207 132 204 123 198 118 C192 113 184 110 176 107 C165 103 162 98 162 88 C156 94 144 94 138 88 Z"></path>
 
-                    <path class="ar-body-map-silhouette" d="M106 113 C96 115 88 123 85 137 C81 154 80 177 79 199 C78 220 75 239 69 260 C66 268 63 276 66 283 C68 289 74 292 79 289 C84 286 85 280 86 273 C88 253 92 231 95 210 C98 188 101 168 106 151 C110 137 115 122 114 117 C112 114 110 113 106 113 Z"></path>
-                    <path class="ar-body-map-silhouette" d="M194 113 C204 115 212 123 215 137 C219 154 220 177 221 199 C222 220 225 239 231 260 C234 268 237 276 234 283 C232 289 226 292 221 289 C216 286 215 280 214 273 C212 253 208 231 205 210 C202 188 199 168 194 151 C190 137 185 122 186 117 C188 114 190 113 194 113 Z"></path>
+                    <path class="body-map-figure__silhouette" d="M106 113 C96 115 88 123 85 137 C81 154 80 177 79 199 C78 220 75 239 69 260 C66 268 63 276 66 283 C68 289 74 292 79 289 C84 286 85 280 86 273 C88 253 92 231 95 210 C98 188 101 168 106 151 C110 137 115 122 114 117 C112 114 110 113 106 113 Z"></path>
+                    <path class="body-map-figure__silhouette" d="M194 113 C204 115 212 123 215 137 C219 154 220 177 221 199 C222 220 225 239 231 260 C234 268 237 276 234 283 C232 289 226 292 221 289 C216 286 215 280 214 273 C212 253 208 231 205 210 C202 188 199 168 194 151 C190 137 185 122 186 117 C188 114 190 113 194 113 Z"></path>
 
-                    <path class="ar-body-map-silhouette" d="M108 250 C106 264 108 279 111 295 C114 311 112 326 113 341 C114 358 111 378 107 395 C105 403 106 410 111 413 C116 416 122 413 124 407 C126 399 126 386 128 376 C131 359 134 342 136 326 C139 309 141 292 143 276 C144 267 140 258 134 254 C126 249 116 247 108 250 Z"></path>
-                    <path class="ar-body-map-silhouette" d="M192 250 C194 264 192 279 189 295 C186 311 188 326 187 341 C186 358 189 378 193 395 C195 403 194 410 189 413 C184 416 178 413 176 407 C174 399 174 386 172 376 C169 359 166 342 164 326 C161 309 159 292 157 276 C156 267 160 258 166 254 C174 249 184 247 192 250 Z"></path>
+                    <path class="body-map-figure__silhouette" d="M108 250 C106 264 108 279 111 295 C114 311 112 326 113 341 C114 358 111 378 107 395 C105 403 106 410 111 413 C116 416 122 413 124 407 C126 399 126 386 128 376 C131 359 134 342 136 326 C139 309 141 292 143 276 C144 267 140 258 134 254 C126 249 116 247 108 250 Z"></path>
+                    <path class="body-map-figure__silhouette" d="M192 250 C194 264 192 279 189 295 C186 311 188 326 187 341 C186 358 189 378 193 395 C195 403 194 410 189 413 C184 416 178 413 176 407 C174 399 174 386 172 376 C169 359 166 342 164 326 C161 309 159 292 157 276 C156 267 160 258 166 254 C174 249 184 247 192 250 Z"></path>
 
-                    <path class="ar-body-map-silhouette" d="M108 394 C100 398 91 404 86 412 C84 416 88 419 95 419 L118 419 C124 419 128 415 126 410 C123 405 119 401 116 397 Z"></path>
-                    <path class="ar-body-map-silhouette" d="M192 394 C200 398 209 404 214 412 C216 416 212 419 205 419 L182 419 C176 419 172 415 174 410 C177 405 181 401 184 397 Z"></path>
+                    <path class="body-map-figure__silhouette" d="M108 394 C100 398 91 404 86 412 C84 416 88 419 95 419 L118 419 C124 419 128 415 126 410 C123 405 119 401 116 397 Z"></path>
+                    <path class="body-map-figure__silhouette" d="M192 394 C200 398 209 404 214 412 C216 416 212 419 205 419 L182 419 C176 419 172 415 174 410 C177 405 181 401 184 397 Z"></path>
 
-                    <path class="ar-body-map-soft-shade" d="M145 101 C127 105 116 112 111 124 C106 139 111 160 119 180 C126 197 126 220 118 240 C115 248 116 256 121 263 C130 266 139 268 150 268 L150 100 C148 100 147 101 145 101 Z"></path>
-                    <path class="ar-body-map-contour" d="M113 120 C128 113 172 113 187 120"></path>
-                    <path class="ar-body-map-contour" d="M116 215 C128 221 138 224 150 224 C162 224 172 221 184 215"></path>
-                    <path class="ar-body-map-contour" d="M103 247 C116 253 132 256 150 256 C168 256 184 253 197 247"></path>
+                    <path class="body-map-figure__soft-shade" d="M145 101 C127 105 116 112 111 124 C106 139 111 160 119 180 C126 197 126 220 118 240 C115 248 116 256 121 263 C130 266 139 268 150 268 L150 100 C148 100 147 101 145 101 Z"></path>
+                    <path class="body-map-figure__contour" d="M113 120 C128 113 172 113 187 120"></path>
+                    <path class="body-map-figure__contour" d="M116 215 C128 221 138 224 150 224 C162 224 172 221 184 215"></path>
+                    <path class="body-map-figure__contour" d="M103 247 C116 253 132 256 150 256 C168 256 184 253 197 247"></path>
 
-                    <g class="ar-body-map-anatomy">
+                    <g class="body-map-figure__anatomy">
                       <path d="M150 103 C149 122 149 143 150 164 C151 184 149 204 150 225 C151 236 150 246 150 255"></path>
                       <path d="M150 119 C139 114 126 114 116 121"></path>
                       <path d="M150 119 C161 114 174 114 184 121"></path>
@@ -1669,7 +1689,7 @@
                       <path d="M153 185 C162 184 168 189 170 196 C164 199 158 200 152 200"></path>
                     </g>
 
-                    <g class="ar-body-map-anatomy soft">
+                    <g class="body-map-figure__anatomy soft">
                       <path d="M113 119 C103 128 100 143 102 158"></path>
                       <path d="M187 119 C197 128 200 143 198 158"></path>
                       <path d="M111 229 C121 222 132 220 143 224"></path>
@@ -1679,51 +1699,58 @@
                       <path d="M123 258 C130 263 140 267 150 267 C160 267 170 263 177 258"></path>
                     </g>
 
-                    <path class="ar-body-map-region" d="M120 126 C128 119 140 116 150 118 C160 116 172 119 180 126 C177 157 169 188 160 211 C154 215 146 215 140 211 C131 188 123 157 120 126 Z"></path>
-                    <path class="ar-body-map-region" d="M105 241 C117 231 130 228 143 234 C146 239 148 246 150 253 C152 246 154 239 157 234 C170 228 183 231 195 241 C188 255 174 265 150 267 C126 265 112 255 105 241 Z"></path>
+                    <path class="body-map-figure__region" d="M120 126 C128 119 140 116 150 118 C160 116 172 119 180 126 C177 157 169 188 160 211 C154 215 146 215 140 211 C131 188 123 157 120 126 Z"></path>
+                    <path class="body-map-figure__region" d="M105 241 C117 231 130 228 143 234 C146 239 148 246 150 253 C152 246 154 239 157 234 C170 228 183 231 195 241 C188 255 174 265 150 267 C126 265 112 255 105 241 Z"></path>
 
                     <g aria-hidden="true">
-                      <circle class="ar-body-map-spine-node" cx="150" cy="116" r="2.2"></circle>
-                      <circle class="ar-body-map-spine-node" cx="150" cy="130" r="2.2"></circle>
-                      <circle class="ar-body-map-spine-node" cx="150" cy="144" r="2.2"></circle>
-                      <circle class="ar-body-map-spine-node" cx="150" cy="158" r="2.2"></circle>
-                      <circle class="ar-body-map-spine-node" cx="150" cy="172" r="2.2"></circle>
-                      <circle class="ar-body-map-spine-node" cx="150" cy="186" r="2.2"></circle>
-                      <circle class="ar-body-map-spine-node" cx="150" cy="200" r="2.2"></circle>
-                      <circle class="ar-body-map-spine-node" cx="150" cy="214" r="2.2"></circle>
-                      <circle class="ar-body-map-spine-node" cx="150" cy="228" r="2.2"></circle>
-                      <circle class="ar-body-map-spine-node" cx="150" cy="242" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="116" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="130" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="144" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="158" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="172" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="186" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="200" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="214" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="228" r="2.2"></circle>
+                      <circle class="body-map-figure__spine-node" cx="150" cy="242" r="2.2"></circle>
                     </g>
 
-                    <circle class="ar-body-map-joint warm" cx="105" cy="117" r="4.6"></circle>
-                    <circle class="ar-body-map-joint warm" cx="195" cy="117" r="4.6"></circle>
-                    <circle class="ar-body-map-joint" cx="81" cy="204" r="3.6"></circle>
-                    <circle class="ar-body-map-joint" cx="219" cy="204" r="3.6"></circle>
-                    <circle class="ar-body-map-joint warm" cx="124" cy="254" r="4.5"></circle>
-                    <circle class="ar-body-map-joint warm" cx="176" cy="254" r="4.5"></circle>
-                    <circle class="ar-body-map-joint" cx="123" cy="326" r="4.5"></circle>
-                    <circle class="ar-body-map-joint" cx="177" cy="326" r="4.5"></circle>
-                    <circle class="ar-body-map-joint warm" cx="116" cy="397" r="3.8"></circle>
-                    <circle class="ar-body-map-joint warm" cx="184" cy="397" r="3.8"></circle>
+                    <circle class="body-map-figure__joint warm" cx="105" cy="117" r="4.6"></circle>
+                    <circle class="body-map-figure__joint warm" cx="195" cy="117" r="4.6"></circle>
+                    <circle class="body-map-figure__joint" cx="81" cy="204" r="3.6"></circle>
+                    <circle class="body-map-figure__joint" cx="219" cy="204" r="3.6"></circle>
+                    <circle class="body-map-figure__joint warm" cx="124" cy="254" r="4.5"></circle>
+                    <circle class="body-map-figure__joint warm" cx="176" cy="254" r="4.5"></circle>
+                    <circle class="body-map-figure__joint" cx="123" cy="326" r="4.5"></circle>
+                    <circle class="body-map-figure__joint" cx="177" cy="326" r="4.5"></circle>
+                    <circle class="body-map-figure__joint warm" cx="116" cy="397" r="3.8"></circle>
+                    <circle class="body-map-figure__joint warm" cx="184" cy="397" r="3.8"></circle>
                   </g>
 
+                </svg>
+
+                <svg
+                  class="body-map-figure__overlay"
+                  viewBox="0 0 300 430"
+                  aria-hidden="true"
+                >
                   {% for item in body_map_items %}
-                    <g class="ar-body-map-target {{ item.level }}">
+                    <g class="body-map-figure__target {{ item.level }}">
                       <line
-                        class="ar-body-map-link"
+                        class="body-map-figure__link"
                         x1="{{ item.svg_x }}"
                         y1="{{ item.svg_y }}"
                         x2="{{ item.svg_anchor_x }}"
                         y2="{{ item.svg_anchor_y }}"
                       ></line>
                       <circle
-                        class="ar-body-map-target-ring"
+                        class="body-map-figure__target-ring"
                         cx="{{ item.svg_x }}"
                         cy="{{ item.svg_y }}"
                         r="11"
                       ></circle>
                       <circle
-                        class="ar-body-map-target-dot"
+                        class="body-map-figure__target-dot"
                         cx="{{ item.svg_x }}"
                         cy="{{ item.svg_y }}"
                         r="5"
@@ -1732,10 +1759,10 @@
                   {% endfor %}
                 </svg>
               </div>
-              <div class="ar-body-map-caption">
+              <figcaption class="body-map-figure__caption">
                 正中線・肩・骨盤・膝・足部ラインは説明用イメージです
-              </div>
-            </div>
+              </figcaption>
+            </figure>
 
             <div class="ar-body-map-notes cf-body-map__notes right">
               {% for item in body_map_items %}
