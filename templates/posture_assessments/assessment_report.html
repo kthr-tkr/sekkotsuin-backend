@@ -547,9 +547,36 @@
   }
 
   .ar-body-map-label{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
     color:#17375c;
     font-size:13px;
     font-weight:950;
+  }
+
+  .ar-body-map-label::after{
+    flex:0 0 auto;
+    padding:3px 7px;
+    border-radius:999px;
+    color:#687d8e;
+    background:#edf2f5;
+    content:"参考";
+    font-size:8px;
+    letter-spacing:.03em;
+  }
+
+  .ar-body-map-note.good .ar-body-map-label::after{
+    color:#28715f;
+    background:#dcefe9;
+    content:"良好傾向";
+  }
+
+  .ar-body-map-note.check .ar-body-map-label::after{
+    color:#8b641d;
+    background:#f8eac7;
+    content:"確認";
   }
 
   .ar-body-map-text{
@@ -584,53 +611,79 @@
 
   .ar-body-map-silhouette{
     fill:url(#bodyMapSkin);
-    stroke:#8fa8ba;
-    stroke-width:1.35;
+    stroke:#9bb1c0;
+    stroke-width:1.05;
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-limb{
+  .ar-body-map-soft-shade{
+    fill:rgba(255,255,255,.18);
+    stroke:none;
+  }
+
+  .ar-body-map-contour{
     fill:none;
-    stroke:url(#bodyMapLimb);
+    stroke:#91aabd;
+    stroke-width:.85;
+    opacity:.48;
     stroke-linecap:round;
     stroke-linejoin:round;
     vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-limb.arm{
-    stroke-width:21;
+  .ar-body-map-anatomy{
+    fill:none;
+    stroke:#7798ae;
+    stroke-width:.75;
+    opacity:.38;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-map-limb.leg{
-    stroke-width:25;
+  .ar-body-map-anatomy.soft{
+    opacity:.24;
   }
 
-  .ar-body-map-zone{
-    fill:rgba(255,255,255,.28);
-    stroke:#a8bdcc;
-    stroke-width:1;
+  .ar-body-map-spine-node{
+    fill:#f8fbfd;
+    stroke:#7798ae;
+    stroke-width:.7;
+    opacity:.78;
+    vector-effect:non-scaling-stroke;
+  }
+
+  .ar-body-map-region{
+    fill:rgba(255,255,255,.13);
+    stroke:#8ca7b9;
+    stroke-width:.72;
+    opacity:.58;
     vector-effect:non-scaling-stroke;
   }
 
   .ar-body-map-joint{
-    fill:#f8fbfd;
-    stroke:#7898ae;
-    stroke-width:1.2;
+    fill:rgba(255,255,255,.9);
+    stroke:#7e9db2;
+    stroke-width:1.1;
     vector-effect:non-scaling-stroke;
+  }
+
+  .ar-body-map-joint.warm{
+    stroke:#c89a43;
   }
 
   .ar-body-map-guide{
     fill:none;
     stroke:#6f91aa;
-    stroke-width:1;
+    stroke-width:.8;
     stroke-dasharray:4 5;
-    opacity:.52;
+    opacity:.34;
     vector-effect:non-scaling-stroke;
   }
 
   .ar-body-map-guide.level{
     stroke-dasharray:none;
-    opacity:.42;
+    opacity:.25;
   }
 
   .ar-body-map-target .ar-body-map-link{
@@ -1163,8 +1216,14 @@
     }
 
     .ar-body-map-figure{
-      transform:scale(.88);
-      margin:-21px 0;
+      width:100%;
+      max-width:300px;
+      margin:0;
+      transform:none;
+    }
+
+    .ar-body-map-target .ar-body-map-link{
+      display:none;
     }
   }
 
@@ -1237,8 +1296,8 @@
     }
 
     .ar-body-map-layout{
-      grid-template-columns:1fr 190px 1fr !important;
-      gap:12px !important;
+      grid-template-columns:1fr 225px 1fr !important;
+      gap:9px !important;
     }
 
     .ar-body-map-notes{
@@ -1257,8 +1316,9 @@
     }
 
     .ar-body-map-figure{
-      transform:scale(.75);
-      margin:-45px -15px !important;
+      width:225px !important;
+      margin:0 !important;
+      transform:none !important;
     }
 
     .ar-body-map-note{
@@ -1552,14 +1612,10 @@
                     人体の各部位とAI所見の位置関係を示す説明用イメージです。
                   </desc>
                   <defs>
-                    <linearGradient id="bodyMapSkin" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stop-color="#dce8ef"></stop>
-                      <stop offset="55%" stop-color="#bfd0dc"></stop>
-                      <stop offset="100%" stop-color="#aabfcd"></stop>
-                    </linearGradient>
-                    <linearGradient id="bodyMapLimb" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#c9d9e3"></stop>
-                      <stop offset="100%" stop-color="#aabfcd"></stop>
+                    <linearGradient id="bodyMapSkin" x1="0" y1="0" x2=".9" y2="1">
+                      <stop offset="0%" stop-color="#e4eef4"></stop>
+                      <stop offset="48%" stop-color="#cadbe5"></stop>
+                      <stop offset="100%" stop-color="#b5c9d6"></stop>
                     </linearGradient>
                     <radialGradient id="bodyMapHalo" cx="50%" cy="42%" r="58%">
                       <stop offset="0%" stop-color="#ffffff"></stop>
@@ -1579,36 +1635,76 @@
                   </g>
 
                   <g aria-hidden="true">
-                    <path class="ar-body-map-limb arm" d="M105 117 C91 140 84 171 81 204 C79 228 75 250 70 270"></path>
-                    <path class="ar-body-map-limb arm" d="M195 117 C209 140 216 171 219 204 C221 228 225 250 230 270"></path>
-                    <ellipse class="ar-body-map-silhouette" cx="69" cy="278" rx="9" ry="13"></ellipse>
-                    <ellipse class="ar-body-map-silhouette" cx="231" cy="278" rx="9" ry="13"></ellipse>
+                    <path class="ar-body-map-silhouette" d="M150 25 C132 25 120 39 120 58 C120 74 127 87 139 93 C142 95 145 97 150 98 C155 97 158 95 161 93 C173 87 180 74 180 58 C180 39 168 25 150 25 Z"></path>
+                    <ellipse class="ar-body-map-silhouette" cx="120" cy="60" rx="3.7" ry="7"></ellipse>
+                    <ellipse class="ar-body-map-silhouette" cx="180" cy="60" rx="3.7" ry="7"></ellipse>
 
-                    <path class="ar-body-map-limb leg" d="M124 244 C120 274 120 301 123 326 C126 353 121 377 116 397"></path>
-                    <path class="ar-body-map-limb leg" d="M176 244 C180 274 180 301 177 326 C174 353 179 377 184 397"></path>
+                    <path class="ar-body-map-silhouette" d="M138 88 C138 98 135 103 124 107 C116 110 108 113 102 118 C96 123 93 132 94 143 C96 159 102 176 107 190 C112 204 113 217 109 229 C106 238 101 247 99 254 C111 263 127 268 150 268 C173 268 189 263 201 254 C199 247 194 238 191 229 C187 217 188 204 193 190 C198 176 204 159 206 143 C207 132 204 123 198 118 C192 113 184 110 176 107 C165 103 162 98 162 88 C156 94 144 94 138 88 Z"></path>
 
-                    <path class="ar-body-map-silhouette" d="M108 395 C99 399 91 406 86 414 C98 419 115 418 126 411 L124 399 Z"></path>
-                    <path class="ar-body-map-silhouette" d="M192 395 C201 399 209 406 214 414 C202 419 185 418 174 411 L176 399 Z"></path>
+                    <path class="ar-body-map-silhouette" d="M106 113 C96 115 88 123 85 137 C81 154 80 177 79 199 C78 220 75 239 69 260 C66 268 63 276 66 283 C68 289 74 292 79 289 C84 286 85 280 86 273 C88 253 92 231 95 210 C98 188 101 168 106 151 C110 137 115 122 114 117 C112 114 110 113 106 113 Z"></path>
+                    <path class="ar-body-map-silhouette" d="M194 113 C204 115 212 123 215 137 C219 154 220 177 221 199 C222 220 225 239 231 260 C234 268 237 276 234 283 C232 289 226 292 221 289 C216 286 215 280 214 273 C212 253 208 231 205 210 C202 188 199 168 194 151 C190 137 185 122 186 117 C188 114 190 113 194 113 Z"></path>
 
-                    <path class="ar-body-map-silhouette" d="M150 25 C131 25 119 40 120 60 C121 78 132 91 150 94 C168 91 179 78 180 60 C181 40 169 25 150 25 Z"></path>
-                    <ellipse class="ar-body-map-silhouette" cx="120" cy="61" rx="4" ry="8"></ellipse>
-                    <ellipse class="ar-body-map-silhouette" cx="180" cy="61" rx="4" ry="8"></ellipse>
-                    <path class="ar-body-map-silhouette" d="M136 88 L136 105 C126 107 116 111 108 118 L192 118 C184 111 174 107 164 105 L164 88 Z"></path>
+                    <path class="ar-body-map-silhouette" d="M108 250 C106 264 108 279 111 295 C114 311 112 326 113 341 C114 358 111 378 107 395 C105 403 106 410 111 413 C116 416 122 413 124 407 C126 399 126 386 128 376 C131 359 134 342 136 326 C139 309 141 292 143 276 C144 267 140 258 134 254 C126 249 116 247 108 250 Z"></path>
+                    <path class="ar-body-map-silhouette" d="M192 250 C194 264 192 279 189 295 C186 311 188 326 187 341 C186 358 189 378 193 395 C195 403 194 410 189 413 C184 416 178 413 176 407 C174 399 174 386 172 376 C169 359 166 342 164 326 C161 309 159 292 157 276 C156 267 160 258 166 254 C174 249 184 247 192 250 Z"></path>
 
-                    <path class="ar-body-map-silhouette" d="M108 111 C95 119 91 136 94 155 C97 176 105 194 107 213 C109 226 104 236 101 244 C116 253 132 256 150 256 C168 256 184 253 199 244 C196 236 191 226 193 213 C195 194 203 176 206 155 C209 136 205 119 192 111 C181 104 167 102 150 102 C133 102 119 104 108 111 Z"></path>
-                    <path class="ar-body-map-zone" d="M116 124 C127 116 173 116 184 124 C181 160 175 187 170 211 C158 217 142 217 130 211 C125 187 119 160 116 124 Z"></path>
-                    <path class="ar-body-map-zone" d="M102 229 C117 237 132 240 150 240 C168 240 183 237 198 229 L202 250 C187 262 170 268 150 268 C130 268 113 262 98 250 Z"></path>
+                    <path class="ar-body-map-silhouette" d="M108 394 C100 398 91 404 86 412 C84 416 88 419 95 419 L118 419 C124 419 128 415 126 410 C123 405 119 401 116 397 Z"></path>
+                    <path class="ar-body-map-silhouette" d="M192 394 C200 398 209 404 214 412 C216 416 212 419 205 419 L182 419 C176 419 172 415 174 410 C177 405 181 401 184 397 Z"></path>
 
-                    <circle class="ar-body-map-joint" cx="105" cy="117" r="5"></circle>
-                    <circle class="ar-body-map-joint" cx="195" cy="117" r="5"></circle>
-                    <circle class="ar-body-map-joint" cx="81" cy="204" r="4"></circle>
-                    <circle class="ar-body-map-joint" cx="219" cy="204" r="4"></circle>
-                    <circle class="ar-body-map-joint" cx="124" cy="246" r="5"></circle>
-                    <circle class="ar-body-map-joint" cx="176" cy="246" r="5"></circle>
-                    <circle class="ar-body-map-joint" cx="123" cy="326" r="5"></circle>
-                    <circle class="ar-body-map-joint" cx="177" cy="326" r="5"></circle>
-                    <circle class="ar-body-map-joint" cx="116" cy="397" r="4"></circle>
-                    <circle class="ar-body-map-joint" cx="184" cy="397" r="4"></circle>
+                    <path class="ar-body-map-soft-shade" d="M145 101 C127 105 116 112 111 124 C106 139 111 160 119 180 C126 197 126 220 118 240 C115 248 116 256 121 263 C130 266 139 268 150 268 L150 100 C148 100 147 101 145 101 Z"></path>
+                    <path class="ar-body-map-contour" d="M113 120 C128 113 172 113 187 120"></path>
+                    <path class="ar-body-map-contour" d="M116 215 C128 221 138 224 150 224 C162 224 172 221 184 215"></path>
+                    <path class="ar-body-map-contour" d="M103 247 C116 253 132 256 150 256 C168 256 184 253 197 247"></path>
+
+                    <g class="ar-body-map-anatomy">
+                      <path d="M150 103 C149 122 149 143 150 164 C151 184 149 204 150 225 C151 236 150 246 150 255"></path>
+                      <path d="M150 119 C139 114 126 114 116 121"></path>
+                      <path d="M150 119 C161 114 174 114 184 121"></path>
+                      <path d="M147 130 C136 127 126 132 120 141 C127 145 137 147 147 147"></path>
+                      <path d="M153 130 C164 127 174 132 180 141 C173 145 163 147 153 147"></path>
+                      <path d="M147 149 C135 147 126 153 122 161 C130 165 138 167 147 166"></path>
+                      <path d="M153 149 C165 147 174 153 178 161 C170 165 162 167 153 166"></path>
+                      <path d="M147 168 C136 166 129 171 126 179 C133 182 140 184 147 183"></path>
+                      <path d="M153 168 C164 166 171 171 174 179 C167 182 160 184 153 183"></path>
+                      <path d="M147 185 C138 184 132 189 130 196 C136 199 142 200 148 200"></path>
+                      <path d="M153 185 C162 184 168 189 170 196 C164 199 158 200 152 200"></path>
+                    </g>
+
+                    <g class="ar-body-map-anatomy soft">
+                      <path d="M113 119 C103 128 100 143 102 158"></path>
+                      <path d="M187 119 C197 128 200 143 198 158"></path>
+                      <path d="M111 229 C121 222 132 220 143 224"></path>
+                      <path d="M189 229 C179 222 168 220 157 224"></path>
+                      <path d="M105 244 C116 235 128 232 142 237 C139 249 132 258 121 263"></path>
+                      <path d="M195 244 C184 235 172 232 158 237 C161 249 168 258 179 263"></path>
+                      <path d="M123 258 C130 263 140 267 150 267 C160 267 170 263 177 258"></path>
+                    </g>
+
+                    <path class="ar-body-map-region" d="M120 126 C128 119 140 116 150 118 C160 116 172 119 180 126 C177 157 169 188 160 211 C154 215 146 215 140 211 C131 188 123 157 120 126 Z"></path>
+                    <path class="ar-body-map-region" d="M105 241 C117 231 130 228 143 234 C146 239 148 246 150 253 C152 246 154 239 157 234 C170 228 183 231 195 241 C188 255 174 265 150 267 C126 265 112 255 105 241 Z"></path>
+
+                    <g aria-hidden="true">
+                      <circle class="ar-body-map-spine-node" cx="150" cy="116" r="2.2"></circle>
+                      <circle class="ar-body-map-spine-node" cx="150" cy="130" r="2.2"></circle>
+                      <circle class="ar-body-map-spine-node" cx="150" cy="144" r="2.2"></circle>
+                      <circle class="ar-body-map-spine-node" cx="150" cy="158" r="2.2"></circle>
+                      <circle class="ar-body-map-spine-node" cx="150" cy="172" r="2.2"></circle>
+                      <circle class="ar-body-map-spine-node" cx="150" cy="186" r="2.2"></circle>
+                      <circle class="ar-body-map-spine-node" cx="150" cy="200" r="2.2"></circle>
+                      <circle class="ar-body-map-spine-node" cx="150" cy="214" r="2.2"></circle>
+                      <circle class="ar-body-map-spine-node" cx="150" cy="228" r="2.2"></circle>
+                      <circle class="ar-body-map-spine-node" cx="150" cy="242" r="2.2"></circle>
+                    </g>
+
+                    <circle class="ar-body-map-joint warm" cx="105" cy="117" r="4.6"></circle>
+                    <circle class="ar-body-map-joint warm" cx="195" cy="117" r="4.6"></circle>
+                    <circle class="ar-body-map-joint" cx="81" cy="204" r="3.6"></circle>
+                    <circle class="ar-body-map-joint" cx="219" cy="204" r="3.6"></circle>
+                    <circle class="ar-body-map-joint warm" cx="124" cy="254" r="4.5"></circle>
+                    <circle class="ar-body-map-joint warm" cx="176" cy="254" r="4.5"></circle>
+                    <circle class="ar-body-map-joint" cx="123" cy="326" r="4.5"></circle>
+                    <circle class="ar-body-map-joint" cx="177" cy="326" r="4.5"></circle>
+                    <circle class="ar-body-map-joint warm" cx="116" cy="397" r="3.8"></circle>
+                    <circle class="ar-body-map-joint warm" cx="184" cy="397" r="3.8"></circle>
                   </g>
 
                   {% for item in body_map_items %}
