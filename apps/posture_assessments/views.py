@@ -33,6 +33,7 @@ from .services.comparison_builder import build_posture_comparison_json
 from .services.image_converter import normalize_posture_image
 
 from .services.measurements import build_measurements_for_image
+from .services.report_templates import select_report_template
 
 LANDMARK_KEYS_BY_IMAGE_TYPE = {
     PostureAssessmentImage.ImageType.FRONT: {
@@ -460,24 +461,38 @@ def _build_assessment_score_context(summary):
     }
 
 
-def _build_assessment_report_steps(summary):
+def _as_report_text_items(value):
+    if isinstance(value, str):
+        return [value.strip()] if value.strip() else []
+    if not isinstance(value, (list, tuple)):
+        return []
+    return [
+        str(item).strip()
+        for item in value
+        if str(item).strip()
+    ]
+
+
+def _build_assessment_report_steps(summary, report_template=None):
     steps = []
 
-    for item in summary.get("treatment_suggestions") or []:
+    for item in _as_report_text_items(
+        summary.get("treatment_suggestions")
+    ):
         steps.append({
             "title": "姿勢改善・施術方針",
             "text": item,
             "source": "treatment",
         })
 
-    for item in summary.get("next_check_points") or []:
+    for item in _as_report_text_items(summary.get("next_check_points")):
         steps.append({
             "title": "次回の確認ポイント",
             "text": item,
             "source": "next_check",
         })
 
-    fallback_steps = [
+    fallback_steps = (report_template or {}).get("care_steps") or [
         {
             "title": "Step1 痛み・負担の管理",
             "text": "痛みや違和感の出方を確認し、日常生活で負担が強くなりやすい動きを整理します。",
@@ -498,9 +513,47 @@ def _build_assessment_report_steps(summary):
     for fallback_step in fallback_steps:
         if len(steps) >= 3:
             break
-        steps.append(fallback_step)
+        if isinstance(fallback_step, dict):
+            title = str(fallback_step.get("title") or "").strip()
+            text = str(fallback_step.get("text") or "").strip()
+        else:
+            title = f"Step{len(steps) + 1}"
+            text = str(fallback_step).strip()
+        if not text or any(step["text"] == text for step in steps):
+            continue
+        step_number = len(steps) + 1
+        if title.startswith("Step") and " " in title:
+            title = f"Step{step_number} {title.split(' ', 1)[1]}"
+        steps.append({
+            "title": title or f"Step{step_number}",
+            "text": text,
+            "source": "report_template",
+        })
 
     return steps[:3]
+
+
+def _build_assessment_home_care_items(
+    summary,
+    report_template=None,
+    limit=3,
+):
+    items = _as_report_text_items(
+        summary.get("home_care_suggestions")
+    )
+    fallback_items = _as_report_text_items(
+        (report_template or {}).get("home_care_examples")
+    )
+
+    for item in fallback_items:
+        if len(items) >= limit:
+            break
+        if item not in items:
+            items.append(item)
+
+    return items[:limit] or [
+        "スタッフの指示に合わせて、無理のない範囲で行ってください。",
+    ]
 
 
 def _build_assessment_load_mechanisms(summary):
@@ -847,16 +900,21 @@ def posture_assessment_report_view(request, assessment_id):
     summary = _normalize_assessment_summary(
         assessment.get_active_summary() or {}
     )
+    report_template = select_report_template(summary, assessment)
     image_cards = _build_assessment_image_cards(images)
     assessment_score = _build_assessment_score_context(summary)
     view_summary_cards = _build_view_summary_cards(summary)
     alignment_groups = _build_alignment_groups(summary)
-    report_steps = _build_assessment_report_steps(summary)
+    report_steps = _build_assessment_report_steps(
+        summary,
+        report_template,
+    )
     load_mechanisms = _build_assessment_load_mechanisms(summary)
     body_map_items = _build_assessment_body_map_items(summary)
-    home_care_items = summary.get("home_care_suggestions") or [
-        "スタッフの指示に合わせて、無理のない範囲で行ってください。",
-    ]
+    home_care_items = _build_assessment_home_care_items(
+        summary,
+        report_template,
+    )
     risk_notes = summary.get("risk_notes") or [
         "画像の評価は撮影角度、立ち位置、服装、カメラ距離の影響を受ける可能性があります。",
         "本レポートは診断ではなく、施術者の評価を補助する参考情報です。",
@@ -868,11 +926,22 @@ def posture_assessment_report_view(request, assessment_id):
         or summary.get("overall_summary")
         or "AI分析後に、姿勢の特徴と今後の改善方針を患者さん向けに表示します。"
     )
-    patient_message = (
+    ai_patient_message = (
         summary.get("patient_explanation")
         or summary.get("report_summary_for_patient")
-        or "姿勢の状態は、日常の動きや症状と合わせて確認することが大切です。無理のない範囲で、一緒に良い変化を目指していきましょう。"
+        or ""
     )
+    patient_message = (
+        ai_patient_message
+        or report_template["patient_message"]
+    )
+    patient_message_support = ""
+    if (
+        ai_patient_message
+        and len(ai_patient_message) < 80
+        and report_template["patient_message"] not in ai_patient_message
+    ):
+        patient_message_support = report_template["patient_message"]
 
     return render(request, "posture_assessments/assessment_report.html", {
         "active": "patient_search",
@@ -893,9 +962,13 @@ def posture_assessment_report_view(request, assessment_id):
         "load_mechanisms": load_mechanisms,
         "body_map_items": body_map_items,
         "home_care_items": home_care_items,
+        "report_template": report_template,
+        "report_template_key": report_template["key"],
+        "report_template_label": report_template["label"],
         "risk_notes": risk_notes,
         "report_summary": report_summary,
         "patient_message": patient_message,
+        "patient_message_support": patient_message_support,
     })
 
 

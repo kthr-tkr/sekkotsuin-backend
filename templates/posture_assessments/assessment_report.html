@@ -1001,6 +1001,118 @@
     line-height:1.65;
   }
 
+  .ar-template-guide{
+    margin-top:11px;
+    padding:15px;
+    border-radius:19px;
+    background:
+      radial-gradient(circle at 100% 0%,rgba(47,111,174,.1),transparent 30%),
+      linear-gradient(135deg,#f4f9fd,#fffaf1);
+    border:1px solid #d8e5ee;
+  }
+
+  .ar-template-guide-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .ar-template-guide-badge{
+    padding:5px 10px;
+    border-radius:999px;
+    color:#2f6fae;
+    background:#e4f0f9;
+    font-size:10px;
+    font-weight:950;
+  }
+
+  .ar-template-guide-label{
+    color:#7c8d9c;
+    font-size:10px;
+    font-weight:900;
+  }
+
+  .ar-template-guide-title{
+    margin-top:9px;
+    color:#17324c;
+    font-size:17px;
+    font-weight:950;
+  }
+
+  .ar-template-guide-main{
+    display:grid;
+    grid-template-columns:1.15fr .85fr;
+    gap:14px;
+    margin-top:11px;
+  }
+
+  .ar-template-guide-cause{
+    padding:13px;
+    border-radius:16px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(207,224,239,.9);
+  }
+
+  .ar-template-guide-cause-title{
+    color:#9a6d20;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .ar-template-guide-text{
+    margin-top:6px;
+    color:#465f75;
+    font-size:12px;
+    font-weight:760;
+    line-height:1.7;
+  }
+
+  .ar-template-guide-points{
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:7px;
+    list-style:none;
+  }
+
+  .ar-template-guide-points-title{
+    margin-bottom:7px;
+    color:#2f6fae;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .ar-template-guide-points li{
+    position:relative;
+    padding:9px 10px 9px 27px;
+    border-radius:13px;
+    color:#405a70;
+    background:rgba(255,255,255,.72);
+    font-size:11px;
+    font-weight:780;
+    line-height:1.5;
+  }
+
+  .ar-template-guide-points li::before{
+    content:"";
+    position:absolute;
+    left:11px;
+    top:14px;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#699bc7;
+  }
+
+  .ar-template-guide-caution{
+    margin-top:10px;
+    color:#796033;
+    font-size:10px;
+    font-weight:800;
+    line-height:1.6;
+  }
+
   .ar-bottom-grid{
     display:grid;
     grid-template-columns:1.15fr .85fr;
@@ -1137,6 +1249,16 @@
     white-space:pre-wrap;
   }
 
+  .ar-message-support{
+    margin-top:9px;
+    padding-top:9px;
+    color:#64798b;
+    border-top:1px solid rgba(201,154,61,.25);
+    font-size:11px;
+    font-weight:760;
+    line-height:1.7;
+  }
+
   .ar-notice-card{
     background:#fffaf1;
     border-color:#ead8b4;
@@ -1171,6 +1293,7 @@
     .ar-summary-strip,
     .ar-main-grid,
     .ar-body-map-layout,
+    .ar-template-guide-main,
     .ar-feature-layout,
     .ar-bottom-grid{
       grid-template-columns:1fr;
@@ -1358,6 +1481,11 @@
       gap:9px !important;
     }
 
+    .ar-template-guide-main{
+      grid-template-columns:1.15fr .85fr !important;
+      gap:8px !important;
+    }
+
     .ar-bottom-grid{
       grid-template-columns:1.15fr .85fr !important;
       gap:9px !important;
@@ -1423,6 +1551,8 @@
     .ar-view-text,
     .ar-finding-text,
     .ar-mechanism-text,
+    .ar-template-guide-text,
+    .ar-template-guide-points li,
     .ar-step-text,
     .ar-care-text,
     .ar-notice-list li{
@@ -1925,23 +2055,53 @@
           <div class="ar-section-note">原因を断定せず、施術者が確認する候補を表示</div>
         </div>
 
-        <div class="ar-mechanism-grid">
-          {% if load_mechanisms %}
+        {% if load_mechanisms %}
+          <div class="ar-mechanism-grid">
             {% for item in load_mechanisms %}
               <article class="ar-mechanism-card">
                 <div class="ar-mechanism-label">{{ item.label }}</div>
                 <div class="ar-mechanism-text">{{ item.text }}</div>
               </article>
             {% endfor %}
-          {% else %}
-            <article class="ar-mechanism-card">
-              <div class="ar-mechanism-label">確認が必要です</div>
-              <div class="ar-mechanism-text">
-                負担の背景は、問診・触診・動作評価と合わせて確認します。
+          </div>
+        {% endif %}
+
+        <article class="ar-template-guide">
+          <div class="ar-template-guide-head">
+            <span class="ar-template-guide-badge">
+              {{ report_template_label }}
+            </span>
+            <span class="ar-template-guide-label">
+              症状別補助テンプレート
+            </span>
+          </div>
+          <div class="ar-template-guide-title">
+            {{ report_template.short_title }}
+          </div>
+          <div class="ar-template-guide-main">
+            <div class="ar-template-guide-cause">
+              <div class="ar-template-guide-cause-title">
+                {{ report_template.main_cause_title }}
               </div>
-            </article>
-          {% endif %}
-        </div>
+              <div class="ar-template-guide-text">
+                {{ report_template.main_cause_text }}
+              </div>
+            </div>
+            <div>
+              <div class="ar-template-guide-points-title">
+                からだの状態
+              </div>
+              <ul class="ar-template-guide-points">
+                {% for item in report_template.body_condition_points %}
+                  <li>{{ item }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          <div class="ar-template-guide-caution">
+            {{ report_template.caution_text }}
+          </div>
+        </article>
       </section>
 
       <div class="ar-bottom-grid">
@@ -1992,6 +2152,11 @@
         <div>
           <div class="ar-message-title">患者さんへのメッセージ</div>
           <p class="ar-message-text">{{ patient_message }}</p>
+          {% if patient_message_support %}
+            <div class="ar-message-support">
+              {{ patient_message_support }}
+            </div>
+          {% endif %}
         </div>
       </section>
 
