@@ -464,18 +464,23 @@
 
   .ar-body-map-layout{
     display:grid;
-    grid-template-columns:minmax(210px,1fr) 240px minmax(210px,1fr);
-    gap:20px;
+    grid-template-columns:minmax(210px,1fr) 300px minmax(210px,1fr);
+    gap:18px;
     align-items:center;
   }
 
   .ar-body-map-notes{
     display:grid;
-    gap:13px;
+    align-self:stretch;
+    grid-template-rows:repeat(3,minmax(82px,1fr));
+    gap:12px;
   }
 
   .ar-body-map-note{
     position:relative;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
     min-height:76px;
     padding:12px 14px 12px 17px;
     border-radius:16px;
@@ -502,8 +507,8 @@
   }
 
   .ar-body-map-note.good::before{
-    background:#2f6fae;
-    box-shadow:0 0 0 4px #dcebf7;
+    background:#3c8b78;
+    box-shadow:0 0 0 4px #dcefe9;
   }
 
   .ar-body-map-note.check{
@@ -521,16 +526,24 @@
     content:"";
     position:absolute;
     top:50%;
-    width:21px;
-    border-top:1px dashed #9fb4c6;
+    width:18px;
+    border-top:1.5px solid #9fb4c6;
   }
 
   .ar-body-map-notes.left .ar-body-map-note::after{
-    right:-21px;
+    right:-18px;
   }
 
   .ar-body-map-notes.right .ar-body-map-note::after{
-    left:-21px;
+    left:-18px;
+  }
+
+  .ar-body-map-notes .ar-body-map-note.good::after{
+    border-color:#3c8b78;
+  }
+
+  .ar-body-map-notes .ar-body-map-note.check::after{
+    border-color:#d5a23d;
   }
 
   .ar-body-map-label{
@@ -554,133 +567,136 @@
   }
 
   .ar-body-map-figure{
-    position:relative;
-    width:220px;
-    height:355px;
-    border-radius:110px 110px 30px 30px;
+    width:300px;
+    padding:3px 0;
+    border-radius:145px 145px 28px 28px;
     background:
-      linear-gradient(90deg,transparent 49.6%,rgba(47,111,174,.18) 50%,transparent 50.4%),
-      radial-gradient(circle at 50% 42%,#fff 0,#f2f7fb 58%,transparent 59%);
+      radial-gradient(circle at 50% 42%,#fff 0,#f5f9fc 58%,transparent 59%);
     border-bottom:1px solid #d8e4ed;
   }
 
-  .ar-body-map-figure span{
-    position:absolute;
+  .ar-body-map-svg{
+    width:100%;
+    height:auto;
     display:block;
+    overflow:visible;
   }
 
-  .ar-body-head{
-    top:13px;
-    left:84px;
-    width:52px;
-    height:57px;
-    border-radius:48% 48% 45% 45%;
-    background:#b8c6d1;
+  .ar-body-map-silhouette{
+    fill:url(#bodyMapSkin);
+    stroke:#8fa8ba;
+    stroke-width:1.35;
+    vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-neck{
-    top:64px;
-    left:101px;
-    width:18px;
-    height:29px;
-    border-radius:7px;
-    background:#aebfcb;
+  .ar-body-map-limb{
+    fill:none;
+    stroke:url(#bodyMapLimb);
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-torso{
-    top:85px;
-    left:68px;
-    width:84px;
-    height:112px;
-    border-radius:30px 30px 20px 20px;
-    background:linear-gradient(180deg,#aebfcb,#c6d1d9);
-    clip-path:polygon(14% 0,86% 0,100% 37%,85% 100%,15% 100%,0 37%);
+  .ar-body-map-limb.arm{
+    stroke-width:21;
   }
 
-  .ar-body-arm{
-    top:93px;
-    width:24px;
-    height:145px;
-    border-radius:18px;
-    background:#becbd4;
-    transform-origin:top center;
+  .ar-body-map-limb.leg{
+    stroke-width:25;
   }
 
-  .ar-body-arm.left{
-    left:51px;
-    transform:rotate(7deg);
+  .ar-body-map-zone{
+    fill:rgba(255,255,255,.28);
+    stroke:#a8bdcc;
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-arm.right{
-    right:51px;
-    transform:rotate(-7deg);
+  .ar-body-map-joint{
+    fill:#f8fbfd;
+    stroke:#7898ae;
+    stroke-width:1.2;
+    vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-pelvis{
-    top:184px;
-    left:72px;
-    width:76px;
-    height:50px;
-    border-radius:19px 19px 27px 27px;
-    background:#a9bac7;
-    clip-path:polygon(4% 0,96% 0,85% 100%,15% 100%);
+  .ar-body-map-guide{
+    fill:none;
+    stroke:#6f91aa;
+    stroke-width:1;
+    stroke-dasharray:4 5;
+    opacity:.52;
+    vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-leg{
-    top:224px;
-    width:29px;
-    height:112px;
-    border-radius:16px 16px 11px 11px;
-    background:linear-gradient(180deg,#b7c6d1,#ced8df);
+  .ar-body-map-guide.level{
+    stroke-dasharray:none;
+    opacity:.42;
   }
 
-  .ar-body-leg.left{
-    left:76px;
+  .ar-body-map-target .ar-body-map-link{
+    fill:none;
+    stroke:#9aa9b6;
+    stroke-width:1.45;
+    opacity:.82;
+    vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-leg.right{
-    right:76px;
+  .ar-body-map-target .ar-body-map-target-ring{
+    fill:rgba(154,169,182,.16);
+    stroke:#9aa9b6;
+    stroke-width:1.2;
+    vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-foot{
-    top:329px;
-    width:42px;
-    height:17px;
-    border-radius:13px 16px 7px 7px;
-    background:#aebfcb;
+  .ar-body-map-target .ar-body-map-target-dot{
+    fill:#9aa9b6;
+    stroke:#fff;
+    stroke-width:2;
+    vector-effect:non-scaling-stroke;
   }
 
-  .ar-body-foot.left{
-    left:64px;
+  .ar-body-map-target.good .ar-body-map-link{
+    stroke:#3c8b78;
   }
 
-  .ar-body-foot.right{
-    right:64px;
+  .ar-body-map-target.good .ar-body-map-target-ring{
+    fill:rgba(60,139,120,.15);
+    stroke:#3c8b78;
   }
 
-  .ar-body-marker{
-    z-index:2;
-    left:50%;
-    width:12px;
-    height:12px;
-    margin-left:-6px;
-    border:3px solid #fff;
-    border-radius:50%;
-    background:#d5a23d;
-    box-shadow:0 0 0 2px rgba(213,162,61,.32);
+  .ar-body-map-target.good .ar-body-map-target-dot{
+    fill:#3c8b78;
   }
 
-  .ar-body-marker.head-neck{ top:70px; }
-  .ar-body-marker.shoulder{ top:101px; }
-  .ar-body-marker.spine{ top:147px; }
-  .ar-body-marker.pelvis{ top:198px; }
-  .ar-body-marker.knee{ top:273px; }
-  .ar-body-marker.ankle-foot{ top:328px; }
+  .ar-body-map-target.check .ar-body-map-link{
+    stroke:#d5a23d;
+  }
+
+  .ar-body-map-target.check .ar-body-map-target-ring{
+    fill:rgba(213,162,61,.17);
+    stroke:#d5a23d;
+  }
+
+  .ar-body-map-target.check .ar-body-map-target-dot{
+    fill:#d5a23d;
+  }
 
   .ar-body-map-caption{
     color:#74889a;
     font-size:10px;
     font-weight:850;
+    text-align:center;
+  }
+
+  .ar-body-map-placeholder{
+    padding:25px;
+    border-radius:18px;
+    color:#60768a;
+    background:rgba(255,255,255,.78);
+    border:1px dashed #c8d7e2;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.75;
     text-align:center;
   }
 
@@ -710,7 +726,7 @@
     background:#9aa9b6;
   }
 
-  .ar-body-map-legend-dot.good{ background:#2f6fae; }
+  .ar-body-map-legend-dot.good{ background:#3c8b78; }
   .ar-body-map-legend-dot.check{ background:#d5a23d; }
 
   .ar-body-map-disclaimer{
@@ -1091,6 +1107,7 @@
 
     .ar-body-map-notes{
       grid-template-columns:repeat(3,minmax(0,1fr));
+      grid-template-rows:auto;
     }
 
     .ar-body-map-notes.left .ar-body-map-note::after,
@@ -1226,7 +1243,13 @@
 
     .ar-body-map-notes{
       grid-template-columns:1fr !important;
+      grid-template-rows:repeat(3,minmax(58px,1fr)) !important;
       gap:6px !important;
+    }
+
+    .ar-body-map-notes.left .ar-body-map-note::after,
+    .ar-body-map-notes.right .ar-body-map-note::after{
+      display:block !important;
     }
 
     .ar-body-map-figure-wrap{
@@ -1494,7 +1517,7 @@
         </section>
       </div>
 
-      <section class="ar-card ar-body-map-card">
+      <section class="ar-card ar-body-map-card cf-body-map">
         <div class="ar-section-head">
           <div>
             <div class="ar-section-kicker">Body Map</div>
@@ -1503,58 +1526,142 @@
           <div class="ar-section-note">AI所見を部位ごとに短く整理</div>
         </div>
 
-        <div class="ar-body-map-layout">
-          <div class="ar-body-map-notes left">
-            {% for item in body_map_items %}
-              {% if item.column == "left" %}
-                <article class="ar-body-map-note {{ item.level }}">
-                  <div class="ar-body-map-label">{{ item.label }}</div>
-                  <div class="ar-body-map-text">{{ item.text }}</div>
-                </article>
-              {% endif %}
-            {% endfor %}
-          </div>
-
-          <div class="ar-body-map-figure-wrap">
-            <div class="ar-body-map-figure" aria-hidden="true">
-              <span class="ar-body-head"></span>
-              <span class="ar-body-neck"></span>
-              <span class="ar-body-torso"></span>
-              <span class="ar-body-arm left"></span>
-              <span class="ar-body-arm right"></span>
-              <span class="ar-body-pelvis"></span>
-              <span class="ar-body-leg left"></span>
-              <span class="ar-body-leg right"></span>
-              <span class="ar-body-foot left"></span>
-              <span class="ar-body-foot right"></span>
-              <span class="ar-body-marker head-neck"></span>
-              <span class="ar-body-marker shoulder"></span>
-              <span class="ar-body-marker spine"></span>
-              <span class="ar-body-marker pelvis"></span>
-              <span class="ar-body-marker knee"></span>
-              <span class="ar-body-marker ankle-foot"></span>
+        {% if body_map_items %}
+          <div class="ar-body-map-layout cf-body-map__layout">
+            <div class="ar-body-map-notes cf-body-map__notes left">
+              {% for item in body_map_items %}
+                {% if item.column == "left" %}
+                  <article class="ar-body-map-note {{ item.level }}">
+                    <div class="ar-body-map-label">{{ item.label }}</div>
+                    <div class="ar-body-map-text">{{ item.text }}</div>
+                  </article>
+                {% endif %}
+              {% endfor %}
             </div>
-            <div class="ar-body-map-caption">
-              姿勢ラインのイメージ
+
+            <div class="ar-body-map-figure-wrap cf-body-map__figure">
+              <div class="ar-body-map-figure">
+                <svg
+                  class="ar-body-map-svg"
+                  viewBox="0 0 300 430"
+                  role="img"
+                  aria-labelledby="assessmentBodyMapTitle assessmentBodyMapDesc"
+                >
+                  <title id="assessmentBodyMapTitle">姿勢評価のからだマップ</title>
+                  <desc id="assessmentBodyMapDesc">
+                    人体の各部位とAI所見の位置関係を示す説明用イメージです。
+                  </desc>
+                  <defs>
+                    <linearGradient id="bodyMapSkin" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#dce8ef"></stop>
+                      <stop offset="55%" stop-color="#bfd0dc"></stop>
+                      <stop offset="100%" stop-color="#aabfcd"></stop>
+                    </linearGradient>
+                    <linearGradient id="bodyMapLimb" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#c9d9e3"></stop>
+                      <stop offset="100%" stop-color="#aabfcd"></stop>
+                    </linearGradient>
+                    <radialGradient id="bodyMapHalo" cx="50%" cy="42%" r="58%">
+                      <stop offset="0%" stop-color="#ffffff"></stop>
+                      <stop offset="72%" stop-color="#edf5fa"></stop>
+                      <stop offset="100%" stop-color="#e5eef5" stop-opacity=".25"></stop>
+                    </radialGradient>
+                  </defs>
+
+                  <rect x="35" y="5" width="230" height="414" rx="112" fill="url(#bodyMapHalo)"></rect>
+
+                  <g aria-hidden="true">
+                    <line class="ar-body-map-guide" x1="150" y1="14" x2="150" y2="414"></line>
+                    <line class="ar-body-map-guide level" x1="76" y1="116" x2="224" y2="116"></line>
+                    <line class="ar-body-map-guide level" x1="96" y1="239" x2="204" y2="239"></line>
+                    <line class="ar-body-map-guide level" x1="101" y1="326" x2="199" y2="326"></line>
+                    <line class="ar-body-map-guide level" x1="86" y1="397" x2="214" y2="397"></line>
+                  </g>
+
+                  <g aria-hidden="true">
+                    <path class="ar-body-map-limb arm" d="M105 117 C91 140 84 171 81 204 C79 228 75 250 70 270"></path>
+                    <path class="ar-body-map-limb arm" d="M195 117 C209 140 216 171 219 204 C221 228 225 250 230 270"></path>
+                    <ellipse class="ar-body-map-silhouette" cx="69" cy="278" rx="9" ry="13"></ellipse>
+                    <ellipse class="ar-body-map-silhouette" cx="231" cy="278" rx="9" ry="13"></ellipse>
+
+                    <path class="ar-body-map-limb leg" d="M124 244 C120 274 120 301 123 326 C126 353 121 377 116 397"></path>
+                    <path class="ar-body-map-limb leg" d="M176 244 C180 274 180 301 177 326 C174 353 179 377 184 397"></path>
+
+                    <path class="ar-body-map-silhouette" d="M108 395 C99 399 91 406 86 414 C98 419 115 418 126 411 L124 399 Z"></path>
+                    <path class="ar-body-map-silhouette" d="M192 395 C201 399 209 406 214 414 C202 419 185 418 174 411 L176 399 Z"></path>
+
+                    <path class="ar-body-map-silhouette" d="M150 25 C131 25 119 40 120 60 C121 78 132 91 150 94 C168 91 179 78 180 60 C181 40 169 25 150 25 Z"></path>
+                    <ellipse class="ar-body-map-silhouette" cx="120" cy="61" rx="4" ry="8"></ellipse>
+                    <ellipse class="ar-body-map-silhouette" cx="180" cy="61" rx="4" ry="8"></ellipse>
+                    <path class="ar-body-map-silhouette" d="M136 88 L136 105 C126 107 116 111 108 118 L192 118 C184 111 174 107 164 105 L164 88 Z"></path>
+
+                    <path class="ar-body-map-silhouette" d="M108 111 C95 119 91 136 94 155 C97 176 105 194 107 213 C109 226 104 236 101 244 C116 253 132 256 150 256 C168 256 184 253 199 244 C196 236 191 226 193 213 C195 194 203 176 206 155 C209 136 205 119 192 111 C181 104 167 102 150 102 C133 102 119 104 108 111 Z"></path>
+                    <path class="ar-body-map-zone" d="M116 124 C127 116 173 116 184 124 C181 160 175 187 170 211 C158 217 142 217 130 211 C125 187 119 160 116 124 Z"></path>
+                    <path class="ar-body-map-zone" d="M102 229 C117 237 132 240 150 240 C168 240 183 237 198 229 L202 250 C187 262 170 268 150 268 C130 268 113 262 98 250 Z"></path>
+
+                    <circle class="ar-body-map-joint" cx="105" cy="117" r="5"></circle>
+                    <circle class="ar-body-map-joint" cx="195" cy="117" r="5"></circle>
+                    <circle class="ar-body-map-joint" cx="81" cy="204" r="4"></circle>
+                    <circle class="ar-body-map-joint" cx="219" cy="204" r="4"></circle>
+                    <circle class="ar-body-map-joint" cx="124" cy="246" r="5"></circle>
+                    <circle class="ar-body-map-joint" cx="176" cy="246" r="5"></circle>
+                    <circle class="ar-body-map-joint" cx="123" cy="326" r="5"></circle>
+                    <circle class="ar-body-map-joint" cx="177" cy="326" r="5"></circle>
+                    <circle class="ar-body-map-joint" cx="116" cy="397" r="4"></circle>
+                    <circle class="ar-body-map-joint" cx="184" cy="397" r="4"></circle>
+                  </g>
+
+                  {% for item in body_map_items %}
+                    <g class="ar-body-map-target {{ item.level }}">
+                      <line
+                        class="ar-body-map-link"
+                        x1="{{ item.svg_x }}"
+                        y1="{{ item.svg_y }}"
+                        x2="{{ item.svg_anchor_x }}"
+                        y2="{{ item.svg_anchor_y }}"
+                      ></line>
+                      <circle
+                        class="ar-body-map-target-ring"
+                        cx="{{ item.svg_x }}"
+                        cy="{{ item.svg_y }}"
+                        r="11"
+                      ></circle>
+                      <circle
+                        class="ar-body-map-target-dot"
+                        cx="{{ item.svg_x }}"
+                        cy="{{ item.svg_y }}"
+                        r="5"
+                      ></circle>
+                    </g>
+                  {% endfor %}
+                </svg>
+              </div>
+              <div class="ar-body-map-caption">
+                正中線・肩・骨盤・膝・足部ラインは説明用イメージです
+              </div>
+            </div>
+
+            <div class="ar-body-map-notes cf-body-map__notes right">
+              {% for item in body_map_items %}
+                {% if item.column == "right" %}
+                  <article class="ar-body-map-note {{ item.level }}">
+                    <div class="ar-body-map-label">{{ item.label }}</div>
+                    <div class="ar-body-map-text">{{ item.text }}</div>
+                  </article>
+                {% endif %}
+              {% endfor %}
             </div>
           </div>
-
-          <div class="ar-body-map-notes right">
-            {% for item in body_map_items %}
-              {% if item.column == "right" %}
-                <article class="ar-body-map-note {{ item.level }}">
-                  <div class="ar-body-map-label">{{ item.label }}</div>
-                  <div class="ar-body-map-text">{{ item.text }}</div>
-                </article>
-              {% endif %}
-            {% endfor %}
+        {% else %}
+          <div class="ar-body-map-placeholder">
+            現在、大きく強調する所見はありません。詳しくはスタッフが確認します。
           </div>
-        </div>
+        {% endif %}
 
-        <div class="ar-body-map-legend">
+        <div class="ar-body-map-legend cf-body-map__legend">
           <div class="ar-body-map-legend-item">
             <span class="ar-body-map-legend-dot good"></span>
-            青：改善・良好傾向
+            青緑：良好・改善傾向
           </div>
           <div class="ar-body-map-legend-item">
             <span class="ar-body-map-legend-dot check"></span>

@@ -562,21 +562,67 @@ def _shorten_body_map_text(value, fallback, limit=38):
 def _build_assessment_body_map_items(summary):
     posture_findings = summary.get("posture_findings") or {}
     joint_assessments = summary.get("joint_assessments") or {}
+    if not isinstance(posture_findings, dict):
+        posture_findings = {}
+    if not isinstance(joint_assessments, dict):
+        joint_assessments = {}
+
+    suspected_source = summary.get("suspected_load_areas") or []
+    if isinstance(suspected_source, str):
+        suspected_source = [suspected_source]
     suspected_load_areas = [
         str(item).strip()
-        for item in summary.get("suspected_load_areas") or []
+        for item in suspected_source
         if str(item).strip()
     ]
+
+    hypothesis_source = (
+        summary.get("symptom_relation_hypotheses") or []
+    )
+    if isinstance(hypothesis_source, str):
+        hypothesis_source = [hypothesis_source]
     symptom_hypotheses = [
         str(item).strip()
-        for item in summary.get("symptom_relation_hypotheses") or []
+        for item in hypothesis_source
         if str(item).strip()
     ]
+    has_posture_findings = any(
+        str(value).strip()
+        for value in posture_findings.values()
+    )
+    has_joint_assessments = any(
+        (
+            (
+                str(item.get("summary") or "").strip()
+                or any(
+                    str(finding).strip()
+                    for finding in item.get("possible_findings") or []
+                )
+            )
+            if isinstance(item, dict)
+            else str(item).strip()
+        )
+        for item in joint_assessments.values()
+    )
+    if not any(
+        (
+            has_posture_findings,
+            has_joint_assessments,
+            suspected_load_areas,
+            symptom_hypotheses,
+        )
+    ):
+        return []
+
     part_specs = (
         {
             "key": "head_neck",
             "label": "頭・首",
             "column": "left",
+            "svg_x": 150,
+            "svg_y": 77,
+            "svg_anchor_x": 10,
+            "svg_anchor_y": 65,
             "joints": ("head", "neck"),
             "keywords": ("頭", "首", "頚"),
             "fallback": "頭・首の位置関係を確認します",
@@ -585,6 +631,10 @@ def _build_assessment_body_map_items(summary):
             "key": "shoulder",
             "label": "肩",
             "column": "right",
+            "svg_x": 205,
+            "svg_y": 116,
+            "svg_anchor_x": 290,
+            "svg_anchor_y": 88,
             "joints": ("shoulder",),
             "keywords": ("肩", "肩甲"),
             "fallback": "肩の高さや左右差を確認します",
@@ -593,6 +643,10 @@ def _build_assessment_body_map_items(summary):
             "key": "spine",
             "label": "背中",
             "column": "left",
+            "svg_x": 150,
+            "svg_y": 178,
+            "svg_anchor_x": 10,
+            "svg_anchor_y": 205,
             "joints": ("thoracic_spine",),
             "keywords": ("背", "胸椎", "脊柱"),
             "fallback": "背中のラインを確認します",
@@ -601,6 +655,10 @@ def _build_assessment_body_map_items(summary):
             "key": "pelvis",
             "label": "骨盤",
             "column": "right",
+            "svg_x": 190,
+            "svg_y": 239,
+            "svg_anchor_x": 290,
+            "svg_anchor_y": 221,
             "joints": ("lumbar_pelvis", "hip"),
             "keywords": ("骨盤", "腰", "股関節", "臀"),
             "fallback": "骨盤の傾きや左右差を確認します",
@@ -609,6 +667,10 @@ def _build_assessment_body_map_items(summary):
             "key": "knee",
             "label": "膝",
             "column": "left",
+            "svg_x": 123,
+            "svg_y": 326,
+            "svg_anchor_x": 10,
+            "svg_anchor_y": 348,
             "joints": ("knee",),
             "keywords": ("膝",),
             "fallback": "膝の向きや負担を確認します",
@@ -617,6 +679,10 @@ def _build_assessment_body_map_items(summary):
             "key": "ankle_foot",
             "label": "足部",
             "column": "right",
+            "svg_x": 177,
+            "svg_y": 397,
+            "svg_anchor_x": 290,
+            "svg_anchor_y": 375,
             "joints": ("ankle_foot",),
             "keywords": ("足", "足首", "足関節", "踵"),
             "fallback": "足部の向きや荷重を確認します",
@@ -651,10 +717,13 @@ def _build_assessment_body_map_items(summary):
         if not source_text:
             for joint_key in spec["joints"]:
                 joint = joint_assessments.get(joint_key) or {}
-                source_text = (
-                    joint.get("summary")
-                    or joint.get("possible_findings")
-                )
+                if isinstance(joint, dict):
+                    source_text = (
+                        joint.get("summary")
+                        or joint.get("possible_findings")
+                    )
+                else:
+                    source_text = joint
                 if source_text:
                     break
         if not source_text and related_hypotheses:
@@ -681,6 +750,10 @@ def _build_assessment_body_map_items(summary):
             "text": text,
             "level": level,
             "column": spec["column"],
+            "svg_x": spec["svg_x"],
+            "svg_y": spec["svg_y"],
+            "svg_anchor_x": spec["svg_anchor_x"],
+            "svg_anchor_y": spec["svg_anchor_y"],
         })
 
     return body_map_items
