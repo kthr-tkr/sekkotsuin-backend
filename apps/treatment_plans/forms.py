@@ -78,7 +78,6 @@ class TreatmentPlanForm(forms.ModelForm):
             "expected_recovery_weeks_max",
             "rebound_reaction_note",
             "explained_to_patient",
-            "is_active",
             "status",
         ]
         widgets = {
@@ -104,7 +103,6 @@ class TreatmentPlanForm(forms.ModelForm):
             "rebound_reaction_note": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
 
             "explained_to_patient": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "status": forms.Select(attrs={"class": "form-select"}),
         }
         labels = {
@@ -124,7 +122,6 @@ class TreatmentPlanForm(forms.ModelForm):
             "expected_recovery_weeks_max": "改善目安（最長週）",
             "rebound_reaction_note": "好転反応の説明",
             "explained_to_patient": "患者へ説明済み",
-            "is_active": "有効な計画",
             "status": "計画ステータス",
         }
 
@@ -159,6 +156,17 @@ class TreatmentPlanForm(forms.ModelForm):
 
     def clean_caution_notes(self):
         return "\n".join(self.cleaned_data.get("caution_notes") or [])
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.is_active = instance.status == "active"
+
+        if commit:
+            instance.save()
+            self.save_m2m()
+
+        return instance
+
 
 class TreatmentProgressForm(forms.ModelForm):
     class Meta:

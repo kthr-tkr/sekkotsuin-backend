@@ -1,12 +1,13 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from apps.patients.models import Patient
 from apps.appointments.models import Appointment
-from apps.intakes.models import Intake
 from apps.clinical_notes.models import ClinicalNote
+from apps.staff.decorators import staff_required
+from apps.staff.views import get_current_clinic
 
 from .forms import TreatmentPlanForm, TreatmentProgressForm
 from .models import TreatmentPlan, TreatmentProgress, TreatmentPlanConsent
@@ -17,8 +18,20 @@ import base64
 import uuid
 
 from django.core.files.base import ContentFile
-from django.http import HttpResponseBadRequest
+from django.http import Http404, HttpResponseBadRequest
 from django.db import transaction
+
+
+def _get_staff_clinic(request):
+    user_clinic_id = getattr(request.user, "clinic_id", None)
+    if not user_clinic_id:
+        raise PermissionDenied("所属院が設定されていません。")
+
+    clinic = get_current_clinic(request)
+    if clinic is None or clinic.pk != user_clinic_id:
+        raise PermissionDenied("所属院のデータのみ操作できます。")
+
+    return clinic
 
 
 def _split_plan_lines(value):
@@ -155,28 +168,48 @@ def _build_patient_plan_document(plan, latest_progress, next_actions):
     }
 
 
-@login_required
+@staff_required
 def plan_create_view(request, patient_id=None, appointment_id=None):
+    clinic = _get_staff_clinic(request)
     patient = None
     appointment = None
     intake = None
     clinical_note = None
 
     if patient_id:
-        patient = get_object_or_404(Patient, pk=patient_id)
+        patient = get_object_or_404(
+            Patient.objects.select_related("clinic"),
+            pk=patient_id,
+            clinic=clinic,
+        )
 
     if appointment_id:
         appointment = get_object_or_404(
             Appointment.objects.select_related("patient", "intake"),
-            pk=appointment_id
+            pk=appointment_id,
+            clinic=clinic,
+            patient__clinic=clinic,
         )
         if patient is None:
             patient = appointment.patient
+        elif appointment.patient_id != patient.pk:
+            raise Http404("患者と予約が一致しません。")
+
         intake = getattr(appointment, "intake", None)
+        if intake and (
+            intake.clinic_id != clinic.pk
+            or intake.patient_id != patient.pk
+        ):
+            raise Http404("問診情報の所属院が一致しません。")
 
         clinical_note = (
             ClinicalNote.objects
-            .filter(appointment=appointment)
+            .filter(
+                appointment=appointment,
+                appointment__clinic=clinic,
+                patient=patient,
+                patient__clinic=clinic,
+            )
             .order_by("-created_at")
             .first()
         )
@@ -216,13 +249,15 @@ def plan_create_view(request, patient_id=None, appointment_id=None):
     })
 
 
-@login_required
+@staff_required
 def plan_detail_view(request, pk):
+    clinic = _get_staff_clinic(request)
     plan = get_object_or_404(
         TreatmentPlan.objects.select_related(
             "patient", "appointment", "intake", "clinical_note", "created_by"
         ),
-        pk=pk
+        pk=pk,
+        patient__clinic=clinic,
     )
 
     active_tab = request.GET.get("tab", "overview")
@@ -230,7 +265,10 @@ def plan_detail_view(request, pk):
     if active_tab not in valid_tabs:
         active_tab = "overview"
 
-    progress_qs = plan.progress_logs.all()
+    progress_qs = TreatmentProgress.objects.filter(
+        plan=plan,
+        plan__patient__clinic=clinic,
+    )
 
     progress_logs_asc = list(progress_qs.order_by("visit_date", "created_at"))
     for idx, log in enumerate(progress_logs_asc, start=1):
@@ -253,7 +291,11 @@ def plan_detail_view(request, pk):
 
     plan_appointments = (
         Appointment.objects
-        .filter(treatment_plan=plan)
+        .filter(
+            treatment_plan=plan,
+            clinic=clinic,
+            patient=plan.patient,
+        )
         .select_related("assigned_staff")
         .order_by("-start_at")
     )
@@ -424,9 +466,10 @@ def plan_detail_view(request, pk):
         "patient_plan_document": patient_plan_document,
     })
 
-@login_required
+@staff_required
 @transaction.atomic
 def plan_sign_view(request, pk):
+    clinic = _get_staff_clinic(request)
     plan = get_object_or_404(
         TreatmentPlan.objects.select_related(
             "patient",
@@ -436,11 +479,17 @@ def plan_sign_view(request, pk):
             "created_by",
         ),
         pk=pk,
+        patient__clinic=clinic,
     )
 
     latest_consent = (
         TreatmentPlanConsent.objects
-        .filter(plan=plan, patient=plan.patient)
+        .filter(
+            plan=plan,
+            patient=plan.patient,
+            plan__patient__clinic=clinic,
+            patient__clinic=clinic,
+        )
         .order_by("-signed_at")
         .first()
     )
@@ -529,9 +578,14 @@ def _get_client_ip(request):
         return x_forwarded_for.split(",")[0].strip()
     return request.META.get("REMOTE_ADDR")
 
-@login_required
+@staff_required
 def progress_create_view(request, pk):
-    plan = get_object_or_404(TreatmentPlan, pk=pk)
+    clinic = _get_staff_clinic(request)
+    plan = get_object_or_404(
+        TreatmentPlan.objects.select_related("patient"),
+        pk=pk,
+        patient__clinic=clinic,
+    )
 
     if request.method != "POST":
         return redirect(f"{reverse('treatment_plans:plan_detail', kwargs={'pk': plan.pk})}?tab=progress#progress-form")
@@ -549,9 +603,16 @@ def progress_create_view(request, pk):
 
     return redirect(f"{reverse('treatment_plans:plan_detail', kwargs={'pk': plan.pk})}?tab=progress#progress-list")
 
-@login_required
+@staff_required
 def plan_edit_view(request, pk):
-    plan = get_object_or_404(TreatmentPlan, pk=pk)
+    clinic = _get_staff_clinic(request)
+    plan = get_object_or_404(
+        TreatmentPlan.objects.select_related(
+            "patient", "appointment", "intake", "clinical_note"
+        ),
+        pk=pk,
+        patient__clinic=clinic,
+    )
 
     if request.method == "POST":
         form = TreatmentPlanForm(request.POST, instance=plan)
@@ -572,11 +633,13 @@ def plan_edit_view(request, pk):
         "page_title": "施術計画編集",
     })
 
-@login_required
+@staff_required
 def progress_edit_view(request, pk):
+    clinic = _get_staff_clinic(request)
     progress = get_object_or_404(
         TreatmentProgress.objects.select_related("plan", "plan__patient", "created_by"),
-        pk=pk
+        pk=pk,
+        plan__patient__clinic=clinic,
     )
     plan = progress.plan
 
@@ -599,11 +662,13 @@ def progress_edit_view(request, pk):
     })
 
 
-@login_required
+@staff_required
 def progress_delete_view(request, pk):
+    clinic = _get_staff_clinic(request)
     progress = get_object_or_404(
         TreatmentProgress.objects.select_related("plan", "plan__patient"),
-        pk=pk
+        pk=pk,
+        plan__patient__clinic=clinic,
     )
     plan = progress.plan
 
@@ -618,42 +683,51 @@ def progress_delete_view(request, pk):
         "page_title": "施術経過記録削除確認",
     })
 
-@login_required
+@staff_required
 @require_POST
 def plan_status_update_view(request, pk):
-    plan = get_object_or_404(TreatmentPlan, pk=pk)
+    clinic = _get_staff_clinic(request)
+    plan = get_object_or_404(
+        TreatmentPlan.objects.select_related("patient"),
+        pk=pk,
+        patient__clinic=clinic,
+    )
 
     new_status = (request.POST.get("status") or "").strip()
     valid_statuses = {choice[0] for choice in TreatmentPlan.STATUS_CHOICES}
 
     if new_status not in valid_statuses:
         messages.error(request, "不正なステータスです。")
-        next_url = request.POST.get("next") or f"{reverse('treatment_plans:plan_detail', kwargs={'pk': plan.pk})}?tab=overview"
-        return redirect(next_url)
+        return redirect(
+            f"{reverse('treatment_plans:plan_detail', kwargs={'pk': plan.pk})}?tab=overview"
+        )
 
     plan.status = new_status
-
-    # 既存の is_active とも軽く整合
-    if new_status == "active":
-        plan.is_active = True
-    else:
-        plan.is_active = False
+    plan.is_active = new_status == "active"
 
     plan.save(update_fields=["status", "is_active", "updated_at"])
 
     messages.success(request, f"施術計画を「{plan.get_status_display()}」に更新しました。")
     return redirect(f"{reverse('treatment_plans:plan_detail', args=[plan.pk])}?tab=overview")
 
-@login_required
+@staff_required
 def plan_create_from_clinical_note_view(request, clinical_note_id):
+    clinic = _get_staff_clinic(request)
     clinical_note = get_object_or_404(
         ClinicalNote.objects.select_related("patient", "appointment", "intake"),
         pk=clinical_note_id,
+        patient__clinic=clinic,
+        appointment__clinic=clinic,
     )
 
     patient = clinical_note.patient
     appointment = clinical_note.appointment
     intake = clinical_note.intake
+    if intake and (
+        intake.clinic_id != clinic.pk
+        or intake.patient_id != patient.pk
+    ):
+        raise Http404("問診情報の所属院が一致しません。")
 
     initial = build_treatment_plan_initial_from_note(clinical_note)
 
@@ -668,7 +742,7 @@ def plan_create_from_clinical_note_view(request, clinical_note_id):
             plan.created_by = request.user
             plan.save()
 
-            messages.success(request, "AI下書きから施術計画を作成しました。")
+            messages.success(request, "カルテ情報をもとに施術計画を作成しました。")
             return redirect("treatment_plans:plan_detail", pk=plan.pk)
     else:
         form = TreatmentPlanForm(initial=initial)
@@ -679,7 +753,7 @@ def plan_create_from_clinical_note_view(request, clinical_note_id):
         "appointment": appointment,
         "intake": intake,
         "clinical_note": clinical_note,
-        "page_title": "AI施術計画案の確認",
+        "page_title": "カルテ情報をもとにした施術計画案の確認",
         "is_ai_draft": True,
     })
     
@@ -729,7 +803,7 @@ def build_treatment_plan_initial_from_note(clinical_note):
     lifestyle_other = ""
 
     if soap_p:
-        lifestyle_other += "AI施術方針案：\n"
+        lifestyle_other += "カルテ情報からの施術方針案：\n"
         lifestyle_other += "\n".join([f"・{x}" for x in soap_p])
 
     if soap_a:
@@ -756,5 +830,4 @@ def build_treatment_plan_initial_from_note(clinical_note):
         "expected_recovery_weeks_max": expected_max,
         "rebound_reaction_note": "施術後、一時的にだるさ・眠気・違和感などが出る場合があります。強い痛みや不安な症状がある場合は、無理をせずご相談ください。",
         "explained_to_patient": False,
-        "is_active": True,
     }

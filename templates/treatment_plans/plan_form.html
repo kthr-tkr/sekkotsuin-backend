@@ -634,7 +634,7 @@
           <div>
             <h2 class="tp-section-title">説明・保存設定</h2>
             <div class="tp-section-sub">
-              患者へ説明済みか、この計画を有効な計画として扱うかを設定します。
+              患者への説明状況を設定します。計画の有効状態はステータスと自動で連動します。
             </div>
           </div>
         </div>
@@ -669,15 +669,9 @@
             {{ form.explained_to_patient }}
             {{ form.explained_to_patient.label }}
           </label>
-
-          <label class="check-item">
-            {{ form.is_active }}
-            {{ form.is_active.label }}
-          </label>
         </div>
 
         {{ form.explained_to_patient.errors }}
-        {{ form.is_active.errors }}
       </section>
 
       <div class="tp-actions">
