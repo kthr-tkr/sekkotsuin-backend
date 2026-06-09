@@ -537,6 +537,155 @@ def _build_assessment_load_mechanisms(summary):
     return items[:8]
 
 
+def _shorten_body_map_text(value, fallback, limit=38):
+    if isinstance(value, (list, tuple)):
+        value = next(
+            (
+                item
+                for item in value
+                if isinstance(item, str) and item.strip()
+            ),
+            "",
+        )
+
+    text = " ".join(str(value or "").split())
+    if not text:
+        return fallback
+
+    for separator in ("。", "！", "？", "\n"):
+        text = text.split(separator, 1)[0].strip()
+    if len(text) > limit:
+        text = f"{text[:limit - 1].rstrip()}…"
+    return text
+
+
+def _build_assessment_body_map_items(summary):
+    posture_findings = summary.get("posture_findings") or {}
+    joint_assessments = summary.get("joint_assessments") or {}
+    suspected_load_areas = [
+        str(item).strip()
+        for item in summary.get("suspected_load_areas") or []
+        if str(item).strip()
+    ]
+    symptom_hypotheses = [
+        str(item).strip()
+        for item in summary.get("symptom_relation_hypotheses") or []
+        if str(item).strip()
+    ]
+    part_specs = (
+        {
+            "key": "head_neck",
+            "label": "頭・首",
+            "column": "left",
+            "joints": ("head", "neck"),
+            "keywords": ("頭", "首", "頚"),
+            "fallback": "頭・首の位置関係を確認します",
+        },
+        {
+            "key": "shoulder",
+            "label": "肩",
+            "column": "right",
+            "joints": ("shoulder",),
+            "keywords": ("肩", "肩甲"),
+            "fallback": "肩の高さや左右差を確認します",
+        },
+        {
+            "key": "spine",
+            "label": "背中",
+            "column": "left",
+            "joints": ("thoracic_spine",),
+            "keywords": ("背", "胸椎", "脊柱"),
+            "fallback": "背中のラインを確認します",
+        },
+        {
+            "key": "pelvis",
+            "label": "骨盤",
+            "column": "right",
+            "joints": ("lumbar_pelvis", "hip"),
+            "keywords": ("骨盤", "腰", "股関節", "臀"),
+            "fallback": "骨盤の傾きや左右差を確認します",
+        },
+        {
+            "key": "knee",
+            "label": "膝",
+            "column": "left",
+            "joints": ("knee",),
+            "keywords": ("膝",),
+            "fallback": "膝の向きや負担を確認します",
+        },
+        {
+            "key": "ankle_foot",
+            "label": "足部",
+            "column": "right",
+            "joints": ("ankle_foot",),
+            "keywords": ("足", "足首", "足関節", "踵"),
+            "fallback": "足部の向きや荷重を確認します",
+        },
+    )
+    check_words = (
+        "負担",
+        "左右差",
+        "傾き",
+        "偏位",
+        "前方",
+        "過伸展",
+        "確認が必要",
+        "注意",
+    )
+    good_words = ("良好", "安定", "整って", "改善", "目立たない")
+
+    body_map_items = []
+    for spec in part_specs:
+        related_loads = [
+            item
+            for item in suspected_load_areas
+            if any(keyword in item for keyword in spec["keywords"])
+        ]
+        related_hypotheses = [
+            item
+            for item in symptom_hypotheses
+            if any(keyword in item for keyword in spec["keywords"])
+        ]
+
+        source_text = posture_findings.get(spec["key"])
+        if not source_text:
+            for joint_key in spec["joints"]:
+                joint = joint_assessments.get(joint_key) or {}
+                source_text = (
+                    joint.get("summary")
+                    or joint.get("possible_findings")
+                )
+                if source_text:
+                    break
+        if not source_text and related_hypotheses:
+            source_text = related_hypotheses[0]
+        if not source_text and related_loads:
+            source_text = related_loads[0]
+
+        text = _shorten_body_map_text(source_text, spec["fallback"])
+        combined_text = " ".join(
+            [text, *related_loads, *related_hypotheses]
+        )
+        if related_loads or any(
+            word in combined_text for word in check_words
+        ):
+            level = "check"
+        elif any(word in combined_text for word in good_words):
+            level = "good"
+        else:
+            level = "info"
+
+        body_map_items.append({
+            "key": spec["key"],
+            "label": spec["label"],
+            "text": text,
+            "level": level,
+            "column": spec["column"],
+        })
+
+    return body_map_items
+
+
 @staff_required
 def posture_detail_view(request, assessment_id):
     clinic = get_current_clinic(request)
@@ -631,6 +780,7 @@ def posture_assessment_report_view(request, assessment_id):
     alignment_groups = _build_alignment_groups(summary)
     report_steps = _build_assessment_report_steps(summary)
     load_mechanisms = _build_assessment_load_mechanisms(summary)
+    body_map_items = _build_assessment_body_map_items(summary)
     home_care_items = summary.get("home_care_suggestions") or [
         "スタッフの指示に合わせて、無理のない範囲で行ってください。",
     ]
@@ -668,6 +818,7 @@ def posture_assessment_report_view(request, assessment_id):
         "alignment_groups": alignment_groups,
         "report_steps": report_steps,
         "load_mechanisms": load_mechanisms,
+        "body_map_items": body_map_items,
         "home_care_items": home_care_items,
         "risk_notes": risk_notes,
         "report_summary": report_summary,

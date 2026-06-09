@@ -455,6 +455,271 @@
     line-height:1.7;
   }
 
+  .ar-body-map-card{
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 50% 42%,rgba(47,111,174,.09),transparent 25%),
+      linear-gradient(135deg,#fbfdff,#f4f8fc 52%,#fffaf1);
+  }
+
+  .ar-body-map-layout{
+    display:grid;
+    grid-template-columns:minmax(210px,1fr) 240px minmax(210px,1fr);
+    gap:20px;
+    align-items:center;
+  }
+
+  .ar-body-map-notes{
+    display:grid;
+    gap:13px;
+  }
+
+  .ar-body-map-note{
+    position:relative;
+    min-height:76px;
+    padding:12px 14px 12px 17px;
+    border-radius:16px;
+    background:#fff;
+    border:1px solid #dbe6ef;
+    box-shadow:0 9px 22px rgba(31,57,82,.07);
+  }
+
+  .ar-body-map-note::before{
+    content:"";
+    position:absolute;
+    top:14px;
+    left:-5px;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#9aa9b6;
+    box-shadow:0 0 0 4px #eef2f5;
+  }
+
+  .ar-body-map-note.good{
+    border-color:#b9d4eb;
+    background:#f2f8fd;
+  }
+
+  .ar-body-map-note.good::before{
+    background:#2f6fae;
+    box-shadow:0 0 0 4px #dcebf7;
+  }
+
+  .ar-body-map-note.check{
+    border-color:#ead39d;
+    background:#fff9eb;
+  }
+
+  .ar-body-map-note.check::before{
+    background:#d5a23d;
+    box-shadow:0 0 0 4px #f8eac7;
+  }
+
+  .ar-body-map-notes.left .ar-body-map-note::after,
+  .ar-body-map-notes.right .ar-body-map-note::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    width:21px;
+    border-top:1px dashed #9fb4c6;
+  }
+
+  .ar-body-map-notes.left .ar-body-map-note::after{
+    right:-21px;
+  }
+
+  .ar-body-map-notes.right .ar-body-map-note::after{
+    left:-21px;
+  }
+
+  .ar-body-map-label{
+    color:#17375c;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .ar-body-map-text{
+    margin-top:5px;
+    color:#4a6277;
+    font-size:12px;
+    font-weight:780;
+    line-height:1.55;
+  }
+
+  .ar-body-map-figure-wrap{
+    display:grid;
+    justify-items:center;
+    gap:8px;
+  }
+
+  .ar-body-map-figure{
+    position:relative;
+    width:220px;
+    height:355px;
+    border-radius:110px 110px 30px 30px;
+    background:
+      linear-gradient(90deg,transparent 49.6%,rgba(47,111,174,.18) 50%,transparent 50.4%),
+      radial-gradient(circle at 50% 42%,#fff 0,#f2f7fb 58%,transparent 59%);
+    border-bottom:1px solid #d8e4ed;
+  }
+
+  .ar-body-map-figure span{
+    position:absolute;
+    display:block;
+  }
+
+  .ar-body-head{
+    top:13px;
+    left:84px;
+    width:52px;
+    height:57px;
+    border-radius:48% 48% 45% 45%;
+    background:#b8c6d1;
+  }
+
+  .ar-body-neck{
+    top:64px;
+    left:101px;
+    width:18px;
+    height:29px;
+    border-radius:7px;
+    background:#aebfcb;
+  }
+
+  .ar-body-torso{
+    top:85px;
+    left:68px;
+    width:84px;
+    height:112px;
+    border-radius:30px 30px 20px 20px;
+    background:linear-gradient(180deg,#aebfcb,#c6d1d9);
+    clip-path:polygon(14% 0,86% 0,100% 37%,85% 100%,15% 100%,0 37%);
+  }
+
+  .ar-body-arm{
+    top:93px;
+    width:24px;
+    height:145px;
+    border-radius:18px;
+    background:#becbd4;
+    transform-origin:top center;
+  }
+
+  .ar-body-arm.left{
+    left:51px;
+    transform:rotate(7deg);
+  }
+
+  .ar-body-arm.right{
+    right:51px;
+    transform:rotate(-7deg);
+  }
+
+  .ar-body-pelvis{
+    top:184px;
+    left:72px;
+    width:76px;
+    height:50px;
+    border-radius:19px 19px 27px 27px;
+    background:#a9bac7;
+    clip-path:polygon(4% 0,96% 0,85% 100%,15% 100%);
+  }
+
+  .ar-body-leg{
+    top:224px;
+    width:29px;
+    height:112px;
+    border-radius:16px 16px 11px 11px;
+    background:linear-gradient(180deg,#b7c6d1,#ced8df);
+  }
+
+  .ar-body-leg.left{
+    left:76px;
+  }
+
+  .ar-body-leg.right{
+    right:76px;
+  }
+
+  .ar-body-foot{
+    top:329px;
+    width:42px;
+    height:17px;
+    border-radius:13px 16px 7px 7px;
+    background:#aebfcb;
+  }
+
+  .ar-body-foot.left{
+    left:64px;
+  }
+
+  .ar-body-foot.right{
+    right:64px;
+  }
+
+  .ar-body-marker{
+    z-index:2;
+    left:50%;
+    width:12px;
+    height:12px;
+    margin-left:-6px;
+    border:3px solid #fff;
+    border-radius:50%;
+    background:#d5a23d;
+    box-shadow:0 0 0 2px rgba(213,162,61,.32);
+  }
+
+  .ar-body-marker.head-neck{ top:70px; }
+  .ar-body-marker.shoulder{ top:101px; }
+  .ar-body-marker.spine{ top:147px; }
+  .ar-body-marker.pelvis{ top:198px; }
+  .ar-body-marker.knee{ top:273px; }
+  .ar-body-marker.ankle-foot{ top:328px; }
+
+  .ar-body-map-caption{
+    color:#74889a;
+    font-size:10px;
+    font-weight:850;
+    text-align:center;
+  }
+
+  .ar-body-map-legend{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:9px 16px;
+    margin-top:13px;
+    padding-top:11px;
+    border-top:1px solid #dfe8ef;
+  }
+
+  .ar-body-map-legend-item{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#586f83;
+    font-size:10px;
+    font-weight:900;
+  }
+
+  .ar-body-map-legend-dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#9aa9b6;
+  }
+
+  .ar-body-map-legend-dot.good{ background:#2f6fae; }
+  .ar-body-map-legend-dot.check{ background:#d5a23d; }
+
+  .ar-body-map-disclaimer{
+    width:100%;
+    color:#8293a2;
+    font-size:9px;
+    text-align:center;
+  }
+
   .ar-state-grid{
     display:grid;
     grid-template-columns:repeat(3,minmax(0,1fr));
@@ -818,9 +1083,23 @@
     .ar-top-grid,
     .ar-summary-strip,
     .ar-main-grid,
+    .ar-body-map-layout,
     .ar-feature-layout,
     .ar-bottom-grid{
       grid-template-columns:1fr;
+    }
+
+    .ar-body-map-notes{
+      grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+
+    .ar-body-map-notes.left .ar-body-map-note::after,
+    .ar-body-map-notes.right .ar-body-map-note::after{
+      display:none;
+    }
+
+    .ar-body-map-figure-wrap{
+      grid-row:1;
     }
 
     .ar-photo-grid,
@@ -860,6 +1139,15 @@
     .ar-photo-body img,
     .ar-no-photo{
       height:250px;
+    }
+
+    .ar-body-map-notes{
+      grid-template-columns:1fr;
+    }
+
+    .ar-body-map-figure{
+      transform:scale(.88);
+      margin:-21px 0;
     }
   }
 
@@ -929,6 +1217,39 @@
     .ar-main-grid{
       grid-template-columns:1.42fr .73fr !important;
       gap:9px !important;
+    }
+
+    .ar-body-map-layout{
+      grid-template-columns:1fr 190px 1fr !important;
+      gap:12px !important;
+    }
+
+    .ar-body-map-notes{
+      grid-template-columns:1fr !important;
+      gap:6px !important;
+    }
+
+    .ar-body-map-figure-wrap{
+      grid-row:auto !important;
+    }
+
+    .ar-body-map-figure{
+      transform:scale(.75);
+      margin:-45px -15px !important;
+    }
+
+    .ar-body-map-note{
+      min-height:58px !important;
+      padding:8px 9px 8px 12px !important;
+    }
+
+    .ar-body-map-label{
+      font-size:9.5px !important;
+    }
+
+    .ar-body-map-text{
+      font-size:8.5px !important;
+      line-height:1.4 !important;
     }
 
     .ar-feature-layout{
@@ -1172,6 +1493,82 @@
           </div>
         </section>
       </div>
+
+      <section class="ar-card ar-body-map-card">
+        <div class="ar-section-head">
+          <div>
+            <div class="ar-section-kicker">Body Map</div>
+            <div class="ar-section-title">からだマップ</div>
+          </div>
+          <div class="ar-section-note">AI所見を部位ごとに短く整理</div>
+        </div>
+
+        <div class="ar-body-map-layout">
+          <div class="ar-body-map-notes left">
+            {% for item in body_map_items %}
+              {% if item.column == "left" %}
+                <article class="ar-body-map-note {{ item.level }}">
+                  <div class="ar-body-map-label">{{ item.label }}</div>
+                  <div class="ar-body-map-text">{{ item.text }}</div>
+                </article>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <div class="ar-body-map-figure-wrap">
+            <div class="ar-body-map-figure" aria-hidden="true">
+              <span class="ar-body-head"></span>
+              <span class="ar-body-neck"></span>
+              <span class="ar-body-torso"></span>
+              <span class="ar-body-arm left"></span>
+              <span class="ar-body-arm right"></span>
+              <span class="ar-body-pelvis"></span>
+              <span class="ar-body-leg left"></span>
+              <span class="ar-body-leg right"></span>
+              <span class="ar-body-foot left"></span>
+              <span class="ar-body-foot right"></span>
+              <span class="ar-body-marker head-neck"></span>
+              <span class="ar-body-marker shoulder"></span>
+              <span class="ar-body-marker spine"></span>
+              <span class="ar-body-marker pelvis"></span>
+              <span class="ar-body-marker knee"></span>
+              <span class="ar-body-marker ankle-foot"></span>
+            </div>
+            <div class="ar-body-map-caption">
+              姿勢ラインのイメージ
+            </div>
+          </div>
+
+          <div class="ar-body-map-notes right">
+            {% for item in body_map_items %}
+              {% if item.column == "right" %}
+                <article class="ar-body-map-note {{ item.level }}">
+                  <div class="ar-body-map-label">{{ item.label }}</div>
+                  <div class="ar-body-map-text">{{ item.text }}</div>
+                </article>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="ar-body-map-legend">
+          <div class="ar-body-map-legend-item">
+            <span class="ar-body-map-legend-dot good"></span>
+            青：改善・良好傾向
+          </div>
+          <div class="ar-body-map-legend-item">
+            <span class="ar-body-map-legend-dot check"></span>
+            黄：確認ポイント
+          </div>
+          <div class="ar-body-map-legend-item">
+            <span class="ar-body-map-legend-dot"></span>
+            グレー：参考情報
+          </div>
+          <div class="ar-body-map-disclaimer">
+            色分けはAI分析を読みやすくするための目安です。診断ではなく、施術者の評価と合わせて判断します。
+          </div>
+        </div>
+      </section>
 
       <section class="ar-card">
         <div class="ar-section-head">
