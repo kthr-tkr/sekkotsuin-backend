@@ -20,6 +20,141 @@ from django.core.files.base import ContentFile
 from django.http import HttpResponseBadRequest
 from django.db import transaction
 
+
+def _split_plan_lines(value):
+    return [
+        line.strip().lstrip("・").strip()
+        for line in (value or "").splitlines()
+        if line.strip().lstrip("・").strip()
+    ]
+
+
+def _build_patient_plan_document(plan, latest_progress, next_actions):
+    chief_complaint = plan.chief_complaint or "現在のお身体の状態"
+
+    current_condition_parts = []
+    if latest_progress and latest_progress.symptom_change:
+        current_condition_parts.append(latest_progress.symptom_change)
+    elif plan.chief_complaint:
+        current_condition_parts.append(
+            f"{plan.chief_complaint}について、状態の変化を確認しながら施術を進めます。"
+        )
+    else:
+        current_condition_parts.append(
+            "現在の負担や動きにくさを確認しながら、施術者の評価と合わせて計画を調整します。"
+        )
+
+    if latest_progress and latest_progress.adl_status:
+        current_condition_parts.append(latest_progress.adl_status)
+
+    treatment_purpose = (
+        f"{chief_complaint}に伴う負担を管理し、日常生活で動きやすい状態を整えながら、"
+        "再発しにくいからだづくりを目指します。"
+    )
+
+    improvement_policy = (
+        (latest_progress.treatment_detail if latest_progress else "")
+        or plan.lifestyle_other_instruction
+        or (
+            "症状や日常動作の変化を確認し、姿勢・可動域・筋肉バランスなどを"
+            "施術者の評価と合わせて段階的に整えます。"
+        )
+    )
+
+    visit_guide_parts = []
+    if plan.visit_guide_type:
+        visit_guide_parts.append(plan.get_visit_guide_type_display())
+    if plan.visit_guide_count:
+        visit_guide_parts.append(f"{plan.visit_guide_count}回")
+    visit_guide = " ".join(visit_guide_parts) or "状態に合わせて相談"
+    if plan.visit_guide_unit_note:
+        visit_guide = f"{visit_guide} / {plan.visit_guide_unit_note}"
+
+    exercise_lines = _split_plan_lines(plan.exercise_instruction)
+    walking_lines = _split_plan_lines(plan.walking_instruction)
+    work_lines = _split_plan_lines(plan.work_instruction)
+    caution_lines = _split_plan_lines(plan.caution_notes)
+    rebound_lines = _split_plan_lines(plan.rebound_reaction_note)
+
+    steps = [
+        {
+            "number": "01",
+            "title": "痛み・負担の管理",
+            "text": (
+                "まずは負担が出やすい動作を確認し、刺激量や生活上の注意点を調整します。"
+                "強い症状がある場合は無理をせず、状態の確認を優先します。"
+            ),
+        },
+        {
+            "number": "02",
+            "title": "姿勢・可動域・筋肉バランスの改善",
+            "text": (
+                exercise_lines[0]
+                if exercise_lines
+                else "姿勢や関節の動き、筋肉バランスを確認し、日常動作を行いやすい状態を目指します。"
+            ),
+        },
+        {
+            "number": "03",
+            "title": "再発予防・日常 / スポーツ復帰",
+            "text": (
+                work_lines[0]
+                if work_lines
+                else "状態の安定を確認しながら、日常生活やスポーツで必要な動作へ段階的につなげます。"
+            ),
+        },
+    ]
+
+    home_attention = []
+    for label, value in [
+        ("入浴", plan.bath_instruction),
+        ("歩行", plan.walking_instruction),
+        ("運動", plan.exercise_instruction),
+        ("仕事・家事", plan.work_instruction),
+    ]:
+        if value:
+            home_attention.append({"label": label, "text": value})
+
+    self_care = exercise_lines + walking_lines
+    if not self_care:
+        self_care = [
+            "スタッフの指示に合わせて、痛みが出ない無理のない範囲で行ってください。"
+        ]
+
+    next_check_points = (
+        _split_plan_lines(latest_progress.next_instruction)
+        if latest_progress and latest_progress.next_instruction
+        else list(next_actions)
+    )
+    if not next_check_points:
+        next_check_points = [
+            "症状や動作の変化を確認し、必要に応じて施術計画を調整します。"
+        ]
+
+    practitioner_notes = (
+        _split_plan_lines(latest_progress.memo)
+        if latest_progress and latest_progress.memo
+        else []
+    )
+
+    return {
+        "current_condition": current_condition_parts,
+        "treatment_purpose": treatment_purpose,
+        "improvement_policy": improvement_policy,
+        "visit_guide": visit_guide,
+        "steps": steps,
+        "home_attention": home_attention,
+        "self_care": self_care[:4],
+        "next_check_points": next_check_points[:4],
+        "cautions": (caution_lines + rebound_lines)[:6],
+        "practitioner_notes": practitioner_notes[:4],
+        "patient_message": (
+            "現在の状態を一緒に確認しながら、無理のないペースで改善を目指します。"
+            "気になる変化や不安があるときは、遠慮なくスタッフへお伝えください。"
+        ),
+    }
+
+
 @login_required
 def plan_create_view(request, patient_id=None, appointment_id=None):
     patient = None
@@ -247,11 +382,10 @@ def plan_detail_view(request, pk):
             ]
             next_action_level = "bad"
 
-    plan_appointments = (
-        Appointment.objects
-        .filter(treatment_plan=plan)
-        .select_related("assigned_staff")
-        .order_by("-start_at")
+    patient_plan_document = _build_patient_plan_document(
+        plan,
+        latest_progress,
+        next_actions,
     )
 
     return render(request, "treatment_plans/plan_detail.html", {
@@ -287,25 +421,8 @@ def plan_detail_view(request, pk):
         "next_plan_appointment": next_plan_appointment,
         "appointment_count": appointment_count,
         "current_path": request.get_full_path(),
+        "patient_plan_document": patient_plan_document,
     })
-
-    todo_cards = []
-
-    if not next_appointment:
-        todo_cards.append({
-            "type": "reservation",
-            "title": "次回予約がありません",
-            "message": "継続施術が必要な場合は予約を作成してください。",
-            "button": "予約を作成",
-        })
-
-    if progress_count == 0:
-        todo_cards.append({
-            "type": "progress",
-            "title": "施術経過を記録してください",
-            "message": "初回施術後の状態変化を記録しましょう。",
-            "button": "経過を追加",
-        })
 
 @login_required
 @transaction.atomic
