@@ -26,6 +26,11 @@ urlpatterns = [
         name="comparison_create",
     ),
     path(
+        "assessments/<int:assessment_id>/report/",
+        views.posture_assessment_report_view,
+        name="assessment_report",
+    ),
+    path(
         "<int:assessment_id>/",
         views.posture_detail_view,
         name="detail",

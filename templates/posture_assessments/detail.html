@@ -183,6 +183,15 @@
     box-shadow:none;
   }
 
+  .pa-btn.disabled{
+    color:#8493a1;
+    background:#eef2f5;
+    border-color:#dce4ea;
+    box-shadow:none;
+    cursor:not-allowed;
+    pointer-events:none;
+  }
+
   .pa-score-strip{
     display:grid;
     grid-template-columns:1fr repeat(3,minmax(0,.52fr));
@@ -868,6 +877,16 @@
         <div class="pa-action-row">
           <a href="{% url 'posture_assessments:list' patient.id %}" class="pa-btn">一覧へ戻る</a>
           <a href="{% url 'staff:patient_detail' patient.id %}" class="pa-btn">患者詳細へ戻る</a>
+          {% if summary %}
+            <a href="{% url 'posture_assessments:assessment_report' assessment.id %}"
+               class="pa-btn">
+              患者向けレポート
+            </a>
+          {% else %}
+            <span class="pa-btn disabled" title="AI分析後に作成できます">
+              AI分析後にレポート作成
+            </span>
+          {% endif %}
           <form method="post"
                 action="{% url 'posture_assessments:analyze' assessment.id %}"
                 style="display:inline;">

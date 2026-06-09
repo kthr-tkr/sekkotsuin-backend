@@ -1,0 +1,1408 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | 姿勢評価レポート / 改善プラン{% endblock %}
+
+{% block content %}
+<style>
+  .ar-shell{
+    max-width:1500px;
+    margin:0 auto;
+    color:#172b40;
+  }
+
+  .ar-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+
+  .ar-btn{
+    min-height:42px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 16px;
+    border-radius:999px;
+    border:1px solid #d6e2ec;
+    background:#fff;
+    color:#17324a;
+    font-size:13px;
+    font-weight:900;
+    box-shadow:0 10px 24px rgba(19,45,70,.07);
+    cursor:pointer;
+  }
+
+  .ar-btn.primary{
+    color:#fff;
+    border-color:transparent;
+    background:linear-gradient(135deg,#17375c,#3579bd);
+  }
+
+  .ar-page{
+    overflow:hidden;
+    border-radius:28px;
+    background:#f8fbfe;
+    border:1px solid #dbe6ef;
+    box-shadow:0 28px 80px rgba(21,48,75,.12);
+  }
+
+  .ar-header{
+    padding:20px;
+    background:
+      radial-gradient(circle at 4% 0%,rgba(67,137,204,.18),transparent 28%),
+      radial-gradient(circle at 98% 8%,rgba(205,162,78,.14),transparent 24%),
+      linear-gradient(135deg,#f5f9fe,#fff 48%,#fffbf2);
+    border-bottom:1px solid #dbe6ef;
+  }
+
+  .ar-top-grid{
+    display:grid;
+    grid-template-columns:1.2fr .85fr .7fr;
+    gap:14px;
+  }
+
+  .ar-title-card,
+  .ar-patient-card,
+  .ar-meta-card,
+  .ar-score-card,
+  .ar-stat-card,
+  .ar-card{
+    border-radius:22px;
+    background:#fff;
+    border:1px solid #dbe6ef;
+    box-shadow:0 14px 34px rgba(24,57,87,.055);
+  }
+
+  .ar-title-card{
+    min-height:180px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:18px;
+  }
+
+  .ar-kicker{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:#2f6fae;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .ar-kicker-pill{
+    min-height:28px;
+    display:inline-flex;
+    align-items:center;
+    padding:0 13px;
+    border-radius:999px;
+    color:#fff;
+    background:linear-gradient(135deg,#17375c,#3579bd);
+  }
+
+  .ar-title{
+    margin:10px 0 0;
+    color:#122b43;
+    font-size:clamp(31px,4vw,50px);
+    line-height:1.03;
+    letter-spacing:-.055em;
+    font-weight:950;
+  }
+
+  .ar-lead{
+    margin:10px 0 0;
+    color:#5b7083;
+    font-size:14px;
+    font-weight:800;
+    line-height:1.75;
+  }
+
+  .ar-brand{
+    color:#7b8fa1;
+    font-size:12px;
+    font-weight:950;
+    letter-spacing:.14em;
+  }
+
+  .ar-patient-card{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    overflow:hidden;
+  }
+
+  .ar-patient-main{
+    grid-column:1 / -1;
+    padding:18px;
+    border-bottom:1px solid #e4edf4;
+  }
+
+  .ar-label{
+    color:#718497;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .ar-patient-name{
+    margin-top:8px;
+    color:#112d48;
+    font-size:29px;
+    font-weight:950;
+    letter-spacing:-.04em;
+  }
+
+  .ar-patient-sub{
+    margin-top:7px;
+    color:#4d6377;
+    font-size:14px;
+    font-weight:850;
+  }
+
+  .ar-patient-meta{
+    padding:14px 18px;
+    border-right:1px solid #e4edf4;
+  }
+
+  .ar-patient-meta:last-child{
+    border-right:0;
+  }
+
+  .ar-meta-value{
+    margin-top:7px;
+    color:#14324d;
+    font-size:17px;
+    font-weight:950;
+  }
+
+  .ar-meta-card{
+    display:grid;
+    overflow:hidden;
+  }
+
+  .ar-meta-head{
+    padding:13px 16px;
+    color:#17375c;
+    background:#eef5fc;
+    border-bottom:1px solid #dbe6ef;
+    font-size:13px;
+    font-weight:950;
+    text-align:center;
+  }
+
+  .ar-meta-row{
+    padding:13px 16px;
+    border-bottom:1px solid #e4edf4;
+  }
+
+  .ar-meta-row:last-child{
+    border-bottom:0;
+  }
+
+  .ar-summary-strip{
+    display:grid;
+    grid-template-columns:1.15fr repeat(3,minmax(0,.55fr));
+    gap:12px;
+    margin-top:14px;
+  }
+
+  .ar-score-card{
+    display:grid;
+    grid-template-columns:120px 1fr;
+    gap:15px;
+    align-items:center;
+    padding:17px;
+    background:
+      radial-gradient(circle at 12% 8%,rgba(47,111,174,.15),transparent 34%),
+      linear-gradient(135deg,#fff,#f3f8fd);
+  }
+
+  .ar-score-ring{
+    --score:0;
+    width:108px;
+    height:108px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:conic-gradient(#2f6fae calc(var(--score) * 1%),#e1eaf2 0);
+  }
+
+  .ar-score-inner{
+    width:78px;
+    height:78px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:#fff;
+    box-shadow:inset 0 0 0 1px #e7eef4;
+  }
+
+  .ar-score-number{
+    color:#132b42;
+    font-size:31px;
+    line-height:1;
+    font-weight:950;
+  }
+
+  .ar-score-max{
+    color:#7b8fa1;
+    font-size:10px;
+    font-weight:900;
+  }
+
+  .ar-score-title{
+    color:#142c44;
+    font-size:15px;
+    font-weight:950;
+  }
+
+  .ar-score-state{
+    margin-top:7px;
+    color:#2f6fae;
+    font-size:22px;
+    font-weight:950;
+  }
+
+  .ar-score-note{
+    margin-top:7px;
+    color:#6c8092;
+    font-size:11px;
+    font-weight:800;
+    line-height:1.6;
+  }
+
+  .ar-stat-card{
+    min-height:108px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:16px;
+  }
+
+  .ar-stat-icon{
+    width:31px;
+    height:31px;
+    display:grid;
+    place-items:center;
+    border-radius:11px;
+    color:#fff;
+    background:#2f6fae;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .ar-stat-icon.gold{
+    background:#c99a3d;
+  }
+
+  .ar-stat-icon.navy{
+    background:#17375c;
+  }
+
+  .ar-stat-label{
+    margin-top:9px;
+    color:#61788d;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .ar-stat-value{
+    margin-top:6px;
+    color:#142c44;
+    font-size:31px;
+    line-height:1;
+    font-weight:950;
+  }
+
+  .ar-stat-unit{
+    margin-left:4px;
+    color:#5c7185;
+    font-size:13px;
+    font-weight:900;
+  }
+
+  .ar-body{
+    padding:16px;
+    display:grid;
+    gap:14px;
+  }
+
+  .ar-card{
+    padding:15px;
+  }
+
+  .ar-section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:12px;
+    margin-bottom:12px;
+  }
+
+  .ar-section-kicker{
+    color:#2f6fae;
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.06em;
+  }
+
+  .ar-section-title{
+    margin-top:3px;
+    color:#142c44;
+    font-size:20px;
+    letter-spacing:-.035em;
+    font-weight:950;
+  }
+
+  .ar-section-note{
+    color:#76899a;
+    font-size:11px;
+    font-weight:850;
+  }
+
+  .ar-main-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1.45fr) minmax(340px,.75fr);
+    gap:14px;
+  }
+
+  .ar-photo-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .ar-photo-card{
+    overflow:hidden;
+    border-radius:18px;
+    background:#f7fafc;
+    border:1px solid #dbe6ef;
+  }
+
+  .ar-photo-head{
+    padding:10px 12px;
+    background:linear-gradient(180deg,#f2f7fc,#eaf2f9);
+    border-bottom:1px solid #dbe6ef;
+  }
+
+  .ar-photo-title{
+    color:#17324c;
+    font-size:15px;
+    font-weight:950;
+  }
+
+  .ar-photo-desc{
+    margin-top:3px;
+    color:#6b8092;
+    font-size:10px;
+    font-weight:850;
+  }
+
+  .ar-photo-body img{
+    width:100%;
+    height:315px;
+    display:block;
+    object-fit:contain;
+    background:#edf3f7;
+  }
+
+  .ar-no-photo{
+    height:315px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#8798a8;
+    background:#edf3f7;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .ar-summary-card{
+    overflow:hidden;
+    padding:0;
+  }
+
+  .ar-summary-head{
+    padding:13px 16px;
+    color:#fff;
+    background:linear-gradient(135deg,#17375c,#3579bd);
+    font-size:17px;
+    font-weight:950;
+  }
+
+  .ar-summary-body{
+    padding:17px;
+  }
+
+  .ar-summary-text{
+    margin:0;
+    color:#29465f;
+    font-size:15px;
+    font-weight:830;
+    line-height:1.9;
+    white-space:pre-wrap;
+  }
+
+  .ar-summary-point{
+    margin-top:14px;
+    padding:13px;
+    border-radius:17px;
+    color:#715426;
+    background:#fff9ec;
+    border:1px solid #eed9a7;
+    font-size:12px;
+    font-weight:850;
+    line-height:1.7;
+  }
+
+  .ar-state-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:11px;
+  }
+
+  .ar-state-card{
+    min-height:150px;
+    padding:14px;
+    border-radius:19px;
+    background:#fff;
+    border:1px solid #dbe6ef;
+  }
+
+  .ar-state-card.blue{
+    background:#f3f8fd;
+    border-color:#cfe0ef;
+  }
+
+  .ar-state-card.gold{
+    background:#fffaf0;
+    border-color:#eed9a7;
+  }
+
+  .ar-state-card.soft{
+    background:#f6faf8;
+    border-color:#d3e8df;
+  }
+
+  .ar-state-number{
+    width:34px;
+    height:34px;
+    display:grid;
+    place-items:center;
+    border-radius:12px;
+    color:#fff;
+    background:#2f6fae;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .ar-state-card.gold .ar-state-number{
+    background:#c99a3d;
+  }
+
+  .ar-state-card.soft .ar-state-number{
+    background:#4a9175;
+  }
+
+  .ar-state-title{
+    margin-top:10px;
+    color:#17324c;
+    font-size:14px;
+    font-weight:950;
+  }
+
+  .ar-list{
+    margin:9px 0 0;
+    padding:0;
+    display:grid;
+    gap:7px;
+    list-style:none;
+  }
+
+  .ar-list li{
+    position:relative;
+    padding-left:15px;
+    color:#415a70;
+    font-size:12px;
+    font-weight:760;
+    line-height:1.65;
+  }
+
+  .ar-list li::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:.7em;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#699bc7;
+  }
+
+  .ar-feature-layout{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+
+  .ar-view-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:9px;
+  }
+
+  .ar-view-card{
+    min-height:132px;
+    padding:13px;
+    border-radius:17px;
+    background:#f6f9fc;
+    border:1px solid #dbe6ef;
+  }
+
+  .ar-view-title{
+    color:#2f6fae;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .ar-view-text{
+    margin-top:7px;
+    color:#415a70;
+    font-size:12px;
+    font-weight:760;
+    line-height:1.65;
+    white-space:pre-wrap;
+  }
+
+  .ar-finding-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .ar-finding-card{
+    padding:11px;
+    border-radius:15px;
+    background:#fff;
+    border:1px solid #e0e9f0;
+  }
+
+  .ar-finding-label{
+    color:#17375c;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .ar-finding-text{
+    margin-top:5px;
+    color:#4b6378;
+    font-size:11px;
+    font-weight:760;
+    line-height:1.55;
+    white-space:pre-wrap;
+  }
+
+  .ar-alignment-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .ar-alignment-card{
+    padding:11px;
+    border-radius:15px;
+    background:#f8fafc;
+    border:1px solid #e0e9f0;
+  }
+
+  .ar-alignment-title{
+    color:#17375c;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .ar-mechanism-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:9px;
+  }
+
+  .ar-mechanism-card{
+    min-height:120px;
+    padding:13px;
+    border-radius:17px;
+    background:linear-gradient(180deg,#fff,#fffaf1);
+    border:1px solid #ead8b4;
+  }
+
+  .ar-mechanism-label{
+    color:#9a6d20;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .ar-mechanism-text{
+    margin-top:7px;
+    color:#4d6073;
+    font-size:12px;
+    font-weight:760;
+    line-height:1.65;
+  }
+
+  .ar-bottom-grid{
+    display:grid;
+    grid-template-columns:1.15fr .85fr;
+    gap:14px;
+  }
+
+  .ar-step-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .ar-step-card{
+    position:relative;
+    overflow:hidden;
+    min-height:160px;
+    padding:14px;
+    border-radius:19px;
+    background:linear-gradient(180deg,#fff,#f4f8fc);
+    border:1px solid #dbe6ef;
+  }
+
+  .ar-step-card::after{
+    content:"";
+    position:absolute;
+    right:-32px;
+    bottom:-42px;
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    background:rgba(47,111,174,.07);
+  }
+
+  .ar-step-number{
+    width:39px;
+    height:39px;
+    display:grid;
+    place-items:center;
+    border-radius:14px;
+    color:#fff;
+    background:#17375c;
+    font-size:16px;
+    font-weight:950;
+  }
+
+  .ar-step-title{
+    position:relative;
+    z-index:1;
+    margin-top:10px;
+    color:#17324c;
+    font-size:14px;
+    font-weight:950;
+  }
+
+  .ar-step-text{
+    position:relative;
+    z-index:1;
+    margin-top:7px;
+    color:#4c6479;
+    font-size:12px;
+    font-weight:760;
+    line-height:1.65;
+  }
+
+  .ar-care-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+
+  .ar-care-card{
+    min-height:105px;
+    padding:13px;
+    border-radius:17px;
+    background:#fff;
+    border:1px solid #dbe6ef;
+  }
+
+  .ar-care-icon{
+    width:32px;
+    height:32px;
+    display:grid;
+    place-items:center;
+    border-radius:11px;
+    color:#fff;
+    background:#c99a3d;
+    font-size:10px;
+    font-weight:950;
+  }
+
+  .ar-care-text{
+    margin-top:8px;
+    color:#405970;
+    font-size:12px;
+    font-weight:780;
+    line-height:1.65;
+  }
+
+  .ar-message-card{
+    display:grid;
+    grid-template-columns:74px 1fr;
+    gap:15px;
+    align-items:center;
+    background:
+      radial-gradient(circle at 96% 0%,rgba(201,154,61,.14),transparent 28%),
+      linear-gradient(135deg,#fffaf1,#f5f9fd);
+    border-color:#ead8b4;
+  }
+
+  .ar-message-icon{
+    width:66px;
+    height:66px;
+    display:grid;
+    place-items:center;
+    border-radius:21px;
+    color:#fff;
+    background:linear-gradient(135deg,#c99a3d,#e0b866);
+    font-size:23px;
+    font-weight:950;
+  }
+
+  .ar-message-title{
+    color:#17324c;
+    font-size:19px;
+    font-weight:950;
+  }
+
+  .ar-message-text{
+    margin:7px 0 0;
+    color:#405970;
+    font-size:14px;
+    font-weight:800;
+    line-height:1.85;
+    white-space:pre-wrap;
+  }
+
+  .ar-notice-card{
+    background:#fffaf1;
+    border-color:#ead8b4;
+  }
+
+  .ar-notice-list{
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:7px;
+    list-style:none;
+  }
+
+  .ar-notice-list li{
+    color:#6f542c;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.65;
+  }
+
+  .ar-footer{
+    display:flex;
+    justify-content:flex-end;
+    gap:22px;
+    color:#687d90;
+    font-size:11px;
+    font-weight:900;
+  }
+
+  @media(max-width:1180px){
+    .ar-top-grid,
+    .ar-summary-strip,
+    .ar-main-grid,
+    .ar-feature-layout,
+    .ar-bottom-grid{
+      grid-template-columns:1fr;
+    }
+
+    .ar-photo-grid,
+    .ar-state-grid,
+    .ar-view-grid,
+    .ar-mechanism-grid,
+    .ar-step-grid{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media(max-width:680px){
+    .ar-header,
+    .ar-body{
+      padding:12px;
+    }
+
+    .ar-actions{
+      align-items:flex-start;
+      flex-direction:column;
+    }
+
+    .ar-patient-card,
+    .ar-score-card,
+    .ar-message-card,
+    .ar-finding-grid,
+    .ar-alignment-grid,
+    .ar-care-grid{
+      grid-template-columns:1fr;
+    }
+
+    .ar-patient-meta{
+      border-right:0;
+      border-bottom:1px solid #e4edf4;
+    }
+
+    .ar-photo-body img,
+    .ar-no-photo{
+      height:250px;
+    }
+  }
+
+  @page{
+    size:A4 landscape;
+    margin:8mm;
+  }
+
+  @media print{
+    *{
+      print-color-adjust:exact;
+      -webkit-print-color-adjust:exact;
+    }
+
+    body{
+      background:#fff !important;
+    }
+
+    .sidebar,
+    .sidebar-overlay,
+    .mobile-topbar,
+    .ar-actions{
+      display:none !important;
+    }
+
+    .app{
+      display:block !important;
+      min-height:auto !important;
+    }
+
+    .main{
+      padding:0 !important;
+    }
+
+    .content,
+    .ar-shell{
+      max-width:none !important;
+      margin:0 !important;
+    }
+
+    .ar-page{
+      border:0 !important;
+      border-radius:0 !important;
+      box-shadow:none !important;
+    }
+
+    .ar-header,
+    .ar-body{
+      padding:9px !important;
+    }
+
+    .ar-body{
+      gap:9px !important;
+    }
+
+    .ar-top-grid{
+      grid-template-columns:1.15fr .82fr .66fr !important;
+      gap:8px !important;
+    }
+
+    .ar-summary-strip{
+      grid-template-columns:1.12fr repeat(3,minmax(0,.5fr)) !important;
+      gap:8px !important;
+      margin-top:8px !important;
+    }
+
+    .ar-main-grid{
+      grid-template-columns:1.42fr .73fr !important;
+      gap:9px !important;
+    }
+
+    .ar-feature-layout{
+      grid-template-columns:1fr 1fr !important;
+      gap:9px !important;
+    }
+
+    .ar-bottom-grid{
+      grid-template-columns:1.15fr .85fr !important;
+      gap:9px !important;
+    }
+
+    .ar-photo-grid,
+    .ar-state-grid,
+    .ar-view-grid,
+    .ar-step-grid{
+      grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+      gap:7px !important;
+    }
+
+    .ar-mechanism-grid{
+      grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+      gap:7px !important;
+    }
+
+    .ar-title-card{
+      min-height:140px !important;
+      padding:12px !important;
+    }
+
+    .ar-title{
+      font-size:31px !important;
+    }
+
+    .ar-lead,
+    .ar-summary-text,
+    .ar-message-text{
+      font-size:11px !important;
+      line-height:1.55 !important;
+    }
+
+    .ar-patient-name{
+      font-size:21px !important;
+    }
+
+    .ar-score-ring{
+      width:82px !important;
+      height:82px !important;
+    }
+
+    .ar-score-inner{
+      width:59px !important;
+      height:59px !important;
+    }
+
+    .ar-score-number{
+      font-size:24px !important;
+    }
+
+    .ar-photo-body img,
+    .ar-no-photo{
+      height:192px !important;
+    }
+
+    .ar-section-title{
+      font-size:15px !important;
+    }
+
+    .ar-list li,
+    .ar-view-text,
+    .ar-finding-text,
+    .ar-mechanism-text,
+    .ar-step-text,
+    .ar-care-text,
+    .ar-notice-list li{
+      font-size:9.5px !important;
+      line-height:1.45 !important;
+    }
+
+    .ar-card,
+    .ar-title-card,
+    .ar-patient-card,
+    .ar-meta-card,
+    .ar-score-card,
+    .ar-stat-card,
+    .ar-photo-card,
+    .ar-state-card,
+    .ar-view-card,
+    .ar-mechanism-card,
+    .ar-step-card,
+    .ar-care-card{
+      box-shadow:none !important;
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+  }
+</style>
+
+<div class="ar-shell">
+  <div class="ar-actions">
+    <a href="{% url 'posture_assessments:detail' assessment.id %}" class="ar-btn">
+      分析詳細へ戻る
+    </a>
+    <button type="button" class="ar-btn primary" id="printAssessmentReport">
+      印刷 / PDF保存
+    </button>
+  </div>
+
+  <article class="ar-page">
+    <header class="ar-header">
+      <div class="ar-top-grid">
+        <section class="ar-title-card">
+          <div>
+            <div class="ar-kicker">
+              <span class="ar-kicker-pill">AI姿勢分析</span>
+              <span>初回評価レポート</span>
+            </div>
+            <h1 class="ar-title">姿勢評価レポート<br>/ 改善プラン</h1>
+            <p class="ar-lead">
+              現在の姿勢傾向と、これからのケア方針を分かりやすくまとめています。
+            </p>
+          </div>
+          <div class="ar-brand">CareFrow</div>
+        </section>
+
+        <section class="ar-patient-card">
+          <div class="ar-patient-main">
+            <div class="ar-label">患者さん</div>
+            <div class="ar-patient-name">{{ patient.last_name }} {{ patient.first_name }} 様</div>
+            <div class="ar-patient-sub">
+              {% if patient_age is not None %}{{ patient_age }}歳{% else %}年齢未登録{% endif %}
+              ・
+              {{ patient_gender|default:"性別未登録" }}
+            </div>
+          </div>
+          <div class="ar-patient-meta">
+            <div class="ar-label">撮影日</div>
+            <div class="ar-meta-value">{{ assessment.created_at|date:"Y/m/d" }}</div>
+          </div>
+          <div class="ar-patient-meta">
+            <div class="ar-label">作成日</div>
+            <div class="ar-meta-value">{{ report_created_at|date:"Y/m/d" }}</div>
+          </div>
+        </section>
+
+        <section class="ar-meta-card">
+          <div class="ar-meta-head">AI分析情報</div>
+          <div class="ar-meta-row">
+            <div class="ar-label">分析状態</div>
+            <div class="ar-meta-value">{{ assessment.get_status_display }}</div>
+          </div>
+          <div class="ar-meta-row">
+            <div class="ar-label">画像数</div>
+            <div class="ar-meta-value">{{ images|length }}枚</div>
+          </div>
+          <div class="ar-meta-row">
+            <div class="ar-label">分析日</div>
+            <div class="ar-meta-value">
+              {% if assessment.analyzed_at %}{{ assessment.analyzed_at|date:"Y/m/d" }}{% else %}-{% endif %}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="ar-summary-strip">
+        <div class="ar-score-card">
+          <div class="ar-score-ring" style="--score:{{ assessment_score.score|default:0 }};">
+            <div class="ar-score-inner">
+              <div>
+                <div class="ar-score-number">
+                  {% if assessment_score.has_score %}{{ assessment_score.score }}{% else %}--{% endif %}
+                </div>
+                <div class="ar-score-max">/100</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="ar-score-title">参考姿勢スコア</div>
+            <div class="ar-score-state">{{ assessment_score.label }}</div>
+            <div class="ar-score-note">
+              ※スコアはAI分析結果をもとにした参考値です。診断ではありません。
+            </div>
+          </div>
+        </div>
+
+        <div class="ar-stat-card">
+          <div class="ar-stat-icon">01</div>
+          <div class="ar-stat-label">重要ポイント</div>
+          <div class="ar-stat-value">{{ assessment_score.important_count }}<span class="ar-stat-unit">件</span></div>
+        </div>
+        <div class="ar-stat-card">
+          <div class="ar-stat-icon gold">02</div>
+          <div class="ar-stat-label">負担部位候補</div>
+          <div class="ar-stat-value">{{ assessment_score.load_count }}<span class="ar-stat-unit">件</span></div>
+        </div>
+        <div class="ar-stat-card">
+          <div class="ar-stat-icon navy">03</div>
+          <div class="ar-stat-label">確認事項</div>
+          <div class="ar-stat-value">{{ assessment_score.risk_count }}<span class="ar-stat-unit">件</span></div>
+        </div>
+      </section>
+    </header>
+
+    <main class="ar-body">
+      <div class="ar-main-grid">
+        <section class="ar-card">
+          <div class="ar-section-head">
+            <div>
+              <div class="ar-section-kicker">Posture Images</div>
+              <div class="ar-section-title">姿勢画像</div>
+            </div>
+            <div class="ar-section-note">正面・右側面・背面</div>
+          </div>
+
+          <div class="ar-photo-grid">
+            {% for card in image_cards %}
+              <article class="ar-photo-card">
+                <div class="ar-photo-head">
+                  <div class="ar-photo-title">{{ card.label }}</div>
+                  <div class="ar-photo-desc">{{ card.description }}</div>
+                </div>
+                <div class="ar-photo-body">
+                  {% if card.image %}
+                    <img src="{{ card.image.image.url }}" alt="{{ card.label }}">
+                  {% else %}
+                    <div class="ar-no-photo">画像なし</div>
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="ar-card ar-summary-card">
+          <div class="ar-summary-head">今回の評価サマリー</div>
+          <div class="ar-summary-body">
+            <p class="ar-summary-text">{{ report_summary }}</p>
+            <div class="ar-summary-point">
+              姿勢の特徴は、痛みや日常の動きと合わせて確認することが大切です。画像だけで断定せず、施術者の評価と合わせて判断します。
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="ar-card">
+        <div class="ar-section-head">
+          <div>
+            <div class="ar-section-kicker">Current Condition</div>
+            <div class="ar-section-title">からだの状態</div>
+          </div>
+          <div class="ar-section-note">現在確認できる傾向を整理しています</div>
+        </div>
+
+        <div class="ar-state-grid">
+          <article class="ar-state-card blue">
+            <div class="ar-state-number">1</div>
+            <div class="ar-state-title">確認したい姿勢ポイント</div>
+            <ul class="ar-list">
+              {% if summary.important_points %}
+                {% for item in summary.important_points %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
+                <li>重要な姿勢ポイントはまだ整理されていません。</li>
+              {% endif %}
+            </ul>
+          </article>
+
+          <article class="ar-state-card gold">
+            <div class="ar-state-number">2</div>
+            <div class="ar-state-title">負担がかかる可能性のある部位</div>
+            <ul class="ar-list">
+              {% if summary.suspected_load_areas %}
+                {% for item in summary.suspected_load_areas %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
+                <li>負担部位の候補はまだ整理されていません。</li>
+              {% endif %}
+            </ul>
+          </article>
+
+          <article class="ar-state-card soft">
+            <div class="ar-state-number">3</div>
+            <div class="ar-state-title">症状との関連の可能性</div>
+            <ul class="ar-list">
+              {% if summary.symptom_relation_hypotheses %}
+                {% for item in summary.symptom_relation_hypotheses %}<li>{{ item }}</li>{% endfor %}
+              {% else %}
+                <li>症状との関係は、問診や動作確認と合わせて判断します。</li>
+              {% endif %}
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="ar-card">
+        <div class="ar-section-head">
+          <div>
+            <div class="ar-section-kicker">Posture Features</div>
+            <div class="ar-section-title">姿勢の特徴</div>
+          </div>
+          <div class="ar-section-note">専門用語を抑えて方向別・部位別に表示</div>
+        </div>
+
+        <div class="ar-feature-layout">
+          <div>
+            <div class="ar-view-grid">
+              {% for card in view_summary_cards %}
+                <article class="ar-view-card">
+                  <div class="ar-view-title">{{ card.label }}</div>
+                  <div class="ar-view-text">{{ card.text }}</div>
+                </article>
+              {% endfor %}
+            </div>
+
+            <div class="ar-finding-grid" style="margin-top:9px;">
+              <article class="ar-finding-card">
+                <div class="ar-finding-label">頭部・首</div>
+                <div class="ar-finding-text">{{ summary.posture_findings.head_neck|default:"確認中です。" }}</div>
+              </article>
+              <article class="ar-finding-card">
+                <div class="ar-finding-label">肩</div>
+                <div class="ar-finding-text">{{ summary.posture_findings.shoulder|default:"確認中です。" }}</div>
+              </article>
+              <article class="ar-finding-card">
+                <div class="ar-finding-label">背骨</div>
+                <div class="ar-finding-text">{{ summary.posture_findings.spine|default:"確認中です。" }}</div>
+              </article>
+              <article class="ar-finding-card">
+                <div class="ar-finding-label">骨盤・股関節</div>
+                <div class="ar-finding-text">
+                  {{ summary.posture_findings.pelvis|default:"確認中です。" }}
+                  {% if summary.posture_findings.hip %}<br>{{ summary.posture_findings.hip }}{% endif %}
+                </div>
+              </article>
+              <article class="ar-finding-card">
+                <div class="ar-finding-label">膝</div>
+                <div class="ar-finding-text">{{ summary.posture_findings.knee|default:"確認中です。" }}</div>
+              </article>
+              <article class="ar-finding-card">
+                <div class="ar-finding-label">足関節・足部</div>
+                <div class="ar-finding-text">{{ summary.posture_findings.ankle_foot|default:"確認中です。" }}</div>
+              </article>
+            </div>
+          </div>
+
+          <div class="ar-alignment-grid">
+            {% for group in alignment_groups %}
+              <article class="ar-alignment-card">
+                <div class="ar-alignment-title">{{ group.label }}</div>
+                <ul class="ar-list">
+                  {% if group.items %}
+                    {% for item in group.items %}<li>{{ item }}</li>{% endfor %}
+                  {% else %}
+                    <li>詳細な評価は施術者の確認と合わせて判断します。</li>
+                  {% endif %}
+                </ul>
+              </article>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="ar-card">
+        <div class="ar-section-head">
+          <div>
+            <div class="ar-section-kicker">Load Mechanism</div>
+            <div class="ar-section-title">主な原因・負担メカニズムの可能性</div>
+          </div>
+          <div class="ar-section-note">原因を断定せず、施術者が確認する候補を表示</div>
+        </div>
+
+        <div class="ar-mechanism-grid">
+          {% if load_mechanisms %}
+            {% for item in load_mechanisms %}
+              <article class="ar-mechanism-card">
+                <div class="ar-mechanism-label">{{ item.label }}</div>
+                <div class="ar-mechanism-text">{{ item.text }}</div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <article class="ar-mechanism-card">
+              <div class="ar-mechanism-label">確認が必要です</div>
+              <div class="ar-mechanism-text">
+                負担の背景は、問診・触診・動作評価と合わせて確認します。
+              </div>
+            </article>
+          {% endif %}
+        </div>
+      </section>
+
+      <div class="ar-bottom-grid">
+        <section class="ar-card">
+          <div class="ar-section-head">
+            <div>
+              <div class="ar-section-kicker">Improvement Plan</div>
+              <div class="ar-section-title">これからのステップ</div>
+            </div>
+            <div class="ar-section-note">無理のない順番で進めます</div>
+          </div>
+
+          <div class="ar-step-grid">
+            {% for step in report_steps %}
+              <article class="ar-step-card">
+                <div class="ar-step-number">{{ forloop.counter }}</div>
+                <div class="ar-step-title">{{ step.title }}</div>
+                <div class="ar-step-text">{{ step.text }}</div>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="ar-card">
+          <div class="ar-section-head">
+            <div>
+              <div class="ar-section-kicker">Home Care</div>
+              <div class="ar-section-title">自宅でできるセルフケア</div>
+            </div>
+          </div>
+
+          <div class="ar-care-grid">
+            {% for item in home_care_items %}
+              <article class="ar-care-card">
+                <div class="ar-care-icon">HC</div>
+                <div class="ar-care-text">{{ item }}</div>
+              </article>
+            {% endfor %}
+          </div>
+          <div class="ar-section-note" style="margin-top:9px;">
+            痛みや違和感が強い場合は無理をせず、スタッフへ相談してください。
+          </div>
+        </section>
+      </div>
+
+      <section class="ar-card ar-message-card">
+        <div class="ar-message-icon">+</div>
+        <div>
+          <div class="ar-message-title">患者さんへのメッセージ</div>
+          <p class="ar-message-text">{{ patient_message }}</p>
+        </div>
+      </section>
+
+      <section class="ar-card ar-notice-card">
+        <div class="ar-section-head">
+          <div>
+            <div class="ar-section-kicker">Important Notes</div>
+            <div class="ar-section-title">注意事項</div>
+          </div>
+        </div>
+        <ul class="ar-notice-list">
+          <li>本レポートは診断ではなく、姿勢評価と施術者の判断を補助する参考情報です。</li>
+          <li>姿勢の特徴は、症状・触診・関節の動き・筋力・日常動作と合わせて判断します。</li>
+          <li>痛み、しびれ、筋力低下、夜間痛などがある場合は画像だけで判断せず、スタッフへ相談してください。</li>
+          {% for item in risk_notes %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <div class="ar-footer">
+        <span>作成日：{{ report_created_at|date:"Y/m/d" }}</span>
+        <span>CareFrow 姿勢評価レポート</span>
+      </div>
+    </main>
+  </article>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const button = document.getElementById("printAssessmentReport");
+  if(!button) return;
+
+  button.addEventListener("click", function(){
+    window.print();
+  });
+})();
+</script>
+{% endblock %}

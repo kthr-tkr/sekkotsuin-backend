@@ -428,7 +428,16 @@ def _build_assessment_score_context(summary):
     important_count = len(summary.get("important_points") or [])
     risk_count = len(summary.get("risk_notes") or [])
     load_count = len(summary.get("suspected_load_areas") or [])
-    score = 86 - important_count * 5 - risk_count * 4 - load_count * 2
+    has_home_care = bool(summary.get("home_care_suggestions"))
+    has_next_checks = bool(summary.get("next_check_points"))
+    support_bonus = (3 if has_home_care else 0) + (3 if has_next_checks else 0)
+    score = (
+        86
+        - important_count * 5
+        - risk_count * 4
+        - load_count * 2
+        + support_bonus
+    )
     score = round(max(35, min(95, score)))
 
     if score >= 76:
@@ -446,7 +455,86 @@ def _build_assessment_score_context(summary):
         "important_count": important_count,
         "risk_count": risk_count,
         "load_count": load_count,
+        "has_home_care": has_home_care,
+        "has_next_checks": has_next_checks,
     }
+
+
+def _build_assessment_report_steps(summary):
+    steps = []
+
+    for item in summary.get("treatment_suggestions") or []:
+        steps.append({
+            "title": "姿勢改善・施術方針",
+            "text": item,
+            "source": "treatment",
+        })
+
+    for item in summary.get("next_check_points") or []:
+        steps.append({
+            "title": "次回の確認ポイント",
+            "text": item,
+            "source": "next_check",
+        })
+
+    fallback_steps = [
+        {
+            "title": "Step1 痛み・負担の管理",
+            "text": "痛みや違和感の出方を確認し、日常生活で負担が強くなりやすい動きを整理します。",
+            "source": "fallback",
+        },
+        {
+            "title": "Step2 姿勢改善・筋肉ケア",
+            "text": "姿勢の傾向に合わせて、筋肉や関節の状態を施術者の評価と合わせて確認します。",
+            "source": "fallback",
+        },
+        {
+            "title": "Step3 再発予防・パフォーマンスアップ",
+            "text": "生活習慣や動作のくせを確認し、良い状態を保ちやすい体づくりを目指します。",
+            "source": "fallback",
+        },
+    ]
+
+    for fallback_step in fallback_steps:
+        if len(steps) >= 3:
+            break
+        steps.append(fallback_step)
+
+    return steps[:3]
+
+
+def _build_assessment_load_mechanisms(summary):
+    items = []
+
+    for item in summary.get("symptom_relation_hypotheses") or []:
+        items.append({
+            "label": "症状との関連仮説",
+            "text": item,
+        })
+
+    for joint_label, joint in [
+        ("頭部・首", (summary.get("joint_assessments") or {}).get("head") or {}),
+        ("頚部", (summary.get("joint_assessments") or {}).get("neck") or {}),
+        ("肩・肩甲帯", (summary.get("joint_assessments") or {}).get("shoulder") or {}),
+        ("胸椎・胸郭", (summary.get("joint_assessments") or {}).get("thoracic_spine") or {}),
+        ("腰椎・骨盤", (summary.get("joint_assessments") or {}).get("lumbar_pelvis") or {}),
+        ("股関節", (summary.get("joint_assessments") or {}).get("hip") or {}),
+        ("膝", (summary.get("joint_assessments") or {}).get("knee") or {}),
+        ("足関節・足部", (summary.get("joint_assessments") or {}).get("ankle_foot") or {}),
+    ]:
+        for finding in joint.get("possible_findings") or []:
+            items.append({
+                "label": joint_label,
+                "text": finding,
+            })
+
+    for item in summary.get("clinical_notes") or []:
+        items.append({
+            "label": "施術者の確認事項",
+            "text": item,
+        })
+
+    return items[:8]
 
 
 @staff_required
@@ -505,6 +593,85 @@ def posture_detail_view(request, assessment_id):
         "view_summary_cards": view_summary_cards,
         "joint_assessment_cards": joint_assessment_cards,
         "alignment_groups": alignment_groups,
+    })
+
+
+@staff_required
+def posture_assessment_report_view(request, assessment_id):
+    clinic = get_current_clinic(request)
+
+    assessment = get_object_or_404(
+        PostureAssessment.objects
+        .select_related(
+            "clinic",
+            "patient",
+            "appointment",
+            "treatment_session",
+            "clinical_note",
+            "created_by",
+            "confirmed_by",
+            "updated_by",
+        )
+        .prefetch_related("images"),
+        pk=assessment_id,
+        clinic=clinic,
+    )
+
+    images = assessment.images.all()
+    image_map = {
+        image.image_type: image
+        for image in images
+    }
+    summary = _normalize_assessment_summary(
+        assessment.get_active_summary() or {}
+    )
+    image_cards = _build_assessment_image_cards(images)
+    assessment_score = _build_assessment_score_context(summary)
+    view_summary_cards = _build_view_summary_cards(summary)
+    alignment_groups = _build_alignment_groups(summary)
+    report_steps = _build_assessment_report_steps(summary)
+    load_mechanisms = _build_assessment_load_mechanisms(summary)
+    home_care_items = summary.get("home_care_suggestions") or [
+        "スタッフの指示に合わせて、無理のない範囲で行ってください。",
+    ]
+    risk_notes = summary.get("risk_notes") or [
+        "画像の評価は撮影角度、立ち位置、服装、カメラ距離の影響を受ける可能性があります。",
+        "本レポートは診断ではなく、施術者の評価を補助する参考情報です。",
+        "痛みやしびれが強い場合は、画像だけで判断せずスタッフへ相談してください。",
+    ]
+    report_summary = (
+        summary.get("report_summary_for_patient")
+        or summary.get("patient_explanation")
+        or summary.get("overall_summary")
+        or "AI分析後に、姿勢の特徴と今後の改善方針を患者さん向けに表示します。"
+    )
+    patient_message = (
+        summary.get("patient_explanation")
+        or summary.get("report_summary_for_patient")
+        or "姿勢の状態は、日常の動きや症状と合わせて確認することが大切です。無理のない範囲で、一緒に良い変化を目指していきましょう。"
+    )
+
+    return render(request, "posture_assessments/assessment_report.html", {
+        "active": "patient_search",
+        "page_title": "姿勢評価レポート / 改善プラン",
+        "assessment": assessment,
+        "patient": assessment.patient,
+        "patient_age": _get_patient_age(assessment.patient),
+        "patient_gender": _get_patient_gender_display(assessment.patient),
+        "report_created_at": timezone.now(),
+        "images": images,
+        "image_map": image_map,
+        "image_cards": image_cards,
+        "summary": summary,
+        "assessment_score": assessment_score,
+        "view_summary_cards": view_summary_cards,
+        "alignment_groups": alignment_groups,
+        "report_steps": report_steps,
+        "load_mechanisms": load_mechanisms,
+        "home_care_items": home_care_items,
+        "risk_notes": risk_notes,
+        "report_summary": report_summary,
+        "patient_message": patient_message,
     })
 
 
