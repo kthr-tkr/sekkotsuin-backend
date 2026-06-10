@@ -153,6 +153,182 @@ def get_current_clinic(request):
     return Clinic.objects.order_by("id").first()
 
 
+def _compact_dashboard_text(value, fallback="", limit=52):
+    if isinstance(value, dict):
+        value = value.get("summary") or value.get("possible_findings") or ""
+
+    if isinstance(value, (list, tuple)):
+        value = next(
+            (
+                item
+                for item in value
+                if isinstance(item, str) and item.strip()
+            ),
+            "",
+        )
+
+    text = " ".join(str(value or "").split())
+    if not text:
+        return fallback
+
+    for separator in ("。", "！", "？", "\n"):
+        text = text.split(separator, 1)[0].strip()
+
+    if len(text) > limit:
+        return f"{text[:limit - 1].rstrip()}…"
+    return text
+
+
+def _dashboard_text_list(value):
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, (list, tuple)):
+        return []
+    return [
+        " ".join(str(item).split())
+        for item in value
+        if str(item).strip()
+    ]
+
+
+def _build_patient_body_profile(summary):
+    if not isinstance(summary, dict) or not summary:
+        return []
+
+    posture_findings = summary.get("posture_findings") or {}
+    joint_assessments = summary.get("joint_assessments") or {}
+    if not isinstance(posture_findings, dict):
+        posture_findings = {}
+    if not isinstance(joint_assessments, dict):
+        joint_assessments = {}
+
+    suspected_load_areas = _dashboard_text_list(
+        summary.get("suspected_load_areas")
+    )
+    alignment_observations = summary.get("alignment_observations") or {}
+    if isinstance(alignment_observations, dict):
+        alignment_items = []
+        for value in alignment_observations.values():
+            alignment_items.extend(_dashboard_text_list(value))
+    else:
+        alignment_items = _dashboard_text_list(alignment_observations)
+
+    specs = (
+        {
+            "key": "head_neck",
+            "label": "頭・首",
+            "joints": ("head", "neck"),
+            "keywords": ("頭", "首", "頚"),
+            "fallback": "頭部と首の位置関係を確認",
+        },
+        {
+            "key": "shoulder",
+            "label": "肩",
+            "joints": ("shoulder",),
+            "keywords": ("肩", "肩甲"),
+            "fallback": "肩の高さと左右差を確認",
+        },
+        {
+            "key": "spine",
+            "label": "背中",
+            "joints": ("thoracic_spine",),
+            "keywords": ("背", "胸椎", "脊柱"),
+            "fallback": "背中と体幹のラインを確認",
+        },
+        {
+            "key": "pelvis",
+            "label": "骨盤",
+            "joints": ("lumbar_pelvis", "hip"),
+            "keywords": ("骨盤", "腰", "股関節", "臀"),
+            "fallback": "骨盤の傾きと左右差を確認",
+        },
+        {
+            "key": "knee",
+            "label": "膝",
+            "joints": ("knee",),
+            "keywords": ("膝", "ニーイン", "ニーアウト"),
+            "fallback": "膝の向きと荷重を確認",
+        },
+        {
+            "key": "ankle_foot",
+            "label": "足部",
+            "joints": ("ankle_foot",),
+            "keywords": ("足", "足首", "足関節", "踵", "アーチ"),
+            "fallback": "足部の向きと荷重を確認",
+        },
+    )
+
+    check_words = (
+        "負担",
+        "左右差",
+        "傾き",
+        "偏位",
+        "前方",
+        "確認",
+        "注意",
+        "可能性",
+    )
+    good_words = ("良好", "安定", "改善", "目立たない", "整って")
+
+    items = []
+    for spec in specs:
+        source = posture_findings.get(spec["key"])
+        if not source and spec["key"] == "ankle_foot":
+            source = posture_findings.get("foot")
+
+        if not source:
+            for joint_key in spec["joints"]:
+                joint = joint_assessments.get(joint_key) or {}
+                if isinstance(joint, dict):
+                    source = (
+                        joint.get("summary")
+                        or joint.get("possible_findings")
+                    )
+                else:
+                    source = joint
+                if source:
+                    break
+
+        related_loads = [
+            item
+            for item in suspected_load_areas
+            if any(keyword in item for keyword in spec["keywords"])
+        ]
+        related_alignment = [
+            item
+            for item in alignment_items
+            if any(keyword in item for keyword in spec["keywords"])
+        ]
+        if not source and related_loads:
+            source = related_loads[0]
+        if not source and related_alignment:
+            source = related_alignment[0]
+
+        has_source = bool(source)
+        text = _compact_dashboard_text(
+            source,
+            fallback=spec["fallback"],
+        )
+        level_source = " ".join([text, *related_loads, *related_alignment])
+        if not has_source:
+            level = "info"
+        elif related_loads or any(word in level_source for word in check_words):
+            level = "check"
+        elif any(word in level_source for word in good_words):
+            level = "good"
+        else:
+            level = "info"
+
+        items.append({
+            "key": spec["key"],
+            "label": spec["label"],
+            "text": text,
+            "level": level,
+        })
+
+    return items
+
+
 def _is_staff_user(user, clinic=None):
     if not user or not user.is_authenticated:
         return False
@@ -1256,6 +1432,13 @@ def register_clinical_note(request, recording_id):
 @staff_required
 def staff_patient_detail_view(request, patient_id):
     clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の患者情報のみ閲覧できます。")
+
     patient = get_object_or_404(Patient, pk=patient_id, clinic=clinic)
 
     active_tab = request.GET.get("tab", "overview")
@@ -1277,14 +1460,21 @@ def staff_patient_detail_view(request, patient_id):
 
     notes = (
         ClinicalNote.objects
-        .filter(patient=patient)
+        .filter(
+            patient=patient,
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+        )
         .select_related("appointment", "recording", "intake")
         .order_by("-created_at")
     )
 
     treatment_plans = (
         TreatmentPlan.objects
-        .filter(patient=patient)
+        .filter(
+            patient=patient,
+            patient__clinic=clinic,
+        )
         .select_related("appointment", "intake", "clinical_note", "created_by")
         .prefetch_related("progress_logs")
         .annotate(
@@ -1327,6 +1517,53 @@ def staff_patient_detail_view(request, patient_id):
 
     posture_assessment_count = posture_assessments.count()
     latest_posture_assessment = posture_assessments.first()
+    posture_summary = (
+        latest_posture_assessment.get_active_summary()
+        if latest_posture_assessment
+        else {}
+    )
+    if not isinstance(posture_summary, dict):
+        posture_summary = {}
+
+    posture_profile_available = any(
+        posture_summary.get(key)
+        for key in (
+            "important_points",
+            "posture_findings",
+            "joint_assessments",
+            "alignment_observations",
+            "suspected_load_areas",
+            "next_check_points",
+            "patient_explanation",
+            "report_summary_for_patient",
+        )
+    )
+    body_profile_items = (
+        _build_patient_body_profile(posture_summary)
+        if posture_profile_available
+        else []
+    )
+    posture_profile_summary = _compact_dashboard_text(
+        posture_summary.get("report_summary_for_patient")
+        or posture_summary.get("patient_explanation")
+        or posture_summary.get("overall_summary"),
+        fallback="姿勢分析結果から身体の特徴を確認します。",
+        limit=96,
+    )
+    posture_attention_source = (
+        _dashboard_text_list(posture_summary.get("important_points"))
+        + _dashboard_text_list(posture_summary.get("suspected_load_areas"))
+    )
+    posture_attention_points = [
+        _compact_dashboard_text(item, limit=64)
+        for item in posture_attention_source[:4]
+    ]
+    posture_next_check_points = [
+        _compact_dashboard_text(item, limit=64)
+        for item in _dashboard_text_list(
+            posture_summary.get("next_check_points")
+        )[:3]
+    ]
 
     upcoming_appointments = appointments.filter(start_at__gte=now).order_by("start_at")[:4]
     past_appointments = appointments.filter(start_at__lt=now).order_by("-start_at")[:8]
@@ -1359,52 +1596,150 @@ def staff_patient_detail_view(request, patient_id):
     latest_note = notes.first()
     latest_extract = latest_note.extract_json if latest_note else {}
     latest_soap = latest_note.soap_json if latest_note else {}
+    if not isinstance(latest_extract, dict):
+        latest_extract = {}
+    if not isinstance(latest_soap, dict):
+        latest_soap = {}
 
-    latest_assessment = ""
-    if latest_soap and isinstance(latest_soap.get("A"), list) and latest_soap.get("A"):
-        latest_assessment = latest_soap.get("A")[0]
+    latest_assessment = _compact_dashboard_text(
+        latest_soap.get("A"),
+        limit=88,
+    )
+    latest_treatment_policy = _compact_dashboard_text(
+        latest_soap.get("P"),
+        limit=88,
+    )
+
+    overview_plan = active_plan or latest_plan
+    latest_plan_progress = None
+    if overview_plan:
+        latest_plan_progress = (
+            overview_plan.progress_logs
+            .filter(plan__patient__clinic=clinic)
+            .order_by("-visit_date", "-created_at")
+            .first()
+        )
+
+    plan_purpose = ""
+    plan_policy = ""
+    plan_next_check = ""
+    if overview_plan:
+        chief = overview_plan.chief_complaint or "現在の身体負担"
+        plan_purpose = (
+            f"{chief}に伴う負担を整え、日常生活を行いやすい状態を目指します。"
+        )
+        plan_policy = _compact_dashboard_text(
+            (
+                latest_plan_progress.treatment_detail
+                if latest_plan_progress
+                else ""
+            )
+            or overview_plan.lifestyle_other_instruction,
+            fallback="状態の変化を確認しながら施術方針を調整します。",
+            limit=88,
+        )
+        plan_next_check = _compact_dashboard_text(
+            (
+                latest_plan_progress.next_instruction
+                if latest_plan_progress
+                else ""
+            )
+            or overview_plan.visit_guide_unit_note,
+            fallback="症状と日常動作の変化を次回来院時に確認します。",
+            limit=72,
+        )
 
     needs_treatment_plan = not treatment_plans.exists()
     needs_next_appointment = next_appointment is None
 
-    command_cards = []
+    command_cards = [
+        {
+            "level": "good" if next_appointment else "warning",
+            "title": (
+                f"次回予約 {next_appointment.start_at:%m/%d %H:%M}"
+                if next_appointment
+                else "次回予約がありません"
+            ),
+            "text": (
+                f"{next_appointment.menu or '-'} / {next_appointment.get_status_display()}"
+                if next_appointment
+                else "継続施術が必要な場合は、来院目安と合わせて予約を確認します。"
+            ),
+            "button": "予約を確認" if next_appointment else "予約を作成",
+            "url": (
+                f"{reverse('staff:patient_detail', args=[patient.id])}?tab=appointments"
+                if next_appointment
+                else reverse("patients:staff_booking_calendar", args=[patient.id])
+            ),
+        },
+        {
+            "level": "info" if latest_note else "warning",
+            "title": "最新カルテ" if latest_note else "カルテが未登録です",
+            "text": (
+                _compact_dashboard_text(
+                    latest_extract.get("chief_complaint")
+                    or latest_assessment,
+                    fallback="直近の主訴・評価・施術方針を確認します。",
+                )
+                if latest_note
+                else "今日の状態を記録し、次回以降の評価につなげます。"
+            ),
+            "button": "カルテを見る" if latest_note else "施術記録を開始",
+            "url": (
+                reverse("staff:clinical_note_detail", args=[latest_note.id])
+                if latest_note
+                else reverse("treatment_sessions:start_for_patient", args=[patient.id])
+            ),
+        },
+        {
+            "level": "good" if overview_plan and overview_plan.is_active else "warning",
+            "title": "直近の施術計画" if overview_plan else "施術計画が未作成です",
+            "text": (
+                _compact_dashboard_text(
+                    plan_next_check,
+                    fallback="施術目的と次回確認ポイントを確認します。",
+                )
+                if overview_plan
+                else "施術目的・通院目安・生活指導を登録してください。"
+            ),
+            "button": "施術計画を見る" if overview_plan else "施術計画を作成",
+            "url": (
+                reverse("treatment_plans:plan_detail", args=[overview_plan.id])
+                if overview_plan
+                else reverse("treatment_plans:plan_create_for_patient", args=[patient.id])
+            ),
+        },
+        {
+            "level": "info" if posture_profile_available else "warning",
+            "title": "最新AI姿勢分析" if posture_profile_available else "AI姿勢分析を確認",
+            "text": (
+                posture_profile_summary
+                if posture_profile_available
+                else "姿勢分析を作成すると、身体特徴が概要に表示されます。"
+            ),
+            "button": "姿勢分析を見る" if latest_posture_assessment else "姿勢分析を作成",
+            "url": (
+                reverse(
+                    "posture_assessments:detail",
+                    args=[latest_posture_assessment.id],
+                )
+                if latest_posture_assessment
+                else reverse("posture_assessments:create", args=[patient.id])
+            ),
+        },
+    ]
 
-    if needs_treatment_plan:
-        command_cards.append({
-            "level": "danger",
-            "title": "施術計画が未作成です",
-            "text": "この患者の施術方針・来院目安・生活指導を登録してください。",
-            "button": "施術計画を作成",
-            "url": reverse("treatment_plans:plan_create_for_patient", args=[patient.id]),
-        })
-
-    if needs_next_appointment:
-        command_cards.append({
-            "level": "warning",
-            "title": "次回予約がありません",
-            "text": "継続施術が必要な場合は、次回予約を作成してください。",
-            "button": "予約を作成",
-            "url": reverse("patients:staff_booking_calendar", args=[patient.id]),
-        })
-
-    if latest_note:
-        command_cards.append({
-            "level": "info",
-            "title": "最新カルテを確認できます",
-            "text": "直近の主訴・評価・施術方針を確認できます。",
-            "button": "カルテを見る",
-            "url": reverse("staff:clinical_note_detail", args=[latest_note.id]),
-        })
-
-    # ★ 姿勢分析がない場合、今日やることにも軽く出せる
-    if not latest_posture_assessment:
-        command_cards.append({
-            "level": "info",
-            "title": "AI姿勢分析が未作成です",
-            "text": "正面・側面・背面の写真を登録し、姿勢傾向を記録できます。",
-            "button": "姿勢分析を作成",
-            "url": reverse("posture_assessments:create", args=[patient.id]),
-        })
+    today_check_points = []
+    today_check_points.extend(posture_next_check_points)
+    if latest_assessment:
+        today_check_points.append(
+            _compact_dashboard_text(latest_assessment, limit=72)
+        )
+    if plan_next_check:
+        today_check_points.append(plan_next_check)
+    if not next_appointment:
+        today_check_points.append("施術後に次回来院の目安を確認します。")
+    today_check_points = list(dict.fromkeys(today_check_points))[:4]
 
     return render(request, "staff/patients/detail.html", {
         "active": "patient_search",
@@ -1437,11 +1772,23 @@ def staff_patient_detail_view(request, patient_id):
         "latest_note": latest_note,
         "latest_extract": latest_extract,
         "latest_assessment": latest_assessment,
+        "latest_treatment_policy": latest_treatment_policy,
+        "overview_plan": overview_plan,
+        "latest_plan_progress": latest_plan_progress,
+        "plan_purpose": plan_purpose,
+        "plan_policy": plan_policy,
+        "plan_next_check": plan_next_check,
+        "today_check_points": today_check_points,
 
         # ★ AI姿勢分析
         "posture_assessments": posture_assessments,
         "posture_assessment_count": posture_assessment_count,
         "latest_posture_assessment": latest_posture_assessment,
+        "posture_summary": posture_summary,
+        "posture_profile_available": posture_profile_available,
+        "posture_profile_summary": posture_profile_summary,
+        "body_profile_items": body_profile_items,
+        "posture_attention_points": posture_attention_points,
 
         "file_count": 0,
     })
