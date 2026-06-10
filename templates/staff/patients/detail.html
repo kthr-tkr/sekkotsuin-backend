@@ -233,20 +233,16 @@
 
   .command-grid{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:14px;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
   }
 
   .command-card{
-    border-radius:22px;
-    padding:18px;
+    border-radius:18px;
+    padding:14px;
     border:1px solid #e8eef7;
     background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
     box-shadow:0 12px 26px rgba(15,23,42,.05);
-  }
-
-  .command-card.main{
-    grid-column:span 2;
   }
 
   .command-card.danger{
@@ -275,7 +271,7 @@
     border-radius:999px;
     font-size:11px;
     font-weight:900;
-    margin-bottom:12px;
+    margin-bottom:9px;
   }
 
   .command-card.danger .command-label{background:#fee2e2;color:#991b1b;}
@@ -284,7 +280,7 @@
   .command-card.good .command-label{background:#dcfce7;color:#166534;}
 
   .command-title{
-    font-size:17px;
+    font-size:15px;
     font-weight:900;
     color:#0f172a;
     margin-bottom:8px;
@@ -295,17 +291,17 @@
     font-size:13px;
     font-weight:700;
     line-height:1.7;
-    min-height:42px;
+    min-height:40px;
   }
 
   .command-btn{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    min-height:40px;
-    margin-top:14px;
-    padding:0 14px;
-    border-radius:14px;
+    min-height:36px;
+    margin-top:10px;
+    padding:0 12px;
+    border-radius:12px;
     text-decoration:none;
     color:#fff;
     background:linear-gradient(135deg,#0b1220,#1d4ed8);
@@ -370,14 +366,14 @@
 
   .body-profile-layout{
     display:grid;
-    grid-template-columns:300px 1fr;
+    grid-template-columns:270px 1fr;
     gap:20px;
     align-items:center;
   }
 
   .body-profile-figure{
     position:relative;
-    min-height:390px;
+    min-height:420px;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -511,6 +507,15 @@
     background:#fef3c7;
   }
 
+  .body-region.unassessed::before{
+    background:#cbd5e1;
+  }
+
+  .body-region.unassessed .body-region-badge{
+    color:#64748b;
+    background:#f1f5f9;
+  }
+
   .body-region-text{
     color:#526579;
     font-size:12px;
@@ -577,6 +582,66 @@
     font-size:13px;
     font-weight:800;
     line-height:1.75;
+  }
+
+  .ai-mini-card{
+    background:
+      radial-gradient(circle at 90% 10%,rgba(52,169,130,.10),transparent 28%),
+      #fff;
+    border-color:#d9ece5;
+  }
+
+  .ai-mini-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  .ai-mini-panel{
+    padding:16px;
+    border-radius:18px;
+    background:#f8fafc;
+    border:1px solid #e5ebf3;
+  }
+
+  .ai-mini-panel.good{
+    background:#f0fdf8;
+    border-color:#c8eadc;
+  }
+
+  .ai-mini-title{
+    color:#16324f;
+    font-size:13px;
+    font-weight:900;
+    margin-bottom:9px;
+  }
+
+  .ai-mini-list{
+    margin:0;
+    padding-left:18px;
+    color:#475569;
+    font-size:12px;
+    font-weight:750;
+    line-height:1.75;
+  }
+
+  .ai-mini-summary{
+    grid-column:1 / -1;
+    padding:16px 18px;
+    border-radius:18px;
+    color:#27445f;
+    background:#edf7ff;
+    border:1px solid #cfe5f5;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.75;
+  }
+
+  .ai-mini-actions{
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+    margin-top:14px;
   }
 
   .status-grid{
@@ -843,11 +908,7 @@
     }
 
     .command-grid{
-      grid-template-columns:1fr;
-    }
-
-    .command-card.main{
-      grid-column:auto;
+      grid-template-columns:repeat(2,1fr);
     }
 
     .appointment-grid{
@@ -880,7 +941,8 @@
     .body-profile-layout,
     .overview-clinical-grid,
     .body-region-grid,
-    .compact-summary-grid{
+    .compact-summary-grid,
+    .ai-mini-grid{
       grid-template-columns:1fr;
     }
 
@@ -892,7 +954,15 @@
       grid-column:auto;
     }
 
+    .ai-mini-summary{
+      grid-column:auto;
+    }
+
     .today-focus{
+      grid-template-columns:1fr;
+    }
+
+    .command-grid{
       grid-template-columns:1fr;
     }
   }
@@ -1714,18 +1784,32 @@
 
       <div class="hero-stats">
         <div class="hero-stat">
-          <div class="hero-label">予約</div>
-          <div class="hero-value">{{ appointment_count }}</div>
+          <div class="hero-label">次回予約</div>
+          <div class="hero-value">
+            {% if next_appointment %}
+              {{ next_appointment.start_at|date:"m/d H:i" }}
+            {% else %}
+              未設定
+            {% endif %}
+          </div>
         </div>
 
         <div class="hero-stat">
-          <div class="hero-label">カルテ</div>
-          <div class="hero-value">{{ note_count }}</div>
+          <div class="hero-label">最新カルテ</div>
+          <div class="hero-value">
+            {% if latest_note %}{{ latest_note.created_at|date:"m/d" }}{% else %}未登録{% endif %}
+          </div>
         </div>
 
         <div class="hero-stat">
-          <div class="hero-label">施術計画</div>
-          <div class="hero-value">{{ plan_count }}</div>
+          <div class="hero-label">AI姿勢分析</div>
+          <div class="hero-value">
+            {% if latest_posture_assessment %}
+              {{ latest_posture_assessment.created_at|date:"m/d" }}
+            {% else %}
+              未作成
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
@@ -1776,7 +1860,7 @@
       {% if command_cards %}
         <div class="command-grid">
           {% for item in command_cards %}
-            <div class="command-card {{ item.level }} {% if forloop.first %}main{% endif %}">
+            <div class="command-card {{ item.level }}">
               <div class="command-label">
                 {% if item.level == "danger" %}要対応{% elif item.level == "warning" %}確認{% elif item.level == "good" %}準備済み{% else %}参照{% endif %}
               </div>
@@ -1803,6 +1887,50 @@
               {% endfor %}
             </div>
           </div>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="pd-card">
+      <div class="pd-section-head">
+        <div>
+          <h3 class="pd-section-title">最新カルテ</h3>
+          <div class="pd-section-sub">施術前に主訴・評価・方針・次回確認だけを確認します</div>
+        </div>
+
+        {% if latest_note %}
+          <a href="{% url 'staff:clinical_note_detail' latest_note.id %}" class="overview-mini-btn">
+            カルテ詳細 →
+          </a>
+        {% endif %}
+      </div>
+
+      {% if latest_note %}
+        <div class="compact-summary-grid">
+          <div class="compact-summary-box">
+            <div class="compact-summary-label">作成日</div>
+            <div class="compact-summary-value">{{ latest_note.created_at|date:"Y-m-d H:i" }}</div>
+          </div>
+          <div class="compact-summary-box">
+            <div class="compact-summary-label">主訴</div>
+            <div class="compact-summary-value">{{ latest_extract.chief_complaint|default:"確認が必要です" }}</div>
+          </div>
+          <div class="compact-summary-box">
+            <div class="compact-summary-label">評価</div>
+            <div class="compact-summary-value">{{ latest_assessment|default:"施術者の評価と合わせて確認します。" }}</div>
+          </div>
+          <div class="compact-summary-box">
+            <div class="compact-summary-label">施術方針</div>
+            <div class="compact-summary-value">{{ latest_treatment_policy|default:"状態を確認しながら方針を調整します。" }}</div>
+          </div>
+          <div class="compact-summary-box wide">
+            <div class="compact-summary-label">次回確認ポイント</div>
+            <div class="compact-summary-value">{{ latest_note_next_check }}</div>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty-box">
+          まだ確定カルテがありません。今日の状態を記録すると、ここに要点が表示されます。
         </div>
       {% endif %}
     </section>
@@ -1841,6 +1969,10 @@
               <circle class="body-profile-joint" cx="110" cy="75" r="5"/>
               <circle class="body-profile-joint" cx="72" cy="111" r="5"/>
               <circle class="body-profile-joint" cx="148" cy="111" r="5"/>
+              <circle class="body-profile-joint" cx="56" cy="184" r="4"/>
+              <circle class="body-profile-joint" cx="164" cy="184" r="4"/>
+              <circle class="body-profile-joint" cx="50" cy="255" r="4"/>
+              <circle class="body-profile-joint" cx="170" cy="255" r="4"/>
               <circle class="body-profile-joint" cx="110" cy="181" r="5"/>
               <circle class="body-profile-joint" cx="84" cy="231" r="5"/>
               <circle class="body-profile-joint" cx="136" cy="231" r="5"/>
@@ -1864,7 +1996,9 @@
                       {% if item.level == "good" %}
                         良好傾向
                       {% elif item.level == "check" %}
-                        確認
+                        要確認
+                      {% elif item.level == "unassessed" %}
+                        未評価
                       {% else %}
                         参考
                       {% endif %}
@@ -1889,7 +2023,7 @@
         </div>
       {% else %}
         <div class="empty-box">
-          まだAI姿勢分析がありません。姿勢分析を作成すると、身体特徴がここに表示されます。<br><br>
+          まだAI姿勢分析がありません。姿勢分析を作成すると、関節別の身体特徴がここに表示されます。<br><br>
           {% if latest_posture_assessment %}
             <a href="{% url 'posture_assessments:detail' latest_posture_assessment.id %}" class="overview-mini-btn primary">
               登録済み分析を確認
@@ -1903,125 +2037,77 @@
       {% endif %}
     </section>
 
-    <div class="overview-clinical-grid">
-      <section class="pd-card">
-        <div class="pd-section-head">
-          <div>
-            <h3 class="pd-section-title">最新カルテサマリー</h3>
-            <div class="pd-section-sub">主訴・評価・施術方針を施術前に確認します</div>
-          </div>
-
-          {% if latest_note %}
-            <a href="{% url 'staff:clinical_note_detail' latest_note.id %}" class="overview-mini-btn">
-              詳細を見る →
-            </a>
-          {% endif %}
-        </div>
-
-        {% if latest_note %}
-          <div class="compact-summary-grid">
-            <div class="compact-summary-box">
-              <div class="compact-summary-label">主訴</div>
-              <div class="compact-summary-value">
-                {{ latest_extract.chief_complaint|default:"確認が必要です" }}
-              </div>
-            </div>
-
-            <div class="compact-summary-box">
-              <div class="compact-summary-label">記録日</div>
-              <div class="compact-summary-value">{{ latest_note.created_at|date:"Y-m-d H:i" }}</div>
-            </div>
-
-            <div class="compact-summary-box wide">
-              <div class="compact-summary-label">評価</div>
-              <div class="compact-summary-value">{{ latest_assessment|default:"施術者の評価と合わせて確認します。" }}</div>
-            </div>
-
-            <div class="compact-summary-box wide">
-              <div class="compact-summary-label">施術方針</div>
-              <div class="compact-summary-value">{{ latest_treatment_policy|default:"状態を確認しながら方針を調整します。" }}</div>
-            </div>
-          </div>
-        {% else %}
-          <div class="empty-box">
-            まだ確定カルテがありません。今日の状態を記録すると、ここに要点が表示されます。
-          </div>
-        {% endif %}
-      </section>
-
-      <section class="pd-card">
+    <section class="pd-card ai-mini-card">
       <div class="pd-section-head">
         <div>
-          <h3 class="pd-section-title">直近の施術計画</h3>
-          <div class="pd-section-sub">施術目的・改善方針・次回確認ポイントを確認します</div>
+          <h3 class="pd-section-title">最新AI姿勢分析 ミニ要約</h3>
+          <div class="pd-section-sub">重要ポイントと次回確認項目を短く確認します</div>
         </div>
 
-        <a href="{% url 'treatment_plans:plan_create_for_patient' patient.id %}" class="section-btn">
-          ＋ 施術計画を作成
-        </a>
+        {% if overview_plan %}
+          <a href="{% url 'treatment_plans:plan_detail' overview_plan.id %}" class="overview-mini-btn">
+            施術計画を見る
+          </a>
+        {% endif %}
       </div>
 
-      {% if overview_plan %}
-        <div class="overview-plan-card">
-          <div class="overview-plan-head">
-            <div>
-              <h3 class="overview-plan-title">
-                {{ overview_plan.title|default:"施術計画" }}
-              </h3>
-              <div class="overview-plan-sub">
-                主訴：{{ overview_plan.chief_complaint|default:"確認が必要です" }}
-              </div>
-            </div>
-
-            <div class="overview-plan-status">
-              {{ overview_plan.get_status_display }}
-            </div>
+      {% if posture_profile_available and latest_posture_assessment %}
+        <div class="ai-mini-grid">
+          <div class="ai-mini-panel good">
+            <div class="ai-mini-title">重要ポイント</div>
+            {% if posture_important_points %}
+              <ul class="ai-mini-list">
+                {% for point in posture_important_points %}
+                  <li>{{ point }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="compact-summary-value">大きく強調する所見はありません。</div>
+            {% endif %}
           </div>
 
-          <div class="compact-summary-grid">
-            <div class="compact-summary-box wide">
-              <div class="compact-summary-label">施術目的</div>
-              <div class="compact-summary-value">{{ plan_purpose }}</div>
-            </div>
-            <div class="compact-summary-box wide">
-              <div class="compact-summary-label">改善方針</div>
-              <div class="compact-summary-value">{{ plan_policy }}</div>
-            </div>
-            <div class="compact-summary-box">
-              <div class="compact-summary-label">通院目安</div>
-              <div class="compact-summary-value">
-                {{ overview_plan.get_visit_guide_type_display|default:"状態に合わせて相談" }}
-                {% if overview_plan.visit_guide_count %} {{ overview_plan.visit_guide_count }}回{% endif %}
-              </div>
-            </div>
-            <div class="compact-summary-box">
-              <div class="compact-summary-label">次回来院日</div>
-              <div class="compact-summary-value">{{ overview_plan.next_visit_date|default:"未設定" }}</div>
-            </div>
-            <div class="compact-summary-box wide">
-              <div class="compact-summary-label">次回確認ポイント</div>
-              <div class="compact-summary-value">{{ plan_next_check }}</div>
-            </div>
+          <div class="ai-mini-panel">
+            <div class="ai-mini-title">次回確認ポイント</div>
+            {% if posture_next_check_points %}
+              <ul class="ai-mini-list">
+                {% for point in posture_next_check_points %}
+                  <li>{{ point }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="compact-summary-value">姿勢と動作の変化を確認します。</div>
+            {% endif %}
           </div>
 
-          <div class="overview-action-row">
-            <a href="{% url 'treatment_plans:plan_detail' overview_plan.id %}" class="overview-mini-btn primary">
-              施術計画を見る →
-            </a>
-
-            <a href="{% url 'treatment_plans:plan_detail' overview_plan.id %}?tab=progress" class="overview-mini-btn">
-              経過を記録
-            </a>
+          <div class="ai-mini-summary">
+            {{ posture_profile_summary }}
           </div>
         </div>
 
+        <div class="ai-mini-actions">
+          <a href="{% url 'posture_assessments:detail' latest_posture_assessment.id %}" class="overview-mini-btn primary">
+            AI姿勢分析詳細 →
+          </a>
+          <a href="{% url 'posture_assessments:assessment_report' latest_posture_assessment.id %}" class="overview-mini-btn">
+            患者向け姿勢レポート
+          </a>
+        </div>
+      {% elif latest_posture_assessment %}
+        <div class="empty-box">
+          登録済みの姿勢分析には、まだAI分析結果がありません。分析を実行すると関節別の特徴が表示されます。<br><br>
+          <a href="{% url 'posture_assessments:detail' latest_posture_assessment.id %}" class="overview-mini-btn primary">
+            姿勢分析を確認
+          </a>
+        </div>
       {% else %}
         <div class="empty-box">
-          まだ施術計画がありません。患者さんの状態に合わせて施術計画を作成してください。
+          まだAI姿勢分析がありません。姿勢分析を作成すると、関節別の身体特徴がここに表示されます。<br><br>
+          <a href="{% url 'posture_assessments:create' patient.id %}" class="overview-mini-btn primary">
+            AI姿勢分析を作成
+          </a>
         </div>
       {% endif %}
-      </section>
-    </div>
+    </section>
 
   {% elif active_tab == "appointments" %}
 

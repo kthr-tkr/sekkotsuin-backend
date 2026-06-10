@@ -182,13 +182,44 @@ def _compact_dashboard_text(value, fallback="", limit=52):
 def _dashboard_text_list(value):
     if isinstance(value, str):
         value = [value]
+    if isinstance(value, dict):
+        value = [value]
     if not isinstance(value, (list, tuple)):
         return []
-    return [
-        " ".join(str(item).split())
-        for item in value
-        if str(item).strip()
-    ]
+
+    texts = []
+    for item in value:
+        if isinstance(item, dict):
+            item = (
+                item.get("text")
+                or item.get("summary")
+                or item.get("label")
+                or ""
+            )
+        text = " ".join(str(item or "").split())
+        if text:
+            texts.append(text)
+    return texts
+
+
+def _compact_profile_findings(values, fallback="", limit=68):
+    texts = []
+    for value in values:
+        for item in _dashboard_text_list(value):
+            text = _compact_dashboard_text(item, limit=42)
+            if text and text not in texts:
+                texts.append(text)
+            if len(texts) >= 2:
+                break
+        if len(texts) >= 2:
+            break
+
+    combined = "、".join(texts)
+    if not combined:
+        return fallback
+    if len(combined) > limit:
+        return f"{combined[:limit - 1].rstrip()}…"
+    return combined
 
 
 def _build_patient_body_profile(summary):
@@ -212,49 +243,101 @@ def _build_patient_body_profile(summary):
             alignment_items.extend(_dashboard_text_list(value))
     else:
         alignment_items = _dashboard_text_list(alignment_observations)
+    symptom_hypotheses = _dashboard_text_list(
+        summary.get("symptom_relation_hypotheses")
+    )
+    clinical_notes = _dashboard_text_list(summary.get("clinical_notes"))
 
     specs = (
         {
-            "key": "head_neck",
-            "label": "頭・首",
-            "joints": ("head", "neck"),
-            "keywords": ("頭", "首", "頚"),
-            "fallback": "頭部と首の位置関係を確認",
+            "key": "head",
+            "label": "頭部",
+            "joints": ("head",),
+            "posture_keys": ("head_neck",),
+            "keywords": ("頭", "頭部", "前方位", "側屈"),
+            "fallback": "頭部位置は必要時に確認",
+        },
+        {
+            "key": "neck",
+            "label": "頸部",
+            "joints": ("neck",),
+            "posture_keys": ("head_neck",),
+            "keywords": ("首", "頚", "頸", "回旋"),
+            "fallback": "頸部の回旋・側屈を必要時に確認",
         },
         {
             "key": "shoulder",
             "label": "肩",
             "joints": ("shoulder",),
+            "posture_keys": ("shoulder",),
             "keywords": ("肩", "肩甲"),
-            "fallback": "肩の高さと左右差を確認",
+            "fallback": "肩の高さ・巻き肩傾向を必要時に確認",
         },
         {
-            "key": "spine",
-            "label": "背中",
+            "key": "thoracic_spine",
+            "label": "胸椎 / 背中",
             "joints": ("thoracic_spine",),
+            "posture_keys": ("spine",),
             "keywords": ("背", "胸椎", "脊柱"),
-            "fallback": "背中と体幹のラインを確認",
+            "fallback": "胸椎後弯・体幹回旋を必要時に確認",
+        },
+        {
+            "key": "lumbar_spine",
+            "label": "腰椎",
+            "joints": ("lumbar_pelvis",),
+            "posture_keys": ("spine", "pelvis"),
+            "keywords": ("腰", "腰椎", "前弯"),
+            "fallback": "腰椎前弯・可動域を必要時に確認",
         },
         {
             "key": "pelvis",
             "label": "骨盤",
-            "joints": ("lumbar_pelvis", "hip"),
+            "joints": ("lumbar_pelvis",),
+            "posture_keys": ("pelvis",),
             "keywords": ("骨盤", "腰", "股関節", "臀"),
-            "fallback": "骨盤の傾きと左右差を確認",
+            "fallback": "骨盤の前後傾・左右差を必要時に確認",
+        },
+        {
+            "key": "hip",
+            "label": "股関節",
+            "joints": ("hip",),
+            "posture_keys": ("hip", "pelvis"),
+            "keywords": ("股関節", "股", "臀", "内旋", "外旋"),
+            "fallback": "股関節の内外旋・可動域を必要時に確認",
         },
         {
             "key": "knee",
             "label": "膝",
             "joints": ("knee",),
+            "posture_keys": ("knee",),
             "keywords": ("膝", "ニーイン", "ニーアウト"),
-            "fallback": "膝の向きと荷重を確認",
+            "fallback": "膝の向き・回旋ストレスを必要時に確認",
         },
         {
             "key": "ankle_foot",
-            "label": "足部",
+            "label": "足部 / 足首",
             "joints": ("ankle_foot",),
+            "posture_keys": ("ankle_foot", "foot"),
             "keywords": ("足", "足首", "足関節", "踵", "アーチ"),
-            "fallback": "足部の向きと荷重を確認",
+            "fallback": "足部の向き・回内外・荷重を必要時に確認",
+        },
+        {
+            "key": "elbow",
+            "label": "肘",
+            "joints": ("elbow",),
+            "posture_keys": ("elbow",),
+            "keywords": ("肘", "肘関節", "内側上顆", "外側上顆"),
+            "fallback": "未評価（症状・競技特性に応じて確認）",
+            "optional": True,
+        },
+        {
+            "key": "wrist_forearm",
+            "label": "手首 / 前腕",
+            "joints": ("wrist", "forearm", "wrist_forearm"),
+            "posture_keys": ("wrist", "forearm"),
+            "keywords": ("手首", "手関節", "前腕", "回内", "回外"),
+            "fallback": "未評価（症状・競技特性に応じて確認）",
+            "optional": True,
         },
     )
 
@@ -264,6 +347,22 @@ def _build_patient_body_profile(summary):
         "傾き",
         "偏位",
         "前方",
+        "下制",
+        "挙上",
+        "巻き肩",
+        "後弯",
+        "前弯",
+        "前傾",
+        "後傾",
+        "ニーイン",
+        "ニーアウト",
+        "制限",
+        "回旋",
+        "内旋",
+        "外旋",
+        "回内",
+        "回外",
+        "ストレス",
         "確認",
         "注意",
         "可能性",
@@ -272,22 +371,17 @@ def _build_patient_body_profile(summary):
 
     items = []
     for spec in specs:
-        source = posture_findings.get(spec["key"])
-        if not source and spec["key"] == "ankle_foot":
-            source = posture_findings.get("foot")
-
-        if not source:
-            for joint_key in spec["joints"]:
-                joint = joint_assessments.get(joint_key) or {}
-                if isinstance(joint, dict):
-                    source = (
-                        joint.get("summary")
-                        or joint.get("possible_findings")
-                    )
-                else:
-                    source = joint
-                if source:
-                    break
+        joint_sources = []
+        for joint_key in spec["joints"]:
+            joint = joint_assessments.get(joint_key) or {}
+            if isinstance(joint, dict):
+                joint_sources.extend([
+                    joint.get("summary"),
+                    joint.get("possible_findings"),
+                    joint.get("check_points"),
+                ])
+            elif joint:
+                joint_sources.append(joint)
 
         related_loads = [
             item
@@ -299,19 +393,48 @@ def _build_patient_body_profile(summary):
             for item in alignment_items
             if any(keyword in item for keyword in spec["keywords"])
         ]
-        if not source and related_loads:
-            source = related_loads[0]
-        if not source and related_alignment:
-            source = related_alignment[0]
+        related_hypotheses = [
+            item
+            for item in symptom_hypotheses
+            if any(keyword in item for keyword in spec["keywords"])
+        ]
+        related_clinical_notes = [
+            item
+            for item in clinical_notes
+            if any(keyword in item for keyword in spec["keywords"])
+        ]
+        posture_sources = [
+            posture_findings.get(key)
+            for key in spec["posture_keys"]
+            if posture_findings.get(key)
+        ]
 
-        has_source = bool(source)
-        text = _compact_dashboard_text(
-            source,
+        source_groups = [
+            joint_sources,
+            posture_sources,
+            related_alignment,
+            related_hypotheses,
+            related_loads,
+            related_clinical_notes,
+        ]
+        source_values = next(
+            (group for group in source_groups if any(group)),
+            [],
+        )
+        has_source = bool(source_values)
+        text = _compact_profile_findings(
+            source_values,
             fallback=spec["fallback"],
         )
-        level_source = " ".join([text, *related_loads, *related_alignment])
+        level_source = " ".join([
+            text,
+            *related_loads,
+            *related_alignment,
+            *related_hypotheses,
+            *related_clinical_notes,
+        ])
         if not has_source:
-            level = "info"
+            level = "unassessed"
         elif related_loads or any(word in level_source for word in check_words):
             level = "check"
         elif any(word in level_source for word in good_words):
@@ -1525,6 +1648,49 @@ def staff_patient_detail_view(request, patient_id):
     if not isinstance(posture_summary, dict):
         posture_summary = {}
 
+    latest_note = notes.first()
+    latest_extract = latest_note.extract_json if latest_note else {}
+    latest_soap = latest_note.soap_json if latest_note else {}
+    if not isinstance(latest_extract, dict):
+        latest_extract = {}
+    if not isinstance(latest_soap, dict):
+        latest_soap = {}
+
+    latest_assessment = _compact_dashboard_text(
+        latest_soap.get("A"),
+        limit=88,
+    )
+    latest_treatment_policy = _compact_dashboard_text(
+        latest_soap.get("P"),
+        limit=88,
+    )
+    latest_note_next_check = _compact_dashboard_text(
+        _dashboard_text_list(
+            latest_note.followups_json if latest_note else None
+        ),
+        fallback=(
+            "次回来院時に主訴・動作時の変化を確認します。"
+            if latest_note
+            else ""
+        ),
+        limit=88,
+    )
+
+    profile_summary = dict(posture_summary)
+    profile_clinical_notes = _dashboard_text_list(
+        profile_summary.get("clinical_notes")
+    )
+    profile_clinical_notes.extend(
+        item
+        for item in (
+            latest_extract.get("chief_complaint"),
+            latest_assessment,
+            latest_treatment_policy,
+        )
+        if item
+    )
+    profile_summary["clinical_notes"] = profile_clinical_notes
+
     posture_profile_available = any(
         posture_summary.get(key)
         for key in (
@@ -1532,14 +1698,16 @@ def staff_patient_detail_view(request, patient_id):
             "posture_findings",
             "joint_assessments",
             "alignment_observations",
+            "symptom_relation_hypotheses",
             "suspected_load_areas",
             "next_check_points",
+            "clinical_notes",
             "patient_explanation",
             "report_summary_for_patient",
         )
     )
     body_profile_items = (
-        _build_patient_body_profile(posture_summary)
+        _build_patient_body_profile(profile_summary)
         if posture_profile_available
         else []
     )
@@ -1554,6 +1722,12 @@ def staff_patient_detail_view(request, patient_id):
         _dashboard_text_list(posture_summary.get("important_points"))
         + _dashboard_text_list(posture_summary.get("suspected_load_areas"))
     )
+    posture_important_points = [
+        _compact_dashboard_text(item, limit=64)
+        for item in _dashboard_text_list(
+            posture_summary.get("important_points")
+        )[:3]
+    ]
     posture_attention_points = [
         _compact_dashboard_text(item, limit=64)
         for item in posture_attention_source[:4]
@@ -1593,23 +1767,6 @@ def staff_patient_detail_view(request, patient_id):
     elif latest_plan:
         progress_count = latest_plan.progress_logs.count()
 
-    latest_note = notes.first()
-    latest_extract = latest_note.extract_json if latest_note else {}
-    latest_soap = latest_note.soap_json if latest_note else {}
-    if not isinstance(latest_extract, dict):
-        latest_extract = {}
-    if not isinstance(latest_soap, dict):
-        latest_soap = {}
-
-    latest_assessment = _compact_dashboard_text(
-        latest_soap.get("A"),
-        limit=88,
-    )
-    latest_treatment_policy = _compact_dashboard_text(
-        latest_soap.get("P"),
-        limit=88,
-    )
-
     overview_plan = active_plan or latest_plan
     latest_plan_progress = None
     if overview_plan:
@@ -1620,24 +1777,8 @@ def staff_patient_detail_view(request, patient_id):
             .first()
         )
 
-    plan_purpose = ""
-    plan_policy = ""
     plan_next_check = ""
     if overview_plan:
-        chief = overview_plan.chief_complaint or "現在の身体負担"
-        plan_purpose = (
-            f"{chief}に伴う負担を整え、日常生活を行いやすい状態を目指します。"
-        )
-        plan_policy = _compact_dashboard_text(
-            (
-                latest_plan_progress.treatment_detail
-                if latest_plan_progress
-                else ""
-            )
-            or overview_plan.lifestyle_other_instruction,
-            fallback="状態の変化を確認しながら施術方針を調整します。",
-            limit=88,
-        )
         plan_next_check = _compact_dashboard_text(
             (
                 latest_plan_progress.next_instruction
@@ -1713,7 +1854,7 @@ def staff_patient_detail_view(request, patient_id):
             "level": "info" if posture_profile_available else "warning",
             "title": "最新AI姿勢分析" if posture_profile_available else "AI姿勢分析を確認",
             "text": (
-                posture_profile_summary
+                "関節別の身体特徴と次回確認ポイントを確認します。"
                 if posture_profile_available
                 else "姿勢分析を作成すると、身体特徴が概要に表示されます。"
             ),
@@ -1773,10 +1914,9 @@ def staff_patient_detail_view(request, patient_id):
         "latest_extract": latest_extract,
         "latest_assessment": latest_assessment,
         "latest_treatment_policy": latest_treatment_policy,
+        "latest_note_next_check": latest_note_next_check,
         "overview_plan": overview_plan,
         "latest_plan_progress": latest_plan_progress,
-        "plan_purpose": plan_purpose,
-        "plan_policy": plan_policy,
         "plan_next_check": plan_next_check,
         "today_check_points": today_check_points,
 
@@ -1789,6 +1929,8 @@ def staff_patient_detail_view(request, patient_id):
         "posture_profile_summary": posture_profile_summary,
         "body_profile_items": body_profile_items,
         "posture_attention_points": posture_attention_points,
+        "posture_important_points": posture_important_points,
+        "posture_next_check_points": posture_next_check_points,
 
         "file_count": 0,
     })
