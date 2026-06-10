@@ -234,6 +234,69 @@
     overflow-wrap:anywhere;
   }
 
+  .patient-context-block{
+    margin-top:16px;
+    padding:18px;
+    border-radius:20px;
+    background:
+      radial-gradient(circle at 92% 10%,rgba(52,169,130,.10),transparent 30%),
+      linear-gradient(180deg,#f8fffc 0%,#f8fbff 100%);
+    border:1px solid #d9ece5;
+  }
+
+  .patient-context-head{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    margin-bottom:13px;
+    color:#16324f;
+    font-size:14px;
+    font-weight:900;
+  }
+
+  .patient-context-head::before{
+    content:"";
+    width:9px;
+    height:9px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#34a982,#2563eb);
+    box-shadow:0 0 0 5px rgba(52,169,130,.10);
+  }
+
+  .patient-context-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .patient-context-item{
+    padding:12px 13px;
+    border-radius:15px;
+    background:rgba(255,255,255,.84);
+    border:1px solid #e2ebe8;
+  }
+
+  .patient-context-item.wide{
+    grid-column:span 2;
+  }
+
+  .patient-context-notes{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:12px;
+  }
+
+  .patient-context-note{
+    padding:7px 10px;
+    border-radius:999px;
+    color:#755b21;
+    background:#fff8e7;
+    border:1px solid #efdcae;
+    font-size:11px;
+    font-weight:850;
+  }
+
   .body-profile-card{
     background:
       radial-gradient(circle at 92% 8%,rgba(59,130,246,.10),transparent 28%),
@@ -309,6 +372,39 @@
     display:flex;
     flex-direction:column;
     gap:14px;
+  }
+
+  .body-context-summary{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+    padding:13px 16px;
+    border-radius:17px;
+    color:#31516a;
+    background:#f5fbff;
+    border:1px solid #d7e8f4;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.65;
+  }
+
+  .body-context-summary strong{
+    flex:0 0 auto;
+    color:#16324f;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .body-profile-source-note{
+    padding:11px 14px;
+    border-radius:15px;
+    color:#6b7280;
+    background:#f8fafc;
+    border:1px dashed #cbd5e1;
+    font-size:11px;
+    font-weight:800;
+    line-height:1.6;
   }
 
   .body-profile-summary{
@@ -398,6 +494,35 @@
     font-size:12px;
     font-weight:750;
     line-height:1.65;
+  }
+
+  .body-region-tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    margin-top:8px;
+  }
+
+  .body-region-tag{
+    padding:4px 7px;
+    border-radius:999px;
+    color:#526579;
+    background:#f1f5f9;
+    border:1px solid #e2e8f0;
+    font-size:9px;
+    font-weight:900;
+  }
+
+  .body-region.check .body-region-tag{
+    color:#80601c;
+    background:#fff8e7;
+    border-color:#efdcae;
+  }
+
+  .body-region.good .body-region-tag{
+    color:#176244;
+    background:#ecfdf5;
+    border-color:#c8eadc;
   }
 
   .body-profile-attention{
@@ -688,6 +813,10 @@
       grid-template-columns:repeat(2,minmax(0,1fr));
     }
 
+    .patient-context-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
     .appointment-grid{
       grid-template-columns:repeat(2,1fr);
     }
@@ -714,13 +843,21 @@
     }
 
     .patient-basic-grid,
+    .patient-context-grid,
     .body-profile-layout,
     .body-region-grid{
       grid-template-columns:1fr;
     }
 
-    .patient-basic-item.wide{
+    .patient-basic-item.wide,
+    .patient-context-item.wide{
       grid-column:auto;
+    }
+
+    .body-context-summary{
+      align-items:flex-start;
+      flex-direction:column;
+      gap:4px;
     }
 
     .body-profile-figure{
@@ -1633,13 +1770,51 @@
           </div>
         </div>
       </div>
+
+      <div class="patient-context-block">
+        <div class="patient-context-head">スポーツ・仕事・生活背景</div>
+        <div class="patient-context-grid">
+          <div class="patient-context-item">
+            <div class="patient-basic-label">スポーツ / 競技</div>
+            <div class="patient-basic-value">{{ patient_context_profile.sports }}</div>
+          </div>
+          <div class="patient-context-item">
+            <div class="patient-basic-label">競技ポジション</div>
+            <div class="patient-basic-value">{{ patient_context_profile.position }}</div>
+          </div>
+          <div class="patient-context-item">
+            <div class="patient-basic-label">仕事内容</div>
+            <div class="patient-basic-value">{{ patient_context_profile.work_style }}</div>
+          </div>
+          <div class="patient-context-item">
+            <div class="patient-basic-label">生活背景</div>
+            <div class="patient-basic-value">{{ patient_context_profile.lifestyle }}</div>
+          </div>
+          <div class="patient-context-item">
+            <div class="patient-basic-label">よくある姿勢・動作</div>
+            <div class="patient-basic-value">{{ patient_context_profile.common_movements }}</div>
+          </div>
+          <div class="patient-context-item">
+            <div class="patient-basic-label">痛みが出る動作</div>
+            <div class="patient-basic-value">{{ patient_context_profile.pain_triggers }}</div>
+          </div>
+        </div>
+
+        {% if patient_context_profile.notes %}
+          <div class="patient-context-notes" aria-label="注意メモ">
+            {% for note in patient_context_profile.notes %}
+              <span class="patient-context-note">注意メモ：{{ note }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
     </section>
 
     <section class="pd-card body-profile-card">
       <div class="pd-section-head">
         <div>
           <h3 class="pd-section-title">からだプロファイル</h3>
-          <div class="pd-section-sub">最新のAI姿勢分析から、施術前に確認したい身体特徴をまとめます</div>
+          <div class="pd-section-sub">姿勢分析・問診・カルテ・施術計画から、施術前に確認したい身体特徴をまとめます</div>
         </div>
 
         {% if latest_posture_assessment %}
@@ -1653,8 +1828,12 @@
         {% endif %}
       </div>
 
-      {% if posture_profile_available %}
-        <div class="body-profile-layout">
+      <div class="body-context-summary">
+        <strong>患者背景サマリー</strong>
+        <span>{{ patient_context_profile.summary }}</span>
+      </div>
+
+      <div class="body-profile-layout">
           <div class="body-profile-figure">
             <svg viewBox="0 0 220 430" role="img" aria-label="姿勢確認用の簡易人体図">
               <ellipse class="body-profile-silhouette" cx="110" cy="42" rx="27" ry="33"/>
@@ -1687,6 +1866,13 @@
           <div class="body-profile-content">
             <div class="body-profile-summary">{{ posture_profile_summary }}</div>
 
+            {% if not posture_profile_available %}
+              <div class="body-profile-source-note">
+                まだAI姿勢分析がありません。問診・カルテ・施術計画の背景情報をもとに、
+                関連しやすい部位と必要時の評価項目を表示しています。
+              </div>
+            {% endif %}
+
             <div class="body-region-grid">
               {% for item in body_profile_items %}
                 <div class="body-region {{ item.level }}">
@@ -1705,6 +1891,13 @@
                     </div>
                   </div>
                   <div class="body-region-text">{{ item.text }}</div>
+                  {% if item.tags %}
+                    <div class="body-region-tags">
+                      {% for tag in item.tags %}
+                        <span class="body-region-tag">{{ tag }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
                 </div>
               {% endfor %}
             </div>
@@ -1720,21 +1913,7 @@
               </div>
             {% endif %}
           </div>
-        </div>
-      {% else %}
-        <div class="empty-box">
-          まだAI姿勢分析がありません。姿勢分析を作成すると、関節別の身体特徴がここに表示されます。<br><br>
-          {% if latest_posture_assessment %}
-            <a href="{% url 'posture_assessments:detail' latest_posture_assessment.id %}" class="overview-mini-btn primary">
-              登録済み分析を確認
-            </a>
-          {% else %}
-            <a href="{% url 'posture_assessments:create' patient.id %}" class="overview-mini-btn primary">
-              AI姿勢分析を作成
-            </a>
-          {% endif %}
-        </div>
-      {% endif %}
+      </div>
     </section>
 
   {% elif active_tab == "appointments" %}
