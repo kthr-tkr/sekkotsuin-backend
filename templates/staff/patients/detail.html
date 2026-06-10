@@ -96,10 +96,7 @@
   }
 
   .patient-hero-grid{
-    display:grid;
-    grid-template-columns:1.1fr .9fr;
-    gap:18px;
-    align-items:stretch;
+    display:block;
   }
 
   .patient-name{
@@ -115,32 +112,6 @@
     font-size:14px;
     font-weight:700;
     line-height:1.8;
-  }
-
-  .hero-stats{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
-  }
-
-  .hero-stat{
-    border-radius:20px;
-    padding:15px;
-    background:rgba(255,255,255,.12);
-    border:1px solid rgba(255,255,255,.12);
-  }
-
-  .hero-label{
-    color:rgba(255,255,255,.66);
-    font-size:11px;
-    font-weight:900;
-    margin-bottom:8px;
-  }
-
-  .hero-value{
-    font-size:22px;
-    font-weight:900;
-    line-height:1.3;
   }
 
   .patient-tabs{
@@ -231,130 +202,36 @@
     font-weight:700;
   }
 
-  .command-grid{
+  .patient-basic-grid{
     display:grid;
     grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:10px;
+    gap:12px;
   }
 
-  .command-card{
+  .patient-basic-item{
     border-radius:18px;
-    padding:14px;
-    border:1px solid #e8eef7;
-    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
-    box-shadow:0 12px 26px rgba(15,23,42,.05);
-  }
-
-  .command-card.danger{
-    border-color:#fecaca;
-    background:linear-gradient(180deg,#fff 0%,#fff7f7 100%);
-  }
-
-  .command-card.warning{
-    border-color:#fde68a;
-    background:linear-gradient(180deg,#fff 0%,#fffbeb 100%);
-  }
-
-  .command-card.info{
-    border-color:#bfdbfe;
-    background:linear-gradient(180deg,#fff 0%,#eff6ff 100%);
-  }
-
-  .command-card.good{
-    border-color:#bbf7d0;
-    background:linear-gradient(180deg,#fff 0%,#ecfdf5 100%);
-  }
-
-  .command-label{
-    display:inline-flex;
-    padding:6px 10px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:900;
-    margin-bottom:9px;
-  }
-
-  .command-card.danger .command-label{background:#fee2e2;color:#991b1b;}
-  .command-card.warning .command-label{background:#fef3c7;color:#92400e;}
-  .command-card.info .command-label{background:#dbeafe;color:#1e3a8a;}
-  .command-card.good .command-label{background:#dcfce7;color:#166534;}
-
-  .command-title{
-    font-size:15px;
-    font-weight:900;
-    color:#0f172a;
-    margin-bottom:8px;
-  }
-
-  .command-text{
-    color:#64748b;
-    font-size:13px;
-    font-weight:700;
-    line-height:1.7;
-    min-height:40px;
-  }
-
-  .command-btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:36px;
-    margin-top:10px;
-    padding:0 12px;
-    border-radius:12px;
-    text-decoration:none;
-    color:#fff;
-    background:linear-gradient(135deg,#0b1220,#1d4ed8);
-    font-size:13px;
-    font-weight:900;
-  }
-
-  .today-focus{
-    display:grid;
-    grid-template-columns:auto 1fr;
-    gap:14px;
-    align-items:start;
-    margin-top:16px;
-    padding:16px 18px;
-    border-radius:20px;
+    padding:15px 16px;
     background:#f8fafc;
     border:1px solid #e2e8f0;
   }
 
-  .today-focus-mark{
-    display:flex;
-    width:38px;
-    height:38px;
-    align-items:center;
-    justify-content:center;
-    border-radius:13px;
-    color:#fff;
-    background:linear-gradient(135deg,#1e3a8a,#d6a94c);
-    font-size:12px;
+  .patient-basic-item.wide{
+    grid-column:span 2;
+  }
+
+  .patient-basic-label{
+    margin-bottom:6px;
+    color:#64748b;
+    font-size:11px;
     font-weight:900;
   }
 
-  .today-focus-title{
-    color:#0f172a;
+  .patient-basic-value{
+    color:#172033;
     font-size:14px;
-    font-weight:900;
-    margin-bottom:7px;
-  }
-
-  .today-focus-list{
-    display:flex;
-    flex-wrap:wrap;
-    gap:7px;
-  }
-
-  .today-focus-item{
-    padding:7px 10px;
-    border-radius:999px;
-    color:#475569;
-    background:#fff;
-    border:1px solid #dbe4ef;
-    font-size:12px;
-    font-weight:800;
+    font-weight:850;
+    line-height:1.65;
+    overflow-wrap:anywhere;
   }
 
   .body-profile-card{
@@ -544,104 +421,6 @@
     font-size:12px;
     font-weight:750;
     line-height:1.7;
-  }
-
-  .overview-clinical-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px;
-    align-items:start;
-  }
-
-  .compact-summary-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-  }
-
-  .compact-summary-box{
-    padding:14px;
-    border-radius:17px;
-    background:#f8fafc;
-    border:1px solid #e5ebf3;
-  }
-
-  .compact-summary-box.wide{
-    grid-column:1 / -1;
-  }
-
-  .compact-summary-label{
-    color:#64748b;
-    font-size:11px;
-    font-weight:900;
-    margin-bottom:6px;
-  }
-
-  .compact-summary-value{
-    color:#172033;
-    font-size:13px;
-    font-weight:800;
-    line-height:1.75;
-  }
-
-  .ai-mini-card{
-    background:
-      radial-gradient(circle at 90% 10%,rgba(52,169,130,.10),transparent 28%),
-      #fff;
-    border-color:#d9ece5;
-  }
-
-  .ai-mini-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-  }
-
-  .ai-mini-panel{
-    padding:16px;
-    border-radius:18px;
-    background:#f8fafc;
-    border:1px solid #e5ebf3;
-  }
-
-  .ai-mini-panel.good{
-    background:#f0fdf8;
-    border-color:#c8eadc;
-  }
-
-  .ai-mini-title{
-    color:#16324f;
-    font-size:13px;
-    font-weight:900;
-    margin-bottom:9px;
-  }
-
-  .ai-mini-list{
-    margin:0;
-    padding-left:18px;
-    color:#475569;
-    font-size:12px;
-    font-weight:750;
-    line-height:1.75;
-  }
-
-  .ai-mini-summary{
-    grid-column:1 / -1;
-    padding:16px 18px;
-    border-radius:18px;
-    color:#27445f;
-    background:#edf7ff;
-    border:1px solid #cfe5f5;
-    font-size:13px;
-    font-weight:800;
-    line-height:1.75;
-  }
-
-  .ai-mini-actions{
-    display:flex;
-    gap:9px;
-    flex-wrap:wrap;
-    margin-top:14px;
   }
 
   .status-grid{
@@ -900,15 +679,13 @@
   }
 
   @media(max-width:1100px){
-    .patient-hero-grid,
     .overview-grid,
-    .hero-stats,
     .status-grid{
       grid-template-columns:1fr 1fr;
     }
 
-    .command-grid{
-      grid-template-columns:repeat(2,1fr);
+    .patient-basic-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
     }
 
     .appointment-grid{
@@ -925,9 +702,7 @@
       font-size:32px;
     }
 
-    .patient-hero-grid,
     .overview-grid,
-    .hero-stats,
     .status-grid,
     .info-grid,
     .appointment-grid{
@@ -938,32 +713,18 @@
       grid-column:auto;
     }
 
+    .patient-basic-grid,
     .body-profile-layout,
-    .overview-clinical-grid,
-    .body-region-grid,
-    .compact-summary-grid,
-    .ai-mini-grid{
+    .body-region-grid{
       grid-template-columns:1fr;
+    }
+
+    .patient-basic-item.wide{
+      grid-column:auto;
     }
 
     .body-profile-figure{
       min-height:330px;
-    }
-
-    .compact-summary-box.wide{
-      grid-column:auto;
-    }
-
-    .ai-mini-summary{
-      grid-column:auto;
-    }
-
-    .today-focus{
-      grid-template-columns:1fr;
-    }
-
-    .command-grid{
-      grid-template-columns:1fr;
     }
   }
 
@@ -1769,47 +1530,12 @@
       <div>
         <h2 class="patient-name">{{ patient.last_name }} {{ patient.first_name }}</h2>
         <div class="patient-sub">
-          患者ID：{{ patient.id }}
-          {% if patient.birth_date %} / 生年月日：{{ patient.birth_date }}{% endif %}
-          {% if patient.phone %} / 電話：{{ patient.phone }}{% endif %}<br>
-          {% if latest_extract.chief_complaint %}
-            主訴：{{ latest_extract.chief_complaint }}
-          {% elif active_plan %}
-            主訴：{{ active_plan.chief_complaint|default:"-" }}
+          患者ID：
+          {% if patient.card_no %}
+            {{ patient.card_no }}
           {% else %}
-            主訴：-
+            {{ patient.id }}
           {% endif %}
-        </div>
-      </div>
-
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <div class="hero-label">次回予約</div>
-          <div class="hero-value">
-            {% if next_appointment %}
-              {{ next_appointment.start_at|date:"m/d H:i" }}
-            {% else %}
-              未設定
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="hero-stat">
-          <div class="hero-label">最新カルテ</div>
-          <div class="hero-value">
-            {% if latest_note %}{{ latest_note.created_at|date:"m/d" }}{% else %}未登録{% endif %}
-          </div>
-        </div>
-
-        <div class="hero-stat">
-          <div class="hero-label">AI姿勢分析</div>
-          <div class="hero-value">
-            {% if latest_posture_assessment %}
-              {{ latest_posture_assessment.created_at|date:"m/d" }}
-            {% else %}
-              未作成
-            {% endif %}
-          </div>
         </div>
       </div>
     </div>
@@ -1818,7 +1544,7 @@
   <nav class="patient-tabs">
     <a class="patient-tab {% if active_tab == 'overview' %}active{% endif %}"
        href="{% url 'staff:patient_detail' patient.id %}?tab=overview">
-      施術前ダッシュボード
+      概要
     </a>
 
     <a class="patient-tab {% if active_tab == 'appointments' %}active{% endif %}"
@@ -1852,87 +1578,61 @@
     <section class="pd-card">
       <div class="pd-section-head">
         <div>
-          <h3 class="pd-section-title">今日やること</h3>
-          <div class="pd-section-sub">予約・カルテ・施術計画・姿勢分析から、施術前の確認と次の行動を整理します</div>
+          <h3 class="pd-section-title">患者様基本情報</h3>
+          <div class="pd-section-sub">患者様の基本情報と主訴を確認します</div>
         </div>
       </div>
 
-      {% if command_cards %}
-        <div class="command-grid">
-          {% for item in command_cards %}
-            <div class="command-card {{ item.level }}">
-              <div class="command-label">
-                {% if item.level == "danger" %}要対応{% elif item.level == "warning" %}確認{% elif item.level == "good" %}準備済み{% else %}参照{% endif %}
-              </div>
-
-              <div class="command-title">{{ item.title }}</div>
-              <div class="command-text">{{ item.text }}</div>
-
-              <a href="{{ item.url }}" class="command-btn">{{ item.button }} →</a>
-            </div>
-          {% endfor %}
+      <div class="patient-basic-grid">
+        <div class="patient-basic-item">
+          <div class="patient-basic-label">患者名</div>
+          <div class="patient-basic-value">{{ patient.last_name }} {{ patient.first_name }} 様</div>
         </div>
-      {% else %}
-        <div class="empty-box">現時点で必要な対応はありません。</div>
-      {% endif %}
-
-      {% if today_check_points %}
-        <div class="today-focus">
-          <div class="today-focus-mark">TODAY</div>
-          <div>
-            <div class="today-focus-title">今日確認すべきポイント</div>
-            <div class="today-focus-list">
-              {% for point in today_check_points %}
-                <span class="today-focus-item">{{ point }}</span>
-              {% endfor %}
-            </div>
+        <div class="patient-basic-item">
+          <div class="patient-basic-label">患者ID</div>
+          <div class="patient-basic-value">
+            {% if patient.card_no %}{{ patient.card_no }}{% else %}{{ patient.id }}{% endif %}
           </div>
         </div>
-      {% endif %}
-    </section>
-
-    <section class="pd-card">
-      <div class="pd-section-head">
-        <div>
-          <h3 class="pd-section-title">最新カルテ</h3>
-          <div class="pd-section-sub">施術前に主訴・評価・方針・次回確認だけを確認します</div>
+        <div class="patient-basic-item">
+          <div class="patient-basic-label">生年月日</div>
+          <div class="patient-basic-value">{{ patient.birth_date|date:"Y年m月d日" }}</div>
         </div>
-
-        {% if latest_note %}
-          <a href="{% url 'staff:clinical_note_detail' latest_note.id %}" class="overview-mini-btn">
-            カルテ詳細 →
-          </a>
-        {% endif %}
+        <div class="patient-basic-item">
+          <div class="patient-basic-label">年齢</div>
+          <div class="patient-basic-value">{% if patient_age is not None %}{{ patient_age }}歳{% else %}未登録{% endif %}</div>
+        </div>
+        <div class="patient-basic-item">
+          <div class="patient-basic-label">性別</div>
+          <div class="patient-basic-value">{{ patient_gender|default:"未登録" }}</div>
+        </div>
+        <div class="patient-basic-item">
+          <div class="patient-basic-label">電話番号</div>
+          <div class="patient-basic-value">{{ patient.phone|default:"未登録" }}</div>
+        </div>
+        <div class="patient-basic-item wide">
+          <div class="patient-basic-label">主訴</div>
+          <div class="patient-basic-value">
+            {% if latest_extract.chief_complaint %}
+              {{ latest_extract.chief_complaint }}
+            {% elif active_plan %}
+              {{ active_plan.chief_complaint|default:"未登録" }}
+            {% else %}
+              未登録
+            {% endif %}
+          </div>
+        </div>
+        <div class="patient-basic-item">
+          <div class="patient-basic-label">最新予約日</div>
+          <div class="patient-basic-value">
+            {% if latest_appointment %}
+              {{ latest_appointment.start_at|date:"Y年m月d日 H:i" }}
+            {% else %}
+              予約なし
+            {% endif %}
+          </div>
+        </div>
       </div>
-
-      {% if latest_note %}
-        <div class="compact-summary-grid">
-          <div class="compact-summary-box">
-            <div class="compact-summary-label">作成日</div>
-            <div class="compact-summary-value">{{ latest_note.created_at|date:"Y-m-d H:i" }}</div>
-          </div>
-          <div class="compact-summary-box">
-            <div class="compact-summary-label">主訴</div>
-            <div class="compact-summary-value">{{ latest_extract.chief_complaint|default:"確認が必要です" }}</div>
-          </div>
-          <div class="compact-summary-box">
-            <div class="compact-summary-label">評価</div>
-            <div class="compact-summary-value">{{ latest_assessment|default:"施術者の評価と合わせて確認します。" }}</div>
-          </div>
-          <div class="compact-summary-box">
-            <div class="compact-summary-label">施術方針</div>
-            <div class="compact-summary-value">{{ latest_treatment_policy|default:"状態を確認しながら方針を調整します。" }}</div>
-          </div>
-          <div class="compact-summary-box wide">
-            <div class="compact-summary-label">次回確認ポイント</div>
-            <div class="compact-summary-value">{{ latest_note_next_check }}</div>
-          </div>
-        </div>
-      {% else %}
-        <div class="empty-box">
-          まだ確定カルテがありません。今日の状態を記録すると、ここに要点が表示されます。
-        </div>
-      {% endif %}
     </section>
 
     <section class="pd-card body-profile-card">
@@ -2033,78 +1733,6 @@
               AI姿勢分析を作成
             </a>
           {% endif %}
-        </div>
-      {% endif %}
-    </section>
-
-    <section class="pd-card ai-mini-card">
-      <div class="pd-section-head">
-        <div>
-          <h3 class="pd-section-title">最新AI姿勢分析 ミニ要約</h3>
-          <div class="pd-section-sub">重要ポイントと次回確認項目を短く確認します</div>
-        </div>
-
-        {% if overview_plan %}
-          <a href="{% url 'treatment_plans:plan_detail' overview_plan.id %}" class="overview-mini-btn">
-            施術計画を見る
-          </a>
-        {% endif %}
-      </div>
-
-      {% if posture_profile_available and latest_posture_assessment %}
-        <div class="ai-mini-grid">
-          <div class="ai-mini-panel good">
-            <div class="ai-mini-title">重要ポイント</div>
-            {% if posture_important_points %}
-              <ul class="ai-mini-list">
-                {% for point in posture_important_points %}
-                  <li>{{ point }}</li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <div class="compact-summary-value">大きく強調する所見はありません。</div>
-            {% endif %}
-          </div>
-
-          <div class="ai-mini-panel">
-            <div class="ai-mini-title">次回確認ポイント</div>
-            {% if posture_next_check_points %}
-              <ul class="ai-mini-list">
-                {% for point in posture_next_check_points %}
-                  <li>{{ point }}</li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <div class="compact-summary-value">姿勢と動作の変化を確認します。</div>
-            {% endif %}
-          </div>
-
-          <div class="ai-mini-summary">
-            {{ posture_profile_summary }}
-          </div>
-        </div>
-
-        <div class="ai-mini-actions">
-          <a href="{% url 'posture_assessments:detail' latest_posture_assessment.id %}" class="overview-mini-btn primary">
-            AI姿勢分析詳細 →
-          </a>
-          <a href="{% url 'posture_assessments:assessment_report' latest_posture_assessment.id %}" class="overview-mini-btn">
-            患者向け姿勢レポート
-          </a>
-        </div>
-      {% elif latest_posture_assessment %}
-        <div class="empty-box">
-          登録済みの姿勢分析には、まだAI分析結果がありません。分析を実行すると関節別の特徴が表示されます。<br><br>
-          <a href="{% url 'posture_assessments:detail' latest_posture_assessment.id %}" class="overview-mini-btn primary">
-            姿勢分析を確認
-          </a>
-        </div>
-      {% else %}
-        <div class="empty-box">
-          まだAI姿勢分析がありません。姿勢分析を作成すると、関節別の身体特徴がここに表示されます。<br><br>
-          <a href="{% url 'posture_assessments:create' patient.id %}" class="overview-mini-btn primary">
-            AI姿勢分析を作成
-          </a>
         </div>
       {% endif %}
     </section>

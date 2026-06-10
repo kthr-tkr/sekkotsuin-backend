@@ -1664,18 +1664,6 @@ def staff_patient_detail_view(request, patient_id):
         latest_soap.get("P"),
         limit=88,
     )
-    latest_note_next_check = _compact_dashboard_text(
-        _dashboard_text_list(
-            latest_note.followups_json if latest_note else None
-        ),
-        fallback=(
-            "次回来院時に主訴・動作時の変化を確認します。"
-            if latest_note
-            else ""
-        ),
-        limit=88,
-    )
-
     profile_summary = dict(posture_summary)
     profile_clinical_notes = _dashboard_text_list(
         profile_summary.get("clinical_notes")
@@ -1722,39 +1710,13 @@ def staff_patient_detail_view(request, patient_id):
         _dashboard_text_list(posture_summary.get("important_points"))
         + _dashboard_text_list(posture_summary.get("suspected_load_areas"))
     )
-    posture_important_points = [
-        _compact_dashboard_text(item, limit=64)
-        for item in _dashboard_text_list(
-            posture_summary.get("important_points")
-        )[:3]
-    ]
     posture_attention_points = [
         _compact_dashboard_text(item, limit=64)
         for item in posture_attention_source[:4]
     ]
-    posture_next_check_points = [
-        _compact_dashboard_text(item, limit=64)
-        for item in _dashboard_text_list(
-            posture_summary.get("next_check_points")
-        )[:3]
-    ]
 
     upcoming_appointments = appointments.filter(start_at__gte=now).order_by("start_at")[:4]
     past_appointments = appointments.filter(start_at__lt=now).order_by("-start_at")[:8]
-
-    next_appointment = (
-        appointments
-        .filter(
-            start_at__gte=now,
-            status__in=[
-                Appointment.Status.PENDING,
-                Appointment.Status.BOOKED,
-                Appointment.Status.ARRIVED,
-            ],
-        )
-        .order_by("start_at")
-        .first()
-    )
 
     latest_appointment = appointments.first()
 
@@ -1767,120 +1729,29 @@ def staff_patient_detail_view(request, patient_id):
     elif latest_plan:
         progress_count = latest_plan.progress_logs.count()
 
-    overview_plan = active_plan or latest_plan
-    latest_plan_progress = None
-    if overview_plan:
-        latest_plan_progress = (
-            overview_plan.progress_logs
-            .filter(plan__patient__clinic=clinic)
-            .order_by("-visit_date", "-created_at")
-            .first()
-        )
-
-    plan_next_check = ""
-    if overview_plan:
-        plan_next_check = _compact_dashboard_text(
-            (
-                latest_plan_progress.next_instruction
-                if latest_plan_progress
-                else ""
+    patient_age = None
+    if patient.birth_date:
+        today = timezone.localdate()
+        patient_age = (
+            today.year
+            - patient.birth_date.year
+            - (
+                (today.month, today.day)
+                < (patient.birth_date.month, patient.birth_date.day)
             )
-            or overview_plan.visit_guide_unit_note,
-            fallback="症状と日常動作の変化を次回来院時に確認します。",
-            limit=72,
         )
 
-    needs_treatment_plan = not treatment_plans.exists()
-    needs_next_appointment = next_appointment is None
-
-    command_cards = [
-        {
-            "level": "good" if next_appointment else "warning",
-            "title": (
-                f"次回予約 {next_appointment.start_at:%m/%d %H:%M}"
-                if next_appointment
-                else "次回予約がありません"
-            ),
-            "text": (
-                f"{next_appointment.menu or '-'} / {next_appointment.get_status_display()}"
-                if next_appointment
-                else "継続施術が必要な場合は、来院目安と合わせて予約を確認します。"
-            ),
-            "button": "予約を確認" if next_appointment else "予約を作成",
-            "url": (
-                f"{reverse('staff:patient_detail', args=[patient.id])}?tab=appointments"
-                if next_appointment
-                else reverse("patients:staff_booking_calendar", args=[patient.id])
-            ),
-        },
-        {
-            "level": "info" if latest_note else "warning",
-            "title": "最新カルテ" if latest_note else "カルテが未登録です",
-            "text": (
-                _compact_dashboard_text(
-                    latest_extract.get("chief_complaint")
-                    or latest_assessment,
-                    fallback="直近の主訴・評価・施術方針を確認します。",
-                )
-                if latest_note
-                else "今日の状態を記録し、次回以降の評価につなげます。"
-            ),
-            "button": "カルテを見る" if latest_note else "施術記録を開始",
-            "url": (
-                reverse("staff:clinical_note_detail", args=[latest_note.id])
-                if latest_note
-                else reverse("treatment_sessions:start_for_patient", args=[patient.id])
-            ),
-        },
-        {
-            "level": "good" if overview_plan and overview_plan.is_active else "warning",
-            "title": "直近の施術計画" if overview_plan else "施術計画が未作成です",
-            "text": (
-                _compact_dashboard_text(
-                    plan_next_check,
-                    fallback="施術目的と次回確認ポイントを確認します。",
-                )
-                if overview_plan
-                else "施術目的・通院目安・生活指導を登録してください。"
-            ),
-            "button": "施術計画を見る" if overview_plan else "施術計画を作成",
-            "url": (
-                reverse("treatment_plans:plan_detail", args=[overview_plan.id])
-                if overview_plan
-                else reverse("treatment_plans:plan_create_for_patient", args=[patient.id])
-            ),
-        },
-        {
-            "level": "info" if posture_profile_available else "warning",
-            "title": "最新AI姿勢分析" if posture_profile_available else "AI姿勢分析を確認",
-            "text": (
-                "関節別の身体特徴と次回確認ポイントを確認します。"
-                if posture_profile_available
-                else "姿勢分析を作成すると、身体特徴が概要に表示されます。"
-            ),
-            "button": "姿勢分析を見る" if latest_posture_assessment else "姿勢分析を作成",
-            "url": (
-                reverse(
-                    "posture_assessments:detail",
-                    args=[latest_posture_assessment.id],
-                )
-                if latest_posture_assessment
-                else reverse("posture_assessments:create", args=[patient.id])
-            ),
-        },
-    ]
-
-    today_check_points = []
-    today_check_points.extend(posture_next_check_points)
-    if latest_assessment:
-        today_check_points.append(
-            _compact_dashboard_text(latest_assessment, limit=72)
+    patient_gender = ""
+    if hasattr(patient, "get_gender_display"):
+        patient_gender = patient.get_gender_display()
+    elif hasattr(patient, "get_sex_display"):
+        patient_gender = patient.get_sex_display()
+    else:
+        patient_gender = (
+            getattr(patient, "gender", "")
+            or getattr(patient, "sex", "")
+            or ""
         )
-    if plan_next_check:
-        today_check_points.append(plan_next_check)
-    if not next_appointment:
-        today_check_points.append("施術後に次回来院の目安を確認します。")
-    today_check_points = list(dict.fromkeys(today_check_points))[:4]
 
     return render(request, "staff/patients/detail.html", {
         "active": "patient_search",
@@ -1888,6 +1759,8 @@ def staff_patient_detail_view(request, patient_id):
         "active_tab": active_tab,
 
         "patient": patient,
+        "patient_age": patient_age,
+        "patient_gender": patient_gender,
 
         "notes": notes,
         "note_count": notes.count(),
@@ -1899,26 +1772,16 @@ def staff_patient_detail_view(request, patient_id):
         "appointment_count": appointments.count(),
         "upcoming_appointments": upcoming_appointments,
         "past_appointments": past_appointments,
-        "next_appointment": next_appointment,
         "latest_appointment": latest_appointment,
 
         "active_plan": active_plan,
         "latest_plan": latest_plan,
         "progress_count": progress_count,
 
-        "needs_treatment_plan": needs_treatment_plan,
-        "needs_next_appointment": needs_next_appointment,
-        "command_cards": command_cards,
-
         "latest_note": latest_note,
         "latest_extract": latest_extract,
         "latest_assessment": latest_assessment,
         "latest_treatment_policy": latest_treatment_policy,
-        "latest_note_next_check": latest_note_next_check,
-        "overview_plan": overview_plan,
-        "latest_plan_progress": latest_plan_progress,
-        "plan_next_check": plan_next_check,
-        "today_check_points": today_check_points,
 
         # ★ AI姿勢分析
         "posture_assessments": posture_assessments,
@@ -1929,8 +1792,6 @@ def staff_patient_detail_view(request, patient_id):
         "posture_profile_summary": posture_profile_summary,
         "body_profile_items": body_profile_items,
         "posture_attention_points": posture_attention_points,
-        "posture_important_points": posture_important_points,
-        "posture_next_check_points": posture_next_check_points,
 
         "file_count": 0,
     })
