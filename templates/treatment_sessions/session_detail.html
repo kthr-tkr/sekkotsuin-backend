@@ -223,6 +223,124 @@
     font-weight:800;
   }
 
+  .flow-card{
+    margin-bottom:20px;
+    padding:22px;
+    border:1px solid #dbe6f3;
+    border-radius:24px;
+    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+    box-shadow:0 14px 34px rgba(15,23,42,.05);
+  }
+  .flow-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .flow-title{
+    margin:0;
+    color:#0f172a;
+    font-size:20px;
+    font-weight:900;
+  }
+  .flow-sub{
+    margin-top:5px;
+    color:#64748b;
+    font-size:12px;
+    line-height:1.6;
+    font-weight:700;
+  }
+  .flow-badge{
+    display:inline-flex;
+    align-items:center;
+    padding:8px 12px;
+    border-radius:999px;
+    color:#1d4ed8;
+    background:#dbeafe;
+    font-size:12px;
+    font-weight:900;
+  }
+  .flow-badge.done{color:#047857;background:#d1fae5;}
+  .flow-badge.confirmed{color:#0f766e;background:#ccfbf1;}
+  .flow-badge.attention{color:#92400e;background:#fef3c7;}
+  .flow-badge.processing{color:#4338ca;background:#e0e7ff;}
+  .flow-badge.error{color:#991b1b;background:#fee2e2;}
+  .flow-stages{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:8px;
+  }
+  .flow-stage{
+    position:relative;
+    padding:11px 8px;
+    border-radius:14px;
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+    color:#94a3b8;
+    text-align:center;
+    font-size:11px;
+    font-weight:900;
+  }
+  .flow-stage.done{color:#047857;border-color:#a7f3d0;background:#ecfdf5;}
+  .flow-stage.current{color:#1d4ed8;border-color:#bfdbfe;background:#eff6ff;}
+  .flow-stage.error{color:#991b1b;border-color:#fecaca;background:#fef2f2;}
+  .flow-next{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-top:14px;
+    padding:14px 16px;
+    border-radius:16px;
+    background:#0f172a;
+    color:#fff;
+  }
+  .flow-next-label{
+    color:#93c5fd;
+    font-size:11px;
+    font-weight:900;
+    margin-bottom:4px;
+  }
+  .flow-next-text{
+    font-size:13px;
+    line-height:1.65;
+    font-weight:800;
+  }
+  .session-error-panel{
+    margin-bottom:20px;
+    padding:16px 18px;
+    border-radius:18px;
+    border:1px solid #fecaca;
+    background:#fef2f2;
+    color:#991b1b;
+  }
+  .session-error-title{
+    font-size:14px;
+    font-weight:900;
+    margin-bottom:7px;
+  }
+  .session-error-panel ul{
+    margin:0;
+    padding-left:20px;
+    font-size:12px;
+    line-height:1.75;
+    font-weight:800;
+  }
+  .summary-reset-warning{
+    margin:0 0 12px;
+    padding:13px 15px;
+    border-radius:15px;
+    border:1px solid #fde68a;
+    background:#fffbeb;
+    color:#92400e;
+    font-size:12px;
+    line-height:1.7;
+    font-weight:800;
+  }
+
   .back-link{
     display:inline-flex;
     margin-top:28px;
@@ -316,6 +434,10 @@
       flex-direction:column;
       align-items:flex-start;
     }
+
+    .flow-stages{
+      grid-template-columns:1fr;
+    }
   }
 </style>
 {% endblock %}
@@ -366,6 +488,53 @@
         </div>
       </div>
     </div>
+
+    <section class="flow-card" aria-label="施術録音の進行状況">
+      <div class="flow-head">
+        <div>
+          <h2 class="flow-title">現在の処理状況</h2>
+          <div class="flow-sub">録音からカルテ登録までの現在地を表示しています</div>
+        </div>
+        <div class="flow-badge {{ flow_state.tone }}">{{ flow_state.label }}</div>
+      </div>
+
+      <div class="flow-stages">
+        {% for stage in flow_state.stages %}
+          <div class="flow-stage {{ stage.status }}">{{ stage.label }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="flow-next">
+        <div>
+          <div class="flow-next-label">次にやること</div>
+          <div class="flow-next-text">{{ flow_state.next_action }}</div>
+        </div>
+        {% if flow_state.is_registered and registered_clinical_note %}
+          <a
+            href="{% url 'staff:clinical_note_detail' registered_clinical_note.id %}"
+            class="record-btn"
+            style="text-decoration:none;"
+          >
+            カルテ詳細を見る
+          </a>
+        {% endif %}
+      </div>
+    </section>
+
+    {% if flow_state.has_error %}
+      <section class="session-error-panel" role="alert">
+        <div class="session-error-title">処理中にエラーが発生しました</div>
+        {% if flow_state.error_messages %}
+          <ul>
+            {% for error_message in flow_state.error_messages %}
+              <li>{{ error_message }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div>エラー内容を確認し、必要に応じて再実行してください。</div>
+        {% endif %}
+      </section>
+    {% endif %}
 
     {% if not session.appointment %}
       <div style="margin-bottom:20px; padding:14px 16px; border-radius:16px; border:1px solid #fde68a; background:#fffbeb; color:#92400e; font-size:13px; line-height:1.75; font-weight:800;">
@@ -459,10 +628,23 @@
                     {% endif %}
                 </div>
 
-                {% if chunk.audio_file and not chunk.transcript_text %}
-                    <form method="post" action="{% url 'treatment_sessions:transcribe_chunk' chunk.id %}">
+                {% if chunk.status == "transcribing" %}
+                    <button type="button" class="record-btn" disabled style="min-height:36px; padding:0 12px; font-size:12px;">
+                      文字起こし中...
+                    </button>
+                {% elif chunk.audio_file and not chunk.transcript_text and not flow_state.is_processing %}
+                    <form
+                      method="post"
+                      action="{% url 'treatment_sessions:transcribe_chunk' chunk.id %}"
+                      data-prevent-double-submit
+                    >
                     {% csrf_token %}
-                    <button type="submit" class="record-btn primary" style="min-height:36px; padding:0 12px; font-size:12px;">
+                    <button
+                      type="submit"
+                      class="record-btn primary"
+                      data-processing-label="文字起こし中..."
+                      style="min-height:36px; padding:0 12px; font-size:12px;"
+                    >
                         文字起こし
                     </button>
                     </form>
@@ -503,21 +685,41 @@
     </details>
     {% endif %}
 
-    {% if session.transcript_text %}
+    {% if flow_state.can_summarize %}
     <section class="chunk-section">
-        <form method="post" action="{% url 'treatment_sessions:summarize' session.id %}">
+        {% if session.confirmed_summary_json %}
+          <div class="summary-reset-warning">
+            要約を再作成すると、現在の確認済みカルテ案は無効になります。再作成後、もう一度カルテ案を確認してください。
+          </div>
+        {% endif %}
+        <form
+          method="post"
+          action="{% url 'treatment_sessions:summarize' session.id %}"
+          data-prevent-double-submit
+          {% if session.confirmed_summary_json %}
+            data-confirm-message="要約を再作成すると、現在の確認済みカルテ案は無効になります。再作成してよろしいですか？"
+          {% endif %}
+        >
         {% csrf_token %}
-        <input type="hidden" name="force" value="1">
+        <input type="hidden" name="force" value="{% if session.summary_json %}1{% else %}0{% endif %}">
 
-        <button type="submit" class="record-btn primary">
+        <button
+          type="submit"
+          class="record-btn {% if not session.summary_json %}primary{% endif %}"
+          data-processing-label="カルテ案を作成中..."
+        >
             {% if session.summary_json %}
-            AI統合要約を再作成
+            カルテ案を再作成
             {% else %}
-            AI統合要約を作成
+            録音内容からカルテ案を作成
             {% endif %}
         </button>
         </form>
     </section>
+    {% elif flow_state.is_processing %}
+      <section class="chunk-section">
+        <button type="button" class="record-btn" disabled>処理中...</button>
+      </section>
     {% endif %}
 
     {% if summary %}
@@ -636,9 +838,9 @@
             {% endif %}
 
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin:0 0 18px;">
-        {% if session.clinical_note %}
+        {% if registered_clinical_note %}
             <a
-            href="{% url 'staff:clinical_note_detail' session.clinical_note.id %}"
+            href="{% url 'staff:clinical_note_detail' registered_clinical_note.id %}"
             class="record-btn"
             style="text-decoration:none;"
             >
@@ -1112,6 +1314,27 @@
   stopBtn.addEventListener("click", stopRecording);
   reloadBtn.addEventListener("click", function() {
     window.location.reload();
+  });
+
+  document.querySelectorAll("form[data-prevent-double-submit]").forEach((form) => {
+    form.addEventListener("submit", function(event) {
+      if (form.dataset.submitting === "1") {
+        event.preventDefault();
+        return;
+      }
+
+      const confirmMessage = form.dataset.confirmMessage || "";
+      if (confirmMessage && !window.confirm(confirmMessage)) {
+        event.preventDefault();
+        return;
+      }
+
+      form.dataset.submitting = "1";
+      form.querySelectorAll('button[type="submit"]').forEach((button) => {
+        button.disabled = true;
+        button.textContent = button.dataset.processingLabel || "処理中...";
+      });
+    });
   });
 </script>
 {% endblock %}

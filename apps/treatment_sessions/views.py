@@ -61,6 +61,256 @@ def _as_summary_list(value):
     return [text] if text else []
 
 
+def _session_scope_for_clinic(clinic):
+    return (
+        TreatmentSession.objects
+        .filter(
+            clinic=clinic,
+            patient__clinic=clinic,
+        )
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
+            Q(intake__isnull=True) | Q(intake__clinic=clinic),
+        )
+    )
+
+
+def _get_registered_clinical_note(session, clinic):
+    if not session.appointment_id:
+        return None
+
+    note_filter = Q(treatment_session=session)
+    if session.clinical_note_id:
+        note_filter |= Q(pk=session.clinical_note_id)
+
+    return (
+        ClinicalNote.objects
+        .select_related("patient", "appointment")
+        .filter(
+            note_filter,
+            patient=session.patient,
+            patient__clinic=clinic,
+            appointment=session.appointment,
+            appointment__clinic=clinic,
+        )
+        .order_by("-updated_at")
+        .first()
+    )
+
+
+def _clinical_note_matches_summary(note, summary):
+    if note is None or not summary:
+        return False
+
+    soap_json, extract_json, followups_json = (
+        _build_clinical_note_data_from_session_summary(summary)
+    )
+    return (
+        (note.soap_json or {}) == soap_json
+        and (note.extract_json or {}) == extract_json
+        and (note.followups_json or []) == followups_json
+    )
+
+
+def build_treatment_session_flow_state(
+    session,
+    chunks,
+    *,
+    clinical_note_exists=False,
+    clinical_note_is_current=False,
+):
+    chunks = list(chunks or [])
+    has_chunks = bool(chunks)
+    has_transcript = bool((session.transcript_text or "").strip())
+    has_summary = bool(session.summary_json)
+    is_confirmed = bool(session.confirmed_summary_json)
+    failed_chunks = [
+        chunk
+        for chunk in chunks
+        if chunk.status == TreatmentSessionChunk.Status.FAILED
+        or bool((chunk.error_message or "").strip())
+    ]
+    pending_transcription_chunks = [
+        chunk
+        for chunk in chunks
+        if chunk.audio_file
+        and not (chunk.transcript_text or "").strip()
+        and chunk.status != TreatmentSessionChunk.Status.TRANSCRIBING
+    ]
+    is_transcribing = (
+        session.status == TreatmentSession.Status.TRANSCRIBING
+        or any(
+            chunk.status == TreatmentSessionChunk.Status.TRANSCRIBING
+            for chunk in chunks
+        )
+    )
+    is_summarizing = session.status == TreatmentSession.Status.SUMMARIZING
+    has_error = bool(
+        session.status == TreatmentSession.Status.FAILED
+        or (session.error_message or "").strip()
+        or failed_chunks
+    )
+
+    if has_error:
+        key = "error"
+        label = "エラーあり"
+        tone = "error"
+        next_action = (
+            "エラー内容を確認し、必要に応じて文字起こしまたはカルテ案作成を再実行してください。"
+        )
+    elif is_transcribing:
+        key = "transcribing"
+        label = "文字起こし中"
+        tone = "processing"
+        next_action = "文字起こし処理中です。完了するまでお待ちください。"
+    elif is_summarizing:
+        key = "summarizing"
+        label = "カルテ案作成中"
+        tone = "processing"
+        next_action = "録音内容からカルテ案を作成中です。完了するまでお待ちください。"
+    elif clinical_note_exists and clinical_note_is_current:
+        key = "registered"
+        label = "カルテ登録済み"
+        tone = "done"
+        next_action = "カルテ詳細で登録内容を確認できます。"
+    elif is_confirmed:
+        key = "confirmed"
+        label = "確認済み"
+        tone = "confirmed"
+        if session.appointment_id:
+            next_action = (
+                "確認済みのカルテ案をカルテへ登録してください。"
+                if not clinical_note_exists
+                else "確認済みの変更内容をカルテへ反映してください。"
+            )
+        else:
+            next_action = (
+                "カルテへ登録するには、本日の予約を作成または選択してください。"
+            )
+    elif has_summary:
+        key = "confirmation_waiting"
+        label = "確認待ち"
+        tone = "attention"
+        next_action = "カルテ案を確認・修正してください。"
+    elif has_transcript:
+        key = "summary_waiting"
+        label = "カルテ案作成待ち"
+        tone = "attention"
+        next_action = "録音内容からカルテ案を作成してください。"
+    elif has_chunks:
+        key = "transcription_waiting"
+        label = "文字起こし待ち"
+        tone = "attention"
+        next_action = "保存済みの録音データを文字起こししてください。"
+    else:
+        key = "recording_ready"
+        label = "録音準備中"
+        tone = "ready"
+        next_action = "施術録音を開始してください。"
+
+    recording_stage = "done" if has_chunks else "current"
+    transcription_stage = "pending"
+    summary_stage = "pending"
+    confirmation_stage = "pending"
+    registration_stage = "pending"
+
+    if is_transcribing:
+        transcription_stage = "current"
+    elif has_transcript:
+        transcription_stage = "done"
+    elif has_chunks:
+        transcription_stage = "current"
+
+    if is_summarizing:
+        summary_stage = "current"
+    elif has_summary:
+        summary_stage = "done"
+    elif has_transcript:
+        summary_stage = "current"
+
+    if is_confirmed:
+        confirmation_stage = "done"
+    elif has_summary:
+        confirmation_stage = "current"
+
+    if clinical_note_exists and clinical_note_is_current:
+        registration_stage = "done"
+    elif is_confirmed and session.appointment_id:
+        registration_stage = "current"
+
+    if has_error:
+        for stage in (
+            "registration_stage",
+            "confirmation_stage",
+            "summary_stage",
+            "transcription_stage",
+            "recording_stage",
+        ):
+            if locals()[stage] == "current":
+                if stage == "registration_stage":
+                    registration_stage = "error"
+                elif stage == "confirmation_stage":
+                    confirmation_stage = "error"
+                elif stage == "summary_stage":
+                    summary_stage = "error"
+                elif stage == "transcription_stage":
+                    transcription_stage = "error"
+                else:
+                    recording_stage = "error"
+                break
+
+    return {
+        "key": key,
+        "label": label,
+        "tone": tone,
+        "next_action": next_action,
+        "has_chunks": has_chunks,
+        "has_transcript": has_transcript,
+        "has_summary": has_summary,
+        "is_confirmed": is_confirmed,
+        "is_registered": clinical_note_exists and clinical_note_is_current,
+        "clinical_note_exists": clinical_note_exists,
+        "clinical_note_is_current": clinical_note_is_current,
+        "has_error": has_error,
+        "is_processing": is_transcribing or is_summarizing,
+        "pending_transcription_count": len(pending_transcription_chunks),
+        "can_summarize": (
+            has_transcript
+            and not pending_transcription_chunks
+            and not is_transcribing
+            and not is_summarizing
+        ),
+        "can_confirm": has_summary and not is_summarizing,
+        "can_register": (
+            is_confirmed
+            and bool(session.appointment_id)
+            and not (clinical_note_exists and clinical_note_is_current)
+        ),
+        "stages": [
+            {"label": "録音", "status": recording_stage},
+            {"label": "文字起こし", "status": transcription_stage},
+            {"label": "カルテ案", "status": summary_stage},
+            {"label": "確認", "status": confirmation_stage},
+            {"label": "カルテ登録", "status": registration_stage},
+        ],
+        "error_messages": list(
+            dict.fromkeys(
+                [
+                    message
+                    for message in [
+                        (session.error_message or "").strip(),
+                        *[
+                            (chunk.error_message or "").strip()
+                            for chunk in failed_chunks
+                        ],
+                    ]
+                    if message
+                ]
+            )
+        ),
+    }
+
+
 def _get_or_create_appointment_session(*, appointment, clinic, patient, intake, user):
     session = (
         TreatmentSession.objects
@@ -153,22 +403,28 @@ def treatment_session_detail_view(request, session_id):
         return HttpResponseForbidden("所属院の施術録音のみ閲覧できます。")
 
     session = get_object_or_404(
-        TreatmentSession.objects.select_related(
+        _session_scope_for_clinic(clinic)
+        .select_related(
             "clinic",
             "patient",
             "appointment",
             "intake",
-            "clinical_note",
             "treatment_plan",
         )
-        .prefetch_related("chunks")
-        .filter(
-            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
-            Q(intake__isnull=True) | Q(intake__clinic=clinic),
-        ),
+        .prefetch_related("chunks"),
         pk=session_id,
-        clinic=clinic,
-        patient__clinic=clinic,
+    )
+    chunks = list(session.chunks.all())
+    registered_clinical_note = _get_registered_clinical_note(session, clinic)
+    clinical_note_is_current = _clinical_note_matches_summary(
+        registered_clinical_note,
+        session.confirmed_summary_json or {},
+    )
+    flow_state = build_treatment_session_flow_state(
+        session,
+        chunks,
+        clinical_note_exists=registered_clinical_note is not None,
+        clinical_note_is_current=clinical_note_is_current,
     )
 
     summary = _as_summary_dict(session.active_summary)
@@ -183,7 +439,9 @@ def treatment_session_detail_view(request, session_id):
 
     context = {
         "session": session,
-        "chunks": session.chunks.all(),
+        "chunks": chunks,
+        "flow_state": flow_state,
+        "registered_clinical_note": registered_clinical_note,
         "summary": summary,
         "important_points": _as_summary_list(summary.get("important_points")),
         "session_summary": session_summary,
@@ -217,22 +475,15 @@ def treatment_session_confirm_view(request, session_id):
         return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
 
     session = get_object_or_404(
-        TreatmentSession.objects
+        _session_scope_for_clinic(clinic)
         .select_related(
             "clinic",
             "patient",
             "appointment",
             "intake",
-            "clinical_note",
             "confirmed_by",
-        )
-        .filter(
-            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
-            Q(intake__isnull=True) | Q(intake__clinic=clinic),
         ),
         pk=session_id,
-        clinic=clinic,
-        patient__clinic=clinic,
     )
 
     source_summary = (
@@ -254,31 +505,84 @@ def treatment_session_confirm_view(request, session_id):
         )
         if form.is_valid():
             confirmed_summary = form.build_confirmed_summary()
-            session.mark_confirmed(
-                user=request.user,
-                data=confirmed_summary,
-            )
-            session.updated_by = request.user
-            session.save(
-                update_fields=[
-                    "confirmed_summary_json",
-                    "summary_status",
-                    "confirmed_at",
-                    "confirmed_by",
-                    "updated_by",
-                    "updated_at",
-                ]
-            )
-            messages.success(
-                request,
-                "確認内容を保存しました。カルテへ登録できます。",
-            )
+            with transaction.atomic():
+                locked_session = get_object_or_404(
+                    _session_scope_for_clinic(clinic)
+                    .select_for_update(of=("self",)),
+                    pk=session.id,
+                )
+                if locked_session.status in {
+                    TreatmentSession.Status.TRANSCRIBING,
+                    TreatmentSession.Status.SUMMARIZING,
+                }:
+                    messages.info(
+                        request,
+                        "文字起こしまたはカルテ案作成中です。完了後に確認内容を保存してください。",
+                    )
+                    return redirect(
+                        "treatment_sessions:session_confirm",
+                        session_id=session.id,
+                    )
+
+                current_source_summary = (
+                    locked_session.confirmed_summary_json
+                    or locked_session.summary_json
+                    or {}
+                )
+                if current_source_summary != source_summary:
+                    messages.warning(
+                        request,
+                        "保存中にカルテ案が更新されました。最新内容を確認してから、もう一度保存してください。",
+                    )
+                    return redirect(
+                        "treatment_sessions:session_confirm",
+                        session_id=session.id,
+                    )
+
+                if (
+                    locked_session.summary_status == "confirmed"
+                    and locked_session.confirmed_summary_json
+                    == confirmed_summary
+                ):
+                    messages.info(request, "確認内容はすでに保存されています。")
+                else:
+                    locked_session.mark_confirmed(
+                        user=request.user,
+                        data=confirmed_summary,
+                    )
+                    locked_session.updated_by = request.user
+                    locked_session.save(
+                        update_fields=[
+                            "confirmed_summary_json",
+                            "summary_status",
+                            "confirmed_at",
+                            "confirmed_by",
+                            "updated_by",
+                            "updated_at",
+                        ]
+                    )
+                    messages.success(
+                        request,
+                        "確認内容を保存しました。カルテへ登録できます。",
+                    )
             return redirect(
                 "treatment_sessions:session_confirm",
                 session_id=session.id,
             )
     else:
         form = TreatmentSessionConfirmForm(summary=source_summary)
+
+    registered_clinical_note = _get_registered_clinical_note(session, clinic)
+    clinical_note_is_current = _clinical_note_matches_summary(
+        registered_clinical_note,
+        session.confirmed_summary_json or {},
+    )
+    flow_state = build_treatment_session_flow_state(
+        session,
+        session.chunks.all(),
+        clinical_note_exists=registered_clinical_note is not None,
+        clinical_note_is_current=clinical_note_is_current,
+    )
 
     return render(
         request,
@@ -287,6 +591,8 @@ def treatment_session_confirm_view(request, session_id):
             "session": session,
             "form": form,
             "is_confirmed": bool(session.confirmed_summary_json),
+            "flow_state": flow_state,
+            "registered_clinical_note": registered_clinical_note,
         },
     )
     
@@ -434,13 +740,6 @@ def upload_session_chunk_view(request, session_id):
             status=403,
         )
 
-    session = get_object_or_404(
-        TreatmentSession.objects.select_related("clinic", "patient", "appointment"),
-        pk=session_id,
-        clinic=clinic,
-        patient__clinic=clinic,
-    )
-
     audio_file = request.FILES.get("audio")
     if not audio_file:
         return JsonResponse(
@@ -453,63 +752,86 @@ def upload_session_chunk_view(request, session_id):
     except ValueError:
         duration_sec = 0
 
-    current_max = (
-        TreatmentSessionChunk.objects
-        .filter(session=session)
-        .aggregate(max_index=Max("chunk_index"))
-        .get("max_index")
-    )
+    with transaction.atomic():
+        session = get_object_or_404(
+            _session_scope_for_clinic(clinic)
+            .select_for_update(of=("self",)),
+            pk=session_id,
+        )
+        if session.status in {
+            TreatmentSession.Status.TRANSCRIBING,
+            TreatmentSession.Status.SUMMARIZING,
+        }:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "error": "文字起こしまたはカルテ案作成中のため、録音を追加できません。",
+                },
+                status=409,
+            )
 
-    next_index = 0 if current_max is None else current_max + 1
+        current_max = (
+            TreatmentSessionChunk.objects
+            .filter(session=session)
+            .aggregate(max_index=Max("chunk_index"))
+            .get("max_index")
+        )
+        next_index = 0 if current_max is None else current_max + 1
 
-    chunk = TreatmentSessionChunk.objects.create(
-        session=session,
-        chunk_index=next_index,
-        audio_file=audio_file,
-        mime_type=audio_file.content_type or "",
-        duration_sec=duration_sec,
-        status=TreatmentSessionChunk.Status.UPLOADED,
-        metadata={
-            "source": "treatment_session_detail",
-            "uploaded_by": request.user.id,
-        },
-    )
+        chunk = TreatmentSessionChunk.objects.create(
+            session=session,
+            chunk_index=next_index,
+            audio_file=audio_file,
+            mime_type=audio_file.content_type or "",
+            duration_sec=duration_sec,
+            status=TreatmentSessionChunk.Status.UPLOADED,
+            metadata={
+                "source": "treatment_session_detail",
+                "uploaded_by": request.user.id,
+            },
+        )
 
-    total_duration = (
-        TreatmentSessionChunk.objects
-        .filter(session=session)
-        .aggregate(total=Sum("duration_sec"))
-        .get("total")
-        or 0
-    )
+        total_duration = (
+            TreatmentSessionChunk.objects
+            .filter(session=session)
+            .aggregate(total=Sum("duration_sec"))
+            .get("total")
+            or 0
+        )
 
-    session.total_duration_sec = total_duration
-    session.status = TreatmentSession.Status.UPLOADED
-    session.updated_by = request.user
+        session.total_duration_sec = total_duration
+        session.status = TreatmentSession.Status.UPLOADED
+        session.error_message = ""
+        session.updated_by = request.user
 
-    # 新しい録音が追加されたので、既存AI要約は無効化
-    session.summary_json = {}
-    session.confirmed_summary_json = {}
-    session.summary_status = "draft"
+        # 新しい録音が追加されたため、以前のカルテ案と確認内容は無効化する。
+        session.summary_json = {}
+        session.confirmed_summary_json = {}
+        session.summary_status = "draft"
+        session.confirmed_by = None
+        session.confirmed_at = None
 
-    if not session.started_at:
-        session.started_at = timezone.now()
+        if not session.started_at:
+            session.started_at = timezone.now()
 
-    session.ended_at = timezone.now()
+        session.ended_at = timezone.now()
 
-    session.save(
-        update_fields=[
-            "total_duration_sec",
-            "status",
-            "updated_by",
-            "summary_json",
-            "confirmed_summary_json",
-            "summary_status",
-            "started_at",
-            "ended_at",
-            "updated_at",
-        ]
-    )
+        session.save(
+            update_fields=[
+                "total_duration_sec",
+                "status",
+                "error_message",
+                "updated_by",
+                "summary_json",
+                "confirmed_summary_json",
+                "summary_status",
+                "confirmed_by",
+                "confirmed_at",
+                "started_at",
+                "ended_at",
+                "updated_at",
+            ]
+        )
 
     return JsonResponse({
         "ok": True,
@@ -536,58 +858,147 @@ def transcribe_session_chunk_view(request, chunk_id):
     if clinic is None:
         return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
 
-    chunk = get_object_or_404(
-        TreatmentSessionChunk.objects.select_related(
-            "session",
-            "session__clinic",
-            "session__patient",
-            "session__appointment",
-            "session__intake",
-        ),
-        pk=chunk_id,
-        session__clinic=clinic,
-        session__patient__clinic=clinic,
-    )
-
-    session = chunk.session
-
-    if not chunk.audio_file:
-        messages.error(request, "音声ファイルがありません。")
-        return redirect("treatment_sessions:detail", session_id=session.id)
-
-    if chunk.status == TreatmentSessionChunk.Status.TRANSCRIBING:
-        messages.info(request, "このチャンクは文字起こし中です。")
-        return redirect("treatment_sessions:detail", session_id=session.id)
-
-    if chunk.transcript_text:
-        messages.info(request, "このチャンクはすでに文字起こし済みです。")
-        return redirect("treatment_sessions:detail", session_id=session.id)
-
     try:
-        chunk.status = TreatmentSessionChunk.Status.TRANSCRIBING
-        chunk.error_message = ""
-        chunk.save(update_fields=["status", "error_message", "updated_at"])
+        with transaction.atomic():
+            session = get_object_or_404(
+                _session_scope_for_clinic(clinic)
+                .select_for_update(of=("self",)),
+                chunks__pk=chunk_id,
+            )
+            chunk = get_object_or_404(
+                TreatmentSessionChunk.objects
+                .select_for_update(of=("self",)),
+                pk=chunk_id,
+                session=session,
+            )
 
-        session.status = TreatmentSession.Status.TRANSCRIBING
-        session.updated_by = request.user
-        session.save(update_fields=["status", "updated_by", "updated_at"])
+            if not chunk.audio_file:
+                messages.error(request, "音声ファイルがありません。")
+                return redirect(
+                    "treatment_sessions:detail",
+                    session_id=session.id,
+                )
+
+            if (
+                chunk.status == TreatmentSessionChunk.Status.TRANSCRIBING
+                or session.status == TreatmentSession.Status.TRANSCRIBING
+            ):
+                messages.info(request, "文字起こしはすでに処理中です。")
+                return redirect(
+                    "treatment_sessions:detail",
+                    session_id=session.id,
+                )
+
+            if session.status == TreatmentSession.Status.SUMMARIZING:
+                messages.info(
+                    request,
+                    "カルテ案を作成中のため、文字起こしを開始できません。",
+                )
+                return redirect(
+                    "treatment_sessions:detail",
+                    session_id=session.id,
+                )
+
+            if chunk.transcript_text:
+                messages.info(request, "この録音はすでに文字起こし済みです。")
+                return redirect(
+                    "treatment_sessions:detail",
+                    session_id=session.id,
+                )
+
+            chunk.status = TreatmentSessionChunk.Status.TRANSCRIBING
+            chunk.error_message = ""
+            chunk.save(
+                update_fields=["status", "error_message", "updated_at"]
+            )
+
+            session.status = TreatmentSession.Status.TRANSCRIBING
+            session.error_message = ""
+            session.updated_by = request.user
+            session.save(
+                update_fields=[
+                    "status",
+                    "error_message",
+                    "updated_by",
+                    "updated_at",
+                ]
+            )
+
+            audio_file = chunk.audio_file
+            mime_type = chunk.mime_type
+            session_id = session.id
+            had_confirmed_summary = bool(session.confirmed_summary_json)
 
         transcript_text, transcript_json = run_stt(
-            chunk.audio_file,
-            chunk.mime_type,
+            audio_file,
+            mime_type,
         )
 
-        chunk.transcript_text = transcript_text or ""
-        chunk.transcript_json = transcript_json or {}
-        chunk.status = TreatmentSessionChunk.Status.SUMMARIZED
-        chunk.save(
-            update_fields=[
-                "transcript_text",
-                "transcript_json",
-                "status",
-                "updated_at",
-            ]
-        )
+        with transaction.atomic():
+            session = get_object_or_404(
+                _session_scope_for_clinic(clinic)
+                .select_for_update(of=("self",)),
+                pk=session_id,
+            )
+            chunk = get_object_or_404(
+                TreatmentSessionChunk.objects
+                .select_for_update(of=("self",)),
+                pk=chunk_id,
+                session=session,
+            )
+
+            chunk.transcript_text = transcript_text or ""
+            chunk.transcript_json = transcript_json or {}
+            chunk.status = TreatmentSessionChunk.Status.SUMMARIZED
+            chunk.error_message = ""
+            chunk.save(
+                update_fields=[
+                    "transcript_text",
+                    "transcript_json",
+                    "status",
+                    "error_message",
+                    "updated_at",
+                ]
+            )
+
+            chunks = list(session.chunks.order_by("chunk_index"))
+            combined_transcript = "\n\n".join(
+                [
+                    f"[chunk {item.chunk_index}]\n{item.transcript_text}"
+                    for item in chunks
+                    if item.transcript_text
+                ]
+            )
+            total_duration = sum(item.duration_sec or 0 for item in chunks)
+
+            session.transcript_text = combined_transcript
+            session.total_duration_sec = total_duration
+            session.status = TreatmentSession.Status.UPLOADED
+            session.error_message = ""
+            session.updated_by = request.user
+
+            # 文字起こしが更新されたため、以前のカルテ案と確認内容は無効化する。
+            session.summary_json = {}
+            session.confirmed_summary_json = {}
+            session.summary_status = "draft"
+            session.confirmed_by = None
+            session.confirmed_at = None
+
+            session.save(
+                update_fields=[
+                    "transcript_text",
+                    "total_duration_sec",
+                    "status",
+                    "error_message",
+                    "updated_by",
+                    "summary_json",
+                    "confirmed_summary_json",
+                    "summary_status",
+                    "confirmed_by",
+                    "confirmed_at",
+                    "updated_at",
+                ]
+            )
 
         # STT利用ログ作成。TreatmentSession用なので recording は使わず metadata に紐づけ情報を残す。
         already_logged = AiUsageLog.objects.filter(
@@ -623,57 +1034,45 @@ def transcribe_session_chunk_view(request, chunk_id):
                 created_by=request.user,
             )
 
-        # session側に文字起こしを統合
-        chunks = session.chunks.order_by("chunk_index")
-
-        combined_transcript = "\n\n".join(
-            [
-                f"[chunk {c.chunk_index}]\n{c.transcript_text}"
-                for c in chunks
-                if c.transcript_text
-            ]
-        )
-
-        total_duration = (
-            chunks.aggregate(total=Sum("duration_sec")).get("total")
-            or 0
-        )
-
-        session.transcript_text = combined_transcript
-        session.total_duration_sec = total_duration
-        session.status = TreatmentSession.Status.UPLOADED
-        session.updated_by = request.user
-
-        # 文字起こしが更新されたので、既存AI要約は無効化
-        session.summary_json = {}
-        session.confirmed_summary_json = {}
-        session.summary_status = "draft"
-
-        session.save(
-            update_fields=[
-                "transcript_text",
-                "total_duration_sec",
-                "status",
-                "updated_by",
-                "summary_json",
-                "confirmed_summary_json",
-                "summary_status",
-                "updated_at",
-            ]
-        )
-
-        messages.success(request, "施術録音の文字起こしが完了しました。")
+        if had_confirmed_summary:
+            messages.success(
+                request,
+                "文字起こしが更新されました。以前の確認済みカルテ案はリセットされたため、カルテ登録前に再度確認してください。",
+            )
+        else:
+            messages.success(request, "施術録音の文字起こしが完了しました。")
         return redirect("treatment_sessions:detail", session_id=session.id)
 
     except Exception as e:
-        chunk.status = TreatmentSessionChunk.Status.FAILED
-        chunk.error_message = str(e)
-        chunk.save(update_fields=["status", "error_message", "updated_at"])
+        with transaction.atomic():
+            session = get_object_or_404(
+                _session_scope_for_clinic(clinic)
+                .select_for_update(of=("self",)),
+                chunks__pk=chunk_id,
+            )
+            chunk = get_object_or_404(
+                TreatmentSessionChunk.objects
+                .select_for_update(of=("self",)),
+                pk=chunk_id,
+                session=session,
+            )
+            chunk.status = TreatmentSessionChunk.Status.FAILED
+            chunk.error_message = str(e)
+            chunk.save(
+                update_fields=["status", "error_message", "updated_at"]
+            )
 
-        session.status = TreatmentSession.Status.FAILED
-        session.error_message = str(e)
-        session.updated_by = request.user
-        session.save(update_fields=["status", "error_message", "updated_by", "updated_at"])
+            session.status = TreatmentSession.Status.FAILED
+            session.error_message = str(e)
+            session.updated_by = request.user
+            session.save(
+                update_fields=[
+                    "status",
+                    "error_message",
+                    "updated_by",
+                    "updated_at",
+                ]
+            )
 
         try:
             AiUsageLog.objects.create(
@@ -721,22 +1120,10 @@ def summarize_treatment_session_view(request, session_id):
         return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
 
     session = get_object_or_404(
-        TreatmentSession.objects.select_related(
-            "clinic",
-            "patient",
-            "appointment",
-            "intake",
-        ),
+        _session_scope_for_clinic(clinic),
         pk=session_id,
-        clinic=clinic,
-        patient__clinic=clinic,
     )
-
-    if not session.transcript_text:
-        messages.error(request, "統合文字起こしがないため、AI要約を作成できません。")
-        return redirect("treatment_sessions:detail", session_id=session.id)
-
-    ai_usage_summary = build_ai_usage_summary(session.clinic)
+    ai_usage_summary = build_ai_usage_summary(clinic)
 
     if not ai_usage_summary.can_use_ai:
         messages.error(
@@ -747,37 +1134,109 @@ def summarize_treatment_session_view(request, session_id):
 
     force = request.POST.get("force") == "1"
 
-    if session.summary_json and not force:
-        messages.info(request, "この施術セッションはすでにAI要約済みです。")
-        return redirect("treatment_sessions:detail", session_id=session.id)
-
     try:
-        session.status = TreatmentSession.Status.SUMMARIZING
-        session.error_message = ""
-        session.updated_by = request.user
-        session.save(update_fields=["status", "error_message", "updated_by", "updated_at"])
+        with transaction.atomic():
+            session = get_object_or_404(
+                _session_scope_for_clinic(clinic)
+                .select_for_update(of=("self",)),
+                pk=session_id,
+            )
 
-        summary = summarize_treatment_session(session.transcript_text)
+            if session.status == TreatmentSession.Status.SUMMARIZING:
+                messages.info(request, "カルテ案はすでに作成処理中です。")
+                return redirect(
+                    "treatment_sessions:detail",
+                    session_id=session.id,
+                )
 
-        session.summary_json = summary or {}
-        session.confirmed_summary_json = {}
-        session.summary_status = "draft"
-        session.confirmed_by = None
-        session.confirmed_at = None
-        session.status = TreatmentSession.Status.DONE
-        session.updated_by = request.user
-        session.save(
-            update_fields=[
-                "summary_json",
-                "confirmed_summary_json",
-                "summary_status",
-                "confirmed_by",
-                "confirmed_at",
-                "status",
-                "updated_by",
-                "updated_at",
-            ]
-        )
+            if session.status == TreatmentSession.Status.TRANSCRIBING:
+                messages.info(
+                    request,
+                    "文字起こし中のため、カルテ案を作成できません。",
+                )
+                return redirect(
+                    "treatment_sessions:detail",
+                    session_id=session.id,
+                )
+
+            pending_chunks = TreatmentSessionChunk.objects.filter(
+                session=session,
+                audio_file__isnull=False,
+                transcript_text="",
+            ).exclude(status=TreatmentSessionChunk.Status.SUMMARIZED)
+            if pending_chunks.exists():
+                messages.warning(
+                    request,
+                    "文字起こし待ちの録音があります。すべて文字起こししてからカルテ案を作成してください。",
+                )
+                return redirect(
+                    "treatment_sessions:detail",
+                    session_id=session.id,
+                )
+
+            if not session.transcript_text:
+                messages.error(
+                    request,
+                    "統合文字起こしがないため、カルテ案を作成できません。",
+                )
+                return redirect(
+                    "treatment_sessions:detail",
+                    session_id=session.id,
+                )
+
+            if session.summary_json and not force:
+                messages.info(
+                    request,
+                    "カルテ案はすでに作成済みです。確認・修正画面へ進んでください。",
+                )
+                return redirect(
+                    "treatment_sessions:session_confirm",
+                    session_id=session.id,
+                )
+
+            transcript_text = session.transcript_text
+            had_confirmed_summary = bool(session.confirmed_summary_json)
+            session.status = TreatmentSession.Status.SUMMARIZING
+            session.error_message = ""
+            session.updated_by = request.user
+            session.save(
+                update_fields=[
+                    "status",
+                    "error_message",
+                    "updated_by",
+                    "updated_at",
+                ]
+            )
+
+        summary = summarize_treatment_session(transcript_text)
+
+        with transaction.atomic():
+            session = get_object_or_404(
+                _session_scope_for_clinic(clinic)
+                .select_for_update(of=("self",)),
+                pk=session_id,
+            )
+            session.summary_json = summary or {}
+            session.confirmed_summary_json = {}
+            session.summary_status = "draft"
+            session.confirmed_by = None
+            session.confirmed_at = None
+            session.status = TreatmentSession.Status.DONE
+            session.error_message = ""
+            session.updated_by = request.user
+            session.save(
+                update_fields=[
+                    "summary_json",
+                    "confirmed_summary_json",
+                    "summary_status",
+                    "confirmed_by",
+                    "confirmed_at",
+                    "status",
+                    "error_message",
+                    "updated_by",
+                    "updated_at",
+                ]
+            )
 
         already_logged = AiUsageLog.objects.filter(
             clinic=session.clinic,
@@ -811,14 +1270,35 @@ def summarize_treatment_session_view(request, session_id):
                 created_by=request.user,
             )
 
-        messages.success(request, "施術セッションのAI要約が完了しました。")
+        if force and had_confirmed_summary:
+            messages.success(
+                request,
+                "録音内容からカルテ案を再作成しました。確認済み内容はリセットされています。カルテ登録前に再度確認してください。",
+            )
+        elif force:
+            messages.success(request, "録音内容からカルテ案を再作成しました。")
+        else:
+            messages.success(request, "録音内容からカルテ案を作成しました。")
         return redirect("treatment_sessions:detail", session_id=session.id)
 
     except Exception as e:
-        session.status = TreatmentSession.Status.FAILED
-        session.error_message = str(e)
-        session.updated_by = request.user
-        session.save(update_fields=["status", "error_message", "updated_by", "updated_at"])
+        with transaction.atomic():
+            session = get_object_or_404(
+                _session_scope_for_clinic(clinic)
+                .select_for_update(of=("self",)),
+                pk=session_id,
+            )
+            session.status = TreatmentSession.Status.FAILED
+            session.error_message = str(e)
+            session.updated_by = request.user
+            session.save(
+                update_fields=[
+                    "status",
+                    "error_message",
+                    "updated_by",
+                    "updated_at",
+                ]
+            )
 
         try:
             AiUsageLog.objects.create(
@@ -844,7 +1324,7 @@ def summarize_treatment_session_view(request, session_id):
         except Exception:
             pass
 
-        messages.error(request, f"AI要約に失敗しました: {e}")
+        messages.error(request, f"カルテ案の作成に失敗しました: {e}")
         return redirect("treatment_sessions:detail", session_id=session.id)
     
 def _build_clinical_note_data_from_session_summary(summary: dict) -> tuple[dict, dict, list]:
@@ -977,21 +1457,20 @@ def register_treatment_session_note_view(request, session_id):
         return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
 
     session = get_object_or_404(
-        TreatmentSession.objects
-        .select_related(
-            "clinic",
-            "patient",
-            "appointment",
-            "intake",
-        )
-        .filter(
-            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
-            Q(intake__isnull=True) | Q(intake__clinic=clinic),
-        ),
+        _session_scope_for_clinic(clinic)
+        .select_for_update(of=("self",)),
         pk=session_id,
-        clinic=clinic,
-        patient__clinic=clinic,
     )
+
+    if session.status in {
+        TreatmentSession.Status.TRANSCRIBING,
+        TreatmentSession.Status.SUMMARIZING,
+    }:
+        messages.info(
+            request,
+            "処理中のため、カルテ登録は完了後に行ってください。",
+        )
+        return redirect("treatment_sessions:detail", session_id=session.id)
 
     if not session.appointment:
         messages.error(
@@ -1052,6 +1531,23 @@ def register_treatment_session_note_view(request, session_id):
             or (existing_note.web_intake_snapshot or {}) != web_snapshot
         )
     )
+
+    if (
+        existing_note
+        and not note_content_changed
+        and existing_note.treatment_session_id == session.id
+    ):
+        if session.clinical_note_id != existing_note.id:
+            session.clinical_note = existing_note
+            session.updated_by = request.user
+            session.save(
+                update_fields=["clinical_note", "updated_by", "updated_at"]
+            )
+        messages.info(request, "この確認内容はすでにカルテへ登録済みです。")
+        return redirect(
+            "staff:clinical_note_detail",
+            pk=existing_note.id,
+        )
 
     # 内容が変わる既存カルテのみ、更新前履歴を1件残す。
     if note_content_changed:

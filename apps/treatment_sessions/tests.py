@@ -1,7 +1,9 @@
 from datetime import datetime, time, timedelta
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -10,7 +12,117 @@ from apps.clinical_notes.models import ClinicalNote, ClinicalNoteHistory
 from apps.clinics.models import Clinic
 from apps.patients.models import Patient
 
-from .models import TreatmentSession
+from .models import TreatmentSession, TreatmentSessionChunk
+from .views import build_treatment_session_flow_state
+
+
+class TreatmentSessionFlowStateTests(SimpleTestCase):
+    @staticmethod
+    def _session(**overrides):
+        values = {
+            "transcript_text": "",
+            "summary_json": {},
+            "confirmed_summary_json": {},
+            "status": TreatmentSession.Status.PENDING,
+            "error_message": "",
+            "appointment_id": None,
+        }
+        values.update(overrides)
+        return SimpleNamespace(**values)
+
+    @staticmethod
+    def _chunk(**overrides):
+        values = {
+            "audio_file": "recording.webm",
+            "transcript_text": "",
+            "status": TreatmentSessionChunk.Status.UPLOADED,
+            "error_message": "",
+        }
+        values.update(overrides)
+        return SimpleNamespace(**values)
+
+    def test_major_flow_states(self):
+        cases = [
+            (self._session(), [], "recording_ready"),
+            (
+                self._session(status=TreatmentSession.Status.UPLOADED),
+                [self._chunk()],
+                "transcription_waiting",
+            ),
+            (
+                self._session(
+                    status=TreatmentSession.Status.UPLOADED,
+                    transcript_text="文字起こし",
+                ),
+                [
+                    self._chunk(
+                        transcript_text="文字起こし",
+                        status=TreatmentSessionChunk.Status.SUMMARIZED,
+                    )
+                ],
+                "summary_waiting",
+            ),
+            (
+                self._session(
+                    status=TreatmentSession.Status.DONE,
+                    transcript_text="文字起こし",
+                    summary_json={"session_summary": {}},
+                ),
+                [],
+                "confirmation_waiting",
+            ),
+            (
+                self._session(
+                    status=TreatmentSession.Status.DONE,
+                    summary_json={"session_summary": {}},
+                    confirmed_summary_json={"session_summary": {}},
+                    appointment_id=1,
+                ),
+                [],
+                "confirmed",
+            ),
+            (
+                self._session(
+                    status=TreatmentSession.Status.DONE,
+                    summary_json={"session_summary": {}},
+                    confirmed_summary_json={"session_summary": {}},
+                    appointment_id=1,
+                ),
+                [],
+                "registered",
+            ),
+            (
+                self._session(
+                    status=TreatmentSession.Status.FAILED,
+                    error_message="処理失敗",
+                ),
+                [],
+                "error",
+            ),
+        ]
+
+        for index, (session, chunks, expected_key) in enumerate(cases):
+            with self.subTest(index=index, expected_key=expected_key):
+                state = build_treatment_session_flow_state(
+                    session,
+                    chunks,
+                    clinical_note_exists=expected_key == "registered",
+                    clinical_note_is_current=expected_key == "registered",
+                )
+                self.assertEqual(state["key"], expected_key)
+
+    def test_confirmed_without_appointment_cannot_register(self):
+        state = build_treatment_session_flow_state(
+            self._session(
+                status=TreatmentSession.Status.DONE,
+                summary_json={"session_summary": {}},
+                confirmed_summary_json={"session_summary": {}},
+            ),
+            [],
+        )
+
+        self.assertFalse(state["can_register"])
+        self.assertIn("予約", state["next_action"])
 
 
 class TreatmentSessionStartTests(TestCase):
@@ -264,12 +376,34 @@ class TreatmentSessionConfirmTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_other_clinic_session_detail_returns_404(self):
+        response = self.client.get(
+            reverse(
+                "treatment_sessions:detail",
+                args=[self.other_session.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
     def test_no_clinic_user_session_confirm_returns_403(self):
         self.client.force_login(self.no_clinic_user)
 
         response = self.client.get(
             reverse(
                 "treatment_sessions:session_confirm",
+                args=[self.session.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_clinic_user_session_detail_returns_403(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self.client.get(
+            reverse(
+                "treatment_sessions:detail",
                 args=[self.session.id],
             )
         )
@@ -404,6 +538,80 @@ class TreatmentSessionConfirmTests(TestCase):
             ClinicalNoteHistory.objects.filter(note=note).count(),
             1,
         )
+
+    def test_registered_session_shows_registered_state_and_note_link(self):
+        self.session.confirmed_summary_json = self._summary(
+            overall="登録済み要約",
+            soap_s="登録済みの主観情報",
+        )
+        self.session.summary_status = "confirmed"
+        self.session.save(
+            update_fields=["confirmed_summary_json", "summary_status"]
+        )
+        self.client.post(
+            reverse(
+                "treatment_sessions:register_clinical_note",
+                args=[self.session.id],
+            )
+        )
+
+        response = self.client.get(
+            reverse(
+                "treatment_sessions:detail",
+                args=[self.session.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "カルテ登録済み")
+        self.assertContains(response, "カルテ詳細を見る")
+
+    @patch("apps.treatment_sessions.views.summarize_treatment_session")
+    @patch("apps.treatment_sessions.views.build_ai_usage_summary")
+    def test_resummarize_resets_confirmed_summary(
+        self,
+        mock_usage_summary,
+        mock_summarize,
+    ):
+        mock_usage_summary.return_value = SimpleNamespace(
+            can_use_ai=True,
+            warning_message="",
+        )
+        recreated_summary = self._summary(
+            overall="再作成後の要約",
+            soap_s="再作成後の主観情報",
+        )
+        mock_summarize.return_value = recreated_summary
+        self.session.transcript_text = "統合文字起こし"
+        self.session.confirmed_summary_json = self.summary
+        self.session.summary_status = "confirmed"
+        self.session.confirmed_by = self.user
+        self.session.confirmed_at = timezone.now()
+        self.session.save(
+            update_fields=[
+                "transcript_text",
+                "confirmed_summary_json",
+                "summary_status",
+                "confirmed_by",
+                "confirmed_at",
+            ]
+        )
+
+        response = self.client.post(
+            reverse(
+                "treatment_sessions:summarize",
+                args=[self.session.id],
+            ),
+            {"force": "1"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.session.refresh_from_db()
+        self.assertEqual(self.session.summary_json, recreated_summary)
+        self.assertEqual(self.session.confirmed_summary_json, {})
+        self.assertEqual(self.session.summary_status, "draft")
+        self.assertIsNone(self.session.confirmed_by)
+        self.assertIsNone(self.session.confirmed_at)
 
     def test_unconfirmed_register_redirects_to_confirm_page(self):
         response = self.client.post(

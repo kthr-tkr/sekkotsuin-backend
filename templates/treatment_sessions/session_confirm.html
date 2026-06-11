@@ -100,6 +100,30 @@
     background:#fffbeb;
     color:#92400e;
   }
+  .confirm-flow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-top:14px;
+    padding:15px 17px;
+    border-radius:17px;
+    border:1px solid #dbe6f3;
+    background:#fff;
+  }
+  .confirm-flow-label{
+    color:#1d4ed8;
+    font-size:12px;
+    font-weight:900;
+  }
+  .confirm-flow-next{
+    margin-top:4px;
+    color:#334155;
+    font-size:13px;
+    line-height:1.65;
+    font-weight:800;
+  }
   .confirm-form{
     margin-top:22px;
   }
@@ -321,7 +345,22 @@
     </div>
   {% endif %}
 
-  <form method="post" class="confirm-form">
+  <div class="confirm-flow">
+    <div>
+      <div class="confirm-flow-label">現在：{{ flow_state.label }}</div>
+      <div class="confirm-flow-next">次にやること：{{ flow_state.next_action }}</div>
+    </div>
+    {% if flow_state.is_registered and registered_clinical_note %}
+      <a
+        class="confirm-button secondary"
+        href="{% url 'staff:clinical_note_detail' registered_clinical_note.id %}"
+      >
+        カルテ詳細を見る
+      </a>
+    {% endif %}
+  </div>
+
+  <form method="post" class="confirm-form" data-prevent-double-submit>
     {% csrf_token %}
 
     {% if form.non_field_errors %}
@@ -421,7 +460,13 @@
       <a class="confirm-button secondary" href="{% url 'treatment_sessions:detail' session.id %}">
         施術録音へ戻る
       </a>
-      <button class="confirm-button" type="submit">確認内容を保存</button>
+      <button
+        class="confirm-button"
+        type="submit"
+        data-processing-label="保存中..."
+      >
+        確認内容を保存
+      </button>
     </div>
   </form>
 
@@ -430,21 +475,46 @@
     <p class="confirm-register-text">
       保存済みの確認内容をClinicalNoteへ登録します。既存カルテを更新する場合は、更新前の内容を履歴として保存します。
     </p>
-    {% if not is_confirmed %}
+    {% if flow_state.is_registered and registered_clinical_note %}
+      <div class="confirm-notice" style="margin:0 0 12px;">
+        この施術録音はカルテに登録済みです。
+      </div>
+      <a
+        class="confirm-button secondary"
+        href="{% url 'staff:clinical_note_detail' registered_clinical_note.id %}"
+      >
+        カルテ詳細を見る
+      </a>
+    {% elif not is_confirmed %}
       <span class="confirm-button disabled" aria-disabled="true">先に確認内容を保存してください</span>
     {% elif not session.appointment %}
       <span class="confirm-button disabled" aria-disabled="true">予約情報が必要です</span>
-    {% else %}
-      <form method="post" action="{% url 'treatment_sessions:register_clinical_note' session.id %}">
+    {% elif flow_state.can_register %}
+      {% if flow_state.clinical_note_exists %}
+        <div class="confirm-notice" style="margin:0 0 12px;">
+          登録済みカルテに未反映の確認内容があります。内容を確認してカルテへ反映してください。
+        </div>
+      {% endif %}
+      <form
+        method="post"
+        action="{% url 'treatment_sessions:register_clinical_note' session.id %}"
+        data-prevent-double-submit
+      >
         {% csrf_token %}
-        <button class="confirm-button register" type="submit">カルテへ登録</button>
+        <button
+          class="confirm-button register"
+          type="submit"
+          data-processing-label="登録中..."
+        >
+          カルテへ登録
+        </button>
       </form>
     {% endif %}
 
-    {% if session.clinical_note %}
+    {% if registered_clinical_note and not flow_state.is_registered %}
       <a
         class="confirm-button secondary"
-        href="{% url 'staff:clinical_note_detail' session.clinical_note.id %}"
+        href="{% url 'staff:clinical_note_detail' registered_clinical_note.id %}"
         style="margin-top:10px;"
       >
         登録済みカルテを見る
@@ -452,4 +522,23 @@
     {% endif %}
   </section>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll("form[data-prevent-double-submit]").forEach((form) => {
+    form.addEventListener("submit", function(event) {
+      if (form.dataset.submitting === "1") {
+        event.preventDefault();
+        return;
+      }
+
+      form.dataset.submitting = "1";
+      form.querySelectorAll('button[type="submit"]').forEach((button) => {
+        button.disabled = true;
+        button.textContent = button.dataset.processingLabel || "処理中...";
+      });
+    });
+  });
+</script>
 {% endblock %}
