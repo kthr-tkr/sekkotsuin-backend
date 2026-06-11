@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseForbidden, JsonResponse
 from django.views.decorators.http import require_POST
-from django.db.models import Max, Sum
+from django.db.models import Max, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -24,12 +24,41 @@ from django.db import IntegrityError, transaction
 
 from apps.clinical_notes.models import ClinicalNote, ClinicalNoteHistory
 
+from .forms import TreatmentSessionConfirmForm
+
 
 def _get_staff_clinic(request):
     clinic = getattr(request.user, "clinic", None)
     if clinic is None or getattr(request.user, "clinic_id", None) != clinic.id:
         return None
     return clinic
+
+
+def _as_summary_dict(value):
+    return value if isinstance(value, dict) else {}
+
+
+def _as_summary_list(value):
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [line.strip(" ・\t") for line in value.splitlines() if line.strip()]
+    if isinstance(value, (list, tuple)):
+        items = []
+        for item in value:
+            if isinstance(item, dict):
+                item = (
+                    item.get("text")
+                    or item.get("summary")
+                    or item.get("label")
+                    or ""
+                )
+            text = str(item or "").strip()
+            if text:
+                items.append(text)
+        return items
+    text = str(value).strip()
+    return [text] if text else []
 
 
 def _get_or_create_appointment_session(*, appointment, clinic, patient, intake, user):
@@ -131,42 +160,32 @@ def treatment_session_detail_view(request, session_id):
             "intake",
             "clinical_note",
             "treatment_plan",
-        ).prefetch_related("chunks"),
+        )
+        .prefetch_related("chunks")
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
+            Q(intake__isnull=True) | Q(intake__clinic=clinic),
+        ),
         pk=session_id,
         clinic=clinic,
         patient__clinic=clinic,
     )
 
-    summary = session.active_summary or {}
+    summary = _as_summary_dict(session.active_summary)
 
-    session_summary = summary.get("session_summary") or {}
-    clinical_assessment = summary.get("clinical_assessment") or {}
-    treatment = summary.get("treatment") or {}
-    explanation = summary.get("explanation") or {}
-    next_plan = summary.get("next_plan") or {}
-    soap = summary.get("soap") or {}
-    progress_note = summary.get("progress_note") or {}
-
-    if not isinstance(session_summary, dict):
-        session_summary = {}
-    if not isinstance(clinical_assessment, dict):
-        clinical_assessment = {}
-    if not isinstance(treatment, dict):
-        treatment = {}
-    if not isinstance(explanation, dict):
-        explanation = {}
-    if not isinstance(next_plan, dict):
-        next_plan = {}
-    if not isinstance(soap, dict):
-        soap = {}
-    if not isinstance(progress_note, dict):
-        progress_note = {}
+    session_summary = _as_summary_dict(summary.get("session_summary"))
+    clinical_assessment = _as_summary_dict(summary.get("clinical_assessment"))
+    treatment = _as_summary_dict(summary.get("treatment"))
+    explanation = _as_summary_dict(summary.get("explanation"))
+    next_plan = _as_summary_dict(summary.get("next_plan"))
+    soap = _as_summary_dict(summary.get("soap"))
+    progress_note = _as_summary_dict(summary.get("progress_note"))
 
     context = {
         "session": session,
         "chunks": session.chunks.all(),
         "summary": summary,
-        "important_points": summary.get("important_points") or [],
+        "important_points": _as_summary_list(summary.get("important_points")),
         "session_summary": session_summary,
         "clinical_assessment": clinical_assessment,
         "treatment": treatment,
@@ -174,9 +193,13 @@ def treatment_session_detail_view(request, session_id):
         "next_plan": next_plan,
         "soap": soap,
         "progress_note": progress_note,
-        "relationship_notes": summary.get("relationship_notes") or [],
-        "missing_information": summary.get("missing_information") or [],
-        "safety_notes": summary.get("safety_notes") or [],
+        "relationship_notes": _as_summary_list(
+            summary.get("relationship_notes")
+        ),
+        "missing_information": _as_summary_list(
+            summary.get("missing_information")
+        ),
+        "safety_notes": _as_summary_list(summary.get("safety_notes")),
         "summary_json_pretty": json.dumps(summary, ensure_ascii=False, indent=2),
     }
 
@@ -184,6 +207,87 @@ def treatment_session_detail_view(request, session_id):
         request,
         "treatment_sessions/session_detail.html",
         context,
+    )
+
+
+@staff_required
+def treatment_session_confirm_view(request, session_id):
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
+
+    session = get_object_or_404(
+        TreatmentSession.objects
+        .select_related(
+            "clinic",
+            "patient",
+            "appointment",
+            "intake",
+            "clinical_note",
+            "confirmed_by",
+        )
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
+            Q(intake__isnull=True) | Q(intake__clinic=clinic),
+        ),
+        pk=session_id,
+        clinic=clinic,
+        patient__clinic=clinic,
+    )
+
+    source_summary = (
+        session.confirmed_summary_json
+        or session.summary_json
+        or {}
+    )
+    if not source_summary:
+        messages.warning(
+            request,
+            "録音内容からカルテ案を作成してから、確認・修正してください。",
+        )
+        return redirect("treatment_sessions:detail", session_id=session.id)
+
+    if request.method == "POST":
+        form = TreatmentSessionConfirmForm(
+            request.POST,
+            summary=source_summary,
+        )
+        if form.is_valid():
+            confirmed_summary = form.build_confirmed_summary()
+            session.mark_confirmed(
+                user=request.user,
+                data=confirmed_summary,
+            )
+            session.updated_by = request.user
+            session.save(
+                update_fields=[
+                    "confirmed_summary_json",
+                    "summary_status",
+                    "confirmed_at",
+                    "confirmed_by",
+                    "updated_by",
+                    "updated_at",
+                ]
+            )
+            messages.success(
+                request,
+                "確認内容を保存しました。カルテへ登録できます。",
+            )
+            return redirect(
+                "treatment_sessions:session_confirm",
+                session_id=session.id,
+            )
+    else:
+        form = TreatmentSessionConfirmForm(summary=source_summary)
+
+    return render(
+        request,
+        "treatment_sessions/session_confirm.html",
+        {
+            "session": session,
+            "form": form,
+            "is_confirmed": bool(session.confirmed_summary_json),
+        },
     )
     
 @staff_required
@@ -656,9 +760,24 @@ def summarize_treatment_session_view(request, session_id):
         summary = summarize_treatment_session(session.transcript_text)
 
         session.summary_json = summary or {}
+        session.confirmed_summary_json = {}
+        session.summary_status = "draft"
+        session.confirmed_by = None
+        session.confirmed_at = None
         session.status = TreatmentSession.Status.DONE
         session.updated_by = request.user
-        session.save(update_fields=["summary_json", "status", "updated_by", "updated_at"])
+        session.save(
+            update_fields=[
+                "summary_json",
+                "confirmed_summary_json",
+                "summary_status",
+                "confirmed_by",
+                "confirmed_at",
+                "status",
+                "updated_by",
+                "updated_at",
+            ]
+        )
 
         already_logged = AiUsageLog.objects.filter(
             clinic=session.clinic,
@@ -733,27 +852,27 @@ def _build_clinical_note_data_from_session_summary(summary: dict) -> tuple[dict,
     TreatmentSession.summary_json を ClinicalNote 用の
     soap_json / extract_json / followups_json に変換する。
     """
-    summary = summary or {}
+    summary = _as_summary_dict(summary)
 
-    important_points = summary.get("important_points") or []
-    session_summary = summary.get("session_summary") or {}
-    clinical_assessment = summary.get("clinical_assessment") or {}
-    treatment = summary.get("treatment") or {}
-    explanation = summary.get("explanation") or {}
-    next_plan = summary.get("next_plan") or {}
-    soap = summary.get("soap") or {}
-    progress_note = summary.get("progress_note") or {}
+    important_points = _as_summary_list(summary.get("important_points"))
+    session_summary = _as_summary_dict(summary.get("session_summary"))
+    clinical_assessment = _as_summary_dict(summary.get("clinical_assessment"))
+    treatment = _as_summary_dict(summary.get("treatment"))
+    explanation = _as_summary_dict(summary.get("explanation"))
+    next_plan = _as_summary_dict(summary.get("next_plan"))
+    soap = _as_summary_dict(summary.get("soap"))
+    progress_note = _as_summary_dict(summary.get("progress_note"))
 
-    relationship_notes = summary.get("relationship_notes") or []
-    missing_information = summary.get("missing_information") or []
-    safety_notes = summary.get("safety_notes") or []
+    relationship_notes = _as_summary_list(summary.get("relationship_notes"))
+    missing_information = _as_summary_list(summary.get("missing_information"))
+    safety_notes = _as_summary_list(summary.get("safety_notes"))
 
     # SOAPはClinicalNoteでそのまま使える形
     soap_json = {
-        "S": soap.get("S") or [],
-        "O": soap.get("O") or [],
-        "A": soap.get("A") or [],
-        "P": soap.get("P") or [],
+        "S": _as_summary_list(soap.get("S")),
+        "O": _as_summary_list(soap.get("O")),
+        "A": _as_summary_list(soap.get("A")),
+        "P": _as_summary_list(soap.get("P")),
     }
 
     # extract_jsonには後から画面表示・検索・施術計画生成に使いやすい情報を集約
@@ -766,30 +885,51 @@ def _build_clinical_note_data_from_session_summary(summary: dict) -> tuple[dict,
         "overall_summary": session_summary.get("overall_summary", ""),
         "progress_change": session_summary.get("progress_change") or {},
 
-        "checked_areas": clinical_assessment.get("checked_areas") or [],
-        "pain_areas": clinical_assessment.get("pain_areas") or [],
-        "movement_tests": clinical_assessment.get("movement_tests") or [],
-        "findings": clinical_assessment.get("findings") or [],
-        "suspected_causes": clinical_assessment.get("suspected_causes") or [],
+        "checked_areas": _as_summary_list(
+            clinical_assessment.get("checked_areas")
+        ),
+        "pain_areas": _as_summary_list(
+            clinical_assessment.get("pain_areas")
+        ),
+        "movement_tests": _as_summary_list(
+            clinical_assessment.get("movement_tests")
+        ),
+        "findings": _as_summary_list(clinical_assessment.get("findings")),
+        "suspected_causes": _as_summary_list(
+            clinical_assessment.get("suspected_causes")
+        ),
         "treatment_intent": clinical_assessment.get("treatment_intent", ""),
 
         # 既存の画面が locations を見る可能性があるので互換用に入れる
-        "locations": clinical_assessment.get("pain_areas") or clinical_assessment.get("checked_areas") or [],
+        "locations": (
+            _as_summary_list(clinical_assessment.get("pain_areas"))
+            or _as_summary_list(clinical_assessment.get("checked_areas"))
+        ),
 
-        "performed_treatments": treatment.get("performed_treatments") or [],
-        "target_areas": treatment.get("target_areas") or [],
+        "performed_treatments": _as_summary_list(
+            treatment.get("performed_treatments")
+        ),
+        "target_areas": _as_summary_list(treatment.get("target_areas")),
         "patient_response": treatment.get("patient_response", ""),
         "after_treatment_change": treatment.get("after_treatment_change", ""),
 
-        "explained_to_patient": explanation.get("explained_to_patient") or [],
-        "lifestyle_guidance": explanation.get("lifestyle_guidance") or [],
-        "home_care": explanation.get("home_care") or [],
-        "cautions_until_next_visit": explanation.get("cautions_until_next_visit") or [],
+        "explained_to_patient": _as_summary_list(
+            explanation.get("explained_to_patient")
+        ),
+        "lifestyle_guidance": _as_summary_list(
+            explanation.get("lifestyle_guidance")
+        ),
+        "home_care": _as_summary_list(explanation.get("home_care")),
+        "cautions_until_next_visit": _as_summary_list(
+            explanation.get("cautions_until_next_visit")
+        ),
 
         "next_plan": next_plan,
         "next_treatment_policy": next_plan.get("next_treatment_policy", ""),
         "recommended_visit_timing": next_plan.get("recommended_visit_timing", ""),
-        "items_to_check_next_time": next_plan.get("items_to_check_next_time") or [],
+        "items_to_check_next_time": _as_summary_list(
+            next_plan.get("items_to_check_next_time")
+        ),
 
         "progress_note": progress_note,
         "relationship_notes": relationship_notes,
@@ -800,7 +940,7 @@ def _build_clinical_note_data_from_session_summary(summary: dict) -> tuple[dict,
     # followups_json は「次回確認」「不足情報」「注意事項」をまとめておく
     followups_json = []
 
-    for item in next_plan.get("items_to_check_next_time") or []:
+    for item in _as_summary_list(next_plan.get("items_to_check_next_time")):
         followups_json.append({
             "type": "next_check",
             "text": item,
@@ -837,11 +977,16 @@ def register_treatment_session_note_view(request, session_id):
         return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
 
     session = get_object_or_404(
-        TreatmentSession.objects.select_related(
+        TreatmentSession.objects
+        .select_related(
             "clinic",
             "patient",
             "appointment",
             "intake",
+        )
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
+            Q(intake__isnull=True) | Q(intake__clinic=clinic),
         ),
         pk=session_id,
         clinic=clinic,
@@ -855,10 +1000,20 @@ def register_treatment_session_note_view(request, session_id):
         )
         return redirect("treatment_sessions:detail", session_id=session.id)
 
-    summary = session.active_summary or {}
+    if not session.confirmed_summary_json:
+        messages.warning(
+            request,
+            "カルテへ登録する前に、録音内容から作成したカルテ案を確認・修正してください。",
+        )
+        return redirect(
+            "treatment_sessions:session_confirm",
+            session_id=session.id,
+        )
+
+    summary = session.confirmed_summary_json or session.summary_json or {}
 
     if not summary:
-        messages.error(request, "AI要約が未作成のため、カルテに登録できません。")
+        messages.error(request, "カルテ案が未作成のため、カルテに登録できません。")
         return redirect("treatment_sessions:detail", session_id=session.id)
 
     patient = session.patient
@@ -888,8 +1043,18 @@ def register_treatment_session_note_view(request, session_id):
         .first()
     )
 
-    # 既存カルテがある場合は更新前履歴を残す
-    if existing_note:
+    note_content_changed = bool(
+        existing_note
+        and (
+            (existing_note.soap_json or {}) != soap_json
+            or (existing_note.extract_json or {}) != extract_json
+            or (existing_note.followups_json or []) != followups_json
+            or (existing_note.web_intake_snapshot or {}) != web_snapshot
+        )
+    )
+
+    # 内容が変わる既存カルテのみ、更新前履歴を1件残す。
+    if note_content_changed:
         ClinicalNoteHistory.objects.create(
             note=existing_note,
             soap_json=existing_note.soap_json or {},
@@ -921,8 +1086,8 @@ def register_treatment_session_note_view(request, session_id):
     session.save(update_fields=["clinical_note", "updated_by", "updated_at"])
 
     if created:
-        messages.success(request, "施術セッションのAI要約をカルテに登録しました。")
+        messages.success(request, "確認済みのカルテ案をカルテに登録しました。")
     else:
-        messages.success(request, "既存カルテを施術セッションのAI要約で更新しました。")
+        messages.success(request, "確認済みのカルテ案で既存カルテを更新しました。")
 
     return redirect("staff:patient_detail", patient_id=patient.id)

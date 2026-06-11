@@ -31,6 +31,11 @@ urlpatterns = [
         name="summarize",
     ),
     path(
+        "<int:session_id>/confirm/",
+        views.treatment_session_confirm_view,
+        name="session_confirm",
+    ),
+    path(
         "<int:session_id>/register-clinical-note/",
         views.register_treatment_session_note_view,
         name="register_clinical_note",

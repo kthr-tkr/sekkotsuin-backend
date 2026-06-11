@@ -1,0 +1,455 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | カルテ案の確認{% endblock %}
+
+{% block extra_head %}
+<style>
+  .confirm-page{
+    max-width:1180px;
+    margin:0 auto;
+    padding:32px;
+  }
+  .confirm-hero{
+    padding:30px;
+    border-radius:28px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 88% 14%,rgba(96,165,250,.34),transparent 30%),
+      linear-gradient(135deg,#0b1220 0%,#172554 55%,#1d4ed8 100%);
+    box-shadow:0 24px 56px rgba(30,64,175,.18);
+  }
+  .confirm-hero-top,
+  .confirm-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .confirm-kicker{
+    margin-bottom:10px;
+    color:#bfdbfe;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+  .confirm-title{
+    margin:0;
+    font-size:34px;
+    font-weight:900;
+    letter-spacing:-.04em;
+  }
+  .confirm-lead{
+    max-width:760px;
+    margin:12px 0 0;
+    color:rgba(255,255,255,.82);
+    font-size:14px;
+    line-height:1.85;
+    font-weight:700;
+  }
+  .confirm-status{
+    display:inline-flex;
+    align-items:center;
+    padding:9px 13px;
+    border-radius:999px;
+    background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.2);
+    font-size:12px;
+    font-weight:900;
+  }
+  .confirm-status.done{
+    color:#d1fae5;
+    background:rgba(16,185,129,.18);
+  }
+  .confirm-meta{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+    margin-top:22px;
+  }
+  .confirm-meta-item{
+    padding:14px 16px;
+    border-radius:17px;
+    background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .confirm-meta-label{
+    margin-bottom:6px;
+    color:rgba(255,255,255,.62);
+    font-size:11px;
+    font-weight:900;
+  }
+  .confirm-meta-value{
+    color:#fff;
+    font-size:14px;
+    font-weight:900;
+  }
+  .confirm-notice{
+    margin-top:18px;
+    padding:14px 16px;
+    border-radius:17px;
+    border:1px solid #bfdbfe;
+    background:#eff6ff;
+    color:#1e3a8a;
+    font-size:13px;
+    line-height:1.75;
+    font-weight:800;
+  }
+  .confirm-notice.warning{
+    border-color:#fde68a;
+    background:#fffbeb;
+    color:#92400e;
+  }
+  .confirm-form{
+    margin-top:22px;
+  }
+  .confirm-section{
+    margin-bottom:18px;
+    padding:24px;
+    border-radius:24px;
+    border:1px solid #e2e8f0;
+    background:#fff;
+    box-shadow:0 14px 34px rgba(15,23,42,.05);
+  }
+  .confirm-section-head{
+    margin-bottom:18px;
+  }
+  .confirm-section-title{
+    margin:0;
+    color:#0f172a;
+    font-size:21px;
+    font-weight:900;
+  }
+  .confirm-section-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:12px;
+    line-height:1.65;
+    font-weight:700;
+  }
+  .confirm-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+  }
+  .confirm-grid.soap{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .confirm-field{
+    min-width:0;
+  }
+  .confirm-field.full{
+    grid-column:1 / -1;
+  }
+  .confirm-field label{
+    display:block;
+    margin-bottom:8px;
+    color:#334155;
+    font-size:13px;
+    font-weight:900;
+  }
+  .confirm-textarea{
+    width:100%;
+    box-sizing:border-box;
+    resize:vertical;
+    padding:14px 15px;
+    border:1px solid #cbd5e1;
+    border-radius:16px;
+    outline:none;
+    background:#fbfdff;
+    color:#0f172a;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.75;
+  }
+  .confirm-textarea:focus{
+    border-color:#3b82f6;
+    box-shadow:0 0 0 4px rgba(59,130,246,.11);
+    background:#fff;
+  }
+  .confirm-help{
+    margin-top:6px;
+    color:#94a3b8;
+    font-size:11px;
+    font-weight:700;
+  }
+  .confirm-error{
+    margin-top:7px;
+    color:#b91c1c;
+    font-size:12px;
+    font-weight:800;
+  }
+  .confirm-form-errors{
+    margin-bottom:16px;
+    padding:14px 16px;
+    border-radius:16px;
+    border:1px solid #fecaca;
+    background:#fef2f2;
+    color:#991b1b;
+    font-size:13px;
+    font-weight:800;
+  }
+  .confirm-action-bar{
+    position:sticky;
+    bottom:14px;
+    z-index:10;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:16px;
+    border:1px solid #dbe6f3;
+    border-radius:20px;
+    background:rgba(255,255,255,.96);
+    box-shadow:0 18px 42px rgba(15,23,42,.12);
+    backdrop-filter:blur(10px);
+  }
+  .confirm-button{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    padding:0 18px;
+    border:0;
+    border-radius:15px;
+    cursor:pointer;
+    text-decoration:none;
+    color:#fff;
+    background:linear-gradient(135deg,#172554 0%,#2563eb 100%);
+    font-size:13px;
+    font-weight:900;
+  }
+  .confirm-button.secondary{
+    color:#334155;
+    background:#f1f5f9;
+  }
+  .confirm-button.register{
+    background:linear-gradient(135deg,#065f46 0%,#10b981 100%);
+  }
+  .confirm-button.disabled{
+    color:#94a3b8;
+    background:#e2e8f0;
+    cursor:not-allowed;
+  }
+  .confirm-register{
+    margin-top:18px;
+    padding:22px;
+    border-radius:22px;
+    border:1px solid #bbf7d0;
+    background:linear-gradient(180deg,#fff 0%,#f0fdf4 100%);
+  }
+  .confirm-register-title{
+    margin:0 0 7px;
+    color:#14532d;
+    font-size:18px;
+    font-weight:900;
+  }
+  .confirm-register-text{
+    margin:0 0 14px;
+    color:#475569;
+    font-size:13px;
+    line-height:1.7;
+    font-weight:700;
+  }
+  @media(max-width:760px){
+    .confirm-page{padding:18px;}
+    .confirm-hero,.confirm-section{padding:20px;border-radius:22px;}
+    .confirm-title{font-size:27px;}
+    .confirm-meta,.confirm-grid,.confirm-grid.soap{grid-template-columns:1fr;}
+    .confirm-field.full{grid-column:auto;}
+    .confirm-action-bar{position:static;}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-page">
+  <header class="confirm-hero">
+    <div class="confirm-hero-top">
+      <div>
+        <div class="confirm-kicker">Treatment Note Review</div>
+        <h1 class="confirm-title">録音内容から作成したカルテ案</h1>
+        <p class="confirm-lead">
+          内容を施術者が確認し、必要に応じて修正してから保存してください。
+          本画面の内容は診断を確定するものではなく、施術者の評価と合わせて判断します。
+        </p>
+      </div>
+      <div class="confirm-status {% if is_confirmed %}done{% endif %}">
+        {% if is_confirmed %}確認済み{% else %}確認が必要{% endif %}
+      </div>
+    </div>
+
+    <div class="confirm-meta">
+      <div class="confirm-meta-item">
+        <div class="confirm-meta-label">患者様</div>
+        <div class="confirm-meta-value">
+          {{ session.patient.last_name }} {{ session.patient.first_name }}
+        </div>
+      </div>
+      <div class="confirm-meta-item">
+        <div class="confirm-meta-label">予約日時</div>
+        <div class="confirm-meta-value">
+          {% if session.appointment %}
+            {{ session.appointment.start_at|date:"Y年n月j日 H:i" }}
+          {% else %}
+            予約なし
+          {% endif %}
+        </div>
+      </div>
+      <div class="confirm-meta-item">
+        <div class="confirm-meta-label">最終確認</div>
+        <div class="confirm-meta-value">
+          {% if session.confirmed_at %}
+            {{ session.confirmed_at|date:"Y年n月j日 H:i" }}
+          {% else %}
+            未確認
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="confirm-notice">
+    各入力欄は1項目ずつ改行してください。症状や状態は「可能性」「傾向」「確認が必要」など、断定を避けた表現で記録してください。
+  </div>
+
+  {% if not session.appointment %}
+    <div class="confirm-notice warning">
+      この施術録音には予約が紐づいていません。カルテへ登録するには予約情報が必要です。本日の予約を作成または選択してください。
+    </div>
+  {% endif %}
+
+  <form method="post" class="confirm-form">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="confirm-form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <section class="confirm-section">
+      <div class="confirm-section-head">
+        <h2 class="confirm-section-title">今回の要約</h2>
+        <div class="confirm-section-sub">今回の状態・変化・施術方針を短くまとめます。</div>
+      </div>
+      <div class="confirm-field">
+        <label for="{{ form.overall_summary.id_for_label }}">{{ form.overall_summary.label }}</label>
+        {{ form.overall_summary }}
+        {% for error in form.overall_summary.errors %}<div class="confirm-error">{{ error }}</div>{% endfor %}
+      </div>
+    </section>
+
+    <section class="confirm-section">
+      <div class="confirm-section-head">
+        <h2 class="confirm-section-title">SOAP</h2>
+        <div class="confirm-section-sub">患者様の訴え、確認した所見、評価、今後の計画を分けて確認します。</div>
+      </div>
+      <div class="confirm-grid soap">
+        {% for field in form %}
+          {% if field.name == "soap_s" or field.name == "soap_o" or field.name == "soap_a" or field.name == "soap_p" %}
+            <div class="confirm-field">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              <div class="confirm-help">1項目ずつ改行</div>
+              {% for error in field.errors %}<div class="confirm-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="confirm-section">
+      <div class="confirm-section-head">
+        <h2 class="confirm-section-title">施術内容・反応</h2>
+        <div class="confirm-section-sub">実施内容と施術後の変化を、録音で確認できた範囲で記録します。</div>
+      </div>
+      <div class="confirm-grid">
+        {% for field in form %}
+          {% if field.name == "target_areas" or field.name == "performed_treatments" or field.name == "patient_response" or field.name == "after_treatment_change" %}
+            <div class="confirm-field">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% for error in field.errors %}<div class="confirm-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="confirm-section">
+      <div class="confirm-section-head">
+        <h2 class="confirm-section-title">患者様への説明・指導</h2>
+        <div class="confirm-section-sub">説明内容、生活上の注意、無理のないセルフケアを整理します。</div>
+      </div>
+      <div class="confirm-grid">
+        {% for field in form %}
+          {% if field.name == "explained_to_patient" or field.name == "lifestyle_guidance" or field.name == "home_care" %}
+            <div class="confirm-field {% if field.name == 'explained_to_patient' %}full{% endif %}">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              <div class="confirm-help">1項目ずつ改行</div>
+              {% for error in field.errors %}<div class="confirm-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="confirm-section">
+      <div class="confirm-section-head">
+        <h2 class="confirm-section-title">次回方針・フォローアップ</h2>
+        <div class="confirm-section-sub">次回確認する症状・動作と、追加確認が必要な情報を整理します。</div>
+      </div>
+      <div class="confirm-grid">
+        {% for field in form %}
+          {% if field.name == "next_treatment_policy" or field.name == "recommended_visit_timing" or field.name == "next_check_points" or field.name == "caution_notes" or field.name == "followup_items" %}
+            <div class="confirm-field {% if field.name == 'next_check_points' or field.name == 'caution_notes' or field.name == 'followup_items' %}full{% endif %}">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.name == "next_check_points" or field.name == "caution_notes" or field.name == "followup_items" %}
+                <div class="confirm-help">1項目ずつ改行</div>
+              {% endif %}
+              {% for error in field.errors %}<div class="confirm-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="confirm-action-bar">
+      <a class="confirm-button secondary" href="{% url 'treatment_sessions:detail' session.id %}">
+        施術録音へ戻る
+      </a>
+      <button class="confirm-button" type="submit">確認内容を保存</button>
+    </div>
+  </form>
+
+  <section class="confirm-register">
+    <h2 class="confirm-register-title">カルテへ反映</h2>
+    <p class="confirm-register-text">
+      保存済みの確認内容をClinicalNoteへ登録します。既存カルテを更新する場合は、更新前の内容を履歴として保存します。
+    </p>
+    {% if not is_confirmed %}
+      <span class="confirm-button disabled" aria-disabled="true">先に確認内容を保存してください</span>
+    {% elif not session.appointment %}
+      <span class="confirm-button disabled" aria-disabled="true">予約情報が必要です</span>
+    {% else %}
+      <form method="post" action="{% url 'treatment_sessions:register_clinical_note' session.id %}">
+        {% csrf_token %}
+        <button class="confirm-button register" type="submit">カルテへ登録</button>
+      </form>
+    {% endif %}
+
+    {% if session.clinical_note %}
+      <a
+        class="confirm-button secondary"
+        href="{% url 'staff:clinical_note_detail' session.clinical_note.id %}"
+        style="margin-top:10px;"
+      >
+        登録済みカルテを見る
+      </a>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

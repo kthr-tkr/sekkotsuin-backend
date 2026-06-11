@@ -522,7 +522,27 @@
 
     {% if summary %}
     <section class="chunk-section">
-        <h2 class="chunk-title">AI施術セッション要約</h2>
+        <h2 class="chunk-title">録音内容から作成したカルテ案</h2>
+
+        <div style="margin:0 0 18px; padding:18px; border-radius:20px; border:1px solid #bfdbfe; background:linear-gradient(180deg,#fff 0%,#eff6ff 100%);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+            <div style="max-width:720px;">
+              <div style="color:#1e3a8a; font-size:16px; font-weight:900; margin-bottom:6px;">
+                {% if session.confirmed_summary_json %}確認済みのカルテ案{% else %}施術者の確認が必要です{% endif %}
+              </div>
+              <div style="color:#475569; font-size:13px; line-height:1.75; font-weight:700;">
+                録音内容から作成したカルテ案を確認し、必要に応じて修正してからカルテへ登録できます。
+              </div>
+            </div>
+            <a
+              href="{% url 'treatment_sessions:session_confirm' session.id %}"
+              class="record-btn primary"
+              style="text-decoration:none;"
+            >
+              カルテ案を確認・修正
+            </a>
+          </div>
+        </div>
 
             {% if important_points %}
             <div style="
@@ -615,19 +635,7 @@
             </div>
             {% endif %}
 
-        <div style="
-        display:flex;
-        gap:10px;
-        flex-wrap:wrap;
-        margin: 0 0 18px;
-        ">
-        <form method="post" action="{% url 'treatment_sessions:register_clinical_note' session.id %}">
-            {% csrf_token %}
-            <button type="submit" class="record-btn primary">
-            カルテに登録
-            </button>
-        </form>
-
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin:0 0 18px;">
         {% if session.clinical_note %}
             <a
             href="{% url 'staff:clinical_note_detail' session.clinical_note.id %}"
@@ -934,6 +942,12 @@
         </summary>
         <pre style="margin-top:12px; padding:14px; border-radius:16px; background:#0f172a; color:#e5e7eb; overflow:auto; font-size:12px;">{{ summary_json_pretty }}</pre>
         </details>
+    </section>
+    {% else %}
+    <section class="chunk-section">
+      <div class="empty-box">
+        カルテ案はまだありません。先に録音の文字起こしと要約作成を行ってください。
+      </div>
     </section>
     {% endif %}
 
