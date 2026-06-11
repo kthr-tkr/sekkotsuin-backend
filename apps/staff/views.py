@@ -323,6 +323,54 @@ def _matched_profile_labels(text, mapping):
     ]
 
 
+def _profile_section(summary, *aliases):
+    if not isinstance(summary, dict):
+        return {}
+
+    normalized_aliases = {
+        re.sub(r"[^a-z0-9]", "", alias.lower())
+        for alias in aliases
+    }
+    for key, value in summary.items():
+        normalized_key = re.sub(r"[^a-z0-9]", "", str(key).lower())
+        if normalized_key in normalized_aliases:
+            return value
+    return {}
+
+
+def _profile_joint_value(joint_assessments, *aliases):
+    value = _profile_section(joint_assessments, *aliases)
+    if value not in (None, "", [], {}):
+        return value
+    return {}
+
+
+def _patient_profile_source_values(patient):
+    values = []
+    for field_name in (
+        "sports",
+        "sport",
+        "competition",
+        "sport_position",
+        "position",
+        "occupation",
+        "job",
+        "work_style",
+        "lifestyle",
+        "daily_life",
+        "chief_complaint",
+        "memo",
+        "note",
+    ):
+        if not hasattr(patient, field_name):
+            continue
+        value = getattr(patient, field_name, None)
+        if callable(value):
+            continue
+        values.extend(_flatten_profile_text(value))
+    return values
+
+
 def extract_keywords_from_patient_sources(
     patient,
     latest_intake=None,
@@ -363,6 +411,7 @@ def extract_keywords_from_patient_sources(
     source_texts = []
     for source in structured_sources:
         source_texts.extend(_flatten_profile_text(source))
+    source_texts.extend(_patient_profile_source_values(patient))
 
     if latest_intake:
         source_texts.extend(_flatten_profile_text(latest_intake.chief_complaint))
@@ -590,15 +639,37 @@ def _context_support_for_region(context_profile, region_key):
 
 def build_body_profile_items(summary, context_profile=None):
     summary = summary if isinstance(summary, dict) else {}
-    posture_findings = summary.get("posture_findings") or {}
-    joint_assessments = summary.get("joint_assessments") or {}
+    posture_findings = _profile_section(
+        summary,
+        "posture_findings",
+        "postureFinding",
+        "postureFindings",
+        "posture_observations",
+    )
+    joint_assessments = _profile_section(
+        summary,
+        "joint_assessments",
+        "jointAssessment",
+        "jointAssessments",
+        "joints",
+    )
     if not isinstance(posture_findings, dict):
         posture_findings = {}
     if not isinstance(joint_assessments, dict):
         joint_assessments = {}
 
-    suspected_load_areas = _dashboard_text_list(summary.get("suspected_load_areas"))
-    alignment_observations = summary.get("alignment_observations") or {}
+    suspected_load_areas = _dashboard_text_list(_profile_section(
+        summary,
+        "suspected_load_areas",
+        "suspectedLoadAreas",
+        "load_areas",
+    ))
+    alignment_observations = _profile_section(
+        summary,
+        "alignment_observations",
+        "alignmentObservations",
+        "alignment",
+    )
     alignment_items = []
     if isinstance(alignment_observations, dict):
         for value in alignment_observations.values():
@@ -606,13 +677,29 @@ def build_body_profile_items(summary, context_profile=None):
     else:
         alignment_items = _dashboard_text_list(alignment_observations)
 
-    symptom_hypotheses = _dashboard_text_list(summary.get("symptom_relation_hypotheses"))
-    clinical_notes = _dashboard_text_list(summary.get("clinical_notes"))
-    next_check_points = _dashboard_text_list(summary.get("next_check_points"))
+    symptom_hypotheses = _dashboard_text_list(_profile_section(
+        summary,
+        "symptom_relation_hypotheses",
+        "symptomRelationHypotheses",
+        "symptom_hypotheses",
+    ))
+    clinical_notes = _dashboard_text_list(_profile_section(
+        summary,
+        "clinical_notes",
+        "clinicalNotes",
+        "practitioner_notes",
+    ))
+    next_check_points = _dashboard_text_list(_profile_section(
+        summary,
+        "next_check_points",
+        "nextCheckPoints",
+        "check_points",
+    ))
 
     specs = (
         {
-            "key": "head", "label": "頭部", "joints": ("head",),
+            "key": "head", "label": "頭部",
+            "joints": ("head", "head_neck", "headNeck"),
             "posture_keys": ("head_neck",),
             "keywords": ("頭", "頭部", "前方位", "側屈"),
             "fallback": "前方位・左右傾き・回旋は未評価",
@@ -623,7 +710,8 @@ def build_body_profile_items(summary, context_profile=None):
             },
         },
         {
-            "key": "neck", "label": "頸部", "joints": ("neck",),
+            "key": "neck", "label": "頸部",
+            "joints": ("neck", "cervical_spine", "cervicalSpine"),
             "posture_keys": ("head_neck",),
             "keywords": ("首", "頚", "頸"),
             "fallback": "屈伸・側屈・回旋可動域は未評価",
@@ -634,7 +722,8 @@ def build_body_profile_items(summary, context_profile=None):
             },
         },
         {
-            "key": "shoulder", "label": "肩", "joints": ("shoulder",),
+            "key": "shoulder", "label": "肩",
+            "joints": ("shoulder", "shoulders", "scapula"),
             "posture_keys": ("shoulder",),
             "keywords": ("肩", "肩甲"),
             "fallback": "左右差・巻き肩・肩甲帯位置は未評価",
@@ -646,7 +735,8 @@ def build_body_profile_items(summary, context_profile=None):
         },
         {
             "key": "thoracic_spine", "label": "胸椎 / 背中",
-            "joints": ("thoracic_spine",), "posture_keys": ("spine",),
+            "joints": ("thoracic_spine", "thoracicSpine", "thoracic"),
+            "posture_keys": ("spine", "thoracic_spine", "thoracicSpine"),
             "keywords": ("背", "胸椎", "脊柱"),
             "fallback": "後弯・回旋・背部緊張は未評価",
             "aspects": {
@@ -657,7 +747,8 @@ def build_body_profile_items(summary, context_profile=None):
         },
         {
             "key": "lumbar_spine", "label": "腰椎",
-            "joints": ("lumbar_pelvis",), "posture_keys": ("spine", "pelvis"),
+            "joints": ("lumbar_pelvis", "lumbarPelvis", "lumbar_spine", "lumbarSpine"),
+            "posture_keys": ("spine", "lumbar_spine", "lumbarSpine", "pelvis"),
             "keywords": ("腰", "腰椎", "前弯", "反り腰"),
             "fallback": "前後弯・反り腰・座位負荷は未評価",
             "aspects": {
@@ -668,7 +759,8 @@ def build_body_profile_items(summary, context_profile=None):
         },
         {
             "key": "pelvis", "label": "骨盤",
-            "joints": ("lumbar_pelvis",), "posture_keys": ("pelvis",),
+            "joints": ("lumbar_pelvis", "lumbarPelvis", "pelvis"),
+            "posture_keys": ("pelvis", "lumbar_pelvis", "lumbarPelvis"),
             "keywords": ("骨盤", "腰", "臀"),
             "fallback": "前後傾・左右傾斜・回旋は未評価",
             "aspects": {
@@ -679,7 +771,8 @@ def build_body_profile_items(summary, context_profile=None):
             },
         },
         {
-            "key": "hip", "label": "股関節", "joints": ("hip",),
+            "key": "hip", "label": "股関節",
+            "joints": ("hip", "hips", "hip_joint", "hipJoint"),
             "posture_keys": ("hip", "pelvis"),
             "keywords": ("股関節", "股", "臀", "内旋", "外旋"),
             "fallback": "内外旋・屈伸・内外転は未評価",
@@ -690,7 +783,8 @@ def build_body_profile_items(summary, context_profile=None):
             },
         },
         {
-            "key": "knee", "label": "膝", "joints": ("knee",),
+            "key": "knee", "label": "膝",
+            "joints": ("knee", "knees", "knee_joint", "kneeJoint"),
             "posture_keys": ("knee",),
             "keywords": ("膝", "ニーイン", "ニーアウト", "膝蓋"),
             "fallback": "膝の向き・回旋・伸展位は未評価",
@@ -703,7 +797,8 @@ def build_body_profile_items(summary, context_profile=None):
         },
         {
             "key": "ankle_foot", "label": "足部 / 足首",
-            "joints": ("ankle_foot",), "posture_keys": ("ankle_foot", "foot"),
+            "joints": ("ankle_foot", "ankleFoot", "ankle", "foot"),
+            "posture_keys": ("ankle_foot", "ankleFoot", "ankle", "foot"),
             "keywords": ("足", "足首", "足関節", "踵", "アーチ", "つま先"),
             "fallback": "回内外・足先・アーチ・荷重は未評価",
             "aspects": {
@@ -715,7 +810,8 @@ def build_body_profile_items(summary, context_profile=None):
             },
         },
         {
-            "key": "elbow", "label": "肘", "joints": ("elbow",),
+            "key": "elbow", "label": "肘",
+            "joints": ("elbow", "elbows", "elbow_joint", "elbowJoint"),
             "posture_keys": ("elbow",),
             "keywords": ("肘", "肘関節", "内側上顆", "外側上顆"),
             "fallback": "内側ストレス・伸展は必要時に評価",
@@ -728,7 +824,7 @@ def build_body_profile_items(summary, context_profile=None):
         },
         {
             "key": "wrist_forearm", "label": "手首 / 前腕",
-            "joints": ("wrist", "forearm", "wrist_forearm"),
+            "joints": ("wrist", "forearm", "wrist_forearm", "wristForearm"),
             "posture_keys": ("wrist", "forearm"),
             "keywords": ("手首", "手関節", "前腕", "回内", "回外", "握る"),
             "fallback": "回内外・掌背屈・握り動作は必要時に評価",
@@ -752,14 +848,27 @@ def build_body_profile_items(summary, context_profile=None):
     items = []
     for spec in specs:
         joint_sources = []
+        joint_check_points = []
         for joint_key in spec["joints"]:
-            joint = joint_assessments.get(joint_key) or {}
+            joint = _profile_joint_value(joint_assessments, joint_key)
             if isinstance(joint, dict):
                 joint_sources.extend([
-                    joint.get("summary"),
-                    joint.get("possible_findings"),
-                    joint.get("check_points"),
+                    _profile_section(joint, "summary", "overview"),
+                    _profile_section(
+                        joint,
+                        "possible_findings",
+                        "possibleFindings",
+                        "findings",
+                    ),
                 ])
+                joint_check_points.extend(_dashboard_text_list(
+                    _profile_section(
+                        joint,
+                        "check_points",
+                        "checkPoints",
+                        "next_check_points",
+                    )
+                ))
             elif joint:
                 joint_sources.append(joint)
 
@@ -769,11 +878,11 @@ def build_body_profile_items(summary, context_profile=None):
                 if any(keyword in item for keyword in spec["keywords"])
             ]
 
-        posture_sources = [
-            posture_findings.get(key)
-            for key in spec["posture_keys"]
-            if posture_findings.get(key)
-        ]
+        posture_sources = []
+        for posture_key in spec["posture_keys"]:
+            value = _profile_section(posture_findings, posture_key)
+            if value not in (None, "", [], {}):
+                posture_sources.append(value)
         related_alignment = related(alignment_items)
         related_hypotheses = related(symptom_hypotheses)
         related_loads = related(suspected_load_areas)
@@ -840,6 +949,26 @@ def build_body_profile_items(summary, context_profile=None):
         if not tags:
             tags = ["必要時に評価"] if level == "unassessed" else ["参考所見"]
 
+        related_checks = related(next_check_points)
+        check_point = _compact_profile_findings(
+            [joint_check_points, related_checks],
+            fallback=(
+                context_note
+                if context_note and not has_clinical_source
+                else "施術者の評価と合わせて必要時に確認"
+            ),
+            limit=58,
+        )
+        source_label = (
+            "姿勢分析"
+            if joint_sources or posture_sources or related_alignment
+            else "関連情報"
+            if related_hypotheses or related_loads or related_clinical
+            else "背景情報"
+            if context_note
+            else "未評価"
+        )
+
         items.append({
             "key": spec["key"],
             "label": spec["label"],
@@ -847,6 +976,8 @@ def build_body_profile_items(summary, context_profile=None):
             "level": level,
             "tags": tags[:3],
             "context_note": context_note,
+            "check_point": check_point,
+            "source_label": source_label,
         })
 
     return items
@@ -2094,6 +2225,15 @@ def staff_patient_detail_view(request, patient_id):
             patient=patient,
             patient__clinic=clinic,
         )
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
+            Q(intake__isnull=True) | Q(intake__clinic=clinic),
+            Q(clinical_note__isnull=True)
+            | Q(
+                clinical_note__patient__clinic=clinic,
+                clinical_note__appointment__clinic=clinic,
+            ),
+        )
         .select_related("appointment", "intake", "clinical_note", "created_by")
         .prefetch_related("progress_logs")
         .annotate(
@@ -2122,6 +2262,16 @@ def staff_patient_detail_view(request, patient_id):
             clinic=clinic,
             patient=patient,
         )
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
+            Q(treatment_session__isnull=True)
+            | Q(treatment_session__clinic=clinic),
+            Q(clinical_note__isnull=True)
+            | Q(
+                clinical_note__patient__clinic=clinic,
+                clinical_note__appointment__clinic=clinic,
+            ),
+        )
         .select_related(
             "created_by",
             "confirmed_by",
@@ -2136,13 +2286,24 @@ def staff_patient_detail_view(request, patient_id):
 
     posture_assessment_count = posture_assessments.count()
     latest_posture_assessment = posture_assessments.first()
-    posture_summary = (
-        latest_posture_assessment.get_active_summary()
-        if latest_posture_assessment
-        else {}
-    )
+    posture_summary_source = "none"
+    posture_summary = {}
+    if latest_posture_assessment:
+        if isinstance(
+            latest_posture_assessment.confirmed_summary_json,
+            dict,
+        ) and latest_posture_assessment.confirmed_summary_json:
+            posture_summary = latest_posture_assessment.confirmed_summary_json
+            posture_summary_source = "confirmed"
+        elif isinstance(
+            latest_posture_assessment.ai_summary_json,
+            dict,
+        ) and latest_posture_assessment.ai_summary_json:
+            posture_summary = latest_posture_assessment.ai_summary_json
+            posture_summary_source = "ai"
     if not isinstance(posture_summary, dict):
         posture_summary = {}
+        posture_summary_source = "none"
 
     latest_note = notes.first()
     latest_intake = (
@@ -2151,6 +2312,9 @@ def staff_patient_detail_view(request, patient_id):
             clinic=clinic,
             patient=patient,
             patient__clinic=clinic,
+        )
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic)
         )
         .select_related("appointment")
         .order_by("-submitted_at", "-id")
@@ -2185,37 +2349,52 @@ def staff_patient_detail_view(request, patient_id):
     )
 
     profile_summary = dict(posture_summary)
-    profile_clinical_notes = _dashboard_text_list(
-        profile_summary.get("clinical_notes")
-    )
-    profile_clinical_notes.extend(
-        item
-        for item in (
-            latest_extract.get("chief_complaint"),
-            latest_assessment,
-            latest_treatment_policy,
-            latest_posture_assessment.memo if latest_posture_assessment else "",
-        )
-        if item
-    )
-    profile_clinical_notes.extend(
-        patient_context_profile.get("source_texts") or []
-    )
+    profile_clinical_notes = _dashboard_text_list(_profile_section(
+        profile_summary,
+        "clinical_notes",
+        "clinicalNotes",
+        "practitioner_notes",
+    ))
+    profile_clinical_notes.extend(_flatten_profile_text(
+        latest_posture_assessment.memo
+        if latest_posture_assessment
+        else ""
+    ))
+    profile_clinical_notes.extend(_flatten_profile_text({
+        "extract": latest_extract,
+        "soap": latest_soap,
+        "followups": latest_note.followups_json if latest_note else [],
+    }))
+    profile_clinical_notes.extend(_flatten_profile_text({
+        "chief_complaint": latest_intake.chief_complaint,
+        "payload": latest_intake.payload,
+    } if latest_intake else {}))
+    profile_clinical_notes.extend(_flatten_profile_text({
+        "chief_complaint": latest_plan.chief_complaint,
+        "exercise_instruction": latest_plan.exercise_instruction,
+        "work_instruction": latest_plan.work_instruction,
+        "lifestyle_other_instruction": latest_plan.lifestyle_other_instruction,
+        "caution_notes": latest_plan.caution_notes,
+    } if latest_plan else {}))
+    profile_clinical_notes.extend(_patient_profile_source_values(patient))
+    profile_clinical_notes = list(dict.fromkeys(
+        item for item in profile_clinical_notes if item
+    ))
     profile_summary["clinical_notes"] = profile_clinical_notes
 
     posture_profile_available = any(
-        posture_summary.get(key)
-        for key in (
-            "important_points",
-            "posture_findings",
-            "joint_assessments",
-            "alignment_observations",
-            "symptom_relation_hypotheses",
-            "suspected_load_areas",
-            "next_check_points",
-            "clinical_notes",
-            "patient_explanation",
-            "report_summary_for_patient",
+        _profile_section(posture_summary, *aliases)
+        for aliases in (
+            ("important_points", "importantPoints"),
+            ("posture_findings", "postureFindings"),
+            ("joint_assessments", "jointAssessments"),
+            ("alignment_observations", "alignmentObservations"),
+            ("symptom_relation_hypotheses", "symptomRelationHypotheses"),
+            ("suspected_load_areas", "suspectedLoadAreas"),
+            ("next_check_points", "nextCheckPoints"),
+            ("clinical_notes", "clinicalNotes"),
+            ("patient_explanation", "patientExplanation"),
+            ("report_summary_for_patient", "reportSummaryForPatient"),
         )
     )
     body_profile_items = build_body_profile_items(
@@ -2223,9 +2402,21 @@ def staff_patient_detail_view(request, patient_id):
         context_profile=patient_context_profile,
     )
     posture_profile_summary = _compact_dashboard_text(
-        posture_summary.get("report_summary_for_patient")
-        or posture_summary.get("patient_explanation")
-        or posture_summary.get("overall_summary"),
+        _profile_section(
+            posture_summary,
+            "report_summary_for_patient",
+            "reportSummaryForPatient",
+        )
+        or _profile_section(
+            posture_summary,
+            "patient_explanation",
+            "patientExplanation",
+        )
+        or _profile_section(
+            posture_summary,
+            "overall_summary",
+            "overallSummary",
+        ),
         fallback=(
             "問診・カルテ・施術計画の背景情報から、必要時に確認する部位を整理しています。"
             if patient_context_profile["has_context"]
@@ -2234,8 +2425,16 @@ def staff_patient_detail_view(request, patient_id):
         limit=96,
     )
     posture_attention_source = (
-        _dashboard_text_list(posture_summary.get("important_points"))
-        + _dashboard_text_list(posture_summary.get("suspected_load_areas"))
+        _dashboard_text_list(_profile_section(
+            posture_summary,
+            "important_points",
+            "importantPoints",
+        ))
+        + _dashboard_text_list(_profile_section(
+            posture_summary,
+            "suspected_load_areas",
+            "suspectedLoadAreas",
+        ))
         + patient_context_profile.get("notes", [])
         + patient_context_profile.get("pain_trigger_items", [])
     )
@@ -2346,6 +2545,7 @@ def staff_patient_detail_view(request, patient_id):
         "posture_assessment_count": posture_assessment_count,
         "latest_posture_assessment": latest_posture_assessment,
         "posture_summary": posture_summary,
+        "posture_summary_source": posture_summary_source,
         "posture_profile_available": posture_profile_available,
         "posture_profile_summary": posture_profile_summary,
         "body_profile_items": body_profile_items,

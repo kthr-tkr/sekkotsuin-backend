@@ -308,7 +308,7 @@
     display:grid;
     grid-template-columns:270px 1fr;
     gap:20px;
-    align-items:center;
+    align-items:start;
   }
 
   .body-profile-figure{
@@ -407,6 +407,25 @@
     line-height:1.6;
   }
 
+  .body-profile-data-source{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#526579;
+    font-size:10px;
+    font-weight:850;
+  }
+
+  .body-profile-data-source::before{
+    content:"";
+    width:7px;
+    height:7px;
+    flex:0 0 auto;
+    border-radius:999px;
+    background:#5b91c7;
+    box-shadow:0 0 0 4px rgba(91,145,199,.11);
+  }
+
   .body-profile-summary{
     padding:16px 18px;
     border-radius:18px;
@@ -455,6 +474,13 @@
     margin-bottom:5px;
   }
 
+  .body-region-source{
+    margin-bottom:7px;
+    color:#8a9aac;
+    font-size:9px;
+    font-weight:850;
+  }
+
   .body-region-label{
     color:#0f172a;
     font-size:13px;
@@ -494,6 +520,24 @@
     font-size:12px;
     font-weight:750;
     line-height:1.65;
+  }
+
+  .body-region-detail{
+    display:grid;
+    grid-template-columns:48px minmax(0,1fr);
+    gap:7px;
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px dashed #e2e8f0;
+    color:#64748b;
+    font-size:10px;
+    font-weight:750;
+    line-height:1.55;
+  }
+
+  .body-region-detail-label{
+    color:#31516a;
+    font-weight:900;
   }
 
   .body-region-tags{
@@ -862,6 +906,10 @@
 
     .body-profile-figure{
       min-height:330px;
+    }
+
+    .body-profile-data-source{
+      align-items:flex-start;
     }
   }
 
@@ -1816,7 +1864,7 @@
       <div class="pd-section-head">
         <div>
           <h3 class="pd-section-title">からだプロファイル</h3>
-          <div class="pd-section-sub">姿勢分析・問診・カルテ・施術計画から、施術前に確認したい身体特徴をまとめます</div>
+          <div class="pd-section-sub">関節の向き・傾き・回旋・荷重・可動域と、競技や仕事との関連を施術前に確認できます</div>
         </div>
 
         {% if latest_posture_assessment %}
@@ -1866,6 +1914,15 @@
           </div>
 
           <div class="body-profile-content">
+            <div class="body-profile-data-source">
+              {% if posture_summary_source == "confirmed" %}
+                確認済みの最新姿勢分析を最優先し、問診・カルテ・施術計画で補完しています
+              {% elif posture_summary_source == "ai" %}
+                最新AI姿勢分析を優先し、問診・カルテ・施術計画で補完しています
+              {% else %}
+                姿勢分析結果がないため、問診・カルテ・施術計画の既存情報から整理しています
+              {% endif %}
+            </div>
             <div class="body-profile-summary">{{ posture_profile_summary }}</div>
 
             {% if not posture_profile_available %}
@@ -1888,11 +1945,22 @@
                       {% elif item.level == "unassessed" %}
                         未評価
                       {% else %}
-                        参考
+                        観察
                       {% endif %}
                     </div>
                   </div>
+                  <div class="body-region-source">情報源：{{ item.source_label }}</div>
                   <div class="body-region-text">{{ item.text }}</div>
+                  {% if item.context_note and item.context_note != item.text %}
+                    <div class="body-region-detail">
+                      <span class="body-region-detail-label">背景関連</span>
+                      <span>{{ item.context_note }}</span>
+                    </div>
+                  {% endif %}
+                  <div class="body-region-detail">
+                    <span class="body-region-detail-label">確認</span>
+                    <span>{{ item.check_point }}</span>
+                  </div>
                   {% if item.tags %}
                     <div class="body-region-tags">
                       {% for tag in item.tags %}
