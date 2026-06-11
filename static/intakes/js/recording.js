@@ -20,6 +20,7 @@
   let stream = null;
   let chunks = [];
   let recording = false;
+  let uploading = false;
   let t0 = 0;
   let timerId = null;
 
@@ -58,6 +59,8 @@
   }
 
   async function startRec() {
+    if (uploading) return;
+
     setUploadState("");
     goDetailBtn.style.display = "none";
 
@@ -136,6 +139,8 @@
       fd.append("duration_sec", String(durationSec));
 
       try {
+        uploading = true;
+        recBtn.disabled = true;
         const res = await fetch(uploadUrl, {
           method: "POST",
           headers: { "X-CSRFToken": csrfToken },
@@ -154,6 +159,8 @@
       } catch (e) {
         setUploadState(`アップロードに失敗しました：${e.message}`, "error");
       } finally {
+        uploading = false;
+        recBtn.disabled = false;
         setUIIdle();
       }
     };
@@ -182,6 +189,7 @@
 
   // ボタンでトグル
   recBtn?.addEventListener("click", () => {
+    if (uploading) return;
     if (!recording) startRec();
     else stopRec();
   });

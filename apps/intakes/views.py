@@ -34,6 +34,7 @@ from apps.ai_usage.services import (
     build_ai_usage_summary,
     create_ai_usage_log_for_recording,
 )
+from apps.clinical_notes.models import ClinicalNote
 
 # apps/intakes/views.py
 
@@ -66,6 +67,189 @@ def _recordings_for_clinic(clinic):
         )
         .filter(Q(intake__isnull=True) | Q(intake__clinic=clinic))
     )
+
+
+def _get_registered_clinical_note(recording, clinic):
+    return (
+        ClinicalNote.objects
+        .select_related("patient", "appointment")
+        .filter(
+            recording=recording,
+            patient=recording.patient,
+            patient__clinic=clinic,
+            appointment=recording.appointment,
+            appointment__clinic=clinic,
+        )
+        .order_by("-updated_at")
+        .first()
+    )
+
+
+def _clinical_note_matches_recording_summary(note, recording):
+    summary = (
+        recording.confirmed_summary_json
+        if isinstance(recording.confirmed_summary_json, dict)
+        else {}
+    )
+    if note is None or not summary or note.recording_id != recording.id:
+        return False
+
+    return (
+        (note.soap_json or {}) == (summary.get("soap") or {})
+        and (note.extract_json or {}) == (summary.get("extract") or {})
+        and (note.followups_json or []) == (summary.get("followups") or [])
+    )
+
+
+def build_interview_recording_flow_state(
+    recording,
+    *,
+    clinical_note_exists=False,
+    clinical_note_is_current=False,
+):
+    has_audio = bool(recording.audio_file)
+    has_transcript = bool((recording.transcript_text or "").strip())
+    has_summary = bool(recording.summary_json)
+    is_confirmed = bool(recording.confirmed_summary_json)
+    is_transcribing = (
+        recording.status == InterviewRecording.Status.TRANSCRIBING
+    )
+    is_summarizing = (
+        recording.status == InterviewRecording.Status.SUMMARIZING
+    )
+    has_error = bool(
+        recording.status == InterviewRecording.Status.FAILED
+        or (recording.error_message or "").strip()
+    )
+
+    if has_error:
+        key = "error"
+        label = "エラーあり"
+        tone = "error"
+        next_action = (
+            "エラー内容を確認し、必要に応じて文字起こしまたはカルテ案作成を再実行してください。"
+        )
+    elif is_transcribing:
+        key = "transcribing"
+        label = "文字起こし中"
+        tone = "processing"
+        next_action = "文字起こし処理中です。完了するまでお待ちください。"
+    elif is_summarizing:
+        key = "summarizing"
+        label = "カルテ案作成中"
+        tone = "processing"
+        next_action = "録音内容からカルテ案を作成中です。完了するまでお待ちください。"
+    elif clinical_note_exists and clinical_note_is_current:
+        key = "registered"
+        label = "カルテ登録済み"
+        tone = "done"
+        next_action = "カルテ詳細で登録内容を確認できます。"
+    elif is_confirmed:
+        key = "confirmed"
+        label = "確認済み"
+        tone = "confirmed"
+        next_action = "確認済みのカルテ案をカルテへ登録してください。"
+    elif has_summary:
+        key = "confirmation_waiting"
+        label = "確認待ち"
+        tone = "attention"
+        next_action = "カルテ案を確認・修正してください。"
+    elif has_transcript:
+        key = "summary_waiting"
+        label = "カルテ案作成待ち"
+        tone = "attention"
+        next_action = "録音内容からカルテ案を作成してください。"
+    elif has_audio:
+        key = "transcription_waiting"
+        label = "文字起こし待ち"
+        tone = "attention"
+        next_action = "保存済みの録音データを文字起こししてください。"
+    else:
+        key = "recording_ready"
+        label = "録音準備中"
+        tone = "ready"
+        next_action = "初診・問診内容を録音してください。"
+
+    recording_stage = "done" if has_audio else "current"
+    transcription_stage = "pending"
+    summary_stage = "pending"
+    confirmation_stage = "pending"
+    registration_stage = "pending"
+
+    if is_transcribing:
+        transcription_stage = "current"
+    elif has_transcript:
+        transcription_stage = "done"
+    elif has_audio:
+        transcription_stage = "current"
+
+    if is_summarizing:
+        summary_stage = "current"
+    elif has_summary:
+        summary_stage = "done"
+    elif has_transcript:
+        summary_stage = "current"
+
+    if is_confirmed:
+        confirmation_stage = "done"
+    elif has_summary:
+        confirmation_stage = "current"
+
+    if clinical_note_exists and clinical_note_is_current:
+        registration_stage = "done"
+    elif is_confirmed:
+        registration_stage = "current"
+
+    if has_error:
+        if registration_stage == "current":
+            registration_stage = "error"
+        elif confirmation_stage == "current":
+            confirmation_stage = "error"
+        elif summary_stage == "current":
+            summary_stage = "error"
+        elif transcription_stage == "current":
+            transcription_stage = "error"
+        else:
+            recording_stage = "error"
+
+    return {
+        "key": key,
+        "label": label,
+        "tone": tone,
+        "next_action": next_action,
+        "has_audio": has_audio,
+        "has_transcript": has_transcript,
+        "has_summary": has_summary,
+        "is_confirmed": is_confirmed,
+        "is_registered": clinical_note_exists and clinical_note_is_current,
+        "clinical_note_exists": clinical_note_exists,
+        "has_error": has_error,
+        "is_processing": is_transcribing or is_summarizing,
+        "can_process": (
+            (has_audio or has_transcript)
+            and not is_transcribing
+            and not is_summarizing
+        ),
+        "can_confirm": has_summary and not is_summarizing,
+        "can_register": (
+            is_confirmed
+            and not is_transcribing
+            and not is_summarizing
+            and not (clinical_note_exists and clinical_note_is_current)
+        ),
+        "stages": [
+            {"label": "録音", "status": recording_stage},
+            {"label": "文字起こし", "status": transcription_stage},
+            {"label": "カルテ案", "status": summary_stage},
+            {"label": "確認", "status": confirmation_stage},
+            {"label": "カルテ登録", "status": registration_stage},
+        ],
+        "error_messages": (
+            [(recording.error_message or "").strip()]
+            if (recording.error_message or "").strip()
+            else []
+        ),
+    }
 
 
 
@@ -366,25 +550,66 @@ def upload_recording(request, recording_id):
     if clinic is None:
         return HttpResponseForbidden("所属院の録音のみ操作できます。")
 
-    rec = get_object_or_404(
-        _recordings_for_clinic(clinic),
-        pk=recording_id,
-    )
-    try:
-        _must_own_recording(request.user, rec)
-    except PermissionError:
-        return HttpResponseForbidden("この録音にはアクセスできません。")
-
     f = request.FILES.get("audio")
     if not f:
         return JsonResponse({"ok": False, "error": "audio file is required"}, status=400)
 
-    rec.audio_file = f
-    rec.mime_type = f.content_type or ""
-    rec.duration_sec = int(request.POST.get("duration_sec") or 0)
-    rec.status = InterviewRecording.Status.UPLOADED
-    rec.error_message = ""
-    rec.save(update_fields=["audio_file", "mime_type", "duration_sec", "status", "error_message"])
+    try:
+        duration_sec = int(request.POST.get("duration_sec") or 0)
+    except ValueError:
+        duration_sec = 0
+
+    with transaction.atomic():
+        rec = get_object_or_404(
+            _recordings_for_clinic(clinic)
+            .select_for_update(of=("self",)),
+            pk=recording_id,
+        )
+        try:
+            _must_own_recording(request.user, rec)
+        except PermissionError:
+            return HttpResponseForbidden("この録音にはアクセスできません。")
+
+        if rec.status in {
+            InterviewRecording.Status.TRANSCRIBING,
+            InterviewRecording.Status.SUMMARIZING,
+        }:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "error": "文字起こしまたはカルテ案作成中のため、録音を更新できません。",
+                },
+                status=409,
+            )
+
+        rec.audio_file = f
+        rec.mime_type = f.content_type or ""
+        rec.duration_sec = duration_sec
+        rec.status = InterviewRecording.Status.UPLOADED
+        rec.error_message = ""
+        rec.transcript_text = ""
+        rec.transcript_json = {}
+        rec.summary_json = {}
+        rec.confirmed_summary_json = None
+        rec.summary_status = InterviewRecording.SummaryStatus.DRAFT
+        rec.confirmed_at = None
+        rec.confirmed_by = None
+        rec.save(
+            update_fields=[
+                "audio_file",
+                "mime_type",
+                "duration_sec",
+                "status",
+                "error_message",
+                "transcript_text",
+                "transcript_json",
+                "summary_json",
+                "confirmed_summary_json",
+                "summary_status",
+                "confirmed_at",
+                "confirmed_by",
+            ]
+        )
 
     return JsonResponse({"ok": True, "recording_id": rec.id})
 
@@ -407,7 +632,6 @@ def process_recording(request, recording_id):
     9. Intakeへ同期
     """
 
-    # 通常取得。ここでは select_for_update しない。
     clinic = _get_staff_clinic(request)
     if clinic is None:
         return HttpResponseForbidden("所属院の録音のみ操作できます。")
@@ -428,81 +652,158 @@ def process_recording(request, recording_id):
         )
         return redirect("intakes:recording_detail", recording_id=rec.id)
 
-    # ここでは InterviewRecording 本体だけをロックする
-    with transaction.atomic():
-        rec = (
-            _recordings_for_clinic(clinic)
-            .select_for_update(of=("self",))
-            .get(pk=recording_id)
-        )
-
-        try:
-            _must_own_recording(request.user, rec)
-        except PermissionError:
-            return HttpResponseForbidden("この録音にはアクセスできません。")
-
-        if rec.status in [
-            InterviewRecording.Status.TRANSCRIBING,
-            InterviewRecording.Status.SUMMARIZING,
-            InterviewRecording.Status.DONE,
-        ]:
-            return redirect("intakes:recording_detail", recording_id=rec.id)
-
-        if not rec.audio_file:
-            rec.status = InterviewRecording.Status.FAILED
-            rec.error_message = "音声ファイルがアップロードされていません"
-            rec.save(update_fields=["status", "error_message"])
-            return redirect("intakes:recording_detail", recording_id=rec.id)
-
-        rec.status = InterviewRecording.Status.TRANSCRIBING
-        rec.error_message = ""
-        rec.save(update_fields=["status", "error_message"])
-
+    force = request.POST.get("force") == "1"
     try:
-        # 最新状態を関連込みで取り直す
-        rec = (
-            _recordings_for_clinic(clinic)
-            .get(pk=recording_id)
-        )
+        with transaction.atomic():
+            rec = get_object_or_404(
+                _recordings_for_clinic(clinic)
+                .select_for_update(of=("self",)),
+                pk=recording_id,
+            )
+            try:
+                _must_own_recording(request.user, rec)
+            except PermissionError:
+                return HttpResponseForbidden("この録音にはアクセスできません。")
 
-        # 1. 文字起こし
-        transcript_text, transcript_json = run_stt(rec.audio_file, rec.mime_type)
+            if rec.status in {
+                InterviewRecording.Status.TRANSCRIBING,
+                InterviewRecording.Status.SUMMARIZING,
+            }:
+                messages.info(request, "録音内容はすでに処理中です。")
+                return redirect(
+                    "intakes:recording_detail",
+                    recording_id=rec.id,
+                )
 
-        rec.transcript_text = transcript_text
-        rec.transcript_json = transcript_json or {}
-        rec.status = InterviewRecording.Status.SUMMARIZING
-        rec.save(update_fields=["transcript_text", "transcript_json", "status"])
+            if rec.summary_json and not force:
+                messages.info(
+                    request,
+                    "カルテ案はすでに作成済みです。確認・修正してください。",
+                )
+                return redirect(
+                    "intakes:recording_detail",
+                    recording_id=rec.id,
+                )
 
-        # 2. STT利用ログ
-        if not AiUsageLog.objects.filter(
-            recording=rec,
-            usage_type=AiUsageLog.UsageType.STT,
-            status=AiUsageLog.Status.SUCCESS,
-        ).exists():
-            create_ai_usage_log_for_recording(
-                recording=rec,
-                usage_type=AiUsageLog.UsageType.STT,
-                model_name=(rec.transcript_json or {}).get("model") or DEFAULT_STT_MODEL,
-                transcript_text=rec.transcript_text or "",
-                estimated_cost_yen=0,
-                created_by=request.user,
-                count_billing_minutes=True,
-                metadata={
-                    "source": "process_recording",
-                    "stage": "stt",
-                    "duration_sec": rec.duration_sec,
-                    "mime_type": rec.mime_type,
-                },
+            if not rec.audio_file and not rec.transcript_text:
+                rec.status = InterviewRecording.Status.FAILED
+                rec.error_message = "音声ファイルがアップロードされていません"
+                rec.save(update_fields=["status", "error_message"])
+                messages.error(request, rec.error_message)
+                return redirect(
+                    "intakes:recording_detail",
+                    recording_id=rec.id,
+                )
+
+            should_transcribe = not bool((rec.transcript_text or "").strip())
+            transcript_text = rec.transcript_text or ""
+            had_confirmed_summary = bool(rec.confirmed_summary_json)
+
+            rec.status = (
+                InterviewRecording.Status.TRANSCRIBING
+                if should_transcribe
+                else InterviewRecording.Status.SUMMARIZING
+            )
+            rec.error_message = ""
+            if force:
+                rec.confirmed_summary_json = None
+                rec.summary_status = InterviewRecording.SummaryStatus.DRAFT
+                rec.confirmed_at = None
+                rec.confirmed_by = None
+            update_fields = ["status", "error_message"]
+            if force:
+                update_fields.extend(
+                    [
+                        "confirmed_summary_json",
+                        "summary_status",
+                        "confirmed_at",
+                        "confirmed_by",
+                    ]
+                )
+            rec.save(update_fields=update_fields)
+
+        if should_transcribe:
+            transcript_text, transcript_json = run_stt(
+                rec.audio_file,
+                rec.mime_type,
             )
 
-        # 3. AI要約
+            with transaction.atomic():
+                rec = get_object_or_404(
+                    _recordings_for_clinic(clinic)
+                    .select_for_update(of=("self",)),
+                    pk=recording_id,
+                )
+                rec.transcript_text = transcript_text or ""
+                rec.transcript_json = transcript_json or {}
+                rec.status = InterviewRecording.Status.SUMMARIZING
+                rec.summary_json = {}
+                rec.confirmed_summary_json = None
+                rec.summary_status = InterviewRecording.SummaryStatus.DRAFT
+                rec.confirmed_at = None
+                rec.confirmed_by = None
+                rec.save(
+                    update_fields=[
+                        "transcript_text",
+                        "transcript_json",
+                        "status",
+                        "summary_json",
+                        "confirmed_summary_json",
+                        "summary_status",
+                        "confirmed_at",
+                        "confirmed_by",
+                    ]
+                )
+
+            if not AiUsageLog.objects.filter(
+                recording=rec,
+                usage_type=AiUsageLog.UsageType.STT,
+                status=AiUsageLog.Status.SUCCESS,
+            ).exists():
+                create_ai_usage_log_for_recording(
+                    recording=rec,
+                    usage_type=AiUsageLog.UsageType.STT,
+                    model_name=(rec.transcript_json or {}).get("model")
+                    or DEFAULT_STT_MODEL,
+                    transcript_text=rec.transcript_text or "",
+                    estimated_cost_yen=0,
+                    created_by=request.user,
+                    count_billing_minutes=True,
+                    metadata={
+                        "source": "process_recording",
+                        "stage": "stt",
+                        "duration_sec": rec.duration_sec,
+                        "mime_type": rec.mime_type,
+                    },
+                )
+
         summary = summarize_transcript(transcript_text)
 
-        rec.summary_json = summary
-        rec.status = InterviewRecording.Status.DONE
-        rec.save(update_fields=["summary_json", "status"])
+        with transaction.atomic():
+            rec = get_object_or_404(
+                _recordings_for_clinic(clinic)
+                .select_for_update(of=("self",)),
+                pk=recording_id,
+            )
+            rec.summary_json = summary or {}
+            rec.confirmed_summary_json = None
+            rec.summary_status = InterviewRecording.SummaryStatus.DRAFT
+            rec.confirmed_at = None
+            rec.confirmed_by = None
+            rec.status = InterviewRecording.Status.DONE
+            rec.error_message = ""
+            rec.save(
+                update_fields=[
+                    "summary_json",
+                    "confirmed_summary_json",
+                    "summary_status",
+                    "confirmed_at",
+                    "confirmed_by",
+                    "status",
+                    "error_message",
+                ]
+            )
 
-        # 4. 要約利用ログ
         if not AiUsageLog.objects.filter(
             recording=rec,
             usage_type=AiUsageLog.UsageType.SUMMARY,
@@ -524,7 +825,6 @@ def process_recording(request, recording_id):
                 },
             )
 
-        # 5. IntakeへAI要約を同期
         if rec.intake_id:
             intake = rec.intake
             sync_intake_columns_from_summary(intake, summary)
@@ -532,13 +832,27 @@ def process_recording(request, recording_id):
             intake.payload["ai_summary"] = summary
             intake.save(update_fields=["payload"])
 
-        messages.success(request, "AI要約が完了しました。")
+        if force and had_confirmed_summary:
+            messages.success(
+                request,
+                "録音内容からカルテ案を再作成しました。確認済み内容はリセットされています。カルテ登録前に再度確認してください。",
+            )
+        elif force:
+            messages.success(request, "録音内容からカルテ案を再作成しました。")
+        else:
+            messages.success(request, "録音内容からカルテ案を作成しました。")
         return redirect("intakes:recording_detail", recording_id=rec.id)
 
     except Exception as e:
-        rec.status = InterviewRecording.Status.FAILED
-        rec.error_message = str(e)
-        rec.save(update_fields=["status", "error_message"])
+        with transaction.atomic():
+            rec = get_object_or_404(
+                _recordings_for_clinic(clinic)
+                .select_for_update(of=("self",)),
+                pk=recording_id,
+            )
+            rec.status = InterviewRecording.Status.FAILED
+            rec.error_message = str(e)
+            rec.save(update_fields=["status", "error_message"])
 
         try:
             create_ai_usage_log_for_recording(
@@ -561,7 +875,7 @@ def process_recording(request, recording_id):
         except Exception:
             pass
 
-        messages.error(request, f"AI処理に失敗しました: {e}")
+        messages.error(request, f"録音内容の処理に失敗しました: {e}")
         return redirect("intakes:recording_detail", recording_id=rec.id)
 
 
@@ -594,7 +908,17 @@ def recording_detail(request, recording_id):
     except PermissionError:
         return HttpResponseForbidden("この録音にはアクセスできません。")
 
-    # ★確定版があればそっちを表示する（重要）
+    registered_clinical_note = _get_registered_clinical_note(rec, clinic)
+    clinical_note_is_current = _clinical_note_matches_recording_summary(
+        registered_clinical_note,
+        rec,
+    )
+    flow_state = build_interview_recording_flow_state(
+        rec,
+        clinical_note_exists=registered_clinical_note is not None,
+        clinical_note_is_current=clinical_note_is_current,
+    )
+
     summary = rec.get_active_summary() or {}
     soap = summary.get("soap") or {}
 
@@ -607,17 +931,17 @@ def recording_detail(request, recording_id):
 
     context = {
         "recording": rec,
+        "appointment": rec.appointment,
+        "patient": rec.patient,
         "soap_view": soap_view,
         "summary": summary,
-        "summary_json_pretty": json.dumps(summary, ensure_ascii=False, indent=2),  # ★編集モーダル用
+        "summary_json_pretty": json.dumps(summary, ensure_ascii=False, indent=2),
         "transcript_text": rec.transcript_text or "",
+        "flow_state": flow_state,
+        "registered_clinical_note": registered_clinical_note,
         "process_url": reverse("intakes:process_recording", args=[rec.id]),
         "retry_url": reverse("intakes:recording_new", args=[rec.appointment_id]),
-
-        # ★編集確定のPOST先（intakes側で1本化）
         "confirm_url": reverse("intakes:recording_confirm", args=[rec.id]),
-
-        # ★内容登録（ClinicalNoteへ）POST先（staff側を利用）
         "register_url": reverse("staff:register_clinical_note", args=[rec.id]),
     }
 
@@ -630,7 +954,10 @@ def recording_confirm(request, recording_id: int):
     if clinic is None:
         return HttpResponseForbidden("所属院の録音のみ操作できます。")
 
-    rec = get_object_or_404(_recordings_for_clinic(clinic), pk=recording_id)
+    rec = get_object_or_404(
+        _recordings_for_clinic(clinic),
+        pk=recording_id,
+    )
 
     try:
         _must_own_recording(request.user, rec)
@@ -663,10 +990,63 @@ def recording_confirm(request, recording_id: int):
     #     messages.error(request, f"スキーマに合いません: {e}")
     #     return redirect(reverse("intakes:recording_detail", args=[recording_id]))
 
-    rec.mark_confirmed(user=request.user, data=data)
-    rec.save(update_fields=["confirmed_summary_json", "summary_status", "confirmed_at", "confirmed_by"])
+    source_summary = rec.get_active_summary() or {}
 
-    messages.success(request, "編集内容を確定しました。")
+    with transaction.atomic():
+        rec = get_object_or_404(
+            _recordings_for_clinic(clinic)
+            .select_for_update(of=("self",)),
+            pk=recording_id,
+        )
+
+        if rec.status in {
+            InterviewRecording.Status.TRANSCRIBING,
+            InterviewRecording.Status.SUMMARIZING,
+        }:
+            messages.info(
+                request,
+                "文字起こしまたはカルテ案作成中です。完了後に確認内容を保存してください。",
+            )
+            return redirect(
+                "intakes:recording_detail",
+                recording_id=recording_id,
+            )
+
+        current_source_summary = rec.get_active_summary() or {}
+        if current_source_summary != source_summary:
+            messages.warning(
+                request,
+                "保存中にカルテ案が更新されました。最新内容を確認してから、もう一度保存してください。",
+            )
+            return redirect(
+                "intakes:recording_detail",
+                recording_id=recording_id,
+            )
+
+        if (
+            rec.summary_status == InterviewRecording.SummaryStatus.CONFIRMED
+            and rec.confirmed_summary_json == data
+        ):
+            messages.info(request, "確認内容はすでに保存されています。")
+            return redirect(
+                "intakes:recording_detail",
+                recording_id=recording_id,
+            )
+
+        rec.mark_confirmed(user=request.user, data=data)
+        rec.save(
+            update_fields=[
+                "confirmed_summary_json",
+                "summary_status",
+                "confirmed_at",
+                "confirmed_by",
+            ]
+        )
+
+    messages.success(
+        request,
+        "確認内容を保存しました。カルテへ登録できます。",
+    )
     return redirect(reverse("intakes:recording_detail", args=[recording_id]))
 
 @login_required

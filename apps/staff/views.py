@@ -1920,6 +1920,7 @@ def register_clinical_note(request, recording_id):
     recording = get_object_or_404(
         InterviewRecording.objects
         .select_related("appointment", "patient", "intake")
+        .select_for_update(of=("self",))
         .filter(
             clinic=clinic,
             patient__clinic=clinic,
@@ -1929,45 +1930,37 @@ def register_clinical_note(request, recording_id):
         pk=recording_id,
     )
 
+    if recording.status in {
+        InterviewRecording.Status.TRANSCRIBING,
+        InterviewRecording.Status.SUMMARIZING,
+    }:
+        messages.info(
+            request,
+            "処理中のため、カルテ登録は完了後に行ってください。",
+        )
+        return redirect(
+            "intakes:recording_detail",
+            recording_id=recording.id,
+        )
+
+    if not recording.confirmed_summary_json:
+        messages.warning(
+            request,
+            "カルテへ登録するには、先にカルテ案を確認してください。",
+        )
+        return redirect(
+            "intakes:recording_detail",
+            recording_id=recording.id,
+        )
+
     appointment = recording.appointment
     patient = recording.patient
     intake = recording.intake
 
-    summary = recording.get_active_summary() or {}
-
-    def parse_json_field(name, default):
-        raw = request.POST.get(name, "")
-        if not raw:
-            return default
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            return default
-
-    # 元データ
-    base_soap = summary.get("soap", {}) or {}
-    base_extract = summary.get("extract", {}) or {}
-    base_followups = summary.get("followups", []) or {}
-
-    # POST優先
-    posted_summary = parse_json_field("summary_json", None)
-    posted_soap = parse_json_field("soap_json", None)
-    posted_extract = parse_json_field("extract_json", None)
-    posted_followups = parse_json_field("followups_json", None)
-    posted_locations = parse_json_field("selected_locations_json", None)
-
-    if posted_summary and isinstance(posted_summary, dict):
-        soap = posted_summary.get("soap", {}) or {}
-        extract = posted_summary.get("extract", {}) or {}
-        followups = posted_summary.get("followups", []) or []
-    else:
-        soap = posted_soap if isinstance(posted_soap, dict) else base_soap
-        extract = posted_extract if isinstance(posted_extract, dict) else base_extract
-        followups = posted_followups if isinstance(posted_followups, list) else base_followups
-
-    # 部位は selected_locations_json を最優先にして上書き
-    if isinstance(posted_locations, list):
-        extract["locations"] = posted_locations
+    summary = recording.confirmed_summary_json or {}
+    soap = summary.get("soap", {}) or {}
+    extract = summary.get("extract", {}) or {}
+    followups = summary.get("followups", []) or []
 
     web_snapshot = {}
     if intake:
@@ -1984,12 +1977,36 @@ def register_clinical_note(request, recording_id):
         .select_for_update(of=("self",))
         .filter(
             appointment=appointment,
+            patient=patient,
+            patient__clinic=clinic,
             appointment__clinic=clinic,
         )
         .first()
     )
 
-    if existing_note:
+    note_content_changed = bool(
+        existing_note
+        and (
+            (existing_note.soap_json or {}) != soap
+            or (existing_note.extract_json or {}) != extract
+            or (existing_note.followups_json or []) != followups
+            or (existing_note.web_intake_snapshot or {}) != web_snapshot
+        )
+    )
+    source_changed = bool(
+        existing_note
+        and (
+            existing_note.recording_id != recording.id
+            or existing_note.treatment_session_id is not None
+            or existing_note.intake_id != getattr(intake, "id", None)
+        )
+    )
+
+    if existing_note and not note_content_changed and not source_changed:
+        messages.info(request, "この確認内容はすでにカルテへ登録済みです。")
+        return redirect("staff:clinical_note_detail", pk=existing_note.id)
+
+    if existing_note and (note_content_changed or source_changed):
         ClinicalNoteHistory.objects.create(
             note=existing_note,
             soap_json=existing_note.soap_json or {},
@@ -2015,7 +2032,10 @@ def register_clinical_note(request, recording_id):
         },
     )
 
-    messages.success(request, "内容登録（確定保存）が完了しました。")
+    if created:
+        messages.success(request, "確認済みのカルテ案をカルテに登録しました。")
+    else:
+        messages.success(request, "確認済みのカルテ案で既存カルテを更新しました。")
 
     next_after_register = (request.POST.get("next_after_register") or "").strip()
 

@@ -1467,6 +1467,125 @@
   transform:translateY(-1px);
   box-shadow:0 18px 34px rgba(29,78,216,.28);
 }
+
+.recording-flow-card{
+  padding:20px;
+  border:1px solid #dbe6f3;
+  border-radius:24px;
+  background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+  box-shadow:0 14px 34px rgba(15,23,42,.05);
+}
+
+.recording-flow-head,
+.recording-flow-next{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.recording-flow-title{
+  margin:0;
+  color:#0f172a;
+  font-size:19px;
+  font-weight:900;
+}
+
+.recording-flow-sub{
+  margin-top:5px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:700;
+}
+
+.recording-flow-badge{
+  padding:8px 12px;
+  border-radius:999px;
+  color:#1d4ed8;
+  background:#dbeafe;
+  font-size:12px;
+  font-weight:900;
+}
+
+.recording-flow-badge.done{color:#047857;background:#d1fae5;}
+.recording-flow-badge.confirmed{color:#0f766e;background:#ccfbf1;}
+.recording-flow-badge.attention{color:#92400e;background:#fef3c7;}
+.recording-flow-badge.processing{color:#4338ca;background:#e0e7ff;}
+.recording-flow-badge.error{color:#991b1b;background:#fee2e2;}
+
+.recording-flow-stages{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+  margin-top:15px;
+}
+
+.recording-flow-stage{
+  padding:10px 8px;
+  border:1px solid #e2e8f0;
+  border-radius:13px;
+  background:#f8fafc;
+  color:#94a3b8;
+  text-align:center;
+  font-size:11px;
+  font-weight:900;
+}
+
+.recording-flow-stage.done{color:#047857;border-color:#a7f3d0;background:#ecfdf5;}
+.recording-flow-stage.current{color:#1d4ed8;border-color:#bfdbfe;background:#eff6ff;}
+.recording-flow-stage.error{color:#991b1b;border-color:#fecaca;background:#fef2f2;}
+
+.recording-flow-next{
+  margin-top:14px;
+  padding:14px 16px;
+  border-radius:16px;
+  background:#0f172a;
+  color:#fff;
+}
+
+.recording-flow-next-label{
+  margin-bottom:4px;
+  color:#93c5fd;
+  font-size:11px;
+  font-weight:900;
+}
+
+.recording-flow-next-text{
+  font-size:13px;
+  line-height:1.65;
+  font-weight:800;
+}
+
+.recording-reset-warning,
+.recording-confirm-required{
+  margin:0 0 12px;
+  padding:13px 15px;
+  border:1px solid #fde68a;
+  border-radius:15px;
+  background:#fffbeb;
+  color:#92400e;
+  font-size:12px;
+  line-height:1.7;
+  font-weight:800;
+}
+
+.recording-error-panel{
+  padding:15px 17px;
+  border:1px solid #fecaca;
+  border-radius:18px;
+  background:#fef2f2;
+  color:#991b1b;
+  font-size:13px;
+  line-height:1.7;
+  font-weight:800;
+}
+
+@media(max-width:720px){
+  .recording-flow-stages{
+    grid-template-columns:1fr;
+  }
+}
 </style>
 
 <div class="ai-page">
@@ -1493,10 +1612,50 @@
   </div>
 
   {% if recording.status == "failed" and recording.error_message %}
-    <div class="alert alert-danger">
+    <div class="recording-error-panel" role="alert">
       {{ recording.error_message }}
     </div>
   {% endif %}
+
+  <section class="recording-flow-card" aria-label="初診録音の進行状況">
+    <div class="recording-flow-head">
+      <div>
+        <h2 class="recording-flow-title">現在の処理状況</h2>
+        <div class="recording-flow-sub">録音からカルテ登録までの現在地を表示しています</div>
+      </div>
+      <div class="recording-flow-badge {{ flow_state.tone }}">
+        {{ flow_state.label }}
+      </div>
+    </div>
+
+    <div class="recording-flow-stages">
+      {% for stage in flow_state.stages %}
+        <div class="recording-flow-stage {{ stage.status }}">{{ stage.label }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="recording-flow-next">
+      <div>
+        <div class="recording-flow-next-label">次にやること</div>
+        <div class="recording-flow-next-text">{{ flow_state.next_action }}</div>
+      </div>
+      {% if flow_state.is_registered and registered_clinical_note %}
+        <a
+          class="miniBtn"
+          href="{% url 'staff:clinical_note_detail' registered_clinical_note.id %}"
+        >
+          カルテ詳細を見る
+        </a>
+      {% elif registered_clinical_note %}
+        <a
+          class="miniBtn"
+          href="{% url 'staff:clinical_note_detail' registered_clinical_note.id %}"
+        >
+          現在の登録済みカルテを見る
+        </a>
+      {% endif %}
+    </div>
+  </section>
 
   <div class="ai-grid">
 
@@ -1724,7 +1883,9 @@
                   <span class="chip ng"><span class="dot"></span>カルテ案（要確認）</span>
                 {% endif %}
 
-                <button type="button" class="miniBtn" data-open="modal-editor">編集</button>
+                <button type="button" class="miniBtn" data-open="modal-editor">
+                  カルテ案を確認・修正
+                </button>
               </div>
             </div>
 
@@ -1824,7 +1985,9 @@
 
           <div class="rightFoot">
             <div>
-              {% if recording.summary_status == "confirmed" %}
+              {% if flow_state.is_registered %}
+                <span class="chip ok"><span class="dot"></span>カルテ登録済み</span>
+              {% elif recording.summary_status == "confirmed" %}
                 <span class="chip ok"><span class="dot"></span>確定済み</span>
               {% else %}
                 <span class="chip ng"><span class="dot"></span>未確定（カルテ案）</span>
@@ -1834,48 +1997,112 @@
             <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
               <button type="button" class="miniBtn" data-open="modal-followups">質問</button>
               <button type="button" class="miniBtn" data-open="modal-transcript">文字起こし</button>
-              <button type="button" class="miniBtn" data-open="modal-editor">編集</button>
+              <button type="button" class="miniBtn" data-open="modal-editor">
+                カルテ案を確認・修正
+              </button>
 
-              <form method="post"
-                    action="{% url 'staff:register_clinical_note' recording.id %}"
-                    id="clinicalNoteRegisterForm"
-                    class="register-actions-form"
-                    style="display:inline;">
-                {% csrf_token %}
+              {% if flow_state.is_registered and registered_clinical_note %}
+                <a
+                  class="miniBtn primary"
+                  href="{% url 'staff:clinical_note_detail' registered_clinical_note.id %}"
+                >
+                  カルテ詳細を見る
+                </a>
+              {% elif flow_state.can_register %}
+                {% if registered_clinical_note %}
+                  <a
+                    class="miniBtn"
+                    href="{% url 'staff:clinical_note_detail' registered_clinical_note.id %}"
+                  >
+                    登録済みカルテを見る
+                  </a>
+                {% endif %}
+                <form method="post"
+                      action="{% url 'staff:register_clinical_note' recording.id %}"
+                      id="clinicalNoteRegisterForm"
+                      class="register-actions-form"
+                      data-prevent-double-submit
+                      style="display:inline;">
+                  {% csrf_token %}
 
-                <input type="hidden" id="register_selected_locations_json" name="selected_locations_json" value="[]">
-                <input type="hidden" id="register_summary_json" name="summary_json" value="">
-                <input type="hidden" id="register_soap_json" name="soap_json" value="">
-                <input type="hidden" id="register_extract_json" name="extract_json" value="">
-                <input type="hidden" id="register_followups_json" name="followups_json" value="">
+                  <button type="submit"
+                          class="miniBtn"
+                          name="next_after_register"
+                          data-processing-label="登録中..."
+                          value="patient_detail">
+                    カルテへ登録
+                  </button>
 
-                <button type="submit"
-                        class="miniBtn"
-                        name="next_after_register"
-                        value="patient_detail">
-                  カルテ登録へ
-                </button>
-
-                <button type="submit"
-                        class="miniBtn primary"
-                        name="next_after_register"
-                        value="treatment_plan">
-                  施術計画へ
-                </button>
-              </form>
+                  <button type="submit"
+                          class="miniBtn primary"
+                          name="next_after_register"
+                          data-processing-label="施術計画を準備中..."
+                          value="treatment_plan">
+                    登録して施術計画へ
+                  </button>
+                </form>
+              {% else %}
+                <span class="miniBtn" aria-disabled="true">
+                  先にカルテ案を確認してください
+                </span>
+              {% endif %}
             </div>
           </div>
+
+          {% if not flow_state.is_confirmed %}
+            <div class="recording-confirm-required">
+              カルテへ登録するには、先にカルテ案を確認してください。「カルテ案を確認・修正」から内容を保存すると登録できます。
+            </div>
+          {% endif %}
+
+          {% if flow_state.can_process %}
+            {% if recording.confirmed_summary_json %}
+              <div class="recording-reset-warning">
+                要約を再作成すると、現在の確認済みカルテ案は無効になります。再作成後、もう一度カルテ案を確認してください。
+              </div>
+            {% endif %}
+            <form
+              method="post"
+              action="{{ process_url }}"
+              data-prevent-double-submit
+              {% if recording.confirmed_summary_json %}
+                data-confirm-message="要約を再作成すると、現在の確認済みカルテ案は無効になります。再作成してよろしいですか？"
+              {% endif %}
+            >
+              {% csrf_token %}
+              <input type="hidden" name="force" value="1">
+              <button
+                class="miniBtn"
+                type="submit"
+                data-processing-label="カルテ案を作成中..."
+              >
+                カルテ案を再作成
+              </button>
+            </form>
+          {% endif %}
         </div>
 
       {% else %}
         <div class="box muted">まだ要約がありません。</div>
 
         <div class="actions" style="margin-top:14px;">
-          {% if recording.audio_file and recording.status != "done" %}
-            <form method="post" action="{{ process_url }}">
+          {% if flow_state.can_process %}
+            <form
+              method="post"
+              action="{{ process_url }}"
+              data-prevent-double-submit
+            >
               {% csrf_token %}
-              <button class="btn btn-primary" type="submit">問診内容を整理（処理開始）</button>
+              <button
+                class="btn btn-primary"
+                type="submit"
+                data-processing-label="処理中..."
+              >
+                録音内容からカルテ案を作成
+              </button>
             </form>
+          {% elif flow_state.is_processing %}
+            <button class="btn btn-primary" type="button" disabled>処理中...</button>
           {% endif %}
           <a class="btn btn-light" href="{{ retry_url|default:'#' }}">もう一度録音する</a>
         </div>
@@ -1930,8 +2157,8 @@
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modalHead">
       <div class="editor-head-left">
-        <div class="editor-kicker">AI Draft Editor</div>
-        <div class="editor-title">診療要約の編集</div>
+        <div class="editor-kicker">Treatment Note Review</div>
+        <div class="editor-title">カルテ案の確認・修正</div>
         <div class="editor-sub">
           録音内容から作成したカルテ案を、施術者が確認・修正してから確定保存します。
         </div>
@@ -1941,7 +2168,12 @@
     </div>
 
     <div class="modalBody">
-      <form method="post" action="{{ confirm_url }}" id="soapEditForm">
+      <form
+        method="post"
+        action="{{ confirm_url }}"
+        id="soapEditForm"
+        data-prevent-double-submit
+      >
         {% csrf_token %}
 
         <div class="editor-wrap">
@@ -1951,7 +2183,7 @@
             <div>
               <div class="editor-notice-title">カルテ案は必ず施術者が確認してください</div>
               <div class="editor-notice-text">
-                この内容は録音内容から生成された下書きです。最終的な判断・修正・確定は施術者が行ってください。
+                この内容は録音内容から作成したカルテ案です。最終的な判断・修正・確定は施術者が行ってください。
               </div>
             </div>
           </div>
@@ -2145,16 +2377,22 @@
 
         <div class="editor-actions">
           <div class="editor-actions-left">
-            ※「確定する」を押すと、施術者が確認した内容として確定保存されます。
+            ※「確認内容を保存」を押すと、施術者が確認した内容として保存されます。
           </div>
 
           <div class="editor-actions-right">
-            {% if recording.is_confirmed %}
-              <span class="badge">確定済み</span>
+            {% if recording.summary_status == "confirmed" %}
+              <span class="badge">確認済み</span>
             {% else %}
-              <span class="badge">未確定</span>
+              <span class="badge">確認待ち</span>
             {% endif %}
-            <button class="editor-save-btn" type="submit">確定する</button>
+            <button
+              class="editor-save-btn"
+              type="submit"
+              data-processing-label="保存中..."
+            >
+              確認内容を保存
+            </button>
           </div>
         </div>
 
@@ -2821,30 +3059,36 @@ function syncRegisterFormHiddenFields() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const registerForm = document.getElementById("clinicalNoteRegisterForm");
-
-  if (registerForm) {
-    registerForm.addEventListener("submit", (event) => {
-      syncRegisterFormHiddenFields();
-
-      const submitter = event.submitter;
-      if (submitter) {
-        submitter.disabled = true;
-
-        if (submitter.value === "treatment_plan") {
-          submitter.innerText = "施術計画を準備中...";
-        } else {
-          submitter.innerText = "保存中...";
-        }
+  document.querySelectorAll("form[data-prevent-double-submit]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      if (form.dataset.submitting === "1") {
+        event.preventDefault();
+        return;
       }
 
-      registerForm.querySelectorAll('button[type="submit"]').forEach((btn) => {
-        if (btn !== submitter) {
-          btn.disabled = true;
+      const confirmMessage = form.dataset.confirmMessage || "";
+      if (confirmMessage && !window.confirm(confirmMessage)) {
+        event.preventDefault();
+        return;
+      }
+
+      if (form.id === "clinicalNoteRegisterForm") {
+        syncRegisterFormHiddenFields();
+      }
+
+      form.dataset.submitting = "1";
+      const submitter = event.submitter;
+      form.querySelectorAll('button[type="submit"]').forEach((button) => {
+        button.disabled = true;
+        if (button === submitter) {
+          button.innerText = (
+            button.dataset.processingLabel
+            || "処理中..."
+          );
         }
       });
     });
-  }
+  });
 });
 </script>
 
