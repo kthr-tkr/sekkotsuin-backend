@@ -8,6 +8,8 @@ from openai import OpenAI
 
 client = OpenAI()
 
+DEFAULT_STT_MODEL = "gpt-4o-mini-transcribe"
+
 SUPPORTED_EXT = {
     ".mp3",
     ".wav",
@@ -62,7 +64,7 @@ def run_stt(
     mime_type: str = "",
     *,
     language: str = "ja",
-    model: str = "gpt-4o-mini-transcribe",
+    model: str = DEFAULT_STT_MODEL,
 ):
     """
     音声文字起こし。

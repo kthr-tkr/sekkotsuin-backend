@@ -507,6 +507,100 @@
     margin-top:18px;
   }
 
+  .panel-recording-title{
+    margin:20px 0 10px;
+    color:#0f172a;
+    font-size:15px;
+    font-weight:900;
+  }
+
+  .panel-recording-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .panel-recording-card{
+    display:flex;
+    flex-direction:column;
+    padding:14px;
+    border:1px solid #dbe6f3;
+    border-radius:17px;
+    background:#fff;
+  }
+
+  .panel-recording-card.initial{
+    box-shadow:inset 3px 0 0 #2563eb;
+  }
+
+  .panel-recording-card.followup{
+    box-shadow:inset 3px 0 0 #0f9f8f;
+  }
+
+  .panel-recording-label{
+    color:#64748b;
+    font-size:10px;
+    font-weight:900;
+    margin-bottom:6px;
+  }
+
+  .panel-recording-name{
+    color:#0f172a;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.45;
+  }
+
+  .panel-recording-text{
+    margin:7px 0 10px;
+    color:#64748b;
+    font-size:11px;
+    line-height:1.65;
+    font-weight:700;
+  }
+
+  .panel-recording-list{
+    margin:0 0 12px;
+    padding-left:16px;
+    color:#475569;
+    font-size:10px;
+    line-height:1.65;
+    font-weight:700;
+  }
+
+  .panel-recording-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:36px;
+    margin-top:auto;
+    border-radius:11px;
+    color:#fff;
+    font-size:11px;
+    font-weight:900;
+    text-decoration:none;
+  }
+
+  .panel-recording-card.initial .panel-recording-link{
+    background:#1d4ed8;
+  }
+
+  .panel-recording-card.followup .panel-recording-link{
+    background:#0f766e;
+  }
+
+  .panel-recording-warning{
+    margin-top:12px;
+    padding:11px 12px;
+    border-radius:13px;
+    border:1px solid #fde68a;
+    background:#fffbeb;
+    color:#92400e;
+    font-size:11px;
+    line-height:1.65;
+    font-weight:800;
+  }
+
   .badge{
     display:inline-flex;
     align-items:center;
@@ -1354,6 +1448,10 @@
       width: 100%;
     }
 
+    .panel-recording-grid{
+      grid-template-columns:1fr;
+    }
+
     .calendar-scroll{
       overflow-x: auto;
       overflow-y: hidden;
@@ -1923,7 +2021,8 @@
                             data-pain-level-display="{{ a.pain_level_display|escape }}"
                             data-areas-display="{{ a.areas_display|escape }}"
                             data-intake-detail-url="{{ a.intake_detail_url|escape }}"
-                            data-recording-url="{{ a.recording_url|escape }}"
+                            data-initial-recording-url="{{ a.initial_recording_url|escape }}"
+                            data-treatment-recording-url="{{ a.treatment_recording_url|escape }}"
                             data-day-url="{{ a.day_url|escape }}"
                           >
                             <div class="timeline-appt-time">
@@ -1991,6 +2090,51 @@
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+  function renderRecordingChoices(p) {
+    const initialUrl = p.initialRecordingUrl || '';
+    const treatmentUrl = p.treatmentRecordingUrl || '';
+
+    if (!initialUrl && !treatmentUrl) {
+      return `
+        <div class="panel-recording-warning">
+          患者が未確定のため録音を開始できません。先に患者を予約へ紐づけてください。
+        </div>
+      `;
+    }
+
+    return `
+      <div class="panel-recording-title">録音の種類を選択</div>
+      <div class="panel-recording-grid">
+        <div class="panel-recording-card initial">
+          <div class="panel-recording-label">初診・問診向け</div>
+          <div class="panel-recording-name">初診録音を開始</div>
+          <div class="panel-recording-text">
+            初診録音では、問診・主訴・既往歴・初回評価・施術方針を記録し、初診カルテ案を作成します。
+          </div>
+          <ul class="panel-recording-list">
+            <li>初回来院時の問診記録</li>
+            <li>主訴・既往歴・生活背景の整理</li>
+            <li>初回評価と施術方針のカルテ案化</li>
+          </ul>
+          <a class="panel-recording-link" href="${escapeHtml(initialUrl)}">初診録音へ</a>
+        </div>
+        <div class="panel-recording-card followup">
+          <div class="panel-recording-label">通院・施術向け</div>
+          <div class="panel-recording-name">通院施術録音を開始</div>
+          <div class="panel-recording-text">
+            通院施術録音では、前回からの変化・施術内容・次回確認ポイントを記録し、本日のカルテ案を作成します。
+          </div>
+          <ul class="panel-recording-list">
+            <li>前回からの症状変化</li>
+            <li>本日の施術内容</li>
+            <li>次回確認ポイントの整理</li>
+          </ul>
+          <a class="panel-recording-link" href="${escapeHtml(treatmentUrl)}">通院録音へ</a>
+        </div>
+      </div>
+    `;
   }
 
   function getCSRFToken() {
@@ -2123,9 +2267,10 @@
         </div>
       </div>
 
+      ${renderRecordingChoices(p)}
+
       <div class="panel-actions">
         ${p.intakeDetailUrl ? `<a class="btn" href="${p.intakeDetailUrl}">問診を確認</a>` : ''}
-        <a class="btn primary" href="${p.recordingUrl}">診察へ</a>
         <a class="btn" href="${p.dayUrl}">日表示で見る</a>
       </div>
     `;
@@ -2179,9 +2324,10 @@
         </div>
       </div>
 
+      ${renderRecordingChoices(p)}
+
       <div class="panel-actions">
         ${p.intakeDetailUrl ? `<a class="btn" href="${p.intakeDetailUrl}">問診を確認</a>` : ''}
-        <a class="btn primary" href="${p.recordingUrl}">診察へ</a>
         <a class="btn" href="${p.dayUrl}">日表示で見る</a>
       </div>
     `;

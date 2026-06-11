@@ -374,14 +374,12 @@
   </div>
   {% endif %}
 
+  {% if intake.appointment %}
+    {% include "staff/partials/recording_start_cards.html" with recording_appointment=intake.appointment recording_patient=intake.patient only %}
+  {% endif %}
+
   <div class="actions">
     <a class="btn" href="javascript:history.back()">戻る</a>
-
-    {% if intake.appointment %}
-      <a class="btn primary" href="{% url 'intakes:recording_new' intake.appointment.id %}">
-        診察へ
-      </a>
-    {% endif %}
   </div>
 </div>
 

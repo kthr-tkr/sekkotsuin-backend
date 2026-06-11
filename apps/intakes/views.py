@@ -19,20 +19,20 @@ from django.urls import reverse
 from pathlib import Path
 from openai import OpenAI
 from django.db import transaction
+from django.db.models import Q
 from django.contrib import messages
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
 from .services.ai_summarizer import SUMMARY_JSON_SCHEMA
 
-from .services.stt import run_stt   # ↑で分離した場合
+from .services.stt import DEFAULT_STT_MODEL, run_stt
 from apps.staff.decorators import staff_required
 
 from apps.ai_usage.models import AiUsageLog
 from apps.ai_usage.services import (
     build_ai_usage_summary,
     create_ai_usage_log_for_recording,
-    get_clinic_from_recording,
 )
 
 # apps/intakes/views.py
@@ -46,6 +46,26 @@ def _as_list(v):
         lines = [s.strip("・- \t") for s in v.splitlines()]
         return [s for s in lines if s]
     return [str(v)]
+
+
+def _get_staff_clinic(request):
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or getattr(request.user, "clinic_id", None) != clinic.id:
+        return None
+    return clinic
+
+
+def _recordings_for_clinic(clinic):
+    return (
+        InterviewRecording.objects
+        .select_related("clinic", "patient", "appointment", "intake")
+        .filter(
+            clinic=clinic,
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+        )
+        .filter(Q(intake__isnull=True) | Q(intake__clinic=clinic))
+    )
 
 
 
@@ -300,17 +320,28 @@ def _must_own_appointment(user, appt: Appointment):
     if patient_user_id and patient_user_id != user.id:
         raise PermissionError("Permission denied")
 
-@login_required
+@staff_required
 def recording_new(request, appointment_id):
-    appt = get_object_or_404(Appointment, pk=appointment_id)
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の録音のみ操作できます。")
+
+    appt = get_object_or_404(
+        Appointment.objects.select_related("clinic", "patient"),
+        pk=appointment_id,
+        clinic=clinic,
+        patient__clinic=clinic,
+    )
 
     intake, _ = Intake.objects.get_or_create(
         appointment=appt,
-        defaults={"clinic": appt.clinic, "patient": appt.patient, "payload": {}},
+        clinic=clinic,
+        patient=appt.patient,
+        defaults={"payload": {}},
     )
 
     rec = InterviewRecording.objects.create(
-        clinic=appt.clinic,
+        clinic=clinic,
         patient=appt.patient,
         appointment=appt,
         intake=intake,
@@ -329,10 +360,20 @@ def recording_new(request, appointment_id):
 
 
 @require_POST
-@login_required
+@staff_required
 def upload_recording(request, recording_id):
-    rec = get_object_or_404(InterviewRecording, pk=recording_id)
-    _must_own_recording(request.user, rec)
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の録音のみ操作できます。")
+
+    rec = get_object_or_404(
+        _recordings_for_clinic(clinic),
+        pk=recording_id,
+    )
+    try:
+        _must_own_recording(request.user, rec)
+    except PermissionError:
+        return HttpResponseForbidden("この録音にはアクセスできません。")
 
     f = request.FILES.get("audio")
     if not f:
@@ -349,7 +390,7 @@ def upload_recording(request, recording_id):
 
 
 @require_POST
-@login_required
+@staff_required
 def process_recording(request, recording_id):
     """
     録音データをAI処理する。
@@ -367,31 +408,16 @@ def process_recording(request, recording_id):
     """
 
     # 通常取得。ここでは select_for_update しない。
-    rec = get_object_or_404(
-        InterviewRecording.objects.select_related(
-            "clinic",
-            "patient",
-            "appointment",
-            "appointment__patient",
-            "intake",
-            "intake__patient",
-        ),
-        pk=recording_id,
-    )
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の録音のみ操作できます。")
+
+    rec = get_object_or_404(_recordings_for_clinic(clinic), pk=recording_id)
 
     try:
         _must_own_recording(request.user, rec)
     except PermissionError:
         return HttpResponseForbidden("この録音にはアクセスできません。")
-
-    clinic = get_clinic_from_recording(rec)
-
-    if clinic is None:
-        messages.error(
-            request,
-            "録音データに院情報が紐づいていないため、AI処理を実行できません。",
-        )
-        return redirect("intakes:recording_detail", recording_id=rec.id)
 
     ai_usage_summary = build_ai_usage_summary(clinic)
 
@@ -405,8 +431,8 @@ def process_recording(request, recording_id):
     # ここでは InterviewRecording 本体だけをロックする
     with transaction.atomic():
         rec = (
-            InterviewRecording.objects
-            .select_for_update()
+            _recordings_for_clinic(clinic)
+            .select_for_update(of=("self",))
             .get(pk=recording_id)
         )
 
@@ -435,15 +461,7 @@ def process_recording(request, recording_id):
     try:
         # 最新状態を関連込みで取り直す
         rec = (
-            InterviewRecording.objects
-            .select_related(
-                "clinic",
-                "patient",
-                "appointment",
-                "appointment__patient",
-                "intake",
-                "intake__patient",
-            )
+            _recordings_for_clinic(clinic)
             .get(pk=recording_id)
         )
 
@@ -464,7 +482,7 @@ def process_recording(request, recording_id):
             create_ai_usage_log_for_recording(
                 recording=rec,
                 usage_type=AiUsageLog.UsageType.STT,
-                model_name="whisper-1",
+                model_name=(rec.transcript_json or {}).get("model") or DEFAULT_STT_MODEL,
                 transcript_text=rec.transcript_text or "",
                 estimated_cost_yen=0,
                 created_by=request.user,
@@ -547,24 +565,29 @@ def process_recording(request, recording_id):
         return redirect("intakes:recording_detail", recording_id=rec.id)
 
 
-@login_required
+@staff_required
 def record_page(request, appointment_id):
-    appt = get_object_or_404(Appointment, pk=appointment_id)
-    rec = InterviewRecording.objects.create(
-        clinic=appt.clinic,
-        appointment=appt,
-        created_by=request.user,
-        status=InterviewRecording.Status.UPLOADED,
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の録音のみ操作できます。")
+
+    appt = get_object_or_404(
+        Appointment.objects.select_related("clinic", "patient"),
+        pk=appointment_id,
+        clinic=clinic,
+        patient__clinic=clinic,
     )
-    return render(request, "intakes/staff/record_page.html", {"appointment": appt, "recording": rec})
+    messages.info(request, "現行の問診録音画面へ移動しました。")
+    return redirect("intakes:recording_new", appointment_id=appt.id)
 
 
-@login_required
+@staff_required
 def recording_detail(request, recording_id):
-    rec = get_object_or_404(
-        InterviewRecording.objects.select_related("appointment", "patient", "intake"),
-        pk=recording_id,
-    )
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の録音のみ閲覧できます。")
+
+    rec = get_object_or_404(_recordings_for_clinic(clinic), pk=recording_id)
 
     try:
         _must_own_recording(request.user, rec)
@@ -603,7 +626,11 @@ def recording_detail(request, recording_id):
 @staff_required
 @require_POST
 def recording_confirm(request, recording_id: int):
-    rec = get_object_or_404(InterviewRecording, pk=recording_id)
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の録音のみ操作できます。")
+
+    rec = get_object_or_404(_recordings_for_clinic(clinic), pk=recording_id)
 
     try:
         _must_own_recording(request.user, rec)

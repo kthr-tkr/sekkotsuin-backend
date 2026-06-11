@@ -1465,7 +1465,10 @@
             <a class="btn" href="{% url 'staff:intake' %}?q={% if a.patient %}{{ a.patient.phone }}{% endif %}">問診一覧へ</a>
           {% endif %}
 
-          <a class="btn primary" href="{% url 'intakes:recording_new' a.id %}">診察へ</a>
+          {% if a.patient %}
+            <a class="btn primary" href="{% url 'intakes:recording_new' a.id %}">初診録音</a>
+            <a class="btn" href="{% url 'treatment_sessions:start' a.id %}">通院施術録音</a>
+          {% endif %}
 
           <form method="post" action="{% url 'staff:appointment_status' a.id %}" class="status-form">
             {% csrf_token %}

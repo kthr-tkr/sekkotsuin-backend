@@ -5,6 +5,7 @@ Django settings for config project.
 from dotenv import load_dotenv
 from pathlib import Path
 import os
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -236,6 +237,16 @@ else:
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
+    }
+
+# collectstaticを行わないテストでは、manifestを参照しない通常ストレージを使う。
+if "test" in sys.argv:
+    test_staticfiles_storage = (
+        "django.contrib.staticfiles.storage.StaticFilesStorage"
+    )
+    STATICFILES_STORAGE = test_staticfiles_storage
+    STORAGES["staticfiles"] = {
+        "BACKEND": test_staticfiles_storage,
     }
 
 

@@ -54,9 +54,9 @@ def visit_ai_draft(request, pk: int):
     job = run_ai_draft(visit, input_text=input_text)
 
     if job.status == job.Status.SUCCESS:
-        messages.success(request, "AI下書きを作成しました。")
+        messages.success(request, "カルテ案を作成しました。施術者が確認して登録してください。")
     else:
-        messages.error(request, f"AI下書きに失敗しました: {job.error_message}")
+        messages.error(request, f"カルテ案の作成に失敗しました: {job.error_message}")
 
     return redirect("visits:detail", pk=visit.pk)
 

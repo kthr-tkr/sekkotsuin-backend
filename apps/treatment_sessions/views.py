@@ -2,7 +2,6 @@ import json
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden, JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Max, Sum
@@ -10,7 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from apps.ai_usage.models import AiUsageLog
-from apps.intakes.services.stt import run_stt
+from apps.intakes.services.stt import DEFAULT_STT_MODEL, run_stt
 
 from apps.appointments.models import Appointment
 from apps.intakes.models import Intake
@@ -21,20 +20,56 @@ from apps.patients.models import Patient
 from apps.ai_usage.services import build_ai_usage_summary
 from apps.treatment_sessions.services.session_summarizer import summarize_treatment_session
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from apps.clinical_notes.models import ClinicalNote, ClinicalNoteHistory
 
 
-def _same_clinic(user, clinic) -> bool:
-    user_clinic = getattr(user, "clinic", None)
+def _get_staff_clinic(request):
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or getattr(request.user, "clinic_id", None) != clinic.id:
+        return None
+    return clinic
 
-    if user.is_superuser and user_clinic is None:
-        # 将来的には運営管理者用の院選択が必要。
-        # 現段階では、superuser も clinic を持たせる運用が推奨。
-        return False
 
-    return user_clinic == clinic
+def _get_or_create_appointment_session(*, appointment, clinic, patient, intake, user):
+    session = (
+        TreatmentSession.objects
+        .filter(
+            appointment=appointment,
+            clinic=clinic,
+            patient=patient,
+        )
+        .first()
+    )
+    if session:
+        return session, False
+
+    try:
+        with transaction.atomic():
+            session = TreatmentSession.objects.create(
+                appointment=appointment,
+                clinic=clinic,
+                patient=patient,
+                intake=intake,
+                title="施術セッション",
+                status=TreatmentSession.Status.PENDING,
+                created_by=user,
+                updated_by=user,
+            )
+    except IntegrityError:
+        session = (
+            TreatmentSession.objects
+            .filter(
+                appointment=appointment,
+                clinic=clinic,
+                patient=patient,
+            )
+            .first()
+        )
+        return session, False
+
+    return session, True
 
 
 @staff_required
@@ -43,32 +78,36 @@ def treatment_session_start_view(request, appointment_id):
     予約から施術セッションを開始する。
     まずは TreatmentSession を作成し、詳細画面へ遷移する。
     """
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
+
     appointment = get_object_or_404(
         Appointment.objects.select_related("clinic", "patient"),
         pk=appointment_id,
+        clinic=clinic,
+        patient__clinic=clinic,
     )
-
-    if not _same_clinic(request.user, appointment.clinic):
-        return HttpResponseForbidden("この院の予約にはアクセスできません。")
 
     intake = (
         Intake.objects
-        .filter(appointment=appointment)
+        .filter(
+            appointment=appointment,
+            clinic=clinic,
+            patient=appointment.patient,
+        )
         .first()
     )
 
-    session, created = TreatmentSession.objects.get_or_create(
+    session, created = _get_or_create_appointment_session(
         appointment=appointment,
-        defaults={
-            "clinic": appointment.clinic,
-            "patient": appointment.patient,
-            "intake": intake,
-            "title": "施術セッション",
-            "status": TreatmentSession.Status.PENDING,
-            "created_by": request.user,
-            "updated_by": request.user,
-        },
+        clinic=clinic,
+        patient=appointment.patient,
+        intake=intake,
+        user=request.user,
     )
+    if session is None:
+        return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
 
     if created:
         messages.success(request, "施術セッションを作成しました。")
@@ -80,6 +119,10 @@ def treatment_session_start_view(request, appointment_id):
 
 @staff_required
 def treatment_session_detail_view(request, session_id):
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の施術録音のみ閲覧できます。")
+
     session = get_object_or_404(
         TreatmentSession.objects.select_related(
             "clinic",
@@ -90,10 +133,9 @@ def treatment_session_detail_view(request, session_id):
             "treatment_plan",
         ).prefetch_related("chunks"),
         pk=session_id,
+        clinic=clinic,
+        patient__clinic=clinic,
     )
-
-    if not _same_clinic(request.user, session.clinic):
-        return HttpResponseForbidden("この施術セッションにはアクセスできません。")
 
     summary = session.active_summary or {}
 
@@ -156,22 +198,32 @@ def treatment_session_start_for_patient_view(request, patient_id):
       - 患者単位の進行中セッションがあれば開く
       - なければ appointment=None で作成する
     """
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
+
     patient = get_object_or_404(
         Patient.objects.select_related("clinic"),
         pk=patient_id,
+        clinic=clinic,
     )
 
-    if not _same_clinic(request.user, patient.clinic):
-        return HttpResponseForbidden("この院の患者にはアクセスできません。")
-
     now = timezone.now()
+    today = timezone.localdate()
 
     appointment = (
         Appointment.objects
         .filter(
-            clinic=patient.clinic,
+            clinic=clinic,
             patient=patient,
+            start_at__date=today,
             start_at__gte=now,
+        )
+        .exclude(
+            status__in=[
+                Appointment.Status.CANCELLED,
+                Appointment.Status.NO_SHOW,
+            ]
         )
         .order_by("start_at")
         .first()
@@ -181,8 +233,15 @@ def treatment_session_start_for_patient_view(request, patient_id):
         appointment = (
             Appointment.objects
             .filter(
-                clinic=patient.clinic,
+                clinic=clinic,
                 patient=patient,
+                start_at__date=today,
+            )
+            .exclude(
+                status__in=[
+                    Appointment.Status.CANCELLED,
+                    Appointment.Status.NO_SHOW,
+                ]
             )
             .order_by("-start_at")
             .first()
@@ -192,22 +251,23 @@ def treatment_session_start_for_patient_view(request, patient_id):
     if appointment:
         intake = (
             Intake.objects
-            .filter(appointment=appointment)
+            .filter(
+                appointment=appointment,
+                clinic=clinic,
+                patient=patient,
+            )
             .first()
         )
 
-        session, created = TreatmentSession.objects.get_or_create(
+        session, created = _get_or_create_appointment_session(
             appointment=appointment,
-            defaults={
-                "clinic": patient.clinic,
-                "patient": patient,
-                "intake": intake,
-                "title": "施術セッション",
-                "status": TreatmentSession.Status.PENDING,
-                "created_by": request.user,
-                "updated_by": request.user,
-            },
+            clinic=clinic,
+            patient=patient,
+            intake=intake,
+            user=request.user,
         )
+        if session is None:
+            return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
 
         if created:
             messages.success(request, "施術セッションを作成しました。")
@@ -219,7 +279,7 @@ def treatment_session_start_for_patient_view(request, patient_id):
     existing_session = (
         TreatmentSession.objects
         .filter(
-            clinic=patient.clinic,
+            clinic=clinic,
             patient=patient,
             appointment__isnull=True,
             status__in=[
@@ -239,7 +299,7 @@ def treatment_session_start_for_patient_view(request, patient_id):
         return redirect("treatment_sessions:detail", session_id=existing_session.id)
 
     session = TreatmentSession.objects.create(
-        clinic=patient.clinic,
+        clinic=clinic,
         patient=patient,
         appointment=None,
         intake=None,
@@ -263,16 +323,19 @@ def upload_session_chunk_view(request, session_id):
     - AI処理はまだ行わない
     - total_duration_sec を更新する
     """
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return JsonResponse(
+            {"ok": False, "error": "所属院の施術録音のみ操作できます。"},
+            status=403,
+        )
+
     session = get_object_or_404(
         TreatmentSession.objects.select_related("clinic", "patient", "appointment"),
         pk=session_id,
+        clinic=clinic,
+        patient__clinic=clinic,
     )
-
-    if not _same_clinic(request.user, session.clinic):
-        return JsonResponse(
-            {"ok": False, "error": "この施術セッションにはアクセスできません。"},
-            status=403,
-        )
 
     audio_file = request.FILES.get("audio")
     if not audio_file:
@@ -365,6 +428,10 @@ def transcribe_session_chunk_view(request, chunk_id):
     - session.transcript_textへ統合
     - 要約は次フェーズ
     """
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
+
     chunk = get_object_or_404(
         TreatmentSessionChunk.objects.select_related(
             "session",
@@ -374,12 +441,11 @@ def transcribe_session_chunk_view(request, chunk_id):
             "session__intake",
         ),
         pk=chunk_id,
+        session__clinic=clinic,
+        session__patient__clinic=clinic,
     )
 
     session = chunk.session
-
-    if not _same_clinic(request.user, session.clinic):
-        return HttpResponseForbidden("この施術セッションにはアクセスできません。")
 
     if not chunk.audio_file:
         messages.error(request, "音声ファイルがありません。")
@@ -435,7 +501,7 @@ def transcribe_session_chunk_view(request, chunk_id):
                 intake=session.intake,
                 usage_type=AiUsageLog.UsageType.STT,
                 status=AiUsageLog.Status.SUCCESS,
-                model_name="whisper-1",
+                model_name=(chunk.transcript_json or {}).get("model") or DEFAULT_STT_MODEL,
                 audio_duration_sec=chunk.duration_sec or 0,
                 billing_minutes=AiUsageLog.seconds_to_billing_minutes(chunk.duration_sec or 0),
                 transcript_chars=len(chunk.transcript_text or ""),
@@ -513,7 +579,7 @@ def transcribe_session_chunk_view(request, chunk_id):
                 intake=session.intake,
                 usage_type=AiUsageLog.UsageType.STT,
                 status=AiUsageLog.Status.FAILED,
-                model_name="whisper-1",
+                model_name=DEFAULT_STT_MODEL,
                 audio_duration_sec=chunk.duration_sec or 0,
                 billing_minutes=0,
                 transcript_chars=0,
@@ -546,6 +612,10 @@ def summarize_treatment_session_view(request, session_id):
     - AiUsageLog に SUMMARY として記録
     - billing_minutes は二重カウント防止のため 0
     """
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
+
     session = get_object_or_404(
         TreatmentSession.objects.select_related(
             "clinic",
@@ -554,10 +624,9 @@ def summarize_treatment_session_view(request, session_id):
             "intake",
         ),
         pk=session_id,
+        clinic=clinic,
+        patient__clinic=clinic,
     )
-
-    if not _same_clinic(request.user, session.clinic):
-        return HttpResponseForbidden("この施術セッションにはアクセスできません。")
 
     if not session.transcript_text:
         messages.error(request, "統合文字起こしがないため、AI要約を作成できません。")
@@ -763,6 +832,10 @@ def register_treatment_session_note_view(request, session_id):
     - 既存カルテがある場合は履歴を残して更新
     - 患者詳細カルテタブへ戻す
     """
+    clinic = _get_staff_clinic(request)
+    if clinic is None:
+        return HttpResponseForbidden("所属院の施術録音のみ操作できます。")
+
     session = get_object_or_404(
         TreatmentSession.objects.select_related(
             "clinic",
@@ -771,10 +844,9 @@ def register_treatment_session_note_view(request, session_id):
             "intake",
         ),
         pk=session_id,
+        clinic=clinic,
+        patient__clinic=clinic,
     )
-
-    if not _same_clinic(request.user, session.clinic):
-        return HttpResponseForbidden("この施術セッションにはアクセスできません。")
 
     if not session.appointment:
         messages.error(
@@ -807,7 +879,12 @@ def register_treatment_session_note_view(request, session_id):
 
     existing_note = (
         ClinicalNote.objects
-        .filter(appointment=appointment)
+        .select_for_update(of=("self",))
+        .filter(
+            appointment=appointment,
+            patient__clinic=session.clinic,
+            appointment__clinic=session.clinic,
+        )
         .first()
     )
 

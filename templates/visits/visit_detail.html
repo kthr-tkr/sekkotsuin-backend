@@ -18,7 +18,7 @@
   <div class="d-flex gap-2 mb-3">
     <form method="post" action="{% url 'visits:ai_draft' visit.pk %}">
       {% csrf_token %}
-      <button class="btn btn-primary" type="submit">AI下書き生成</button>
+      <button class="btn btn-primary" type="submit">カルテ案を作成</button>
     </form>
 
     <form method="post" action="{% url 'visits:note_finalize' visit.pk %}">

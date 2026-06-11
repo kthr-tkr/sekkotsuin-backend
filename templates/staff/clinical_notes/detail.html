@@ -382,6 +382,119 @@
     font-weight:950;
   }
 
+  .cn-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:11px;
+  }
+
+  .cn-summary-item{
+    position:relative;
+    overflow:hidden;
+    min-height:132px;
+    padding:17px;
+    border-radius:21px;
+    background:#fff;
+    border:1px solid #e6edf6;
+    box-shadow:0 10px 26px rgba(15,23,42,.045);
+  }
+
+  .cn-summary-item::before{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    top:0;
+    height:4px;
+    background:#2563eb;
+  }
+
+  .cn-summary-item.orange::before{background:#d6a94c;}
+  .cn-summary-item.green::before{background:#34a982;}
+  .cn-summary-item.purple::before{background:#7c3aed;}
+  .cn-summary-item.red::before{background:#e87979;}
+
+  .cn-summary-label{
+    margin-bottom:9px;
+    color:#64748b;
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.06em;
+  }
+
+  .cn-summary-value{
+    color:#172033;
+    font-size:13px;
+    line-height:1.75;
+    font-weight:820;
+  }
+
+  .cn-ai-summary{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:13px;
+    align-items:start;
+    margin-top:14px;
+    padding:15px 17px;
+    border-radius:19px;
+    color:#27445f;
+    background:#edf7ff;
+    border:1px solid #cfe5f5;
+  }
+
+  .cn-ai-summary-label{
+    padding:6px 9px;
+    border-radius:999px;
+    color:#fff;
+    background:linear-gradient(135deg,#1e3a8a,#2563eb);
+    font-size:10px;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .cn-ai-summary-text{
+    font-size:13px;
+    font-weight:800;
+    line-height:1.75;
+  }
+
+  .cn-quick-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+  }
+
+  .cn-quick-panel{
+    padding:19px;
+    border-radius:23px;
+    background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);
+    border:1px solid #e3ebf5;
+  }
+
+  .cn-quick-panel.treatment{
+    background:linear-gradient(180deg,#fff 0%,#f1fbf7 100%);
+    border-color:#cfe9df;
+  }
+
+  .cn-quick-panel.next{
+    background:linear-gradient(180deg,#fff 0%,#f7f4ff 100%);
+    border-color:#ddd6fe;
+  }
+
+  .cn-quick-title{
+    margin-bottom:11px;
+    color:#16324f;
+    font-size:16px;
+    font-weight:950;
+  }
+
+  .cn-quick-foot{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:14px;
+  }
+
   .cn-soap-grid{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
@@ -722,6 +835,10 @@
     .cn-grid-3{
       grid-template-columns:1fr;
     }
+
+    .cn-summary-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
   }
 
   @media(max-width: 760px){
@@ -735,7 +852,14 @@
     }
 
     .cn-hero-stats,
-    .cn-soap-grid{
+    .cn-soap-grid,
+    .cn-summary-grid,
+    .cn-quick-grid,
+    .cn-quick-foot{
+      grid-template-columns:1fr;
+    }
+
+    .cn-ai-summary{
       grid-template-columns:1fr;
     }
 
@@ -869,9 +993,27 @@
   .cn-hero-grid,
   .cn-grid-2,
   .cn-grid-3,
-  .cn-next-grid{
+  .cn-next-grid,
+  .cn-quick-grid{
     grid-template-columns:1fr 1fr !important;
     gap:8px !important;
+  }
+
+  .cn-summary-grid{
+    grid-template-columns:repeat(5,1fr) !important;
+    gap:6px !important;
+  }
+
+  .cn-summary-item{
+    min-height:auto !important;
+    padding:8px !important;
+    box-shadow:none !important;
+  }
+
+  .cn-ai-summary{
+    grid-template-columns:auto 1fr !important;
+    margin-top:7px !important;
+    padding:8px !important;
   }
 
   .cn-hero-stats{
@@ -972,26 +1114,22 @@
     </div>
 
     <div class="cn-actions">
-      {% if note.appointment_id %}
-        <a href="{% url 'treatment_plans:plan_create_for_appointment' note.appointment_id %}" class="cn-btn primary">
-          ＋ 施術計画を作成
+      {% if related_plan %}
+        <a href="{% url 'treatment_plans:plan_detail' related_plan.id %}" class="cn-btn primary">
+          施術計画を確認
         </a>
-      {% elif note.patient_id %}
-        <a href="{% url 'treatment_plans:plan_create_for_patient' note.patient_id %}" class="cn-btn primary">
-          ＋ 施術計画を作成
+      {% else %}
+        <a href="{% url 'treatment_plans:plan_create_from_clinical_note' note.id %}" class="cn-btn primary">
+          カルテから施術計画を作成
         </a>
       {% endif %}
 
       <a href="{% url 'staff:clinical_note_edit' note.id %}" class="cn-btn">
-        ✏️ 編集
+        カルテ編集
       </a>
 
-      <button type="button" class="cn-btn" onclick="window.print()">
-        🖨 画面を印刷
-      </button>
-
       <a href="{% url 'staff:clinical_note_print' note.id %}" class="cn-btn" target="_blank">
-        🧾 施術録を印刷
+        印刷 / PDF
       </a>
 
       <a href="{% url 'staff:patient_detail' note.patient_id %}" class="cn-btn">
@@ -1013,6 +1151,9 @@
           <br>
           作成：{{ note.created_at|date:"Y-m-d H:i" }}
           {% if note.registered_by %} / 作成者：{{ note.registered_by }}{% endif %}
+          <br>
+          予約日：{{ note.appointment.start_at|date:"Y-m-d H:i" }}
+          {% if note.appointment.assigned_staff %} / 担当：{{ note.appointment.assigned_staff }}{% endif %}
           <br>
           最終更新：{{ note.updated_at|date:"Y-m-d H:i" }}
           {% if note.updated_by %} / 更新者：{{ note.updated_by }}{% endif %}
@@ -1047,6 +1188,114 @@
         <div class="cn-stat">
           <div class="cn-stat-label">次回目安</div>
           <div class="cn-stat-value">{{ recommended_visit_timing|default:"-" }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cn-card">
+    <div class="cn-card-inner">
+      <div class="cn-section-head">
+        <div>
+          <div class="cn-section-kicker">Quick Summary</div>
+          <h2 class="cn-section-title">今回のカルテ要約</h2>
+          <div class="cn-section-sub">主訴・評価・方針・次回確認・注意点を短く整理しています</div>
+        </div>
+      </div>
+
+      <div class="cn-summary-grid">
+        {% for item in summary_cards %}
+          <div class="cn-summary-item {{ item.tone }}">
+            <div class="cn-summary-label">{{ item.label }}</div>
+            <div class="cn-summary-value">{{ item.value }}</div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if ai_summary_text %}
+        <div class="cn-ai-summary">
+          <div class="cn-ai-summary-label">AI要約</div>
+          <div class="cn-ai-summary-text">{{ ai_summary_text }}</div>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="cn-card">
+    <div class="cn-card-inner">
+      <div class="cn-section-head">
+        <div>
+          <div class="cn-section-kicker green">Treatment & Next Check</div>
+          <h2 class="cn-section-title">施術内容・次回確認</h2>
+          <div class="cn-section-sub">実施内容と次回来院時の確認事項をまとめています</div>
+        </div>
+      </div>
+
+      <div class="cn-quick-grid">
+        <div class="cn-quick-panel treatment">
+          <div class="cn-quick-title">施術内容</div>
+          {% if treatment_summary_items %}
+            <div class="cn-mini-list">
+              {% for item in treatment_summary_items %}
+                <div class="cn-mini-item">
+                  <span class="cn-mini-dot green"></span>
+                  <span>{{ item }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="cn-empty">未記録</div>
+          {% endif %}
+        </div>
+
+        <div class="cn-quick-panel next">
+          <div class="cn-quick-title">次回確認ポイント</div>
+          {% if next_check_items %}
+            <div class="cn-mini-list">
+              {% for item in next_check_items %}
+                <div class="cn-mini-item">
+                  <span class="cn-mini-dot purple"></span>
+                  <span>{{ item }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="cn-empty">未記録</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="cn-quick-foot">
+        <div class="cn-info blue">
+          <div class="cn-info-label">指導・セルフケア</div>
+          {% if guidance_summary_items %}
+            <div class="cn-mini-list">
+              {% for item in guidance_summary_items %}
+                <div class="cn-mini-item">
+                  <span class="cn-mini-dot"></span>
+                  <span>{{ item }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="cn-empty">未記録</div>
+          {% endif %}
+        </div>
+
+        <div class="cn-info red">
+          <div class="cn-info-label">注意事項</div>
+          {% if caution_summary_items %}
+            <div class="cn-mini-list">
+              {% for item in caution_summary_items %}
+                <div class="cn-mini-item">
+                  <span class="cn-mini-dot red"></span>
+                  <span>{{ item }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="cn-empty">未記録</div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -1545,6 +1794,40 @@
       </div>
     </section>
   {% endif %}
+
+  <section class="cn-card">
+    <div class="cn-card-inner">
+      <div class="cn-section-head">
+        <div>
+          <div class="cn-section-kicker">Connections</div>
+          <h2 class="cn-section-title">関連情報</h2>
+          <div class="cn-section-sub">施術計画・姿勢分析・録音元へ移動できます</div>
+        </div>
+      </div>
+
+      <div class="cn-actions" style="justify-content:flex-start;">
+        {% if related_plan %}
+          <a href="{% url 'treatment_plans:plan_detail' related_plan.id %}" class="cn-btn primary">施術計画を確認</a>
+        {% else %}
+          <a href="{% url 'treatment_plans:plan_create_from_clinical_note' note.id %}" class="cn-btn primary">施術計画を作成</a>
+        {% endif %}
+
+        {% if related_posture_assessment %}
+          <a href="{% url 'posture_assessments:detail' related_posture_assessment.id %}" class="cn-btn">AI姿勢分析を見る</a>
+        {% endif %}
+
+        {% if source_session_available %}
+          <a href="{% url 'treatment_sessions:detail' note.treatment_session_id %}" class="cn-btn">施術録音・文字起こし元</a>
+        {% elif source_recording_available %}
+          <a href="{% url 'intakes:recording_detail' note.recording_id %}" class="cn-btn">問診録音・文字起こし元</a>
+        {% elif note.intake_id %}
+          <a href="{% url 'staff:intake_detail' note.intake_id %}" class="cn-btn">関連問診を見る</a>
+        {% endif %}
+
+        <a href="{% url 'staff:patient_detail' note.patient_id %}?tab=clinical_notes" class="cn-btn">患者カルテ一覧へ</a>
+      </div>
+    </div>
+  </section>
 
   <section class="cn-card">
     <div class="cn-card-inner">

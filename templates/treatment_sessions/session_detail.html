@@ -367,6 +367,12 @@
       </div>
     </div>
 
+    {% if not session.appointment %}
+      <div style="margin-bottom:20px; padding:14px 16px; border-radius:16px; border:1px solid #fde68a; background:#fffbeb; color:#92400e; font-size:13px; line-height:1.75; font-weight:800;">
+        予約が紐づいていません。録音は開始できますが、カルテ登録には予約情報が必要になる場合があります。本日のカルテとして登録する場合は、先に予約を作成または選択してください。
+      </div>
+    {% endif %}
+
     <section class="record-panel">
       <div class="record-head">
         <div>
@@ -446,7 +452,11 @@
 
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
                 <div class="chunk-badge">
-                    {{ chunk.get_status_display }}
+                    {% if chunk.status == "summarized" %}
+                      文字起こし完了
+                    {% else %}
+                      {{ chunk.get_status_display }}
+                    {% endif %}
                 </div>
 
                 {% if chunk.audio_file and not chunk.transcript_text %}

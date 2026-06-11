@@ -1810,6 +1810,8 @@
       </div>
     </section>
 
+    {% include "staff/partials/recording_start_cards.html" with recording_appointment=recording_appointment recording_patient=patient only %}
+
     <section class="pd-card body-profile-card">
       <div class="pd-section-head">
         <div>
@@ -1988,8 +1990,8 @@
           <div class="card-sub">確定済みカルテの要点と履歴を確認できます</div>
         </div>
 
-        <a href="{% url 'treatment_sessions:start_for_patient' patient.id %}" class="section-btn">
-          AI施術録音を開始 →
+        <a href="{% url 'staff:patient_detail' patient.id %}?tab=overview#recording-start" class="section-btn">
+          録音方法を選ぶ →
         </a>
       </div>
 
@@ -2062,8 +2064,8 @@
               最新カルテを見る →
             </a>
 
-            <a href="{% url 'treatment_sessions:start_for_patient' patient.id %}" class="overview-mini-btn">
-              AI施術録音を開始
+            <a href="{% url 'staff:patient_detail' patient.id %}?tab=overview#recording-start" class="overview-mini-btn">
+              録音方法を選ぶ
             </a>
           </div>
         </div>

@@ -1033,7 +1033,14 @@ def staff_intake_view(request):
 
 @staff_required
 def staff_appointments_view(request):
-    clinic = get_current_clinic(request)
+    clinic = getattr(request.user, "clinic", None)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の予約のみ閲覧できます。")
+
     today = timezone.localdate()
 
     day_str = request.GET.get("day") or today.isoformat()
@@ -1423,7 +1430,16 @@ def _build_calendar_events(appointments):
                 "areasDisplay": areas,
                 "status": a.status,
                 "intakeDetailUrl": reverse("staff:intake_detail", args=[a.intake.id]) if intake else "",
-                "recordingUrl": reverse("intakes:recording_new", args=[a.id]),
+                "initialRecordingUrl": (
+                    reverse("intakes:recording_new", args=[a.id])
+                    if a.patient_id
+                    else ""
+                ),
+                "treatmentRecordingUrl": (
+                    reverse("treatment_sessions:start", args=[a.id])
+                    if a.patient_id
+                    else ""
+                ),
                 "dayUrl": f"{reverse('staff:appointments')}?period=day&day={a.start_at.date().isoformat()}",
             }
         })
@@ -1574,7 +1590,16 @@ def _build_day_timeline_rows(appointments, staff_users, base_day):
             "left_percent": round(left_percent, 3),
             "width_percent": round(width_percent, 3),
             "intake_detail_url": reverse("staff:intake_detail", args=[a.intake.id]) if intake else "",
-            "recording_url": reverse("intakes:recording_new", args=[a.id]),
+            "initial_recording_url": (
+                reverse("intakes:recording_new", args=[a.id])
+                if a.patient_id
+                else ""
+            ),
+            "treatment_recording_url": (
+                reverse("treatment_sessions:start", args=[a.id])
+                if a.patient_id
+                else ""
+            ),
             "day_url": f"{reverse('staff:appointments')}?period=day&day={a.start_at.date().isoformat()}",
         })
 
@@ -1597,7 +1622,10 @@ def _build_day_timeline_rows(appointments, staff_users, base_day):
 @staff_required
 @require_POST
 def staff_appointment_status_update_view(request, pk):
-    clinic = get_current_clinic(request)
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or request.user.clinic_id != clinic.id:
+        return HttpResponseForbidden("所属院の予約のみ操作できます。")
+
     appt = get_object_or_404(Appointment, pk=pk, clinic=clinic)
 
     new_status = (request.POST.get("status") or "").strip()
@@ -1617,9 +1645,13 @@ def staff_appointment_status_update_view(request, pk):
 @staff_required
 @require_POST
 def move_appointment_view(request, pk):
-    clinic = get_current_clinic(request)
+    clinic = getattr(request.user, "clinic", None)
 
-    if not _is_staff_user(request.user, clinic):
+    if (
+        clinic is None
+        or request.user.clinic_id != clinic.id
+        or not _is_staff_user(request.user, clinic)
+    ):
         return JsonResponse({"ok": False, "error": "権限がありません。"}, status=403)
 
     try:
@@ -1671,7 +1703,10 @@ def move_appointment_view(request, pk):
 
 @staff_required
 def staff_intake_list_view(request):
-    clinic = get_current_clinic(request)
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or request.user.clinic_id != clinic.id:
+        return HttpResponseForbidden("所属院の問診のみ閲覧できます。")
+
     today = timezone.localdate()
     q = (request.GET.get("q", "") or "").strip()
 
@@ -1705,7 +1740,10 @@ def staff_intake_list_view(request):
 
 @staff_required
 def staff_intake_detail_view(request, pk):
-    clinic = get_current_clinic(request)
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or request.user.clinic_id != clinic.id:
+        return HttpResponseForbidden("所属院の問診のみ閲覧できます。")
+
     intake = get_object_or_404(
         Intake.objects.select_related("patient", "appointment"),
         pk=pk,
@@ -1786,7 +1824,9 @@ def staff_intake_detail_view(request, pk):
 
 @staff_required
 def staff_interview_view(request, appointment_id: int):
-    clinic = get_current_clinic(request)
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or request.user.clinic_id != clinic.id:
+        return HttpResponseForbidden("所属院の予約のみ操作できます。")
 
     appt = get_object_or_404(
         Appointment.objects.select_related("patient", "assigned_staff"),
@@ -1845,7 +1885,7 @@ def staff_interview_view(request, appointment_id: int):
         job = run_ai_draft(visit=visit, input_text=exam_text)
 
         if job.status == job.Status.SUCCESS:
-            messages.success(request, "SOAP（AI下書き）を作成しました。")
+            messages.success(request, "SOAPカルテ案を作成しました。施術者が確認して登録してください。")
         else:
             messages.error(request, f"AI処理に失敗しました：{job.error_message}")
 
@@ -1867,15 +1907,26 @@ def staff_interview_view(request, appointment_id: int):
 @require_POST
 @transaction.atomic
 def register_clinical_note(request, recording_id):
-    clinic = get_current_clinic(request)
+    clinic = getattr(request.user, "clinic", None)
 
-    if not _is_staff_user(request.user, clinic):
-        return HttpResponseForbidden("staff only")
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+        or not _is_staff_user(request.user, clinic)
+    ):
+        return HttpResponseForbidden("所属院の録音のみカルテ登録できます。")
 
     recording = get_object_or_404(
-        InterviewRecording.objects.select_related("appointment", "patient", "intake"),
+        InterviewRecording.objects
+        .select_related("appointment", "patient", "intake")
+        .filter(
+            clinic=clinic,
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+        )
+        .filter(Q(intake__isnull=True) | Q(intake__clinic=clinic)),
         pk=recording_id,
-        clinic=clinic,
     )
 
     appointment = recording.appointment
@@ -1928,12 +1979,33 @@ def register_clinical_note(request, recording_id):
             "submitted_at": intake.submitted_at.isoformat() if intake.submitted_at else None,
         }
 
+    existing_note = (
+        ClinicalNote.objects
+        .select_for_update(of=("self",))
+        .filter(
+            appointment=appointment,
+            appointment__clinic=clinic,
+        )
+        .first()
+    )
+
+    if existing_note:
+        ClinicalNoteHistory.objects.create(
+            note=existing_note,
+            soap_json=existing_note.soap_json or {},
+            extract_json=existing_note.extract_json or {},
+            followups_json=existing_note.followups_json or [],
+            web_intake_snapshot=existing_note.web_intake_snapshot or {},
+            edited_by=request.user,
+        )
+
     note, created = ClinicalNote.objects.update_or_create(
         appointment=appointment,
         defaults={
             "patient": patient,
             "intake": intake,
             "recording": recording,
+            "treatment_session": None,
             "soap_json": soap,
             "extract_json": extract,
             "followups_json": followups,
@@ -2156,6 +2228,35 @@ def staff_patient_detail_view(request, patient_id):
     past_appointments = appointments.filter(start_at__lt=now).order_by("-start_at")[:8]
 
     latest_appointment = appointments.first()
+    today = timezone.localdate()
+    recording_appointment = (
+        appointments
+        .filter(
+            start_at__date=today,
+            start_at__gte=now,
+        )
+        .exclude(
+            status__in=[
+                Appointment.Status.CANCELLED,
+                Appointment.Status.NO_SHOW,
+            ]
+        )
+        .order_by("start_at")
+        .first()
+    )
+    if recording_appointment is None:
+        recording_appointment = (
+            appointments
+            .filter(start_at__date=today)
+            .exclude(
+                status__in=[
+                    Appointment.Status.CANCELLED,
+                    Appointment.Status.NO_SHOW,
+                ]
+            )
+            .order_by("-start_at")
+            .first()
+        )
 
     progress_count = 0
     if active_plan:
@@ -2209,6 +2310,7 @@ def staff_patient_detail_view(request, patient_id):
         "upcoming_appointments": upcoming_appointments,
         "past_appointments": past_appointments,
         "latest_appointment": latest_appointment,
+        "recording_appointment": recording_appointment,
 
         "active_plan": active_plan,
         "latest_plan": latest_plan,
@@ -2235,11 +2337,48 @@ def staff_patient_detail_view(request, patient_id):
 def _as_list(v):
     if v is None:
         return []
-    if isinstance(v, list):
-        return [str(x) for x in v if str(x).strip()]
+    if isinstance(v, dict):
+        v = (
+            v.get("text")
+            or v.get("summary")
+            or v.get("items")
+            or []
+        )
+    if isinstance(v, (list, tuple)):
+        items = []
+        for x in v:
+            if isinstance(x, dict):
+                x = x.get("text") or x.get("summary") or x.get("label") or ""
+            text = str(x or "").strip()
+            if text:
+                items.append(text)
+        return items
     if isinstance(v, str):
         return [s.strip() for s in v.split("\n") if s.strip()]
     return [str(v)]
+
+
+def _merge_note_items(*values, limit=None):
+    items = []
+    for value in values:
+        for item in _as_list(value):
+            text = " ".join(item.split())
+            if text and text not in items:
+                items.append(text)
+            if limit and len(items) >= limit:
+                return items
+    return items
+
+
+def _short_note_text(values, fallback="未記録", limit=86):
+    items = _merge_note_items(values, limit=2)
+    if not items:
+        return fallback
+    text = " / ".join(items)
+    if len(text) > limit:
+        return f"{text[:limit - 1].rstrip()}…"
+    return text
+
 
 def normalize_print_location_name(name: str) -> str:
     n = str(name or "").strip()
@@ -2414,6 +2553,12 @@ def build_print_body_markers(locations):
 @staff_required
 def staff_clinical_note_detail_view(request, pk):
     clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のカルテのみ閲覧できます。")
 
     note = get_object_or_404(
         ClinicalNote.objects.select_related(
@@ -2424,9 +2569,11 @@ def staff_clinical_note_detail_view(request, pk):
             "treatment_session",
             "registered_by",
             "updated_by",
+            "appointment__assigned_staff",
         ),
         pk=pk,
         patient__clinic=clinic,
+        appointment__clinic=clinic,
     )
 
     soap = note.soap_json or {}
@@ -2470,6 +2617,39 @@ def staff_clinical_note_detail_view(request, pk):
     missing_information = extract.get("missing_information") or []
     safety_notes = extract.get("safety_notes") or []
 
+    source_session_available = bool(
+        note.treatment_session_id
+        and note.treatment_session.clinic_id == clinic.id
+    )
+    source_recording_available = bool(
+        note.recording_id
+        and note.recording.clinic_id == clinic.id
+    )
+
+    session_summary = {}
+    if source_session_available:
+        treatment_session = note.treatment_session
+        session_summary = treatment_session.active_summary or {}
+        if not isinstance(session_summary, dict):
+            session_summary = {}
+
+    recording_summary = {}
+    if source_recording_available:
+        recording_summary = note.recording.get_active_summary() or {}
+        if not isinstance(recording_summary, dict):
+            recording_summary = {}
+
+    session_overview = session_summary.get("session_summary") or {}
+    recording_extract = recording_summary.get("extract") or {}
+    ai_summary_text = (
+        extract.get("overall_summary")
+        or session_overview.get("overall_summary")
+        or recording_extract.get("overall_summary")
+        or progress_note.get("short_summary")
+        or progress_note.get("record_text")
+        or ""
+    )
+
     visit_type_label = (
         extract.get("visit_type")
         or extract.get("symptom_type")
@@ -2500,6 +2680,125 @@ def staff_clinical_note_detail_view(request, pk):
                 "text": str(item),
             })
 
+    followup_next = [
+        item["text"]
+        for item in followup_items
+        if item["text"] and item["type"] in {"next_check", "followup"}
+    ]
+    followup_cautions = [
+        item["text"]
+        for item in followup_items
+        if item["text"] and item["type"] in {"safety", "missing_information"}
+    ]
+
+    assessment_items = _merge_note_items(
+        soap_view["A"],
+        findings,
+        suspected_causes,
+        extract.get("treatment_intent"),
+        limit=4,
+    )
+    plan_items = _merge_note_items(
+        soap_view["P"],
+        extract.get("next_treatment_policy"),
+        next_plan.get("next_treatment_policy"),
+        limit=4,
+    )
+    treatment_summary_items = _merge_note_items(
+        performed_treatments,
+        extract.get("treatment_detail"),
+        extract.get("manual_therapy"),
+        extract.get("exercise_therapy"),
+        extract.get("physical_therapy"),
+        explained_to_patient,
+        lifestyle_guidance,
+        home_care,
+        limit=8,
+    )
+    next_check_items = _merge_note_items(
+        extract.get("items_to_check_next_time"),
+        next_plan.get("items_to_check_next_time"),
+        followup_next,
+        limit=6,
+    )
+    caution_summary_items = _merge_note_items(
+        safety_notes,
+        cautions_until_next_visit,
+        missing_information,
+        followup_cautions,
+        limit=6,
+    )
+    guidance_summary_items = _merge_note_items(
+        explained_to_patient,
+        lifestyle_guidance,
+        home_care,
+        limit=6,
+    )
+
+    summary_cards = [
+        {
+            "label": "主訴",
+            "value": _short_note_text(
+                chief_complaint_label if chief_complaint_label != "-" else soap_view["S"],
+            ),
+            "tone": "blue",
+        },
+        {
+            "label": "評価",
+            "value": _short_note_text(assessment_items),
+            "tone": "orange",
+        },
+        {
+            "label": "施術方針",
+            "value": _short_note_text(plan_items),
+            "tone": "green",
+        },
+        {
+            "label": "次回確認",
+            "value": _short_note_text(next_check_items),
+            "tone": "purple",
+        },
+        {
+            "label": "注意点",
+            "value": _short_note_text(caution_summary_items),
+            "tone": "red",
+        },
+    ]
+
+    related_plan = (
+        TreatmentPlan.objects
+        .filter(
+            patient=note.patient,
+            patient__clinic=clinic,
+        )
+        .filter(
+            Q(clinical_note=note)
+            | Q(appointment=note.appointment)
+        )
+        .order_by("-is_active", "-created_at")
+        .first()
+    )
+    related_posture_assessment = (
+        PostureAssessment.objects
+        .filter(
+            clinic=clinic,
+            patient=note.patient,
+        )
+        .filter(
+            Q(clinical_note=note)
+            | Q(appointment=note.appointment)
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if related_posture_assessment is None:
+        related_posture_assessment = (
+            PostureAssessment.objects
+            .filter(clinic=clinic, patient=note.patient)
+            .order_by("-created_at")
+            .first()
+        )
+
     if note.treatment_session_id:
         source_label = "施術セッションAI"
         source_badge_class = "session"
@@ -2523,10 +2822,22 @@ def staff_clinical_note_detail_view(request, pk):
         "followups": followups,
         "followup_items": followup_items,
         "histories": histories,
+        "summary_cards": summary_cards,
+        "assessment_items": assessment_items,
+        "plan_items": plan_items,
+        "treatment_summary_items": treatment_summary_items,
+        "next_check_items": next_check_items,
+        "caution_summary_items": caution_summary_items,
+        "guidance_summary_items": guidance_summary_items,
+        "ai_summary_text": ai_summary_text,
+        "related_plan": related_plan,
+        "related_posture_assessment": related_posture_assessment,
 
         "is_treatment_session_note": is_treatment_session_note,
         "source_label": source_label,
         "source_badge_class": source_badge_class,
+        "source_session_available": source_session_available,
+        "source_recording_available": source_recording_available,
 
         # 施術セッション由来カルテ用
         "important_points": important_points,
@@ -2568,6 +2879,12 @@ def staff_clinical_note_detail_view(request, pk):
 @staff_required
 def staff_clinical_note_print_view(request, pk):
     clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のカルテのみ閲覧できます。")
 
     note = get_object_or_404(
         ClinicalNote.objects.select_related(
@@ -2580,6 +2897,7 @@ def staff_clinical_note_print_view(request, pk):
         ),
         pk=pk,
         patient__clinic=clinic,
+        appointment__clinic=clinic,
     )
 
     soap = note.soap_json or {}
@@ -2704,7 +3022,19 @@ def staff_clinical_note_print_view(request, pk):
 @staff_required
 def staff_clinical_note_edit(request, note_id):
     clinic = get_current_clinic(request)
-    note = get_object_or_404(ClinicalNote, id=note_id, patient__clinic=clinic)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のカルテのみ編集できます。")
+
+    note = get_object_or_404(
+        ClinicalNote,
+        id=note_id,
+        patient__clinic=clinic,
+        appointment__clinic=clinic,
+    )
 
     if request.method == "POST":
         form = ClinicalNoteEditForm(request.POST, note=note)

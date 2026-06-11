@@ -3,7 +3,7 @@
 {% load static %}
 
 {% url 'staff:register_clinical_note' recording.id as register_url %}
-{% url 'staff:confirm_recording' recording.id as confirm_url %}
+{% url 'intakes:recording_confirm' recording.id as confirm_url %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'intakes/css/recording.css' %}">
@@ -1721,7 +1721,7 @@
                 {% if recording.summary_status == "confirmed" %}
                   <span class="chip ok"><span class="dot"></span>確定済み</span>
                 {% else %}
-                  <span class="chip ng"><span class="dot"></span>AI下書き（要確認）</span>
+                  <span class="chip ng"><span class="dot"></span>カルテ案（要確認）</span>
                 {% endif %}
 
                 <button type="button" class="miniBtn" data-open="modal-editor">編集</button>
@@ -1827,7 +1827,7 @@
               {% if recording.summary_status == "confirmed" %}
                 <span class="chip ok"><span class="dot"></span>確定済み</span>
               {% else %}
-                <span class="chip ng"><span class="dot"></span>未確定（AI下書き）</span>
+                <span class="chip ng"><span class="dot"></span>未確定（カルテ案）</span>
               {% endif %}
             </div>
 
@@ -1933,7 +1933,7 @@
         <div class="editor-kicker">AI Draft Editor</div>
         <div class="editor-title">診療要約の編集</div>
         <div class="editor-sub">
-          AI下書きを確認し、施術者の判断で修正してから確定保存します。
+          録音内容から作成したカルテ案を、施術者が確認・修正してから確定保存します。
         </div>
       </div>
 
@@ -1949,7 +1949,7 @@
           <div class="editor-notice">
             <div class="editor-notice-icon">!</div>
             <div>
-              <div class="editor-notice-title">AI下書きは必ず確認してください</div>
+              <div class="editor-notice-title">カルテ案は必ず施術者が確認してください</div>
               <div class="editor-notice-text">
                 この内容は録音内容から生成された下書きです。最終的な判断・修正・確定は施術者が行ってください。
               </div>
@@ -2145,7 +2145,7 @@
 
         <div class="editor-actions">
           <div class="editor-actions-left">
-            ※「確定する」を押すと、編集内容がAI下書きではなく確定版として保存されます。
+            ※「確定する」を押すと、施術者が確認した内容として確定保存されます。
           </div>
 
           <div class="editor-actions-right">
