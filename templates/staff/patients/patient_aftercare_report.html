@@ -1,0 +1,551 @@
+{% extends "staff/_layout.html" %}
+{% block title %}施術後説明レポート | CareFrow{% endblock %}
+
+{% block extra_head %}
+<style>
+  @page{
+    size:A4 portrait;
+    margin:11mm;
+  }
+
+  .aftercare-page{
+    max-width:920px;
+    margin:0 auto;
+    color:#18314f;
+  }
+
+  .aftercare-sheet{
+    overflow:hidden;
+    background:#fff;
+    border:1px solid #dbe7f2;
+    border-radius:28px;
+    box-shadow:0 24px 70px rgba(15,23,42,.10);
+  }
+
+  .aftercare-hero{
+    position:relative;
+    padding:30px 34px 26px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 88% 5%,rgba(110,231,183,.23),transparent 28%),
+      linear-gradient(135deg,#0b1b33 0%,#174e78 58%,#14806e 100%);
+  }
+
+  .aftercare-hero-row,
+  .aftercare-meta,
+  .aftercare-actions,
+  .aftercare-section-title{
+    display:flex;
+    align-items:center;
+  }
+
+  .aftercare-hero-row{
+    justify-content:space-between;
+    gap:20px;
+  }
+
+  .aftercare-brand{
+    margin-bottom:7px;
+    color:#a7f3d0;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+  }
+
+  .aftercare-title{
+    margin:0;
+    font-size:30px;
+    font-weight:950;
+    letter-spacing:-.04em;
+  }
+
+  .aftercare-subtitle{
+    margin-top:8px;
+    color:rgba(255,255,255,.78);
+    font-size:12px;
+    font-weight:700;
+    line-height:1.7;
+  }
+
+  .aftercare-actions{
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+  }
+
+  .aftercare-btn{
+    display:inline-flex;
+    min-height:40px;
+    align-items:center;
+    justify-content:center;
+    padding:0 14px;
+    border:1px solid rgba(255,255,255,.24);
+    border-radius:12px;
+    color:#fff;
+    background:rgba(255,255,255,.11);
+    font:inherit;
+    font-size:11px;
+    font-weight:900;
+    text-decoration:none;
+    cursor:pointer;
+  }
+
+  .aftercare-btn.primary{
+    color:#164e63;
+    background:#fff;
+    border-color:#fff;
+  }
+
+  .aftercare-meta{
+    flex-wrap:wrap;
+    gap:10px 24px;
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid rgba(255,255,255,.16);
+  }
+
+  .aftercare-meta-item{
+    min-width:150px;
+  }
+
+  .aftercare-meta-label{
+    color:rgba(255,255,255,.61);
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.08em;
+  }
+
+  .aftercare-meta-value{
+    margin-top:4px;
+    font-size:14px;
+    font-weight:900;
+  }
+
+  .aftercare-content{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px;
+    padding:24px;
+    background:linear-gradient(180deg,#f8fbfe 0%,#fff 42%);
+  }
+
+  .aftercare-card{
+    min-width:0;
+    padding:20px;
+    border:1px solid #dce8f2;
+    border-radius:20px;
+    background:#fff;
+    box-shadow:0 12px 28px rgba(30,64,175,.045);
+    break-inside:avoid;
+  }
+
+  .aftercare-card.wide{
+    grid-column:1 / -1;
+  }
+
+  .aftercare-card.summary{
+    border-color:#b9e5dc;
+    background:linear-gradient(135deg,#effbf8,#f4faff);
+  }
+
+  .aftercare-card.caution{
+    border-color:#f0d79b;
+    background:#fffaf0;
+  }
+
+  .aftercare-section-title{
+    gap:11px;
+  }
+
+  .aftercare-number{
+    display:grid;
+    width:34px;
+    height:34px;
+    flex:0 0 auto;
+    place-items:center;
+    border-radius:11px;
+    color:#0f766e;
+    background:#e8faf5;
+    font-size:10px;
+    font-weight:950;
+  }
+
+  .aftercare-card.caution .aftercare-number{
+    color:#9a6700;
+    background:#fff0c7;
+  }
+
+  .aftercare-heading{
+    margin:0;
+    color:#102a43;
+    font-size:17px;
+    font-weight:950;
+    letter-spacing:-.02em;
+  }
+
+  .aftercare-caption{
+    margin-top:3px;
+    color:#718096;
+    font-size:10px;
+    font-weight:700;
+  }
+
+  .aftercare-summary-text{
+    margin-top:16px;
+    color:#24475c;
+    font-size:15px;
+    font-weight:800;
+    line-height:1.9;
+  }
+
+  .aftercare-list{
+    display:grid;
+    gap:10px;
+    margin:15px 0 0;
+    padding:0;
+    list-style:none;
+  }
+
+  .aftercare-list li{
+    position:relative;
+    padding:11px 12px 11px 32px;
+    border-radius:13px;
+    color:#334e68;
+    background:#f7fafc;
+    font-size:12px;
+    font-weight:750;
+    line-height:1.7;
+  }
+
+  .aftercare-list li::before{
+    content:"";
+    position:absolute;
+    top:16px;
+    left:14px;
+    width:7px;
+    height:7px;
+    border-radius:999px;
+    background:#38a997;
+    box-shadow:0 0 0 4px #e4f7f3;
+  }
+
+  .aftercare-card.caution .aftercare-list li{
+    background:#fffdf7;
+  }
+
+  .aftercare-card.caution .aftercare-list li::before{
+    background:#d6a326;
+    box-shadow:0 0 0 4px #fff2c9;
+  }
+
+  .aftercare-next{
+    margin:0 24px 24px;
+    padding:18px 20px;
+    border:1px solid #cbdced;
+    border-radius:20px;
+    background:#f5f9fd;
+    break-inside:avoid;
+  }
+
+  .aftercare-next-label{
+    color:#2874a6;
+    font-size:10px;
+    font-weight:950;
+    letter-spacing:.08em;
+  }
+
+  .aftercare-next-value{
+    margin-top:7px;
+    color:#17324d;
+    font-size:14px;
+    font-weight:900;
+  }
+
+  .aftercare-next-note{
+    margin-top:5px;
+    color:#64748b;
+    font-size:11px;
+    line-height:1.6;
+  }
+
+  .aftercare-footer{
+    padding:18px 24px 22px;
+    color:#52677d;
+    background:#f8fafc;
+    border-top:1px solid #e2e8f0;
+    font-size:10px;
+    font-weight:700;
+    line-height:1.75;
+  }
+
+  @media(max-width:760px){
+    .aftercare-sheet{
+      border-radius:20px;
+    }
+
+    .aftercare-hero{
+      padding:24px 20px;
+    }
+
+    .aftercare-hero-row{
+      align-items:flex-start;
+      flex-direction:column;
+    }
+
+    .aftercare-actions{
+      justify-content:flex-start;
+    }
+
+    .aftercare-content{
+      grid-template-columns:1fr;
+      padding:16px;
+    }
+
+    .aftercare-card.wide{
+      grid-column:auto;
+    }
+
+    .aftercare-next{
+      margin:0 16px 16px;
+    }
+  }
+
+  @media print{
+    html,
+    body{
+      background:#fff !important;
+    }
+
+    .sidebar,
+    .topbar,
+    .aftercare-actions,
+    .no-print,
+    nav,
+    header.staff-header{
+      display:none !important;
+    }
+
+    .main-content,
+    .content,
+    main{
+      width:100% !important;
+      max-width:none !important;
+      margin:0 !important;
+      padding:0 !important;
+    }
+
+    .aftercare-page{
+      max-width:none;
+    }
+
+    .aftercare-sheet{
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+    }
+
+    .aftercare-hero{
+      padding:20px 22px;
+      background:#eaf5f5 !important;
+      color:#102a43 !important;
+      -webkit-print-color-adjust:exact;
+      print-color-adjust:exact;
+    }
+
+    .aftercare-brand{
+      color:#0f766e !important;
+    }
+
+    .aftercare-subtitle,
+    .aftercare-meta-label{
+      color:#52677d !important;
+    }
+
+    .aftercare-meta{
+      border-top-color:#bdd7dc;
+    }
+
+    .aftercare-content{
+      gap:9px;
+      padding:14px;
+    }
+
+    .aftercare-card{
+      padding:14px;
+      box-shadow:none;
+    }
+
+    .aftercare-list{
+      gap:6px;
+      margin-top:10px;
+    }
+
+    .aftercare-list li{
+      padding-top:8px;
+      padding-bottom:8px;
+    }
+
+    .aftercare-list li::before{
+      top:13px;
+    }
+
+    .aftercare-next{
+      margin:0 14px 12px;
+      padding:13px 15px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="aftercare-page">
+  <article class="aftercare-sheet">
+    <header class="aftercare-hero">
+      <div class="aftercare-hero-row">
+        <div>
+          <div class="aftercare-brand">CareFrow Aftercare Report</div>
+          <h1 class="aftercare-title">施術後説明レポート</h1>
+          <div class="aftercare-subtitle">
+            本日確認した内容と、ご自宅で意識していただきたいことをまとめました。
+          </div>
+        </div>
+        <div class="aftercare-actions">
+          <button type="button" class="aftercare-btn primary" onclick="window.print()">印刷する</button>
+          <a class="aftercare-btn" href="{% url 'staff:post_treatment_summary' note.id %}">施術後サマリーへ</a>
+          <a class="aftercare-btn" href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">患者詳細へ</a>
+        </div>
+      </div>
+      <div class="aftercare-meta">
+        <div class="aftercare-meta-item">
+          <div class="aftercare-meta-label">PATIENT</div>
+          <div class="aftercare-meta-value">{{ patient.last_name }} {{ patient.first_name }} 様</div>
+        </div>
+        <div class="aftercare-meta-item">
+          <div class="aftercare-meta-label">TREATMENT DATE</div>
+          <div class="aftercare-meta-value">{{ appointment.start_at|date:"Y年m月d日" }}</div>
+        </div>
+        <div class="aftercare-meta-item">
+          <div class="aftercare-meta-label">MENU</div>
+          <div class="aftercare-meta-value">{{ appointment.menu|default:"施術" }}</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="aftercare-content">
+      <section class="aftercare-card summary wide">
+        <div class="aftercare-section-title">
+          <span class="aftercare-number">01</span>
+          <div>
+            <h2 class="aftercare-heading">本日のまとめ</h2>
+            <div class="aftercare-caption">本日の状態と確認内容</div>
+          </div>
+        </div>
+        <div class="aftercare-summary-text">{{ patient_report.overall_summary }}</div>
+      </section>
+
+      <section class="aftercare-card">
+        <div class="aftercare-section-title">
+          <span class="aftercare-number">02</span>
+          <div>
+            <h2 class="aftercare-heading">本日の施術内容</h2>
+            <div class="aftercare-caption">本日行った内容</div>
+          </div>
+        </div>
+        <ul class="aftercare-list">
+          {% for item in patient_report.treatment_items %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </section>
+
+      <section class="aftercare-card">
+        <div class="aftercare-section-title">
+          <span class="aftercare-number">03</span>
+          <div>
+            <h2 class="aftercare-heading">今日確認した身体の状態</h2>
+            <div class="aftercare-caption">身体の特徴と確認ポイント</div>
+          </div>
+        </div>
+        <ul class="aftercare-list">
+          {% for item in patient_report.body_condition_items %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </section>
+
+      <section class="aftercare-card">
+        <div class="aftercare-section-title">
+          <span class="aftercare-number">04</span>
+          <div>
+            <h2 class="aftercare-heading">ご自宅で気をつけること</h2>
+            <div class="aftercare-caption">次回来院までの過ごし方</div>
+          </div>
+        </div>
+        <ul class="aftercare-list">
+          {% for item in patient_report.home_attention_items %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </section>
+
+      <section class="aftercare-card">
+        <div class="aftercare-section-title">
+          <span class="aftercare-number">05</span>
+          <div>
+            <h2 class="aftercare-heading">セルフケア</h2>
+            <div class="aftercare-caption">無理のない範囲で行う内容</div>
+          </div>
+        </div>
+        <ul class="aftercare-list">
+          {% for item in patient_report.home_care_items %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </section>
+
+      <section class="aftercare-card">
+        <div class="aftercare-section-title">
+          <span class="aftercare-number">06</span>
+          <div>
+            <h2 class="aftercare-heading">次回確認すること</h2>
+            <div class="aftercare-caption">次回来院時に一緒に確認します</div>
+          </div>
+        </div>
+        <ul class="aftercare-list">
+          {% for item in patient_report.next_check_items %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </section>
+
+      <section class="aftercare-card caution">
+        <div class="aftercare-section-title">
+          <span class="aftercare-number">07</span>
+          <div>
+            <h2 class="aftercare-heading">注意事項</h2>
+            <div class="aftercare-caption">無理をせずお過ごしください</div>
+          </div>
+        </div>
+        <ul class="aftercare-list">
+          {% for item in patient_report.caution_items %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </section>
+    </div>
+
+    <section class="aftercare-next">
+      <div class="aftercare-next-label">NEXT APPOINTMENT</div>
+      {% if next_appointment %}
+        <div class="aftercare-next-value">
+          次回予約：{{ next_appointment.start_at|date:"Y年m月d日 H:i" }}
+          {% if next_appointment.menu %} / {{ next_appointment.menu }}{% endif %}
+        </div>
+        <div class="aftercare-next-note">
+          ご都合に変更がある場合は、事前にスタッフへお知らせください。
+        </div>
+      {% else %}
+        <div class="aftercare-next-value">次回予約は未登録です。</div>
+        <div class="aftercare-next-note">
+          次回の確認時期については、スタッフへご相談ください。
+        </div>
+      {% endif %}
+    </section>
+
+    <footer class="aftercare-footer">
+      本レポートは、本日の施術内容と身体の状態を分かりやすく共有するための説明資料です。
+      診断を行うものではなく、施術者の評価と合わせてご確認ください。
+      痛みやしびれ、違和感が強い場合は無理をせず、セルフケアを中止してスタッフへご相談ください。
+    </footer>
+  </article>
+</div>
+{% endblock %}

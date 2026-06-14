@@ -1,0 +1,723 @@
+{% extends "staff/_layout.html" %}
+{% block title %}施術後サマリー | CareFrow{% endblock %}
+
+{% block extra_head %}
+<style>
+  .post-page{
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .post-hero{
+    padding:28px;
+    border-radius:30px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 88% 10%,rgba(52,211,153,.22),transparent 28%),
+      linear-gradient(135deg,#07101f 0%,#113557 52%,#0f8a78 100%);
+    box-shadow:0 24px 64px rgba(15,23,42,.17);
+  }
+
+  .post-hero-row,
+  .post-section-head,
+  .post-card-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+  }
+
+  .post-eyebrow{
+    margin-bottom:8px;
+    color:#a7f3d0;
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+  }
+
+  .post-title{
+    margin:0;
+    font-size:34px;
+    font-weight:950;
+    letter-spacing:-.04em;
+  }
+
+  .post-patient{
+    margin-top:9px;
+    color:rgba(255,255,255,.80);
+    font-size:14px;
+    font-weight:800;
+    line-height:1.7;
+  }
+
+  .post-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+  }
+
+  .post-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:42px;
+    padding:0 14px;
+    border-radius:13px;
+    color:#fff;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.22);
+    font:inherit;
+    font-size:11px;
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  .post-btn.light{
+    color:#164e63;
+    background:#fff;
+    border-color:#fff;
+  }
+
+  .post-hero-note{
+    margin-top:18px;
+    padding:12px 14px;
+    border-radius:16px;
+    color:rgba(255,255,255,.86);
+    background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.14);
+    font-size:12px;
+    font-weight:750;
+    line-height:1.7;
+  }
+
+  .post-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:18px;
+  }
+
+  .post-card{
+    min-width:0;
+    padding:22px;
+    border-radius:24px;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    box-shadow:0 16px 38px rgba(15,23,42,.055);
+  }
+
+  .post-card.wide{
+    grid-column:1 / -1;
+  }
+
+  .post-heading{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .post-number{
+    display:grid;
+    width:34px;
+    height:34px;
+    flex:0 0 auto;
+    place-items:center;
+    border-radius:12px;
+    color:#0f766e;
+    background:#ecfdf5;
+    font-size:10px;
+    font-weight:950;
+  }
+
+  .post-heading h2{
+    margin:0;
+    color:#0f172a;
+    font-size:19px;
+    font-weight:950;
+    letter-spacing:-.025em;
+  }
+
+  .post-sub{
+    margin-top:5px;
+    color:#64748b;
+    font-size:11px;
+    font-weight:750;
+    line-height:1.6;
+  }
+
+  .post-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:36px;
+    padding:0 12px;
+    border-radius:11px;
+    color:#0f766e;
+    background:#ecfdf5;
+    border:1px solid #c7eee2;
+    font-size:10px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .post-overview{
+    margin-top:17px;
+    padding:18px;
+    border-radius:19px;
+    color:#24475c;
+    background:linear-gradient(135deg,#effaff,#f0fdf8);
+    border:1px solid #cce9e4;
+    font-size:14px;
+    font-weight:850;
+    line-height:1.85;
+  }
+
+  .post-facts{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:13px;
+  }
+
+  .post-fact{
+    padding:11px 12px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1px solid #edf1f6;
+  }
+
+  .post-fact-label{
+    margin-bottom:5px;
+    color:#8493a6;
+    font-size:8px;
+    font-weight:950;
+  }
+
+  .post-fact-value{
+    color:#31516a;
+    font-size:11px;
+    font-weight:850;
+    line-height:1.55;
+  }
+
+  .post-soap-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+    margin-top:16px;
+  }
+
+  .post-soap{
+    padding:14px;
+    border-radius:16px;
+    background:#f8fafc;
+    border:1px solid #e8eef5;
+  }
+
+  .post-soap-key{
+    display:grid;
+    width:28px;
+    height:28px;
+    margin-bottom:9px;
+    place-items:center;
+    border-radius:10px;
+    color:#fff;
+    background:#31516a;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .post-soap-title{
+    margin-bottom:7px;
+    color:#31516a;
+    font-size:10px;
+    font-weight:950;
+  }
+
+  .post-soap-list,
+  .post-list{
+    margin:0;
+    padding:0;
+    list-style:none;
+    display:grid;
+    gap:8px;
+  }
+
+  .post-soap-list li,
+  .post-list li{
+    position:relative;
+    padding-left:15px;
+    color:#526579;
+    font-size:11px;
+    font-weight:750;
+    line-height:1.65;
+  }
+
+  .post-soap-list li::before,
+  .post-list li::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:.66em;
+    width:6px;
+    height:6px;
+    border-radius:999px;
+    background:#38a58f;
+  }
+
+  .post-empty{
+    margin-top:15px;
+    padding:15px;
+    border-radius:15px;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px dashed #cbd5e1;
+    font-size:11px;
+    font-weight:800;
+  }
+
+  .post-message{
+    margin-top:15px;
+    padding:17px;
+    border-radius:18px;
+    color:#30566a;
+    background:#effaff;
+    border:1px solid #cfe8f1;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.8;
+  }
+
+  .post-caution{
+    background:#fffaf0;
+    border-color:#efdcae;
+  }
+
+  .post-caution .post-number{
+    color:#8a6418;
+    background:#fef3c7;
+  }
+
+  .post-caution .post-list li::before{
+    background:#d6a94c;
+  }
+
+  .post-practitioner{
+    background:#f8fafc;
+  }
+
+  .post-related-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:16px;
+  }
+
+  .post-related{
+    padding:14px;
+    border-radius:16px;
+    background:#f8fafc;
+    border:1px solid #e8eef5;
+  }
+
+  .post-related-label{
+    margin-bottom:7px;
+    color:#31516a;
+    font-size:10px;
+    font-weight:950;
+  }
+
+  .post-related-text{
+    min-height:50px;
+    color:#64748b;
+    font-size:10px;
+    font-weight:750;
+    line-height:1.6;
+  }
+
+  .post-related .post-link{
+    margin-top:11px;
+  }
+
+  .post-disclaimer{
+    padding:14px 17px;
+    border-radius:16px;
+    color:#64748b;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    font-size:10px;
+    font-weight:750;
+    line-height:1.7;
+  }
+
+  @media(max-width:980px){
+    .post-soap-grid,
+    .post-related-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+  }
+
+  @media(max-width:720px){
+    .post-hero{
+      padding:22px;
+      border-radius:24px;
+    }
+
+    .post-hero-row,
+    .post-section-head{
+      flex-direction:column;
+    }
+
+    .post-actions{
+      justify-content:flex-start;
+    }
+
+    .post-title{
+      font-size:28px;
+    }
+
+    .post-grid,
+    .post-facts,
+    .post-soap-grid,
+    .post-related-grid{
+      grid-template-columns:1fr;
+    }
+
+    .post-card.wide{
+      grid-column:auto;
+    }
+  }
+
+  @page{
+    size:A4 portrait;
+    margin:10mm;
+  }
+
+  @media print{
+    body{
+      background:#fff !important;
+    }
+
+    .sidebar,
+    .topbar,
+    .post-actions,
+    .post-link,
+    .no-print{
+      display:none !important;
+    }
+
+    .main,
+    .content{
+      width:100% !important;
+      margin:0 !important;
+      padding:0 !important;
+    }
+
+    .post-page{
+      max-width:none;
+      gap:10px;
+    }
+
+    .post-hero,
+    .post-card,
+    .post-disclaimer{
+      box-shadow:none !important;
+      break-inside:avoid;
+    }
+
+    .post-hero{
+      padding:18px;
+      color:#102a43 !important;
+      background:#eef7f5 !important;
+      border:1px solid #b9dcd5;
+    }
+
+    .post-patient,
+    .post-hero-note{
+      color:#31516a !important;
+    }
+
+    .post-eyebrow{
+      color:#0f766e !important;
+    }
+
+    .post-card{
+      padding:15px;
+    }
+
+    .post-grid{
+      gap:10px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="post-page">
+  <header class="post-hero">
+    <div class="post-hero-row">
+      <div>
+        <div class="post-eyebrow">Post-treatment summary</div>
+        <h1 class="post-title">施術後サマリー</h1>
+        <div class="post-patient">
+          {{ patient.last_name }} {{ patient.first_name }} 様
+          / 施術日：{{ appointment.start_at|date:"Y年m月d日 H:i" }}
+        </div>
+      </div>
+      <div class="post-actions">
+        <a class="post-btn light" href="{% url 'staff:patient_aftercare_report' note.id %}">
+          患者向け説明レポート
+        </a>
+        <button type="button" class="post-btn light" onclick="window.print()">印刷</button>
+        <a class="post-btn" href="{% url 'staff:clinical_note_detail' note.id %}">カルテ詳細へ戻る</a>
+        <a class="post-btn" href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">患者詳細へ</a>
+      </div>
+    </div>
+    <div class="post-hero-note">
+      本日の施術内容と次回までのポイントを、患者さんへ説明しやすい形でまとめています。
+      本画面は診断を行うものではなく、施術者の評価と合わせて判断します。
+    </div>
+  </header>
+
+  <section class="post-card">
+    <div class="post-card-head">
+      <div class="post-heading">
+        <span class="post-number">01</span>
+        <div>
+          <h2>本日のまとめ</h2>
+          <div class="post-sub">主訴と本日の確認内容</div>
+        </div>
+      </div>
+    </div>
+    <div class="post-overview">{{ post_summary.overall_summary }}</div>
+    <div class="post-facts">
+      <div class="post-fact">
+        <div class="post-fact-label">主訴</div>
+        <div class="post-fact-value">{{ post_summary.chief_complaint }}</div>
+      </div>
+      <div class="post-fact">
+        <div class="post-fact-label">担当</div>
+        <div class="post-fact-value">
+          {% if appointment.assigned_staff %}
+            {{ appointment.assigned_staff.get_full_name|default:appointment.assigned_staff.username }}
+          {% else %}
+            未登録
+          {% endif %}
+        </div>
+      </div>
+      <div class="post-fact">
+        <div class="post-fact-label">カルテ更新</div>
+        <div class="post-fact-value">{{ note.updated_at|date:"Y年m月d日 H:i" }}</div>
+      </div>
+    </div>
+
+    <div class="post-soap-grid">
+      <div class="post-soap">
+        <div class="post-soap-key">S</div>
+        <div class="post-soap-title">患者さんの訴え</div>
+        {% if post_summary.soap_view.S %}
+          <ul class="post-soap-list">
+            {% for item in post_summary.soap_view.S %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        {% else %}
+          <div class="post-empty">未記録</div>
+        {% endif %}
+      </div>
+      <div class="post-soap">
+        <div class="post-soap-key">O</div>
+        <div class="post-soap-title">確認した状態</div>
+        {% if post_summary.soap_view.O %}
+          <ul class="post-soap-list">
+            {% for item in post_summary.soap_view.O %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        {% else %}
+          <div class="post-empty">未記録</div>
+        {% endif %}
+      </div>
+      <div class="post-soap">
+        <div class="post-soap-key">A</div>
+        <div class="post-soap-title">評価・傾向</div>
+        {% if post_summary.soap_view.A %}
+          <ul class="post-soap-list">
+            {% for item in post_summary.soap_view.A %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        {% else %}
+          <div class="post-empty">未記録</div>
+        {% endif %}
+      </div>
+      <div class="post-soap">
+        <div class="post-soap-key">P</div>
+        <div class="post-soap-title">今後の方針</div>
+        {% if post_summary.soap_view.P %}
+          <ul class="post-soap-list">
+            {% for item in post_summary.soap_view.P %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        {% else %}
+          <div class="post-empty">未記録</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <div class="post-grid">
+    <section class="post-card">
+      <div class="post-heading">
+        <span class="post-number">02</span>
+        <div>
+          <h2>本日の施術内容</h2>
+          <div class="post-sub">本日実施した内容</div>
+        </div>
+      </div>
+      <ul class="post-list" style="margin-top:16px;">
+        {% for item in post_summary.treatment_items %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </section>
+
+    <section class="post-card">
+      <div class="post-heading">
+        <span class="post-number">03</span>
+        <div>
+          <h2>患者さんへの説明</h2>
+          <div class="post-sub">本日お伝えする内容</div>
+        </div>
+      </div>
+      <div class="post-message">
+        {% for item in post_summary.patient_guidance_items %}
+          {{ item }}{% if not forloop.last %}<br>{% endif %}
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="post-card">
+      <div class="post-heading">
+        <span class="post-number">04</span>
+        <div>
+          <h2>セルフケア</h2>
+          <div class="post-sub">ご自宅で無理なく行う候補</div>
+        </div>
+      </div>
+      <ul class="post-list" style="margin-top:16px;">
+        {% for item in post_summary.home_care_items %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </section>
+
+    <section class="post-card">
+      <div class="post-heading">
+        <span class="post-number">05</span>
+        <div>
+          <h2>次回確認ポイント</h2>
+          <div class="post-sub">次回来院時に確認する項目</div>
+        </div>
+      </div>
+      <ul class="post-list" style="margin-top:16px;">
+        {% for item in post_summary.next_check_items %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </section>
+
+    <section class="post-card post-caution">
+      <div class="post-heading">
+        <span class="post-number">06</span>
+        <div>
+          <h2>注意事項</h2>
+          <div class="post-sub">次回来院までに気をつけること</div>
+        </div>
+      </div>
+      <ul class="post-list" style="margin-top:16px;">
+        {% for item in post_summary.caution_items %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </section>
+
+    <section class="post-card post-practitioner">
+      <div class="post-heading">
+        <span class="post-number">MEMO</span>
+        <div>
+          <h2>施術者向けメモ</h2>
+          <div class="post-sub">患者説明とは分けて確認する情報</div>
+        </div>
+      </div>
+      {% if post_summary.practitioner_notes %}
+        <ul class="post-list" style="margin-top:16px;">
+          {% for item in post_summary.practitioner_notes %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      {% else %}
+        <div class="post-empty">施術者向けメモはありません。</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="post-card">
+    <div class="post-heading">
+      <span class="post-number">07</span>
+      <div>
+        <h2>関連情報</h2>
+        <div class="post-sub">施術計画・姿勢分析・録音元を確認</div>
+      </div>
+    </div>
+    <div class="post-related-grid">
+      <div class="post-related">
+        <div class="post-related-label">施術計画</div>
+        {% if related_plan %}
+          <div class="post-related-text">
+            {{ related_plan.title|default:related_plan.chief_complaint|default:"施術計画" }}
+            <br>通院目安：{{ plan_visit_guide }}
+          </div>
+          <a class="post-link" href="{% url 'treatment_plans:plan_detail' related_plan.id %}">
+            施術計画を見る
+          </a>
+        {% else %}
+          <div class="post-related-text">施術計画はまだ登録されていません。</div>
+          <a class="post-link" href="{% url 'treatment_plans:plan_create_from_clinical_note' note.id %}">
+            施術計画を作成
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="post-related">
+        <div class="post-related-label">姿勢分析</div>
+        {% if related_posture_assessment %}
+          <div class="post-related-text">{{ posture_summary_text }}</div>
+          <a class="post-link" href="{% url 'posture_assessments:detail' related_posture_assessment.id %}">
+            姿勢分析を見る
+          </a>
+        {% else %}
+          <div class="post-related-text">姿勢分析はまだ登録されていません。</div>
+          <a class="post-link" href="{% url 'posture_assessments:create' patient.id %}">
+            姿勢分析を作成
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="post-related">
+        <div class="post-related-label">録音・問診元</div>
+        {% if source_session %}
+          <div class="post-related-text">通院施術録音から、施術者が確認したカルテ案を反映しています。</div>
+          <a class="post-link" href="{% url 'treatment_sessions:detail' source_session.id %}">
+            施術録音を見る
+          </a>
+        {% elif source_recording %}
+          <div class="post-related-text">初診・問診録音から、施術者が確認したカルテ案を反映しています。</div>
+          <a class="post-link" href="{% url 'intakes:recording_detail' source_recording.id %}">
+            問診録音を見る
+          </a>
+        {% elif source_intake %}
+          <div class="post-related-text">関連する問診情報があります。</div>
+          <a class="post-link" href="{% url 'staff:intake_detail' source_intake.id %}">
+            問診を見る
+          </a>
+        {% else %}
+          <div class="post-related-text">録音元または問診元は登録されていません。</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <div class="post-disclaimer">
+    本サマリーは患者説明と施術記録の共有を目的とした参考情報です。診断を断定するものではありません。
+    痛みやしびれ、筋力低下などが強い場合は、画像や記録だけで判断せず、施術者へご相談ください。
+  </div>
+</div>
+{% endblock %}

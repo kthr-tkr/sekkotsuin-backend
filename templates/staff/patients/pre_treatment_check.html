@@ -1,0 +1,720 @@
+{% extends "staff/_layout.html" %}
+{% block title %}施術前チェック | CareFrow{% endblock %}
+
+{% block extra_head %}
+<style>
+  .brief-page{
+    max-width:1240px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .brief-hero{
+    position:relative;
+    overflow:hidden;
+    padding:28px;
+    border-radius:30px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 86% 18%,rgba(96,165,250,.28),transparent 27%),
+      linear-gradient(135deg,#07101f 0%,#102345 50%,#2563eb 100%);
+    box-shadow:0 24px 64px rgba(15,23,42,.17);
+  }
+
+  .brief-hero-row,
+  .brief-section-head,
+  .brief-card-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+  }
+
+  .brief-eyebrow{
+    margin-bottom:8px;
+    color:#93c5fd;
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+  }
+
+  .brief-title{
+    margin:0;
+    font-size:34px;
+    font-weight:950;
+    letter-spacing:-.04em;
+  }
+
+  .brief-patient{
+    margin-top:9px;
+    color:rgba(255,255,255,.78);
+    font-size:14px;
+    font-weight:750;
+  }
+
+  .brief-back{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    padding:0 16px;
+    border-radius:14px;
+    color:#fff;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.22);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .brief-hero-note{
+    margin-top:18px;
+    padding:12px 14px;
+    border-radius:16px;
+    color:rgba(255,255,255,.86);
+    background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.14);
+    font-size:12px;
+    font-weight:750;
+    line-height:1.7;
+  }
+
+  .brief-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:18px;
+  }
+
+  .brief-grid.three{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+
+  .brief-card{
+    min-width:0;
+    padding:22px;
+    border-radius:24px;
+    background:#fff;
+    border:1px solid #e3eaf3;
+    box-shadow:0 16px 38px rgba(15,23,42,.055);
+  }
+
+  .brief-number{
+    display:inline-grid;
+    width:34px;
+    height:34px;
+    flex:0 0 auto;
+    place-items:center;
+    border-radius:12px;
+    color:#1d4ed8;
+    background:#eff6ff;
+    font-size:11px;
+    font-weight:950;
+  }
+
+  .brief-heading{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .brief-heading h2{
+    margin:0;
+    color:#0f172a;
+    font-size:19px;
+    font-weight:950;
+    letter-spacing:-.025em;
+  }
+
+  .brief-section-sub{
+    margin-top:5px;
+    color:#64748b;
+    font-size:11px;
+    font-weight:750;
+    line-height:1.6;
+  }
+
+  .brief-action{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:38px;
+    padding:0 13px;
+    border-radius:12px;
+    color:#1d4ed8;
+    background:#eff6ff;
+    border:1px solid #dbeafe;
+    font-size:11px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .brief-data-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-top:17px;
+  }
+
+  .brief-data{
+    padding:12px 13px;
+    border-radius:15px;
+    background:#f8fafc;
+    border:1px solid #edf1f6;
+  }
+
+  .brief-data.wide{
+    grid-column:1 / -1;
+  }
+
+  .brief-label{
+    margin-bottom:5px;
+    color:#7c8da0;
+    font-size:9px;
+    font-weight:950;
+    letter-spacing:.04em;
+  }
+
+  .brief-value{
+    color:#243b53;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.65;
+    overflow-wrap:anywhere;
+  }
+
+  .brief-appointment{
+    margin-top:17px;
+    padding:16px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#edf8ff,#f2fbf7);
+    border:1px solid #cfe6e2;
+  }
+
+  .brief-appointment-time{
+    color:#0f3d57;
+    font-size:20px;
+    font-weight:950;
+  }
+
+  .brief-appointment-meta{
+    margin-top:7px;
+    color:#526579;
+    font-size:11px;
+    font-weight:750;
+    line-height:1.7;
+  }
+
+  .brief-empty{
+    margin-top:17px;
+    padding:18px;
+    border-radius:18px;
+    color:#64748b;
+    background:#f8fafc;
+    border:1px dashed #cbd5e1;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.7;
+  }
+
+  .brief-check-list{
+    display:grid;
+    gap:9px;
+    margin-top:17px;
+  }
+
+  .brief-check{
+    display:grid;
+    grid-template-columns:26px 1fr;
+    gap:10px;
+    align-items:start;
+    padding:11px 12px;
+    border-radius:15px;
+    color:#58471e;
+    background:#fffbeb;
+    border:1px solid #f3df9b;
+    font-size:11px;
+    font-weight:800;
+    line-height:1.65;
+  }
+
+  .brief-check-index{
+    display:grid;
+    width:24px;
+    height:24px;
+    place-items:center;
+    border-radius:9px;
+    color:#8a6418;
+    background:#fef3c7;
+    font-size:9px;
+    font-weight:950;
+  }
+
+  .brief-profile{
+    padding:22px;
+    border-radius:26px;
+    background:
+      radial-gradient(circle at 96% 4%,rgba(59,130,246,.10),transparent 24%),
+      #fff;
+    border:1px solid #dce8f5;
+    box-shadow:0 16px 38px rgba(15,23,42,.055);
+  }
+
+  .brief-profile-summary{
+    margin-top:17px;
+    padding:15px 17px;
+    border-radius:17px;
+    color:#27445f;
+    background:#edf7ff;
+    border:1px solid #cfe5f5;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.75;
+  }
+
+  .brief-context{
+    margin-top:10px;
+    color:#64748b;
+    font-size:10px;
+    font-weight:750;
+    line-height:1.6;
+  }
+
+  .brief-region-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:14px;
+  }
+
+  .brief-region{
+    position:relative;
+    min-width:0;
+    padding:13px 13px 13px 16px;
+    border-radius:16px;
+    background:#fff;
+    border:1px solid #e2e8f0;
+  }
+
+  .brief-region::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:12px;
+    bottom:12px;
+    width:4px;
+    border-radius:0 5px 5px 0;
+    background:#94a3b8;
+  }
+
+  .brief-region.check::before{background:#d6a94c;}
+  .brief-region.good::before{background:#34a982;}
+  .brief-region.unassessed::before{background:#cbd5e1;}
+
+  .brief-region-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:7px;
+  }
+
+  .brief-region-title{
+    color:#0f172a;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .brief-region-badge{
+    padding:3px 6px;
+    border-radius:999px;
+    color:#64748b;
+    background:#f1f5f9;
+    font-size:8px;
+    font-weight:950;
+  }
+
+  .brief-region.check .brief-region-badge{
+    color:#8a6418;
+    background:#fef3c7;
+  }
+
+  .brief-region.good .brief-region-badge{
+    color:#166534;
+    background:#dcfce7;
+  }
+
+  .brief-region-text{
+    margin-top:7px;
+    color:#526579;
+    font-size:10px;
+    font-weight:750;
+    line-height:1.55;
+  }
+
+  .brief-region-check{
+    margin-top:6px;
+    padding-top:6px;
+    border-top:1px dashed #e2e8f0;
+    color:#31516a;
+    font-size:9px;
+    font-weight:800;
+    line-height:1.5;
+  }
+
+  .brief-summary{
+    margin-top:17px;
+    display:grid;
+    gap:10px;
+  }
+
+  .brief-summary-row{
+    padding:11px 12px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1px solid #edf1f6;
+  }
+
+  .brief-summary-row strong{
+    display:block;
+    margin-bottom:4px;
+    color:#31516a;
+    font-size:9px;
+    font-weight:950;
+  }
+
+  .brief-summary-row span{
+    color:#526579;
+    font-size:11px;
+    font-weight:750;
+    line-height:1.65;
+  }
+
+  .brief-recording{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  @media(max-width:980px){
+    .brief-grid.three,
+    .brief-region-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+  }
+
+  @media(max-width:720px){
+    .brief-page{
+      gap:14px;
+    }
+
+    .brief-hero{
+      padding:22px;
+      border-radius:24px;
+    }
+
+    .brief-hero-row,
+    .brief-section-head{
+      flex-direction:column;
+    }
+
+    .brief-title{
+      font-size:28px;
+    }
+
+    .brief-grid,
+    .brief-grid.three,
+    .brief-region-grid,
+    .brief-data-grid{
+      grid-template-columns:1fr;
+    }
+
+    .brief-data.wide{
+      grid-column:auto;
+    }
+
+    .brief-card,
+    .brief-profile{
+      padding:18px;
+      border-radius:21px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="brief-page">
+  <header class="brief-hero">
+    <div class="brief-hero-row">
+      <div>
+        <div class="brief-eyebrow">Pre-treatment briefing</div>
+        <h1 class="brief-title">施術前チェック</h1>
+        <div class="brief-patient">
+          {{ patient.last_name }} {{ patient.first_name }} 様
+          / 患者ID：{{ patient.card_no|default:patient.id }}
+        </div>
+      </div>
+      <a class="brief-back" href="{% url 'staff:patient_detail' patient.id %}?tab=overview">
+        患者詳細へ戻る
+      </a>
+    </div>
+    <div class="brief-hero-note">
+      身体特徴、前回内容、本日の確認点を30秒で確認するための画面です。
+      表示内容は診断ではなく、施術者の評価と合わせて判断してください。
+    </div>
+  </header>
+
+  <div class="brief-grid">
+    <section class="brief-card">
+      <div class="brief-card-head">
+        <div class="brief-heading">
+          <span class="brief-number">01</span>
+          <div>
+            <h2>患者基本情報</h2>
+            <div class="brief-section-sub">基本情報と施術に関係する背景</div>
+          </div>
+        </div>
+      </div>
+      <div class="brief-data-grid">
+        <div class="brief-data">
+          <div class="brief-label">生年月日 / 年齢</div>
+          <div class="brief-value">
+            {{ patient.birth_date|date:"Y年m月d日" }}
+            {% if patient_age is not None %} / {{ patient_age }}歳{% endif %}
+          </div>
+        </div>
+        <div class="brief-data">
+          <div class="brief-label">性別 / 電話番号</div>
+          <div class="brief-value">
+            {{ patient_gender|default:"未登録" }} / {{ patient.phone|default:"未登録" }}
+          </div>
+        </div>
+        <div class="brief-data wide">
+          <div class="brief-label">主訴</div>
+          <div class="brief-value">
+            {% if latest_note_summary.chief_complaint != "未記録" %}
+              {{ latest_note_summary.chief_complaint }}
+            {% elif latest_plan %}
+              {{ latest_plan.chief_complaint|default:"未登録" }}
+            {% else %}
+              未登録
+            {% endif %}
+          </div>
+        </div>
+        <div class="brief-data">
+          <div class="brief-label">スポーツ / 競技</div>
+          <div class="brief-value">{{ patient_context_profile.sports }}</div>
+        </div>
+        <div class="brief-data">
+          <div class="brief-label">仕事 / 生活背景</div>
+          <div class="brief-value">
+            {{ patient_context_profile.work_style }} / {{ patient_context_profile.lifestyle }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="brief-card">
+      <div class="brief-card-head">
+        <div class="brief-heading">
+          <span class="brief-number">02</span>
+          <div>
+            <h2>本日の予約・確認ポイント</h2>
+            <div class="brief-section-sub">今日の予定と優先して見る項目</div>
+          </div>
+        </div>
+      </div>
+      {% if today_appointment %}
+        <div class="brief-appointment">
+          <div class="brief-appointment-time">
+            {{ today_appointment.start_at|date:"H:i" }} - {{ today_appointment.end_at|date:"H:i" }}
+          </div>
+          <div class="brief-appointment-meta">
+            {{ today_appointment.menu|default:"施術" }}
+            / {{ today_appointment.get_status_display }}
+            {% if today_appointment.assigned_staff %}
+              / 担当：{{ today_appointment.assigned_staff.get_full_name|default:today_appointment.assigned_staff.username }}
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div class="brief-empty">本日の予約はありません。</div>
+      {% endif %}
+      <div class="brief-check-list">
+        {% for point in today_check_points %}
+          <div class="brief-check">
+            <span class="brief-check-index">{{ forloop.counter|stringformat:"02d" }}</span>
+            <span>{{ point }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <section class="brief-profile">
+    <div class="brief-section-head">
+      <div class="brief-heading">
+        <span class="brief-number">03</span>
+        <div>
+          <h2>からだプロファイル</h2>
+          <div class="brief-section-sub">最新姿勢分析を優先し、問診・カルテ・施術計画で補完</div>
+        </div>
+      </div>
+      {% if latest_posture_assessment %}
+        <a class="brief-action" href="{% url 'posture_assessments:detail' latest_posture_assessment.id %}">
+          姿勢分析を見る
+        </a>
+      {% endif %}
+    </div>
+    <div class="brief-profile-summary">{{ posture_profile_summary }}</div>
+    <div class="brief-context">
+      患者背景：{{ patient_context_profile.summary }}
+      {% if posture_summary_source == "confirmed" %}
+        / 確認済み姿勢分析を使用
+      {% elif posture_summary_source == "ai" %}
+        / AI姿勢分析を使用
+      {% else %}
+        / 姿勢分析未登録
+      {% endif %}
+    </div>
+    <div class="brief-region-grid">
+      {% for item in body_profile_items %}
+        <article class="brief-region {{ item.level }}">
+          <div class="brief-region-head">
+            <div class="brief-region-title">{{ item.label }}</div>
+            <div class="brief-region-badge">
+              {% if item.level == "check" %}
+                要確認
+              {% elif item.level == "good" %}
+                良好傾向
+              {% elif item.level == "unassessed" %}
+                未評価
+              {% else %}
+                観察
+              {% endif %}
+            </div>
+          </div>
+          <div class="brief-region-text">{{ item.text }}</div>
+          <div class="brief-region-check">確認：{{ item.check_point }}</div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="brief-grid three">
+    <section class="brief-card">
+      <div class="brief-card-head">
+        <div class="brief-heading">
+          <span class="brief-number">04</span>
+          <div>
+            <h2>最新カルテ</h2>
+            <div class="brief-section-sub">前回内容の要点</div>
+          </div>
+        </div>
+        {% if latest_note %}
+          <div style="display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end;">
+            <a class="brief-action" href="{% url 'staff:post_treatment_summary' latest_note.id %}">
+              施術後サマリー
+            </a>
+            <a class="brief-action" href="{% url 'staff:clinical_note_detail' latest_note.id %}">
+              詳細を見る
+            </a>
+          </div>
+        {% endif %}
+      </div>
+      {% if latest_note %}
+        <div class="brief-summary">
+          <div class="brief-summary-row">
+            <strong>主訴</strong><span>{{ latest_note_summary.chief_complaint }}</span>
+          </div>
+          <div class="brief-summary-row">
+            <strong>評価</strong><span>{{ latest_note_summary.assessment }}</span>
+          </div>
+          <div class="brief-summary-row">
+            <strong>施術方針</strong><span>{{ latest_note_summary.plan }}</span>
+          </div>
+        </div>
+      {% else %}
+        <div class="brief-empty">カルテはまだ登録されていません。</div>
+      {% endif %}
+    </section>
+
+    <section class="brief-card">
+      <div class="brief-card-head">
+        <div class="brief-heading">
+          <span class="brief-number">05</span>
+          <div>
+            <h2>最新姿勢分析</h2>
+            <div class="brief-section-sub">姿勢所見の短い要約</div>
+          </div>
+        </div>
+        {% if latest_posture_assessment %}
+          <a class="brief-action" href="{% url 'posture_assessments:detail' latest_posture_assessment.id %}">
+            詳細を見る
+          </a>
+        {% endif %}
+      </div>
+      {% if latest_posture_assessment %}
+        <div class="brief-summary">
+          <div class="brief-summary-row">
+            <strong>{{ latest_posture_assessment.title|default:"AI姿勢分析" }}</strong>
+            <span>{{ posture_profile_summary }}</span>
+          </div>
+          <div class="brief-summary-row">
+            <strong>状態</strong>
+            <span>
+              {{ latest_posture_assessment.get_status_display }}
+              / {{ latest_posture_assessment.created_at|date:"Y年m月d日" }}
+            </span>
+          </div>
+        </div>
+      {% else %}
+        <div class="brief-empty">姿勢分析はまだ登録されていません。</div>
+      {% endif %}
+    </section>
+
+    <section class="brief-card">
+      <div class="brief-card-head">
+        <div class="brief-heading">
+          <span class="brief-number">06</span>
+          <div>
+            <h2>最新施術計画</h2>
+            <div class="brief-section-sub">目的・方針・通院目安</div>
+          </div>
+        </div>
+        {% if latest_plan %}
+          <a class="brief-action" href="{% url 'treatment_plans:plan_detail' latest_plan.id %}">
+            詳細を見る
+          </a>
+        {% endif %}
+      </div>
+      {% if latest_plan %}
+        <div class="brief-summary">
+          <div class="brief-summary-row">
+            <strong>目的</strong><span>{{ latest_plan_summary.purpose }}</span>
+          </div>
+          <div class="brief-summary-row">
+            <strong>改善方針</strong><span>{{ latest_plan_summary.policy }}</span>
+          </div>
+          <div class="brief-summary-row">
+            <strong>通院目安</strong><span>{{ latest_plan_summary.visit_guide }}</span>
+          </div>
+        </div>
+      {% else %}
+        <div class="brief-empty">施術計画はまだ登録されていません。</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="brief-recording">
+    <div class="brief-heading">
+      <span class="brief-number">07</span>
+      <div>
+        <h2>録音開始</h2>
+        <div class="brief-section-sub">初診録音または通院施術録音を選択</div>
+      </div>
+    </div>
+    {% include "staff/partials/recording_start_cards.html" with recording_appointment=recording_appointment recording_patient=patient only %}
+  </section>
+</div>
+{% endblock %}

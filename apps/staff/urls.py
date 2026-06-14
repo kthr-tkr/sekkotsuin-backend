@@ -37,7 +37,22 @@ urlpatterns = [
     path("settings/", views.staff_settings_view, name="settings"),
     path("recordings/<int:recording_id>/register/", views.register_clinical_note, name="register_clinical_note"),
     path("clinical_notes/<int:pk>/", views.staff_clinical_note_detail_view, name="clinical_note_detail"),
+    path(
+        "clinical-notes/<int:note_id>/post-summary/",
+        views.staff_post_treatment_summary_view,
+        name="post_treatment_summary",
+    ),
+    path(
+        "clinical-notes/<int:note_id>/aftercare-report/",
+        views.staff_patient_aftercare_report_view,
+        name="patient_aftercare_report",
+    ),
     path("patients/<int:patient_id>/", views.staff_patient_detail_view, name="patient_detail"),
+    path(
+        "patients/<int:patient_id>/pre-check/",
+        views.staff_pre_treatment_check_view,
+        name="pre_treatment_check",
+    ),
     path("clinical_notes/<int:note_id>/edit/", views.staff_clinical_note_edit, name="clinical_note_edit"),
     path("api/appointments/<int:pk>/move/", views.move_appointment_view, name="appointment_move"),
     path("staffs/create/", views.staff_create, name="staff_create"),

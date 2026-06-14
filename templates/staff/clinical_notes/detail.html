@@ -1114,12 +1114,19 @@
     </div>
 
     <div class="cn-actions">
+      <a href="{% url 'staff:post_treatment_summary' note.id %}" class="cn-btn primary">
+        施術後サマリーを見る
+      </a>
+      <a href="{% url 'staff:patient_aftercare_report' note.id %}" class="cn-btn">
+        印刷用レポートを開く
+      </a>
+
       {% if related_plan %}
-        <a href="{% url 'treatment_plans:plan_detail' related_plan.id %}" class="cn-btn primary">
+        <a href="{% url 'treatment_plans:plan_detail' related_plan.id %}" class="cn-btn">
           施術計画を確認
         </a>
       {% else %}
-        <a href="{% url 'treatment_plans:plan_create_from_clinical_note' note.id %}" class="cn-btn primary">
+        <a href="{% url 'treatment_plans:plan_create_from_clinical_note' note.id %}" class="cn-btn">
           カルテから施術計画を作成
         </a>
       {% endif %}
@@ -1806,10 +1813,17 @@
       </div>
 
       <div class="cn-actions" style="justify-content:flex-start;">
+        <a href="{% url 'staff:post_treatment_summary' note.id %}" class="cn-btn primary">
+          患者説明まとめを開く
+        </a>
+        <a href="{% url 'staff:patient_aftercare_report' note.id %}" class="cn-btn">
+          患者向け説明レポート
+        </a>
+
         {% if related_plan %}
-          <a href="{% url 'treatment_plans:plan_detail' related_plan.id %}" class="cn-btn primary">施術計画を確認</a>
+          <a href="{% url 'treatment_plans:plan_detail' related_plan.id %}" class="cn-btn">施術計画を確認</a>
         {% else %}
-          <a href="{% url 'treatment_plans:plan_create_from_clinical_note' note.id %}" class="cn-btn primary">施術計画を作成</a>
+          <a href="{% url 'treatment_plans:plan_create_from_clinical_note' note.id %}" class="cn-btn">施術計画を作成</a>
         {% endif %}
 
         {% if related_posture_assessment %}

@@ -96,7 +96,11 @@
   }
 
   .patient-hero-grid{
-    display:block;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap;
   }
 
   .patient-name{
@@ -112,6 +116,51 @@
     font-size:14px;
     font-weight:700;
     line-height:1.8;
+  }
+
+  .precheck-link{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    max-width:430px;
+    padding:14px 16px;
+    border-radius:18px;
+    color:#fff;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.24);
+    box-shadow:0 14px 30px rgba(3,7,18,.14);
+    transition:.18s ease;
+  }
+
+  .precheck-link:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,.18);
+  }
+
+  .precheck-link-mark{
+    display:grid;
+    width:42px;
+    height:42px;
+    flex:0 0 auto;
+    place-items:center;
+    border-radius:14px;
+    color:#12325b;
+    background:#fff;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .precheck-link-title{
+    font-size:14px;
+    font-weight:950;
+  }
+
+  .precheck-link-sub{
+    margin-top:3px;
+    color:rgba(255,255,255,.76);
+    font-size:10px;
+    font-weight:750;
+    line-height:1.55;
   }
 
   .patient-tabs{
@@ -1723,6 +1772,16 @@
           {% endif %}
         </div>
       </div>
+
+      <a class="precheck-link" href="{% url 'staff:pre_treatment_check' patient.id %}">
+        <span class="precheck-link-mark">CHECK</span>
+        <span>
+          <span class="precheck-link-title">施術前チェックを開く</span>
+          <span class="precheck-link-sub">
+            患者様の身体特徴・前回内容・本日の確認点をまとめて確認できます。
+          </span>
+        </span>
+      </a>
     </div>
   </section>
 
@@ -1857,8 +1916,6 @@
         {% endif %}
       </div>
     </section>
-
-    {% include "staff/partials/recording_start_cards.html" with recording_appointment=recording_appointment recording_patient=patient only %}
 
     <section class="pd-card body-profile-card">
       <div class="pd-section-head">
@@ -2058,8 +2115,8 @@
           <div class="card-sub">確定済みカルテの要点と履歴を確認できます</div>
         </div>
 
-        <a href="{% url 'staff:patient_detail' patient.id %}?tab=overview#recording-start" class="section-btn">
-          録音方法を選ぶ →
+        <a href="{% url 'staff:pre_treatment_check' patient.id %}#recording-start" class="section-btn">
+          施術前チェック・録音 →
         </a>
       </div>
 
@@ -2132,8 +2189,16 @@
               最新カルテを見る →
             </a>
 
-            <a href="{% url 'staff:patient_detail' patient.id %}?tab=overview#recording-start" class="overview-mini-btn">
-              録音方法を選ぶ
+            <a href="{% url 'staff:post_treatment_summary' latest_note.id %}" class="section-btn">
+              施術後サマリーを見る
+            </a>
+
+            <a href="{% url 'staff:patient_aftercare_report' latest_note.id %}" class="section-btn">
+              患者向け説明レポート
+            </a>
+
+            <a href="{% url 'staff:pre_treatment_check' patient.id %}#recording-start" class="overview-mini-btn">
+              施術前チェック・録音
             </a>
           </div>
         </div>
