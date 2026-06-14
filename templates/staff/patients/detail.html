@@ -1753,6 +1753,11 @@
 
     <div class="pd-tools">
       <a href="{% url 'staff:patient_search' %}" class="pd-btn">← 患者検索へ戻る</a>
+      {% if latest_note %}
+        <a href="{% url 'staff:patient_aftercare_report' latest_note.id %}" class="pd-btn">
+          最新の患者向け説明レポートを開く
+        </a>
+      {% endif %}
       <a href="{% url 'patients:staff_booking_calendar' patient.id %}" class="pd-btn primary">
         ＋ 予約を作成
       </a>
@@ -2194,7 +2199,7 @@
             </a>
 
             <a href="{% url 'staff:patient_aftercare_report' latest_note.id %}" class="section-btn">
-              患者向け説明レポート
+              最新の患者向け説明レポートを開く
             </a>
 
             <a href="{% url 'staff:pre_treatment_check' patient.id %}#recording-start" class="overview-mini-btn">

@@ -616,6 +616,9 @@
             <a class="brief-action" href="{% url 'staff:post_treatment_summary' latest_note.id %}">
               施術後サマリー
             </a>
+            <a class="brief-action" href="{% url 'staff:patient_aftercare_report' latest_note.id %}">
+              患者向け説明レポート
+            </a>
             <a class="brief-action" href="{% url 'staff:clinical_note_detail' latest_note.id %}">
               詳細を見る
             </a>

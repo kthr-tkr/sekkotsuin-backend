@@ -5,7 +5,7 @@
 <style>
   @page{
     size:A4 portrait;
-    margin:11mm;
+    margin:10mm;
   }
 
   .aftercare-page{
@@ -97,6 +97,14 @@
     border-color:#fff;
   }
 
+  .aftercare-btn[disabled]{
+    color:#7c8da1;
+    background:#e8eef4;
+    border-color:#d7e0e9;
+    cursor:not-allowed;
+    opacity:1;
+  }
+
   .aftercare-meta{
     flex-wrap:wrap;
     gap:10px 24px;
@@ -128,6 +136,42 @@
     gap:16px;
     padding:24px;
     background:linear-gradient(180deg,#f8fbfe 0%,#fff 42%);
+  }
+
+  .aftercare-share-panel{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    padding:16px 24px;
+    color:#294760;
+    background:#f1f7fb;
+    border-bottom:1px solid #dbe7f2;
+  }
+
+  .aftercare-share-title{
+    color:#123a5a;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .aftercare-share-text{
+    margin-top:4px;
+    color:#60758a;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.65;
+  }
+
+  .aftercare-share-controls{
+    display:flex;
+    flex:0 0 auto;
+    align-items:center;
+    gap:10px;
+  }
+
+  .aftercare-share-controls .aftercare-btn{
+    color:#7c8da1;
   }
 
   .aftercare-card{
@@ -302,6 +346,12 @@
       padding:16px;
     }
 
+    .aftercare-share-panel{
+      align-items:flex-start;
+      flex-direction:column;
+      padding:16px 20px;
+    }
+
     .aftercare-card.wide{
       grid-column:auto;
     }
@@ -320,6 +370,7 @@
     .sidebar,
     .topbar,
     .aftercare-actions,
+    .aftercare-share-panel,
     .no-print,
     nav,
     header.staff-header{
@@ -412,8 +463,9 @@
         </div>
         <div class="aftercare-actions">
           <button type="button" class="aftercare-btn primary" onclick="window.print()">印刷する</button>
-          <a class="aftercare-btn" href="{% url 'staff:post_treatment_summary' note.id %}">施術後サマリーへ</a>
-          <a class="aftercare-btn" href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">患者詳細へ</a>
+          <a class="aftercare-btn" href="{% url 'staff:clinical_note_detail' note.id %}">カルテ詳細へ戻る</a>
+          <a class="aftercare-btn" href="{% url 'staff:post_treatment_summary' note.id %}">施術後サマリーへ戻る</a>
+          <a class="aftercare-btn" href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">患者詳細へ戻る</a>
         </div>
       </div>
       <div class="aftercare-meta">
@@ -431,6 +483,21 @@
         </div>
       </div>
     </header>
+
+    <section class="aftercare-share-panel">
+      <div>
+        <div class="aftercare-share-title">印刷・PDF保存</div>
+        <div class="aftercare-share-text">
+          PDFとして保存する場合は、印刷画面で送信先を「PDFに保存」に変更してください。<br>
+          LINE共有は今後対応予定です。現在は印刷またはPDF保存をご利用ください。
+        </div>
+      </div>
+      <div class="aftercare-share-controls">
+        <button type="button" class="aftercare-btn" disabled aria-disabled="true">
+          LINE共有 準備中
+        </button>
+      </div>
+    </section>
 
     <div class="aftercare-content">
       <section class="aftercare-card summary wide">

@@ -538,6 +538,15 @@ class StaffPostTreatmentSummaryTests(TestCase):
         self.assertContains(response, "本日は右膝の荷重動作を中心に確認しました")
         self.assertContains(response, "大腿部と膝周囲への施術")
 
+    def test_aftercare_report_displays_print_pdf_and_line_guidance(self):
+        response = self.client.get(self._report_url())
+
+        self.assertContains(response, "印刷する")
+        self.assertContains(response, "PDFに保存")
+        self.assertContains(response, "LINE共有 準備中")
+        self.assertContains(response, "LINE共有は今後対応予定です")
+        self.assertContains(response, "disabled")
+
     def test_other_clinic_note_aftercare_report_returns_404(self):
         response = self.client.get(self._report_url(self.other_note))
 
@@ -580,7 +589,15 @@ class StaffPostTreatmentSummaryTests(TestCase):
         self.session.memo = "内部限定メモXYZ"
         self.session.save(update_fields=["memo"])
         self.note.extract_json["findings"] = ["内部評価メモXYZ"]
+        self.note.extract_json["internal_debug"] = "RAW_JSON_SECRET"
         self.note.save(update_fields=["extract_json"])
+        summary = dict(self.session.confirmed_summary_json)
+        summary["meta"] = {
+            "model": "gpt-private-model",
+            "internal_trace": "MODEL_TRACE_SECRET",
+        }
+        self.session.confirmed_summary_json = summary
+        self.session.save(update_fields=["confirmed_summary_json"])
 
         response = self.client.get(self._report_url())
 
@@ -588,6 +605,47 @@ class StaffPostTreatmentSummaryTests(TestCase):
         self.assertNotContains(response, "内部限定メモXYZ")
         self.assertNotContains(response, "内部評価メモXYZ")
         self.assertNotContains(response, "施術者向けメモ")
+        self.assertNotContains(response, "RAW_JSON_SECRET")
+        self.assertNotContains(response, "gpt-private-model")
+        self.assertNotContains(response, "MODEL_TRACE_SECRET")
+        self.assertNotContains(response, "summary_json")
+
+    def test_patient_detail_shows_latest_aftercare_report_link(self):
+        response = self.client.get(
+            reverse("staff:patient_detail", args=[self.patient.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "最新の患者向け説明レポートを開く",
+        )
+        self.assertContains(response, self._report_url())
+
+    def test_patient_detail_without_clinical_note_does_not_fail(self):
+        patient_without_note = Patient.objects.create(
+            clinic=self.clinic,
+            card_no="POST-A-EMPTY",
+            last_name="井上",
+            first_name="健",
+            last_name_kana="イノウエ",
+            first_name_kana="ケン",
+            birth_date=date(1985, 2, 1),
+            phone="09000000039",
+        )
+
+        response = self.client.get(
+            reverse(
+                "staff:patient_detail",
+                args=[patient_without_note.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(
+            response,
+            "最新の患者向け説明レポートを開く",
+        )
 
     def test_next_appointment_is_displayed_on_aftercare_report(self):
         future_start = timezone.now() + timedelta(days=3)

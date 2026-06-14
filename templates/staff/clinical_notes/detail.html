@@ -1115,10 +1115,10 @@
 
     <div class="cn-actions">
       <a href="{% url 'staff:post_treatment_summary' note.id %}" class="cn-btn primary">
-        施術後サマリーを見る
+        施術後サマリー
       </a>
       <a href="{% url 'staff:patient_aftercare_report' note.id %}" class="cn-btn">
-        印刷用レポートを開く
+        患者向け説明レポート
       </a>
 
       {% if related_plan %}
@@ -1814,7 +1814,7 @@
 
       <div class="cn-actions" style="justify-content:flex-start;">
         <a href="{% url 'staff:post_treatment_summary' note.id %}" class="cn-btn primary">
-          患者説明まとめを開く
+          施術後サマリー
         </a>
         <a href="{% url 'staff:patient_aftercare_report' note.id %}" class="cn-btn">
           患者向け説明レポート
