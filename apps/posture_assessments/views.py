@@ -815,6 +815,12 @@ def _build_assessment_body_map_items(summary):
 @staff_required
 def posture_detail_view(request, assessment_id):
     clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の姿勢分析のみ閲覧できます。")
 
     assessment = get_object_or_404(
         PostureAssessment.objects
@@ -874,6 +880,12 @@ def posture_detail_view(request, assessment_id):
 @staff_required
 def posture_assessment_report_view(request, assessment_id):
     clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の姿勢分析のみ閲覧できます。")
 
     assessment = get_object_or_404(
         PostureAssessment.objects

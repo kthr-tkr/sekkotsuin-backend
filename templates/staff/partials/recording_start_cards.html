@@ -171,7 +171,7 @@
       </ul>
       {% if recording_appointment %}
         <a class="cf-recording-action" href="{% url 'intakes:recording_new' recording_appointment.id %}">
-          初診録音へ
+          初診録音を開始
         </a>
       {% else %}
         <span class="cf-recording-action disabled" aria-disabled="true">予約を選択してください</span>
@@ -191,11 +191,11 @@
       </ul>
       {% if recording_appointment %}
         <a class="cf-recording-action" href="{% url 'treatment_sessions:start' recording_appointment.id %}">
-          通院録音へ
+          通院施術録音を開始
         </a>
       {% elif recording_patient %}
         <a class="cf-recording-action" href="{% url 'treatment_sessions:start_for_patient' recording_patient.id %}">
-          通院録音へ
+          通院施術録音を開始
         </a>
       {% else %}
         <span class="cf-recording-action disabled" aria-disabled="true">患者を選択してください</span>

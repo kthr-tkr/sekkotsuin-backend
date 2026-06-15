@@ -410,6 +410,28 @@ class TreatmentSessionConfirmTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_empty_session_detail_explains_next_step_and_return_links(self):
+        empty_session = TreatmentSession.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            status=TreatmentSession.Status.PENDING,
+            created_by=self.user,
+            updated_by=self.user,
+        )
+
+        response = self.client.get(
+            reverse(
+                "treatment_sessions:detail",
+                args=[empty_session.id],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "録音はまだありません")
+        self.assertContains(response, "カルテ案はまだありません")
+        self.assertContains(response, "患者詳細へ戻る")
+        self.assertContains(response, "予約管理へ戻る")
+
     def test_summary_json_can_be_displayed_on_confirm_page(self):
         response = self.client.get(
             reverse(

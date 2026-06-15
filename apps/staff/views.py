@@ -7,8 +7,18 @@ from datetime import date, timedelta
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q, Case, When, Value, IntegerField
+from django.db.models import (
+    Q,
+    Case,
+    When,
+    Value,
+    IntegerField,
+    Exists,
+    OuterRef,
+    Subquery,
+)
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -1230,9 +1240,332 @@ def staff_logout_view(request):
     return redirect("/")
 
 
+def build_dashboard_today_tasks(clinic, today, today_appointments):
+    from apps.intakes.views import build_interview_recording_flow_state
+    from apps.treatment_sessions.views import (
+        build_treatment_session_flow_state,
+    )
+
+    today_appointments = list(today_appointments[:20])
+    appointment_ids = [
+        appointment.id
+        for appointment in today_appointments
+    ]
+
+    today_recordings = {
+        recording.appointment_id: recording
+        for recording in (
+            InterviewRecording.objects
+            .filter(
+                clinic=clinic,
+                patient__clinic=clinic,
+                appointment__clinic=clinic,
+                appointment_id__in=appointment_ids,
+            )
+            .select_related("patient", "appointment")
+            .order_by("created_at")
+        )
+    }
+    today_sessions = {
+        session.appointment_id: session
+        for session in (
+            TreatmentSession.objects
+            .filter(
+                clinic=clinic,
+                patient__clinic=clinic,
+                appointment__clinic=clinic,
+                appointment_id__in=appointment_ids,
+            )
+            .select_related("patient", "appointment")
+            .order_by("-created_at")
+        )
+    }
+
+    appointment_items = []
+    for appointment in today_appointments:
+        patient = appointment.patient
+        recording = today_recordings.get(appointment.id)
+        session = today_sessions.get(appointment.id)
+        appointment_items.append({
+            "appointment": appointment,
+            "patient": patient,
+            "precheck_url": (
+                reverse(
+                    "staff:pre_treatment_check",
+                    args=[patient.id],
+                )
+                if patient
+                else ""
+            ),
+            "patient_url": (
+                reverse(
+                    "staff:patient_detail",
+                    args=[patient.id],
+                )
+                if patient
+                else ""
+            ),
+            "initial_recording_url": (
+                reverse(
+                    "intakes:recording_detail",
+                    args=[recording.id],
+                )
+                if recording
+                else (
+                    reverse(
+                        "intakes:recording_new",
+                        args=[appointment.id],
+                    )
+                    if patient
+                    else ""
+                )
+            ),
+            "initial_recording_label": (
+                "初診録音を確認"
+                if recording
+                else "初診録音"
+            ),
+            "treatment_recording_url": (
+                reverse(
+                    "treatment_sessions:detail",
+                    args=[session.id],
+                )
+                if session
+                else (
+                    reverse(
+                        "treatment_sessions:start",
+                        args=[appointment.id],
+                    )
+                    if patient
+                    else ""
+                )
+            ),
+            "treatment_recording_label": (
+                "施術録音を確認"
+                if session
+                else "施術録音"
+            ),
+        })
+
+    recording_confirmation_qs = (
+        InterviewRecording.objects
+        .filter(
+            clinic=clinic,
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+        )
+        .exclude(summary_json={})
+        .filter(
+            Q(confirmed_summary_json__isnull=True)
+            | Q(confirmed_summary_json={})
+        )
+        .select_related("patient", "appointment")
+        .order_by("-created_at")
+    )
+    session_confirmation_qs = (
+        TreatmentSession.objects
+        .filter(
+            clinic=clinic,
+            patient__clinic=clinic,
+        )
+        .filter(
+            Q(appointment__isnull=True)
+            | Q(appointment__clinic=clinic)
+        )
+        .exclude(summary_json={})
+        .filter(
+            Q(confirmed_summary_json__isnull=True)
+            | Q(confirmed_summary_json={})
+        )
+        .select_related("patient", "appointment")
+        .order_by("-created_at")
+    )
+
+    confirmation_waiting_count = (
+        recording_confirmation_qs.count()
+        + session_confirmation_qs.count()
+    )
+    confirmation_items = [
+        {
+            "patient": recording.patient,
+            "type": "初診録音",
+            "created_at": recording.created_at,
+            "status": "カルテ案確認待ち",
+            "url": reverse(
+                "intakes:recording_confirm",
+                args=[recording.id],
+            ),
+        }
+        for recording in recording_confirmation_qs[:10]
+    ]
+    confirmation_items.extend({
+        "patient": session.patient,
+        "type": "通院施術録音",
+        "created_at": session.created_at,
+        "status": "カルテ案確認待ち",
+        "url": reverse(
+            "treatment_sessions:session_confirm",
+            args=[session.id],
+        ),
+    } for session in session_confirmation_qs[:10])
+    confirmation_items = sorted(
+        confirmation_items,
+        key=lambda item: item["created_at"],
+        reverse=True,
+    )[:10]
+
+    recording_attention_q = (
+        Q(status__in=[
+            InterviewRecording.Status.TRANSCRIBING,
+            InterviewRecording.Status.SUMMARIZING,
+            InterviewRecording.Status.FAILED,
+        ])
+        | ~Q(error_message="")
+        | (
+            Q(audio_file__isnull=False)
+            & ~Q(audio_file="")
+            & Q(transcript_text="")
+        )
+        | (~Q(transcript_text="") & Q(summary_json={}))
+    )
+    recording_attention_qs = (
+        InterviewRecording.objects
+        .filter(
+            recording_attention_q,
+            clinic=clinic,
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+        )
+        .select_related("patient", "appointment")
+        .order_by("-created_at")
+    )
+    session_attention_q = (
+        Q(status__in=[
+            TreatmentSession.Status.TRANSCRIBING,
+            TreatmentSession.Status.SUMMARIZING,
+            TreatmentSession.Status.FAILED,
+        ])
+        | ~Q(error_message="")
+        | (
+            Q(chunks__isnull=False)
+            & Q(transcript_text="")
+        )
+        | (~Q(transcript_text="") & Q(summary_json={}))
+    )
+    session_attention_qs = (
+        TreatmentSession.objects
+        .filter(
+            session_attention_q,
+            clinic=clinic,
+            patient__clinic=clinic,
+        )
+        .filter(
+            Q(appointment__isnull=True)
+            | Q(appointment__clinic=clinic)
+        )
+        .select_related("patient", "appointment")
+        .prefetch_related("chunks")
+        .order_by("-created_at")
+        .distinct()
+    )
+    recording_attention_count = (
+        recording_attention_qs.count()
+        + session_attention_qs.count()
+    )
+    recording_attention_items = []
+    for recording in recording_attention_qs[:15]:
+        state = build_interview_recording_flow_state(recording)
+        if state["key"] in {
+            "error",
+            "transcribing",
+            "summarizing",
+            "transcription_waiting",
+            "summary_waiting",
+        }:
+            recording_attention_items.append({
+                "patient": recording.patient,
+                "type": "初診録音",
+                "created_at": recording.created_at,
+                "status": state["label"],
+                "tone": state["tone"],
+                "url": reverse(
+                    "intakes:recording_detail",
+                    args=[recording.id],
+                ),
+            })
+    for session in session_attention_qs[:15]:
+        state = build_treatment_session_flow_state(
+            session,
+            session.chunks.all(),
+        )
+        if state["key"] in {
+            "error",
+            "transcribing",
+            "summarizing",
+            "transcription_waiting",
+            "summary_waiting",
+        }:
+            recording_attention_items.append({
+                "patient": session.patient,
+                "type": "通院施術録音",
+                "created_at": session.created_at,
+                "status": state["label"],
+                "tone": state["tone"],
+                "url": reverse(
+                    "treatment_sessions:detail",
+                    args=[session.id],
+                ),
+            })
+    recording_attention_items = sorted(
+        recording_attention_items,
+        key=lambda item: item["created_at"],
+        reverse=True,
+    )[:10]
+
+    today_notes_qs = (
+        ClinicalNote.objects
+        .filter(
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+            created_at__date=today,
+        )
+        .select_related("patient", "appointment")
+        .order_by("-created_at")
+    )
+    report_items = [
+        {
+            "note": note,
+            "patient": note.patient,
+            "created_at": note.created_at,
+            "url": reverse(
+                "staff:patient_aftercare_report",
+                args=[note.id],
+            ),
+        }
+        for note in today_notes_qs[:10]
+    ]
+
+    return {
+        "today_appointment_items": appointment_items,
+        "today_note_count": today_notes_qs.count(),
+        "confirmation_waiting_count": confirmation_waiting_count,
+        "confirmation_waiting_items": confirmation_items,
+        "recording_attention_count": recording_attention_count,
+        "recording_attention_items": recording_attention_items,
+        "today_report_items": report_items,
+    }
+
+
 @staff_required
 def staff_dashboard_view(request):
     clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のダッシュボードのみ閲覧できます。")
+
     today = timezone.localdate()
 
     ai_usage_summary = build_ai_usage_summary(clinic)
@@ -1275,14 +1608,19 @@ def staff_dashboard_view(request):
 
     next_appt = waiting_qs.first()
     appt_cards = todays_appts[:5]
+    today_tasks = build_dashboard_today_tasks(
+        clinic,
+        today,
+        todays_appts,
+    )
 
     active_plan_count = 0
     paused_plan_count = 0
     completed_plan_count = 0
     today_progress_count = 0
 
-    ai_count = intake_count
-    note_count = intake_count
+    ai_count = today_tasks["confirmation_waiting_count"]
+    note_count = today_tasks["today_note_count"]
 
     return render(request, "staff/dashboard.html", {
         "active": "home",
@@ -1305,6 +1643,7 @@ def staff_dashboard_view(request):
 
         "next_appt": next_appt,
         "appointments": appt_cards,
+        **today_tasks,
 
         "ai_usage_summary": ai_usage_summary,
         "ai_usage_percent_for_bar": ai_usage_percent_for_bar,
@@ -1517,23 +1856,585 @@ def staff_create(request):
 @staff_required
 def staff_patient_search_view(request):
     clinic = get_current_clinic(request)
-    q = (request.GET.get("q") or "").strip()
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の患者情報のみ閲覧できます。")
 
-    qs = Patient.objects.filter(clinic=clinic).order_by("last_name", "first_name")
+    q = (request.GET.get("q") or "").strip()
+    selected_filter = (request.GET.get("filter") or "").strip()
+    valid_filters = {
+        "",
+        "today",
+        "recent",
+        "no_note",
+        "confirmation_waiting",
+        "posture",
+        "plan",
+        "attention",
+    }
+    if selected_filter not in valid_filters:
+        selected_filter = ""
+
+    today = timezone.localdate()
+    recent_from = today - timedelta(days=30)
+
+    latest_intake = (
+        Intake.objects
+        .filter(
+            clinic=clinic,
+            patient=OuterRef("pk"),
+        )
+        .order_by("-submitted_at", "-id")
+    )
+    latest_appointment = (
+        Appointment.objects
+        .filter(
+            clinic=clinic,
+            patient=OuterRef("pk"),
+        )
+        .order_by("-start_at")
+    )
+    latest_completed_appointment = (
+        Appointment.objects
+        .filter(
+            clinic=clinic,
+            patient=OuterRef("pk"),
+            status=Appointment.Status.COMPLETED,
+        )
+        .order_by("-start_at")
+    )
+    today_appointment = (
+        Appointment.objects
+        .filter(
+            clinic=clinic,
+            patient=OuterRef("pk"),
+            start_at__date=today,
+        )
+        .exclude(
+            status__in=[
+                Appointment.Status.CANCELLED,
+                Appointment.Status.NO_SHOW,
+            ]
+        )
+        .order_by("start_at")
+    )
+    latest_note = (
+        ClinicalNote.objects
+        .filter(
+            patient=OuterRef("pk"),
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+        )
+        .order_by("-created_at")
+    )
+    latest_plan = (
+        TreatmentPlan.objects
+        .filter(
+            patient=OuterRef("pk"),
+            patient__clinic=clinic,
+        )
+        .order_by("-created_at")
+    )
+    waiting_recordings = (
+        InterviewRecording.objects
+        .filter(
+            clinic=clinic,
+            patient=OuterRef("pk"),
+        )
+        .exclude(summary_json={})
+        .filter(
+            Q(confirmed_summary_json__isnull=True)
+            | Q(confirmed_summary_json={})
+        )
+    )
+    waiting_sessions = (
+        TreatmentSession.objects
+        .filter(
+            clinic=clinic,
+            patient=OuterRef("pk"),
+        )
+        .exclude(summary_json={})
+        .filter(
+            Q(confirmed_summary_json__isnull=True)
+            | Q(confirmed_summary_json={})
+        )
+    )
+    recording_errors = (
+        InterviewRecording.objects
+        .filter(
+            clinic=clinic,
+            patient=OuterRef("pk"),
+        )
+        .filter(
+            Q(status=InterviewRecording.Status.FAILED)
+            | ~Q(error_message="")
+        )
+    )
+    session_errors = (
+        TreatmentSession.objects
+        .filter(
+            clinic=clinic,
+            patient=OuterRef("pk"),
+        )
+        .filter(
+            Q(status=TreatmentSession.Status.FAILED)
+            | ~Q(error_message="")
+        )
+    )
+
+    qs = (
+        Patient.objects
+        .filter(clinic=clinic)
+        .annotate(
+            latest_chief_complaint=Subquery(
+                latest_intake.values("chief_complaint")[:1]
+            ),
+            latest_plan_complaint=Subquery(
+                latest_plan.values("chief_complaint")[:1]
+            ),
+            latest_appointment_at=Subquery(
+                latest_appointment.values("start_at")[:1]
+            ),
+            last_visit_at=Subquery(
+                latest_completed_appointment.values("start_at")[:1]
+            ),
+            today_appointment_id=Subquery(
+                today_appointment.values("id")[:1]
+            ),
+            latest_note_at=Subquery(
+                latest_note.values("created_at")[:1]
+            ),
+            latest_note_id=Subquery(
+                latest_note.values("id")[:1]
+            ),
+            latest_plan_status=Subquery(
+                latest_plan.values("status")[:1]
+            ),
+            has_today_appointment=Exists(today_appointment),
+            has_recent_visit=Exists(
+                latest_completed_appointment.filter(
+                    start_at__date__gte=recent_from,
+                )
+            ),
+            has_clinical_note=Exists(latest_note),
+            has_waiting_recording=Exists(waiting_recordings),
+            has_waiting_session=Exists(waiting_sessions),
+            has_recording_error=Exists(recording_errors),
+            has_session_error=Exists(session_errors),
+            has_posture_assessment=Exists(
+                PostureAssessment.objects.filter(
+                    clinic=clinic,
+                    patient=OuterRef("pk"),
+                )
+            ),
+            has_treatment_plan=Exists(latest_plan),
+        )
+        .order_by("last_name", "first_name", "id")
+    )
     if q:
         qs = qs.filter(
-            Q(last_name__icontains=q) |
-            Q(first_name__icontains=q) |
-            Q(phone__icontains=q)
+            Q(last_name__icontains=q)
+            | Q(first_name__icontains=q)
+            | Q(last_name_kana__icontains=q)
+            | Q(first_name_kana__icontains=q)
+            | Q(phone__icontains=q)
+            | Q(card_no__icontains=q)
+            | Q(intakes__chief_complaint__icontains=q)
+            | Q(treatment_plans__chief_complaint__icontains=q)
+        ).distinct()
+
+    if selected_filter == "today":
+        qs = qs.filter(has_today_appointment=True)
+    elif selected_filter == "recent":
+        qs = qs.filter(has_recent_visit=True)
+    elif selected_filter == "no_note":
+        qs = qs.filter(has_clinical_note=False)
+    elif selected_filter == "confirmation_waiting":
+        qs = qs.filter(
+            Q(has_waiting_recording=True)
+            | Q(has_waiting_session=True)
+        )
+    elif selected_filter == "posture":
+        qs = qs.filter(has_posture_assessment=True)
+    elif selected_filter == "plan":
+        qs = qs.filter(has_treatment_plan=True)
+    elif selected_filter == "attention":
+        qs = qs.filter(
+            Q(has_waiting_recording=True)
+            | Q(has_waiting_session=True)
+            | Q(has_recording_error=True)
+            | Q(has_session_error=True)
         )
 
-    patients = qs[:50]
+    paginator = Paginator(qs, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    today_value = timezone.localdate()
+    plan_status_labels = dict(TreatmentPlan.STATUS_CHOICES)
+    for patient in page_obj.object_list:
+        patient.age = (
+            today_value.year
+            - patient.birth_date.year
+            - (
+                (today_value.month, today_value.day)
+                < (patient.birth_date.month, patient.birth_date.day)
+            )
+        ) if patient.birth_date else None
+        patient.main_complaint = (
+            patient.latest_chief_complaint
+            or patient.latest_plan_complaint
+            or "未登録"
+        )
+        patient.latest_treatment_status = plan_status_labels.get(
+            patient.latest_plan_status,
+            "未作成",
+        )
+        patient.needs_attention = any((
+            patient.has_waiting_recording,
+            patient.has_waiting_session,
+            patient.has_recording_error,
+            patient.has_session_error,
+        ))
 
     return render(request, "staff/patients/search.html", {
         "active": "patient_search",
-        "page_title": "患者検索",
+        "page_title": "患者様一覧",
         "q": q,
-        "patients": patients,
+        "selected_filter": selected_filter,
+        "patients": page_obj.object_list,
+        "page_obj": page_obj,
+        "result_count": paginator.count,
+    })
+
+
+def _kpi_recording_querysets(clinic):
+    waiting_recordings = (
+        InterviewRecording.objects
+        .filter(clinic=clinic)
+        .select_related("patient", "appointment")
+        .exclude(summary_json={})
+        .filter(
+            Q(confirmed_summary_json__isnull=True)
+            | Q(confirmed_summary_json={})
+        )
+    )
+    waiting_sessions = (
+        TreatmentSession.objects
+        .filter(clinic=clinic)
+        .select_related("patient", "appointment")
+        .exclude(summary_json={})
+        .filter(
+            Q(confirmed_summary_json__isnull=True)
+            | Q(confirmed_summary_json={})
+        )
+    )
+    error_recordings = (
+        InterviewRecording.objects
+        .filter(clinic=clinic)
+        .select_related("patient", "appointment")
+        .filter(
+            Q(status=InterviewRecording.Status.FAILED)
+            | ~Q(error_message="")
+        )
+    )
+    error_sessions = (
+        TreatmentSession.objects
+        .filter(clinic=clinic)
+        .select_related("patient", "appointment")
+        .filter(
+            Q(status=TreatmentSession.Status.FAILED)
+            | ~Q(error_message="")
+        )
+    )
+    transcript_only_recordings = (
+        InterviewRecording.objects
+        .filter(clinic=clinic)
+        .select_related("patient", "appointment")
+        .exclude(transcript_text="")
+        .filter(summary_json={})
+    )
+    transcript_only_sessions = (
+        TreatmentSession.objects
+        .filter(clinic=clinic)
+        .select_related("patient", "appointment")
+        .exclude(transcript_text="")
+        .filter(summary_json={})
+    )
+    no_appointment_sessions = (
+        TreatmentSession.objects
+        .filter(clinic=clinic, appointment__isnull=True)
+        .select_related("patient")
+    )
+    return {
+        "waiting_recordings": waiting_recordings,
+        "waiting_sessions": waiting_sessions,
+        "error_recordings": error_recordings,
+        "error_sessions": error_sessions,
+        "transcript_only_recordings": transcript_only_recordings,
+        "transcript_only_sessions": transcript_only_sessions,
+        "no_appointment_sessions": no_appointment_sessions,
+    }
+
+
+def build_staff_kpi_context(clinic):
+    today = timezone.localdate()
+    seven_days_ago = today - timedelta(days=6)
+    recordings = _kpi_recording_querysets(clinic)
+
+    today_appointments = Appointment.objects.filter(
+        clinic=clinic,
+        start_at__date=today,
+    )
+    today_notes = ClinicalNote.objects.filter(
+        patient__clinic=clinic,
+        appointment__clinic=clinic,
+        created_at__date=today,
+    )
+    today_initial_recordings = InterviewRecording.objects.filter(
+        clinic=clinic,
+        created_at__date=today,
+    )
+    today_treatment_sessions = TreatmentSession.objects.filter(
+        clinic=clinic,
+        created_at__date=today,
+    )
+    waiting_count = (
+        recordings["waiting_recordings"].count()
+        + recordings["waiting_sessions"].count()
+    )
+
+    today_cards = [
+        {
+            "label": "本日の予約",
+            "value": today_appointments.count(),
+            "note": "本日の予約管理へ",
+            "tone": "blue",
+            "url": f"{reverse('staff:appointments')}?day={today.isoformat()}",
+        },
+        {
+            "label": "来院・対応済み",
+            "value": today_appointments.filter(
+                status__in=[
+                    Appointment.Status.ARRIVED,
+                    Appointment.Status.COMPLETED,
+                ]
+            ).count(),
+            "note": "来院・完了ステータス",
+            "tone": "green",
+            "url": f"{reverse('staff:appointments')}?day={today.isoformat()}",
+        },
+        {
+            "label": "カルテ登録",
+            "value": today_notes.count(),
+            "note": "本日登録されたカルテ",
+            "tone": "navy",
+            "url": reverse("staff:dashboard"),
+        },
+        {
+            "label": "録音",
+            "value": (
+                today_initial_recordings.count()
+                + today_treatment_sessions.count()
+            ),
+            "note": "初診録音・通院施術録音",
+            "tone": "blue",
+            "url": reverse("staff:dashboard"),
+        },
+        {
+            "label": "患者向けレポート",
+            "value": today_notes.count(),
+            "note": "本日のカルテから作成可能",
+            "tone": "green",
+            "url": reverse("staff:dashboard"),
+        },
+        {
+            "label": "カルテ案確認待ち",
+            "value": waiting_count,
+            "note": "施術者の確認が必要",
+            "tone": "warning" if waiting_count else "neutral",
+            "url": reverse("staff:dashboard"),
+        },
+    ]
+
+    recent_cards = [
+        {
+            "label": "予約",
+            "value": Appointment.objects.filter(
+                clinic=clinic,
+                start_at__date__gte=seven_days_ago,
+                start_at__date__lte=today,
+            ).count(),
+        },
+        {
+            "label": "新規患者",
+            "value": Patient.objects.filter(
+                clinic=clinic,
+                created_at__date__gte=seven_days_ago,
+                created_at__date__lte=today,
+            ).count(),
+        },
+        {
+            "label": "カルテ登録",
+            "value": ClinicalNote.objects.filter(
+                patient__clinic=clinic,
+                appointment__clinic=clinic,
+                created_at__date__gte=seven_days_ago,
+                created_at__date__lte=today,
+            ).count(),
+        },
+        {
+            "label": "初診録音",
+            "value": InterviewRecording.objects.filter(
+                clinic=clinic,
+                created_at__date__gte=seven_days_ago,
+                created_at__date__lte=today,
+            ).count(),
+        },
+        {
+            "label": "通院施術録音",
+            "value": TreatmentSession.objects.filter(
+                clinic=clinic,
+                created_at__date__gte=seven_days_ago,
+                created_at__date__lte=today,
+            ).count(),
+        },
+        {
+            "label": "姿勢分析",
+            "value": PostureAssessment.objects.filter(
+                clinic=clinic,
+                created_at__date__gte=seven_days_ago,
+                created_at__date__lte=today,
+            ).count(),
+        },
+        {
+            "label": "施術計画",
+            "value": TreatmentPlan.objects.filter(
+                patient__clinic=clinic,
+                created_at__date__gte=seven_days_ago,
+                created_at__date__lte=today,
+            ).count(),
+        },
+        {
+            "label": "患者向けレポート",
+            "value": ClinicalNote.objects.filter(
+                patient__clinic=clinic,
+                appointment__clinic=clinic,
+                created_at__date__gte=seven_days_ago,
+                created_at__date__lte=today,
+            ).count(),
+        },
+    ]
+
+    attention_items = []
+
+    def append_items(queryset, *, kind, state, url_name, priority):
+        for item in queryset.order_by("-created_at")[:10]:
+            attention_items.append({
+                "patient": item.patient,
+                "kind": kind,
+                "state": state,
+                "created_at": item.created_at,
+                "url": reverse(url_name, args=[item.id]),
+                "priority": priority,
+            })
+
+    append_items(
+        recordings["waiting_recordings"],
+        kind="初診録音",
+        state="カルテ案確認待ち",
+        url_name="intakes:recording_detail",
+        priority=2,
+    )
+    append_items(
+        recordings["waiting_sessions"],
+        kind="通院施術録音",
+        state="カルテ案確認待ち",
+        url_name="treatment_sessions:detail",
+        priority=2,
+    )
+    append_items(
+        recordings["error_recordings"],
+        kind="初診録音",
+        state="エラーあり",
+        url_name="intakes:recording_detail",
+        priority=0,
+    )
+    append_items(
+        recordings["error_sessions"],
+        kind="通院施術録音",
+        state="エラーあり",
+        url_name="treatment_sessions:detail",
+        priority=0,
+    )
+    append_items(
+        recordings["transcript_only_recordings"],
+        kind="初診録音",
+        state="カルテ案作成待ち",
+        url_name="intakes:recording_detail",
+        priority=1,
+    )
+    append_items(
+        recordings["transcript_only_sessions"],
+        kind="通院施術録音",
+        state="カルテ案作成待ち",
+        url_name="treatment_sessions:detail",
+        priority=1,
+    )
+    append_items(
+        recordings["no_appointment_sessions"],
+        kind="通院施術録音",
+        state="予約情報なし",
+        url_name="treatment_sessions:detail",
+        priority=1,
+    )
+    attention_items = sorted(
+        attention_items,
+        key=lambda item: (
+            item["priority"],
+            -item["created_at"].timestamp(),
+        ),
+    )[:15]
+
+    return {
+        "today": today,
+        "seven_days_ago": seven_days_ago,
+        "today_cards": today_cards,
+        "recent_cards": recent_cards,
+        "attention_items": attention_items,
+        "attention_counts": {
+            "confirmation_waiting": waiting_count,
+            "recording_errors": (
+                recordings["error_recordings"].count()
+                + recordings["error_sessions"].count()
+            ),
+            "summary_waiting": (
+                recordings["transcript_only_recordings"].count()
+                + recordings["transcript_only_sessions"].count()
+            ),
+            "unconfirmed": waiting_count,
+            "without_appointment": recordings[
+                "no_appointment_sessions"
+            ].count(),
+        },
+    }
+
+
+@staff_required
+def staff_kpi_dashboard_view(request):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のKPIのみ閲覧できます。")
+
+    return render(request, "staff/kpi_dashboard.html", {
+        "active": "kpi",
+        "page_title": "KPI",
+        **build_staff_kpi_context(clinic),
     })
 
 
@@ -2335,6 +3236,430 @@ def register_clinical_note(request, recording_id):
     return redirect("staff:patient_detail", patient_id=patient.id)
 
 
+def normalize_timeline_event(
+    *,
+    event_date,
+    event_type,
+    title,
+    description,
+    status,
+    tone="neutral",
+    actions=None,
+    sort_priority=0,
+):
+    return {
+        "date": event_date,
+        "type": event_type,
+        "title": title,
+        "description": description,
+        "status": status,
+        "tone": tone,
+        "actions": actions or [],
+        "sort_priority": sort_priority,
+    }
+
+
+def build_patient_timeline(patient, clinic):
+    from apps.intakes.views import build_interview_recording_flow_state
+    from apps.treatment_sessions.views import (
+        build_treatment_session_flow_state,
+    )
+
+    notes = list(
+        ClinicalNote.objects
+        .filter(
+            patient=patient,
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+        )
+        .select_related("appointment", "recording", "treatment_session")
+        .order_by("-created_at")
+    )
+    notes_by_recording = {
+        note.recording_id: note
+        for note in notes
+        if note.recording_id
+    }
+    notes_by_session = {
+        note.treatment_session_id: note
+        for note in notes
+        if note.treatment_session_id
+    }
+
+    appointments = list(
+        Appointment.objects
+        .filter(
+            clinic=clinic,
+            patient=patient,
+            patient__clinic=clinic,
+        )
+        .select_related("assigned_staff")
+        .order_by("-start_at")
+    )
+    recordings = list(
+        InterviewRecording.objects
+        .filter(
+            clinic=clinic,
+            patient=patient,
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+        )
+        .filter(Q(intake__isnull=True) | Q(intake__clinic=clinic))
+        .select_related("appointment", "intake")
+        .order_by("-created_at")
+    )
+    sessions = list(
+        TreatmentSession.objects
+        .filter(
+            clinic=clinic,
+            patient=patient,
+            patient__clinic=clinic,
+        )
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
+            Q(intake__isnull=True) | Q(intake__clinic=clinic),
+            Q(clinical_note__isnull=True)
+            | Q(
+                clinical_note__patient__clinic=clinic,
+                clinical_note__appointment__clinic=clinic,
+            ),
+            Q(treatment_plan__isnull=True)
+            | Q(treatment_plan__patient__clinic=clinic),
+        )
+        .select_related(
+            "appointment",
+            "clinical_note",
+            "treatment_plan",
+        )
+        .prefetch_related("chunks")
+        .order_by("-created_at")
+    )
+    posture_assessments = list(
+        PostureAssessment.objects
+        .filter(
+            clinic=clinic,
+            patient=patient,
+            patient__clinic=clinic,
+        )
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
+            Q(treatment_session__isnull=True)
+            | Q(treatment_session__clinic=clinic),
+            Q(clinical_note__isnull=True)
+            | Q(
+                clinical_note__patient__clinic=clinic,
+                clinical_note__appointment__clinic=clinic,
+            ),
+        )
+        .select_related("appointment", "clinical_note")
+        .order_by("-created_at")
+    )
+    treatment_plans = list(
+        TreatmentPlan.objects
+        .filter(
+            patient=patient,
+            patient__clinic=clinic,
+        )
+        .filter(
+            Q(appointment__isnull=True) | Q(appointment__clinic=clinic),
+            Q(intake__isnull=True) | Q(intake__clinic=clinic),
+            Q(clinical_note__isnull=True)
+            | Q(
+                clinical_note__patient__clinic=clinic,
+                clinical_note__appointment__clinic=clinic,
+            ),
+        )
+        .select_related("appointment", "clinical_note")
+        .order_by("-created_at")
+    )
+
+    events = []
+    appointment_tones = {
+        Appointment.Status.PENDING: "attention",
+        Appointment.Status.BOOKED: "info",
+        Appointment.Status.ARRIVED: "processing",
+        Appointment.Status.COMPLETED: "done",
+        Appointment.Status.CANCELLED: "neutral",
+        Appointment.Status.NO_SHOW: "error",
+    }
+    for appointment in appointments:
+        local_start = timezone.localtime(appointment.start_at)
+        assigned_name = ""
+        if appointment.assigned_staff:
+            assigned_name = (
+                appointment.assigned_staff.get_full_name()
+                or appointment.assigned_staff.username
+            )
+        description = appointment.menu or "予約"
+        if assigned_name:
+            description = f"{description} / 担当：{assigned_name}"
+        events.append(normalize_timeline_event(
+            event_date=appointment.start_at,
+            event_type="予約",
+            title=appointment.menu or "来院予約",
+            description=description,
+            status=appointment.get_status_display(),
+            tone=appointment_tones.get(appointment.status, "neutral"),
+            actions=[
+                {
+                    "label": "予約一覧で確認",
+                    "url": (
+                        f"{reverse('staff:appointments')}"
+                        f"?period=day&day={local_start.date().isoformat()}"
+                    ),
+                },
+                {
+                    "label": "施術前チェックを開く",
+                    "url": reverse(
+                        "staff:pre_treatment_check",
+                        args=[patient.id],
+                    ),
+                },
+            ],
+        ))
+
+    for note in notes:
+        extract = (
+            note.extract_json
+            if isinstance(note.extract_json, dict)
+            else {}
+        )
+        soap = (
+            note.soap_json
+            if isinstance(note.soap_json, dict)
+            else {}
+        )
+        note_description = _compact_dashboard_text(
+            extract.get("overall_summary")
+            or extract.get("chief_complaint")
+            or _profile_section(soap, "S", "subjective"),
+            fallback="確定済みカルテを登録しました。",
+            limit=100,
+        )
+        events.append(normalize_timeline_event(
+            event_date=note.created_at,
+            event_type="カルテ",
+            title="施術カルテ",
+            description=note_description,
+            status="カルテ登録済み",
+            tone="done",
+            sort_priority=2,
+            actions=[
+                {
+                    "label": "カルテ詳細",
+                    "url": reverse(
+                        "staff:clinical_note_detail",
+                        args=[note.id],
+                    ),
+                },
+                {
+                    "label": "施術後サマリーを見る",
+                    "url": reverse(
+                        "staff:post_treatment_summary",
+                        args=[note.id],
+                    ),
+                },
+                {
+                    "label": "患者向け説明レポートを開く",
+                    "url": reverse(
+                        "staff:patient_aftercare_report",
+                        args=[note.id],
+                    ),
+                },
+            ],
+        ))
+        events.append(normalize_timeline_event(
+            event_date=note.updated_at,
+            event_type="患者向けレポート",
+            title="施術後説明レポート",
+            description=(
+                "本日のまとめ・セルフケア・次回確認ポイントを患者さん向けに表示できます。"
+            ),
+            status="表示可能",
+            tone="confirmed",
+            sort_priority=1,
+            actions=[
+                {
+                    "label": "患者向け説明レポートを開く",
+                    "url": reverse(
+                        "staff:patient_aftercare_report",
+                        args=[note.id],
+                    ),
+                },
+                {
+                    "label": "施術後サマリーを見る",
+                    "url": reverse(
+                        "staff:post_treatment_summary",
+                        args=[note.id],
+                    ),
+                },
+            ],
+        ))
+
+    for recording in recordings:
+        note = notes_by_recording.get(recording.id)
+        flow_state = build_interview_recording_flow_state(
+            recording,
+            clinical_note_exists=note is not None,
+            clinical_note_is_current=note is not None,
+        )
+        actions = [{
+            "label": "初診録音詳細",
+            "url": reverse(
+                "intakes:recording_detail",
+                args=[recording.id],
+            ),
+        }]
+        if note:
+            actions.append({
+                "label": "カルテ詳細",
+                "url": reverse(
+                    "staff:clinical_note_detail",
+                    args=[note.id],
+                ),
+            })
+        events.append(normalize_timeline_event(
+            event_date=recording.created_at,
+            event_type="初診録音",
+            title="初診・問診録音",
+            description=_compact_dashboard_text(
+                recording.transcript_text,
+                fallback="問診・主訴・初回評価の録音記録です。",
+                limit=100,
+            ),
+            status=flow_state["label"],
+            tone=flow_state["tone"],
+            actions=actions,
+        ))
+
+    for session in sessions:
+        note = notes_by_session.get(session.id) or session.clinical_note
+        flow_state = build_treatment_session_flow_state(
+            session,
+            session.chunks.all(),
+            clinical_note_exists=note is not None,
+            clinical_note_is_current=note is not None,
+        )
+        actions = [{
+            "label": "通院施術録音詳細",
+            "url": reverse(
+                "treatment_sessions:detail",
+                args=[session.id],
+            ),
+        }]
+        if note:
+            actions.append({
+                "label": "カルテ詳細",
+                "url": reverse(
+                    "staff:clinical_note_detail",
+                    args=[note.id],
+                ),
+            })
+        events.append(normalize_timeline_event(
+            event_date=session.started_at or session.created_at,
+            event_type="通院施術録音",
+            title=session.title or "通院施術録音",
+            description=_compact_dashboard_text(
+                session.transcript_text,
+                fallback="前回からの変化と本日の施術内容を記録しています。",
+                limit=100,
+            ),
+            status=flow_state["label"],
+            tone=flow_state["tone"],
+            actions=actions,
+        ))
+
+    posture_tones = {
+        PostureAssessment.Status.DRAFT: "neutral",
+        PostureAssessment.Status.ANALYZING: "processing",
+        PostureAssessment.Status.ANALYZED: "info",
+        PostureAssessment.Status.CONFIRMED: "confirmed",
+        PostureAssessment.Status.FAILED: "error",
+    }
+    for assessment in posture_assessments:
+        summary = assessment.get_active_summary()
+        description = _compact_dashboard_text(
+            _profile_section(
+                summary,
+                "report_summary_for_patient",
+                "reportSummaryForPatient",
+            )
+            or _profile_section(
+                summary,
+                "overall_summary",
+                "overallSummary",
+            )
+            or assessment.memo,
+            fallback="姿勢画像と身体バランスの傾向を記録しています。",
+            limit=100,
+        )
+        actions = [{
+            "label": "姿勢分析詳細",
+            "url": reverse(
+                "posture_assessments:detail",
+                args=[assessment.id],
+            ),
+        }]
+        if assessment.status in {
+            PostureAssessment.Status.ANALYZED,
+            PostureAssessment.Status.CONFIRMED,
+        }:
+            actions.append({
+                "label": "患者向け姿勢レポート",
+                "url": reverse(
+                    "posture_assessments:assessment_report",
+                    args=[assessment.id],
+                ),
+            })
+        events.append(normalize_timeline_event(
+            event_date=assessment.created_at,
+            event_type="姿勢分析",
+            title=assessment.title or "AI姿勢分析",
+            description=description,
+            status=assessment.get_status_display(),
+            tone=posture_tones.get(assessment.status, "neutral"),
+            actions=actions,
+        ))
+
+    plan_tones = {
+        "active": "processing",
+        "paused": "attention",
+        "completed": "done",
+    }
+    for plan in treatment_plans:
+        description = _compact_dashboard_text(
+            plan.chief_complaint
+            or plan.lifestyle_other_instruction
+            or plan.caution_notes,
+            fallback="施術目的と今後の進め方をまとめた計画です。",
+            limit=100,
+        )
+        events.append(normalize_timeline_event(
+            event_date=plan.created_at,
+            event_type="施術計画",
+            title=plan.title or "施術計画",
+            description=description,
+            status=plan.get_status_display(),
+            tone=plan_tones.get(plan.status, "neutral"),
+            actions=[{
+                "label": "施術計画詳細",
+                "url": reverse(
+                    "treatment_plans:plan_detail",
+                    args=[plan.id],
+                ),
+            }],
+        ))
+
+    return sorted(
+        events,
+        key=lambda event: (
+            event["date"],
+            event["sort_priority"],
+        ),
+        reverse=True,
+    )
+
+
 @staff_required
 def staff_patient_detail_view(request, patient_id):
     clinic = get_current_clinic(request)
@@ -2352,6 +3677,7 @@ def staff_patient_detail_view(request, patient_id):
     # ★ posture を追加
     valid_tabs = [
         "overview",
+        "timeline",
         "appointments",
         "clinical_notes",
         "treatment_plans",
@@ -2542,6 +3868,10 @@ def staff_patient_detail_view(request, patient_id):
             or ""
         )
 
+    timeline_events = []
+    if active_tab == "timeline":
+        timeline_events = build_patient_timeline(patient, clinic)
+
     return render(request, "staff/patients/detail.html", {
         "active": "patient_search",
         "page_title": "患者詳細",
@@ -2574,6 +3904,7 @@ def staff_patient_detail_view(request, patient_id):
         "latest_extract": latest_extract,
         "latest_assessment": latest_assessment,
         "latest_treatment_policy": latest_treatment_policy,
+        "timeline_events": timeline_events,
 
         # ★ AI姿勢分析
         "posture_assessments": posture_assessments,

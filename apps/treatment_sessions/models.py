@@ -200,7 +200,7 @@ class TreatmentSession(models.Model):
     def active_summary(self) -> dict:
         """
         確定済み要約があればそれを優先。
-        なければAI下書き要約を返す。
+        なければ未確認のカルテ案を返す。
         """
         if self.confirmed_summary_json:
             return self.confirmed_summary_json

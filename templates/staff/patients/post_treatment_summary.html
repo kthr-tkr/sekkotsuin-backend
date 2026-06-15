@@ -472,9 +472,9 @@
         <a class="post-btn light" href="{% url 'staff:patient_aftercare_report' note.id %}">
           患者向け説明レポートを開く
         </a>
-        <button type="button" class="post-btn light" onclick="window.print()">印刷</button>
+        <button type="button" class="post-btn light" onclick="window.print()">印刷する</button>
         <a class="post-btn" href="{% url 'staff:clinical_note_detail' note.id %}">カルテ詳細へ戻る</a>
-        <a class="post-btn" href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">患者詳細へ</a>
+        <a class="post-btn" href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">患者詳細へ戻る</a>
       </div>
     </div>
     <div class="post-hero-note">
@@ -669,7 +669,9 @@
             施術計画を見る
           </a>
         {% else %}
-          <div class="post-related-text">施術計画はまだ登録されていません。</div>
+          <div class="post-related-text">
+            施術計画はまだ作成されていません。カルテ情報をもとに施術計画を作成できます。
+          </div>
           <a class="post-link" href="{% url 'treatment_plans:plan_create_from_clinical_note' note.id %}">
             施術計画を作成
           </a>
@@ -684,7 +686,9 @@
             姿勢分析を見る
           </a>
         {% else %}
-          <div class="post-related-text">姿勢分析はまだ登録されていません。</div>
+          <div class="post-related-text">
+            姿勢分析はまだ登録されていません。姿勢写真を登録すると、身体特徴の確認に活用できます。
+          </div>
           <a class="post-link" href="{% url 'posture_assessments:create' patient.id %}">
             姿勢分析を作成
           </a>
@@ -709,7 +713,9 @@
             問診を見る
           </a>
         {% else %}
-          <div class="post-related-text">録音元または問診元は登録されていません。</div>
+          <div class="post-related-text">
+            録音元または問診元は登録されていません。必要に応じて患者詳細から録音を開始できます。
+          </div>
         {% endif %}
       </div>
     </div>

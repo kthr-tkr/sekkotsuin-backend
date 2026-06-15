@@ -716,7 +716,7 @@
             <span class="label-text">予約管理</span>
           </a>
 
-          <a href="{% url 'staff:patient_search' %}" class="{% if active == 'search' %}active{% endif %}">
+          <a href="{% url 'staff:patient_search' %}" class="{% if active == 'patient_search' or active == 'search' %}active{% endif %}">
             <span class="nav-icon">🔍</span>
             <span class="label-text">患者様一覧</span>
           </a>
@@ -726,7 +726,7 @@
             <span class="label-text">担当者一覧</span>
           </a>
 
-          <a href="{% url 'staff:settings' %}" class="{% if active == 'settings' %}active{% endif %}">
+          <a href="{% url 'staff:kpi_dashboard' %}" class="{% if active == 'kpi' %}active{% endif %}">
             <span class="nav-icon">📈</span>
             <span class="label-text">KPI</span>
           </a>

@@ -19,6 +19,7 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
 
     path("dashboard/", staff_dashboard_view, name="dashboard"),
+    path("kpi/", views.staff_kpi_dashboard_view, name="kpi_dashboard"),
 
     # 予約管理
     path("appointments/", staff_appointments_view, name="appointments"),

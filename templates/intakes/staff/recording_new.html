@@ -2,7 +2,7 @@
 {% extends "staff/_layout.html" %}
 {% load static %}
 
-{% block title %}CareFrow | AI問診アシスタント{% endblock %}
+{% block title %}CareFrow | 初診録音を開始{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'intakes/css/recording.css' %}">
@@ -701,15 +701,16 @@
 
   <header class="cf-ai-head">
     <div>
-      <div class="cf-ai-eyebrow">AI Interview Assistant</div>
-      <h1 class="cf-ai-title">AI問診アシスタント</h1>
+      <div class="cf-ai-eyebrow">Initial Interview Recording</div>
+      <h1 class="cf-ai-title">初診録音を開始</h1>
       <div class="cf-ai-sub">
         患者さんの訴えを録音し、SOAP・要点・確認事項を含むカルテ案へ整理します。
       </div>
     </div>
 
     <div class="cf-ai-actions">
-      <a class="cf-btn" href="{{ back_url|default:'javascript:history.back()' }}">← 戻る</a>
+      <a class="cf-btn" href="{% url 'staff:patient_detail' appointment.patient_id %}">患者詳細へ戻る</a>
+      <a class="cf-btn" href="{% url 'staff:appointments' %}">予約管理へ戻る</a>
     </div>
   </header>
 
@@ -766,7 +767,7 @@
           <div>
             <h2 class="cf-panel-title">聞き取りチェックリスト</h2>
             <div class="cf-panel-sub">
-              聞き漏れ防止のため、録音前に確認してください。すべて聞けなくても、AIが不足点を後で追加確認事項として整理します。
+              聞き漏れ防止のため、録音前に確認してください。不足している内容は、カルテ案の追加確認事項として整理されます。
             </div>
           </div>
           <span class="cf-chip">9 items</span>

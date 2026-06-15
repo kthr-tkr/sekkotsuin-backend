@@ -1531,6 +1531,181 @@
   transform:translateY(-1px);
 }
 
+.care-timeline{
+  position:relative;
+  display:grid;
+  gap:14px;
+  margin-top:20px;
+  padding-left:34px;
+}
+
+.care-timeline::before{
+  content:"";
+  position:absolute;
+  top:12px;
+  bottom:12px;
+  left:13px;
+  width:2px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#2563eb,#62b6a7,#dbe7f2);
+}
+
+.care-event{
+  position:relative;
+  display:grid;
+  grid-template-columns:142px minmax(0,1fr);
+  gap:18px;
+  padding:18px;
+  border:1px solid #e1e9f2;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 12px 28px rgba(15,23,42,.045);
+}
+
+.care-event::before{
+  content:"";
+  position:absolute;
+  top:26px;
+  left:-27px;
+  width:12px;
+  height:12px;
+  border:4px solid #eff6ff;
+  border-radius:999px;
+  background:#2563eb;
+  box-shadow:0 0 0 1px #bfdbfe;
+}
+
+.care-event-date{
+  color:#49627a;
+  font-size:12px;
+  font-weight:900;
+  line-height:1.6;
+}
+
+.care-event-type{
+  display:inline-flex;
+  width:max-content;
+  margin-top:7px;
+  padding:5px 9px;
+  border-radius:999px;
+  color:#1d4ed8;
+  background:#eff6ff;
+  font-size:10px;
+  font-weight:950;
+}
+
+.care-event-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.care-event-title{
+  margin:0;
+  color:#102a43;
+  font-size:16px;
+  font-weight:950;
+}
+
+.care-event-description{
+  margin-top:7px;
+  color:#60758a;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.75;
+}
+
+.care-status{
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  min-height:28px;
+  padding:0 10px;
+  border-radius:999px;
+  color:#52677d;
+  background:#f1f5f9;
+  font-size:10px;
+  font-weight:950;
+  white-space:nowrap;
+}
+
+.care-status.done,
+.care-status.confirmed{
+  color:#0f766e;
+  background:#e8faf5;
+}
+
+.care-status.info,
+.care-status.ready{
+  color:#1d4ed8;
+  background:#eff6ff;
+}
+
+.care-status.processing{
+  color:#0369a1;
+  background:#e0f2fe;
+}
+
+.care-status.attention{
+  color:#9a6700;
+  background:#fff5d6;
+}
+
+.care-status.error{
+  color:#b42318;
+  background:#fff0ee;
+}
+
+.care-event-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:13px;
+}
+
+.care-event-action{
+  display:inline-flex;
+  min-height:32px;
+  align-items:center;
+  justify-content:center;
+  padding:0 10px;
+  border:1px solid #d8e4ef;
+  border-radius:10px;
+  color:#245b86;
+  background:#f8fbfe;
+  font-size:10px;
+  font-weight:900;
+  text-decoration:none;
+  transition:.16s ease;
+}
+
+.care-event-action:hover{
+  color:#fff;
+  background:#2563eb;
+  border-color:#2563eb;
+}
+
+@media(max-width:720px){
+  .care-timeline{
+    padding-left:26px;
+  }
+
+  .care-timeline::before{
+    left:9px;
+  }
+
+  .care-event{
+    grid-template-columns:1fr;
+    gap:10px;
+    padding:16px;
+  }
+
+  .care-event::before{
+    left:-23px;
+  }
+}
+
 .posture-hero-card{
   position:relative;
   overflow:hidden;
@@ -1801,6 +1976,11 @@
       予約 <span>{{ appointment_count }}</span>
     </a>
 
+    <a class="patient-tab {% if active_tab == 'timeline' %}active{% endif %}"
+       href="{% url 'staff:patient_detail' patient.id %}?tab=timeline">
+      治療履歴
+    </a>
+
     <a class="patient-tab {% if active_tab == 'clinical_notes' %}active{% endif %}"
        href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">
       カルテ <span>{{ note_count }}</span>
@@ -2048,6 +2228,57 @@
       </div>
     </section>
 
+  {% elif active_tab == "timeline" %}
+
+    <section class="pd-card">
+      <div class="pd-section-head">
+        <div>
+          <h3 class="pd-section-title">治療履歴タイムライン</h3>
+          <div class="pd-section-sub">
+            予約・録音・カルテ・姿勢分析・施術計画を最新順に確認できます
+          </div>
+        </div>
+        <a href="{% url 'staff:pre_treatment_check' patient.id %}" class="section-btn">
+          施術前チェック
+        </a>
+      </div>
+
+      {% if timeline_events %}
+        <div class="care-timeline">
+          {% for event in timeline_events %}
+            <article class="care-event">
+              <div>
+                <div class="care-event-date">
+                  {{ event.date|date:"Y年m月d日 H:i" }}
+                </div>
+                <div class="care-event-type">{{ event.type }}</div>
+              </div>
+              <div>
+                <div class="care-event-head">
+                  <h4 class="care-event-title">{{ event.title }}</h4>
+                  <span class="care-status {{ event.tone }}">{{ event.status }}</span>
+                </div>
+                <div class="care-event-description">{{ event.description }}</div>
+                {% if event.actions %}
+                  <div class="care-event-actions">
+                    {% for action in event.actions %}
+                      <a class="care-event-action" href="{{ action.url }}">
+                        {{ action.label }}
+                      </a>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-box">
+          まだ治療履歴はありません。予約、録音、カルテ、姿勢分析を登録するとここに表示されます。
+        </div>
+      {% endif %}
+    </section>
+
   {% elif active_tab == "appointments" %}
 
     <section class="pd-card">
@@ -2117,7 +2348,7 @@
       <div class="section-row">
         <div>
           <h3 class="card-title">カルテ</h3>
-          <div class="card-sub">確定済みカルテの要点と履歴を確認できます</div>
+          <div class="card-sub">登録済みカルテの要点と履歴を確認できます</div>
         </div>
 
         <a href="{% url 'staff:pre_treatment_check' patient.id %}#recording-start" class="section-btn">
@@ -2208,7 +2439,14 @@
           </div>
         </div>
       {% else %}
-        <div class="empty-box">まだ確定カルテがありません。</div>
+        <div class="empty-box">
+          まだカルテは登録されていません。録音または手入力からカルテを作成できます。
+          <div style="margin-top:12px;">
+            <a href="{% url 'staff:pre_treatment_check' patient.id %}#recording-start" class="section-btn">
+              録音を開始する
+            </a>
+          </div>
+        </div>
       {% endif %}
     </section>
 
@@ -2298,7 +2536,9 @@
           {% endfor %}
         </div>
       {% else %}
-        <div class="empty-box">まだ確定カルテがありません。</div>
+        <div class="empty-box">
+          まだカルテは登録されていません。録音または手入力からカルテを作成すると、ここに履歴が表示されます。
+        </div>
       {% endif %}
     </section>
 
@@ -2527,7 +2767,12 @@
       </div>
     {% else %}
       <div class="empty-box">
-        まだ姿勢分析がありません。正面・側面・背面の写真を登録して、姿勢傾向を記録しましょう。
+        姿勢分析はまだ登録されていません。姿勢写真を登録すると、からだプロファイルや患者向けレポートに反映できます。
+        <div style="margin-top:12px;">
+          <a href="{% url 'posture_assessments:create' patient.id %}" class="section-btn">
+            姿勢分析を作成
+          </a>
+        </div>
       </div>
     {% endif %}
   </section>

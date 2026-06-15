@@ -1109,16 +1109,16 @@
       <div class="cn-eyebrow">Clinical Intelligence</div>
       <h1 class="cn-title">Clinical Note #{{ note.id }}</h1>
       <div class="cn-subtitle">
-        AI要約・SOAP・施術記録・次回方針を一画面で確認できます
+        カルテ要約・SOAP・施術記録・次回方針を一画面で確認できます
       </div>
     </div>
 
     <div class="cn-actions">
       <a href="{% url 'staff:post_treatment_summary' note.id %}" class="cn-btn primary">
-        施術後サマリー
+        施術後サマリーを見る
       </a>
       <a href="{% url 'staff:patient_aftercare_report' note.id %}" class="cn-btn">
-        患者向け説明レポート
+        患者向け説明レポートを開く
       </a>
 
       {% if related_plan %}
@@ -1136,7 +1136,7 @@
       </a>
 
       <a href="{% url 'staff:clinical_note_print' note.id %}" class="cn-btn" target="_blank">
-        印刷 / PDF
+        印刷する / PDF保存
       </a>
 
       <a href="{% url 'staff:patient_detail' note.patient_id %}" class="cn-btn">
@@ -1221,7 +1221,7 @@
 
       {% if ai_summary_text %}
         <div class="cn-ai-summary">
-          <div class="cn-ai-summary-label">AI要約</div>
+          <div class="cn-ai-summary-label">録音内容からの要約</div>
           <div class="cn-ai-summary-text">{{ ai_summary_text }}</div>
         </div>
       {% endif %}
@@ -1814,10 +1814,10 @@
 
       <div class="cn-actions" style="justify-content:flex-start;">
         <a href="{% url 'staff:post_treatment_summary' note.id %}" class="cn-btn primary">
-          施術後サマリー
+          施術後サマリーを見る
         </a>
         <a href="{% url 'staff:patient_aftercare_report' note.id %}" class="cn-btn">
-          患者向け説明レポート
+          患者向け説明レポートを開く
         </a>
 
         {% if related_plan %}
@@ -1921,7 +1921,7 @@
 
   <footer class="cn-footer">
     <div class="cn-status-row">
-      <span class="cn-tag green">確定カルテ</span>
+      <span class="cn-tag green">カルテ登録済み</span>
 
       {% if note.updated_by %}
         <span class="cn-tag">編集済み</span>

@@ -235,6 +235,26 @@ class InterviewRecordingFlowTests(TestCase):
             f'action="{reverse("intakes:recording_confirm", args=[self.recording.id])}"',
         )
 
+    def test_recording_detail_empty_state_explains_next_step_and_return_links(self):
+        empty_recording = InterviewRecording.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            appointment=self.appointment,
+            intake=self.intake,
+            created_by=self.user,
+            status=InterviewRecording.Status.PENDING,
+            summary_json={},
+        )
+
+        response = self.client.get(
+            reverse("intakes:recording_detail", args=[empty_recording.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "カルテ案はまだありません")
+        self.assertContains(response, "患者詳細へ戻る")
+        self.assertContains(response, "予約管理へ戻る")
+
     def test_no_clinic_user_recording_detail_returns_403(self):
         self.client.force_login(self.no_clinic_user)
 

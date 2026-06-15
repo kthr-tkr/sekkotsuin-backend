@@ -69,6 +69,13 @@
     font-weight:900;
   }
 
+  .brief-nav-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+  }
+
   .brief-hero-note{
     margin-top:18px;
     padding:12px 14px;
@@ -454,9 +461,14 @@
           / 患者ID：{{ patient.card_no|default:patient.id }}
         </div>
       </div>
-      <a class="brief-back" href="{% url 'staff:patient_detail' patient.id %}?tab=overview">
-        患者詳細へ戻る
-      </a>
+      <div class="brief-nav-actions">
+        <a class="brief-back" href="{% url 'staff:patient_detail' patient.id %}?tab=overview">
+          患者詳細へ戻る
+        </a>
+        <a class="brief-back" href="{% url 'staff:dashboard' %}">
+          ダッシュボードへ戻る
+        </a>
+      </div>
     </div>
     <div class="brief-hero-note">
       身体特徴、前回内容、本日の確認点を30秒で確認するための画面です。
@@ -614,13 +626,13 @@
         {% if latest_note %}
           <div style="display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end;">
             <a class="brief-action" href="{% url 'staff:post_treatment_summary' latest_note.id %}">
-              施術後サマリー
+              施術後サマリーを見る
             </a>
             <a class="brief-action" href="{% url 'staff:patient_aftercare_report' latest_note.id %}">
-              患者向け説明レポート
+              患者向け説明レポートを開く
             </a>
             <a class="brief-action" href="{% url 'staff:clinical_note_detail' latest_note.id %}">
-              詳細を見る
+              カルテ詳細を見る
             </a>
           </div>
         {% endif %}
@@ -638,7 +650,10 @@
           </div>
         </div>
       {% else %}
-        <div class="brief-empty">カルテはまだ登録されていません。</div>
+        <div class="brief-empty">
+          まだカルテは登録されていません。録音または手入力からカルテを作成できます。
+          下部の録音開始から来院目的に合う録音を選択してください。
+        </div>
       {% endif %}
     </section>
 
@@ -672,7 +687,12 @@
           </div>
         </div>
       {% else %}
-        <div class="brief-empty">姿勢分析はまだ登録されていません。</div>
+        <div class="brief-empty">
+          姿勢分析はまだ登録されていません。姿勢写真を登録すると、からだプロファイルや患者向けレポートに反映できます。
+          <div style="margin-top:10px;">
+            <a class="brief-action" href="{% url 'posture_assessments:create' patient.id %}">姿勢分析を作成</a>
+          </div>
+        </div>
       {% endif %}
     </section>
 
@@ -704,7 +724,12 @@
           </div>
         </div>
       {% else %}
-        <div class="brief-empty">施術計画はまだ登録されていません。</div>
+        <div class="brief-empty">
+          施術計画はまだ作成されていません。カルテ情報をもとに施術計画を作成できます。
+          <div style="margin-top:10px;">
+            <a class="brief-action" href="{% url 'treatment_plans:plan_create_for_patient' patient.id %}">施術計画を作成</a>
+          </div>
+        </div>
       {% endif %}
     </section>
   </div>

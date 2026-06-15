@@ -301,7 +301,7 @@
         </p>
       </div>
       <div class="confirm-status {% if is_confirmed %}done{% endif %}">
-        {% if is_confirmed %}確認済み{% else %}確認が必要{% endif %}
+        {% if is_confirmed %}確認済み{% else %}確認待ち{% endif %}
       </div>
     </div>
 
@@ -458,7 +458,10 @@
 
     <div class="confirm-action-bar">
       <a class="confirm-button secondary" href="{% url 'treatment_sessions:detail' session.id %}">
-        施術録音へ戻る
+        通院施術録音へ戻る
+      </a>
+      <a class="confirm-button secondary" href="{% url 'staff:patient_detail' session.patient_id %}">
+        患者詳細へ戻る
       </a>
       <button
         class="confirm-button"

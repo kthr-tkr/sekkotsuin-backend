@@ -1592,22 +1592,21 @@
 
   <div class="ai-topbar">
     <div class="ai-title">
-      <h1>AI問診結果</h1>
-      <div class="sub">AI要約・SOAP・追加確認事項を確認し、カルテ登録します</div>
+      <h1>初診録音詳細</h1>
+      <div class="sub">文字起こし・SOAP・追加確認事項を確認し、カルテ案を施術者が確認して登録します</div>
     </div>
 
     <div class="ai-head-right">
       <span class="badge">状態: <strong>{{ recording.get_status_display|default:recording.status }}</strong></span>
 
-      {% if summary %}
-        <span class="badge">model: <strong>{{ summary.meta.model|default:"" }}</strong></span>
-      {% endif %}
-
       {% if recording.audio_file %}
         <audio controls src="{{ recording.audio_file.url }}"></audio>
       {% endif %}
 
-      <a class="btn btn-light" href="{{ back_url|default:'javascript:history.back()' }}">← 戻る</a>
+      {% if recording.patient_id %}
+        <a class="btn btn-light" href="{% url 'staff:patient_detail' recording.patient_id %}">患者詳細へ戻る</a>
+      {% endif %}
+      <a class="btn btn-light" href="{% url 'staff:appointments' %}">予約管理へ戻る</a>
     </div>
   </div>
 
@@ -1878,9 +1877,9 @@
 
               <div class="summary-hero-tools">
                 {% if recording.summary_status == "confirmed" %}
-                  <span class="chip ok"><span class="dot"></span>確定済み</span>
+                  <span class="chip ok"><span class="dot"></span>確認済み</span>
                 {% else %}
-                  <span class="chip ng"><span class="dot"></span>カルテ案（要確認）</span>
+                  <span class="chip ng"><span class="dot"></span>確認待ち</span>
                 {% endif %}
 
                 <button type="button" class="miniBtn" data-open="modal-editor">
@@ -1988,9 +1987,9 @@
               {% if flow_state.is_registered %}
                 <span class="chip ok"><span class="dot"></span>カルテ登録済み</span>
               {% elif recording.summary_status == "confirmed" %}
-                <span class="chip ok"><span class="dot"></span>確定済み</span>
+                <span class="chip ok"><span class="dot"></span>確認済み</span>
               {% else %}
-                <span class="chip ng"><span class="dot"></span>未確定（カルテ案）</span>
+                <span class="chip ng"><span class="dot"></span>確認待ち</span>
               {% endif %}
             </div>
 
@@ -2083,7 +2082,9 @@
         </div>
 
       {% else %}
-        <div class="box muted">まだ要約がありません。</div>
+        <div class="box muted">
+          カルテ案はまだありません。文字起こし完了後、「録音内容からカルテ案を作成」へ進んでください。
+        </div>
 
         <div class="actions" style="margin-top:14px;">
           {% if flow_state.can_process %}
@@ -2123,7 +2124,9 @@
       {% if recording.transcript_text %}
         <div class="scrollBox">{{ recording.transcript_text }}</div>
       {% else %}
-        <div class="scrollBox muted">まだ文字起こしがありません。</div>
+        <div class="scrollBox muted">
+          文字起こしはまだありません。音声をアップロードし、録音内容の処理を実行してください。
+        </div>
       {% endif %}
     </div>
   </div>

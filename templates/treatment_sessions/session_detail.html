@@ -16,6 +16,14 @@
     box-shadow:0 18px 40px rgba(15,23,42,.08);
   }
 
+  .session-nav{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+    margin-bottom:18px;
+  }
+
   .session-kicker{
     font-size:12px;
     font-weight:900;
@@ -445,10 +453,16 @@
 {% block content %}
 <div class="session-page">
   <div class="session-card">
+    <div class="session-nav">
+      <a class="record-btn" href="{% url 'staff:patient_detail' session.patient_id %}">患者詳細へ戻る</a>
+      <a class="record-btn" href="{% url 'staff:appointments' %}">予約管理へ戻る</a>
+      <a class="record-btn" href="{% url 'staff:dashboard' %}">ダッシュボードへ戻る</a>
+    </div>
+
     <div class="session-kicker">Treatment Session</div>
 
     <h1 class="session-title">
-      施術セッション
+      通院施術録音
     </h1>
 
     <p class="session-sub">
@@ -650,7 +664,7 @@
                     </form>
                 {% elif chunk.transcript_text %}
                     <span class="chunk-badge" style="background:#dcfce7; color:#166534;">
-                    文字起こし済み
+                    文字起こし完了
                     </span>
                 {% endif %}
                 </div>
@@ -659,7 +673,7 @@
         </div>
         {% else %}
         <div class="empty-box">
-            まだ録音データはありません。
+            録音はまだありません。「録音開始」を押すと、本日の施術内容を記録できます。
         </div>
         {% endif %}
     </div>
@@ -671,7 +685,7 @@
         <span class="collapse-title">
             <span>統合文字起こし</span>
             <span class="collapse-sub">
-            AI要約の根拠となる全文テキストを確認できます
+            カルテ案の根拠となる全文テキストを確認できます
             </span>
         </span>
         <span class="collapse-icon">⌄</span>
@@ -730,7 +744,7 @@
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap;">
             <div style="max-width:720px;">
               <div style="color:#1e3a8a; font-size:16px; font-weight:900; margin-bottom:6px;">
-                {% if session.confirmed_summary_json %}確認済みのカルテ案{% else %}施術者の確認が必要です{% endif %}
+                {% if session.confirmed_summary_json %}確認済みのカルテ案{% else %}確認待ち{% endif %}
               </div>
               <div style="color:#475569; font-size:13px; line-height:1.75; font-weight:700;">
                 録音内容から作成したカルテ案を確認し、必要に応じて修正してからカルテへ登録できます。
@@ -1148,14 +1162,15 @@
     {% else %}
     <section class="chunk-section">
       <div class="empty-box">
-        カルテ案はまだありません。先に録音の文字起こしと要約作成を行ってください。
+        カルテ案はまだありません。録音の文字起こし完了後、「録音内容からカルテ案を作成」へ進んでください。
       </div>
     </section>
     {% endif %}
 
-    <a href="{% url 'staff:appointments' %}" class="back-link">
-      予約管理へ戻る
-    </a>
+    <div class="session-nav" style="margin-top:24px; margin-bottom:0;">
+      <a href="{% url 'staff:patient_detail' session.patient_id %}" class="back-link">患者詳細へ戻る</a>
+      <a href="{% url 'staff:appointments' %}" class="back-link">予約管理へ戻る</a>
+    </div>
   </div>
 </div>
 {% endblock %}
