@@ -1867,7 +1867,7 @@
           </div>
 
           <div class="ai-usage-chip">
-            <small>AI原価</small>
+            <small>概算AIコスト</small>
             <strong>{{ ai_usage_summary.estimated_cost_yen|default:0 }}円</strong>
           </div>
         </div>
@@ -1902,8 +1902,8 @@
           </div>
         {% endif %}
 
-        <a class="ai-detail-link" href="{% url 'staff:kpi_dashboard' %}">
-          KPI詳細へ →
+        <a class="ai-detail-link" href="{% url 'staff:ai_usage_dashboard' %}">
+          AI利用量を見る →
         </a>
       </div>
     </div>
@@ -2049,7 +2049,7 @@
         <div class="quick-sub">使い方・運用ルールを確認</div>
       </a>
 
-      <a class="quick-link" href="{% url 'staff:settings' %}">
+      <a class="quick-link" href="{% url 'staff:clinic_settings' %}">
         <div class="quick-icon">⚙</div>
         <div class="quick-title">設定</div>
         <div class="quick-sub">システム設定・運用設定</div>

@@ -20,6 +20,11 @@ urlpatterns = [
 
     path("dashboard/", staff_dashboard_view, name="dashboard"),
     path("kpi/", views.staff_kpi_dashboard_view, name="kpi_dashboard"),
+    path(
+        "ai-usage/",
+        views.staff_ai_usage_dashboard_view,
+        name="ai_usage_dashboard",
+    ),
 
     # 予約管理
     path("appointments/", staff_appointments_view, name="appointments"),
@@ -36,6 +41,31 @@ urlpatterns = [
     path("staff/", views.staff_list, name="staff_list"),
     path("manual/", views.staff_manual_view, name="manual"),
     path("settings/", views.staff_settings_view, name="settings"),
+    path(
+        "settings/clinic/",
+        views.staff_clinic_settings_view,
+        name="clinic_settings",
+    ),
+    path(
+        "settings/treatment-menus/",
+        views.staff_treatment_menu_list_view,
+        name="treatment_menu_list",
+    ),
+    path(
+        "settings/treatment-menus/new/",
+        views.staff_treatment_menu_create_view,
+        name="treatment_menu_create",
+    ),
+    path(
+        "settings/treatment-menus/<int:menu_id>/edit/",
+        views.staff_treatment_menu_update_view,
+        name="treatment_menu_update",
+    ),
+    path(
+        "settings/treatment-menus/<int:menu_id>/toggle/",
+        views.staff_treatment_menu_toggle_view,
+        name="treatment_menu_toggle",
+    ),
     path("recordings/<int:recording_id>/register/", views.register_clinical_note, name="register_clinical_note"),
     path("clinical_notes/<int:pk>/", views.staff_clinical_note_detail_view, name="clinical_note_detail"),
     path(

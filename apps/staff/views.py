@@ -18,7 +18,10 @@ from django.db.models import (
     Exists,
     OuterRef,
     Subquery,
+    Count,
+    Sum,
 )
+from django.db.models.functions import TruncDate
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -30,7 +33,7 @@ from apps.ai_jobs.usecases import run_ai_draft
 from apps.appointments.models import Appointment
 from apps.charts.models import ChartNote
 from apps.clinical_notes.models import ClinicalNote, ClinicalNoteHistory
-from apps.clinics.models import Clinic
+from apps.clinics.models import Clinic, ClinicSettings, TreatmentMenu
 from apps.intakes.forms import AREA_CHOICES, VISIT_TYPE_CHOICES, SYMPTOM_TYPE_CHOICES
 from apps.intakes.models import Intake, InterviewRecording
 from apps.patients.models import Patient
@@ -40,8 +43,9 @@ from apps.treatment_plans.models import TreatmentPlan
 from apps.treatment_sessions.models import TreatmentSession
 from apps.visits.models import Visit
 
-from .forms import StaffCreateForm
-from apps.ai_usage.services import build_ai_usage_summary
+from .forms import ClinicSettingsForm, StaffCreateForm, TreatmentMenuForm
+from apps.ai_usage.models import AiUsageLog, ClinicAiPlan
+from apps.ai_usage.services import build_ai_usage_summary, get_month_range
 from apps.posture_assessments.models import PostureAssessment
 
 INTAKE_FIELD_LABELS = {
@@ -1668,6 +1672,7 @@ def staff_appointments_view(request):
         return HttpResponseForbidden("所属院の予約のみ閲覧できます。")
 
     today = timezone.localdate()
+    clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
 
     day_str = request.GET.get("day") or today.isoformat()
     period = (request.GET.get("period") or "day").strip()
@@ -1775,6 +1780,27 @@ def staff_appointments_view(request):
         "filter_status": status,
         "filter_q": q,
         "status_choices": Appointment.Status.choices,
+        "clinic_settings": clinic_settings,
+        "calendar_slot_min": (
+            clinic_settings.business_start_time.strftime("%H:%M:%S")
+            if clinic_settings
+            else "08:00:00"
+        ),
+        "calendar_slot_max": (
+            clinic_settings.business_end_time.strftime("%H:%M:%S")
+            if clinic_settings
+            else "20:00:00"
+        ),
+        "calendar_slot_duration": (
+            f"00:{clinic_settings.appointment_interval_minutes:02d}:00"
+            if clinic_settings
+            and clinic_settings.appointment_interval_minutes < 60
+            else (
+                "01:00:00"
+                if clinic_settings
+                else "00:30:00"
+            )
+        ),
     }
 
     context["calendar_events"] = _build_calendar_events(appointments)
@@ -1785,6 +1811,7 @@ def staff_appointments_view(request):
             appointments=appointments,
             staff_users=staff_users,
             base_day=base_day,
+            clinic_settings=clinic_settings,
         )
 
     return render(request, "staff/appointments_calendar.html", context)
@@ -2438,6 +2465,405 @@ def staff_kpi_dashboard_view(request):
     })
 
 
+def _ai_usage_category(log):
+    metadata = log.metadata if isinstance(log.metadata, dict) else {}
+    source = str(metadata.get("source") or "").lower()
+
+    if log.usage_type == AiUsageLog.UsageType.POSTURE:
+        return "posture"
+    if log.usage_type == AiUsageLog.UsageType.TREATMENT_PLAN:
+        return "treatment_plan"
+    if (
+        metadata.get("treatment_session_id")
+        or "treatment_session" in source
+    ):
+        return "treatment_session"
+    if log.recording_id or "interview" in source:
+        return "interview_recording"
+    if log.usage_type in {
+        AiUsageLog.UsageType.SUMMARY,
+        AiUsageLog.UsageType.SOAP,
+    }:
+        return "clinical_summary"
+    return "other"
+
+
+def _ai_usage_warning_context(plan, used_minutes):
+    if plan is None:
+        return {
+            "level": "unconfigured",
+            "label": "プラン未設定",
+            "message": "AI料金プランが未設定です。利用ログは引き続き確認できます。",
+        }
+    if not plan.is_ai_enabled:
+        return {
+            "level": "disabled",
+            "label": "AI機能停止中",
+            "message": "この院のAI機能は現在無効です。",
+        }
+    if used_minutes >= plan.hard_limit_minutes:
+        return {
+            "level": "danger",
+            "label": "利用制限対象",
+            "message": "hard limitに達しています。上限設定をご確認ください。",
+        }
+
+    usage_percent = plan.usage_percent(used_minutes)
+    if usage_percent >= 100:
+        return {
+            "level": "overage",
+            "label": "上限超過",
+            "message": "上限を超過しています。追加利用またはプラン変更をご検討ください。",
+        }
+    if usage_percent >= 90:
+        return {
+            "level": "danger",
+            "label": "上限間近",
+            "message": "月間上限に近づいています。",
+        }
+    if usage_percent >= 70:
+        return {
+            "level": "warning",
+            "label": "注意",
+            "message": "AI利用量が増えています。残り分数にご注意ください。",
+        }
+    return {
+        "level": "normal",
+        "label": "通常",
+        "message": "AI利用量は通常範囲です。",
+    }
+
+
+def _safe_metadata_id(metadata, *keys):
+    if not isinstance(metadata, dict):
+        return None
+    for key in keys:
+        value = metadata.get(key)
+        if value in (None, ""):
+            continue
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def build_ai_usage_dashboard_context(clinic):
+    today = timezone.localdate()
+    month_start, next_month = get_month_range(today)
+    seven_days_ago = today - timedelta(days=6)
+
+    month_logs = list(
+        AiUsageLog.objects
+        .filter(
+            clinic=clinic,
+            status=AiUsageLog.Status.SUCCESS,
+            created_at__date__gte=month_start,
+            created_at__date__lt=next_month,
+        )
+        .only(
+            "id",
+            "usage_type",
+            "billing_minutes",
+            "input_tokens",
+            "output_tokens",
+            "estimated_cost_yen",
+            "metadata",
+            "recording_id",
+        )
+    )
+    monthly = {
+        "recording_minutes": sum(log.billing_minutes for log in month_logs),
+        "transcription_count": sum(
+            log.usage_type == AiUsageLog.UsageType.STT
+            for log in month_logs
+        ),
+        "summary_count": sum(
+            log.usage_type in {
+                AiUsageLog.UsageType.SUMMARY,
+                AiUsageLog.UsageType.SOAP,
+            }
+            for log in month_logs
+        ),
+        "posture_count": sum(
+            log.usage_type == AiUsageLog.UsageType.POSTURE
+            for log in month_logs
+        ),
+        "input_tokens": sum(log.input_tokens for log in month_logs),
+        "output_tokens": sum(log.output_tokens for log in month_logs),
+        "estimated_cost_yen": sum(
+            log.estimated_cost_yen for log in month_logs
+        ),
+    }
+    posture_assessment_count = PostureAssessment.objects.filter(
+        clinic=clinic,
+        status__in=[
+            PostureAssessment.Status.ANALYZED,
+            PostureAssessment.Status.CONFIRMED,
+        ],
+    ).filter(
+        Q(
+            analyzed_at__date__gte=month_start,
+            analyzed_at__date__lt=next_month,
+        )
+        | Q(
+            analyzed_at__isnull=True,
+            created_at__date__gte=month_start,
+            created_at__date__lt=next_month,
+        )
+    ).count()
+    monthly["posture_count"] = max(
+        monthly["posture_count"],
+        posture_assessment_count,
+    )
+
+    plan = ClinicAiPlan.objects.filter(clinic=clinic).first()
+    if plan:
+        included_minutes = plan.included_minutes
+        usage_percent = plan.usage_percent(monthly["recording_minutes"])
+        remaining_minutes = max(
+            included_minutes - monthly["recording_minutes"],
+            0,
+        )
+        overage_fee = plan.calc_overage_fee(
+            monthly["recording_minutes"]
+        )
+    else:
+        included_minutes = 0
+        usage_percent = 0
+        remaining_minutes = None
+        overage_fee = 0
+
+    monthly.update({
+        "included_minutes": included_minutes,
+        "remaining_minutes": remaining_minutes,
+        "usage_percent": usage_percent,
+        "usage_percent_bar": min(usage_percent, 100),
+        "overage_fee": overage_fee,
+    })
+    warning = _ai_usage_warning_context(
+        plan,
+        monthly["recording_minutes"],
+    )
+
+    daily_rows = list(
+        AiUsageLog.objects
+        .filter(
+            clinic=clinic,
+            status=AiUsageLog.Status.SUCCESS,
+            created_at__date__gte=seven_days_ago,
+            created_at__date__lte=today,
+        )
+        .annotate(day=TruncDate("created_at"))
+        .values("day")
+        .annotate(
+            recording_minutes=Sum("billing_minutes"),
+            process_count=Count("id"),
+            estimated_cost_yen=Sum("estimated_cost_yen"),
+        )
+        .order_by("day")
+    )
+    daily_map = {row["day"]: row for row in daily_rows}
+    daily_usage = []
+    for offset in range(7):
+        day = seven_days_ago + timedelta(days=offset)
+        row = daily_map.get(day, {})
+        daily_usage.append({
+            "day": day,
+            "recording_minutes": row.get("recording_minutes") or 0,
+            "process_count": row.get("process_count") or 0,
+            "estimated_cost_yen": row.get("estimated_cost_yen") or 0,
+        })
+    max_minutes = max(
+        (row["recording_minutes"] for row in daily_usage),
+        default=0,
+    )
+    max_processes = max(
+        (row["process_count"] for row in daily_usage),
+        default=0,
+    )
+    for row in daily_usage:
+        row["minutes_percent"] = (
+            round(row["recording_minutes"] / max_minutes * 100)
+            if max_minutes else 0
+        )
+        row["process_percent"] = (
+            round(row["process_count"] / max_processes * 100)
+            if max_processes else 0
+        )
+
+    category_specs = {
+        "interview_recording": "初診録音",
+        "treatment_session": "通院施術録音",
+        "posture": "姿勢分析",
+        "clinical_summary": "カルテ要約",
+        "treatment_plan": "施術計画",
+        "other": "その他",
+    }
+    category_map = {
+        key: {
+            "key": key,
+            "label": label,
+            "count": 0,
+            "recording_minutes": 0,
+            "estimated_cost_yen": 0,
+        }
+        for key, label in category_specs.items()
+    }
+    for log in month_logs:
+        item = category_map[_ai_usage_category(log)]
+        item["count"] += 1
+        item["recording_minutes"] += log.billing_minutes
+        item["estimated_cost_yen"] += log.estimated_cost_yen
+    category_usage = list(category_map.values())
+
+    recent_logs = list(
+        AiUsageLog.objects
+        .filter(clinic=clinic)
+        .select_related(
+            "patient",
+            "appointment",
+            "recording",
+        )
+        .order_by("-created_at")[:30]
+    )
+    session_ids = {
+        session_id
+        for log in recent_logs
+        if (
+            session_id := _safe_metadata_id(
+                log.metadata,
+                "treatment_session_id",
+                "session_id",
+            )
+        )
+    }
+    posture_ids = {
+        assessment_id
+        for log in recent_logs
+        if (
+            assessment_id := _safe_metadata_id(
+                log.metadata,
+                "posture_assessment_id",
+                "assessment_id",
+            )
+        )
+    }
+    sessions = TreatmentSession.objects.filter(
+        clinic=clinic,
+        pk__in=session_ids,
+    ).in_bulk()
+    assessments = PostureAssessment.objects.filter(
+        clinic=clinic,
+        pk__in=posture_ids,
+    ).in_bulk()
+
+    recent_items = []
+    for log in recent_logs:
+        category_key = _ai_usage_category(log)
+        related_url = ""
+        related_label = ""
+        if (
+            log.recording_id
+            and log.recording
+            and log.recording.clinic_id == clinic.id
+        ):
+            related_url = reverse(
+                "intakes:recording_detail",
+                args=[log.recording_id],
+            )
+            related_label = "初診録音詳細"
+        else:
+            session_id = _safe_metadata_id(
+                log.metadata,
+                "treatment_session_id",
+                "session_id",
+            )
+            assessment_id = _safe_metadata_id(
+                log.metadata,
+                "posture_assessment_id",
+                "assessment_id",
+            )
+            if session_id in sessions:
+                related_url = reverse(
+                    "treatment_sessions:detail",
+                    args=[session_id],
+                )
+                related_label = "通院施術録音詳細"
+            elif assessment_id in assessments:
+                related_url = reverse(
+                    "posture_assessments:detail",
+                    args=[assessment_id],
+                )
+                related_label = "姿勢分析詳細"
+            elif log.patient_id and log.patient.clinic_id == clinic.id:
+                related_url = reverse(
+                    "staff:patient_detail",
+                    args=[log.patient_id],
+                )
+                related_label = "患者詳細"
+
+        patient_name = "患者情報なし"
+        if log.patient_id and log.patient.clinic_id == clinic.id:
+            patient_name = str(log.patient)
+        elif log.appointment_id:
+            patient_name = (
+                f"予約 #{log.appointment_id}"
+            )
+
+        recent_items.append({
+            "log": log,
+            "category_label": category_specs[category_key],
+            "patient_name": patient_name,
+            "related_url": related_url,
+            "related_label": related_label,
+        })
+
+    plan_context = None
+    if plan:
+        plan_context = {
+            "name": plan.plan_name or "名称未設定",
+            "monthly_base_fee": plan.monthly_base_fee,
+            "included_minutes": plan.included_minutes,
+            "used_minutes": monthly["recording_minutes"],
+            "remaining_minutes": remaining_minutes,
+            "overage_unit_minutes": plan.overage_unit_minutes,
+            "overage_unit_price": plan.overage_unit_price,
+            "overage_fee": overage_fee,
+            "hard_limit_minutes": plan.hard_limit_minutes,
+            "is_ai_enabled": plan.is_ai_enabled,
+            "allow_overage": plan.allow_overage,
+        }
+
+    return {
+        "today": today,
+        "month_start": month_start,
+        "monthly_usage": monthly,
+        "usage_warning": warning,
+        "daily_usage": daily_usage,
+        "category_usage": category_usage,
+        "plan": plan_context,
+        "recent_usage_items": recent_items,
+    }
+
+
+@staff_required
+def staff_ai_usage_dashboard_view(request):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のAI利用状況のみ閲覧できます。")
+
+    return render(request, "staff/ai_usage_dashboard.html", {
+        "active": "ai_usage",
+        "page_title": "AI利用量・コスト管理",
+        **build_ai_usage_dashboard_context(clinic),
+    })
+
+
 @staff_required
 def staff_manual_view(request):
     return render(request, "staff/manual.html", {
@@ -2448,10 +2874,169 @@ def staff_manual_view(request):
 
 @staff_required
 def staff_settings_view(request):
-    return render(request, "staff/placeholder.html", {
+    return redirect("staff:clinic_settings")
+
+
+@staff_required
+def staff_clinic_settings_view(request):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の設定のみ編集できます。")
+
+    clinic_settings, _ = ClinicSettings.objects.get_or_create(
+        clinic=clinic,
+    )
+    if request.method == "POST":
+        form = ClinicSettingsForm(
+            request.POST,
+            instance=clinic_settings,
+            clinic=clinic,
+        )
+        if form.is_valid():
+            with transaction.atomic():
+                form.save()
+            messages.success(request, "院設定を保存しました。")
+            return redirect("staff:clinic_settings")
+    else:
+        form = ClinicSettingsForm(
+            instance=clinic_settings,
+            clinic=clinic,
+        )
+
+    return render(request, "staff/clinic_settings.html", {
         "active": "settings",
-        "page_title": "設定",
+        "page_title": "院設定",
+        "clinic": clinic,
+        "clinic_settings": clinic_settings,
+        "form": form,
     })
+
+
+def _format_yen(value):
+    try:
+        return f"¥{int(value):,}"
+    except (TypeError, ValueError):
+        return "¥0"
+
+
+def _require_staff_clinic(request, message):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return None, HttpResponseForbidden(message)
+    return clinic, None
+
+
+@staff_required
+def staff_treatment_menu_list_view(request):
+    clinic, forbidden_response = _require_staff_clinic(
+        request,
+        "所属院の施術メニューのみ閲覧できます。",
+    )
+    if forbidden_response:
+        return forbidden_response
+
+    menus = list(
+        TreatmentMenu.objects
+        .filter(clinic=clinic)
+        .order_by("display_order", "name", "id")
+    )
+    for menu in menus:
+        menu.price_display = _format_yen(menu.price)
+
+    return render(request, "staff/treatment_menu_list.html", {
+        "active": "treatment_menus",
+        "page_title": "施術メニュー・料金設定",
+        "clinic": clinic,
+        "menus": menus,
+        "active_menu_count": sum(1 for menu in menus if menu.is_active),
+    })
+
+
+@staff_required
+def staff_treatment_menu_create_view(request):
+    clinic, forbidden_response = _require_staff_clinic(
+        request,
+        "所属院の施術メニューのみ作成できます。",
+    )
+    if forbidden_response:
+        return forbidden_response
+
+    if request.method == "POST":
+        form = TreatmentMenuForm(request.POST, clinic=clinic)
+        if form.is_valid():
+            with transaction.atomic():
+                form.save()
+            messages.success(request, "施術メニューを登録しました。")
+            return redirect("staff:treatment_menu_list")
+    else:
+        form = TreatmentMenuForm(clinic=clinic)
+
+    return render(request, "staff/treatment_menu_form.html", {
+        "active": "treatment_menus",
+        "page_title": "施術メニューを追加",
+        "clinic": clinic,
+        "form": form,
+        "is_edit": False,
+        "menu": None,
+    })
+
+
+@staff_required
+def staff_treatment_menu_update_view(request, menu_id):
+    clinic, forbidden_response = _require_staff_clinic(
+        request,
+        "所属院の施術メニューのみ編集できます。",
+    )
+    if forbidden_response:
+        return forbidden_response
+
+    menu = get_object_or_404(TreatmentMenu, pk=menu_id, clinic=clinic)
+    if request.method == "POST":
+        form = TreatmentMenuForm(request.POST, instance=menu, clinic=clinic)
+        if form.is_valid():
+            with transaction.atomic():
+                form.save()
+            messages.success(request, "施術メニューを保存しました。")
+            return redirect("staff:treatment_menu_list")
+    else:
+        form = TreatmentMenuForm(instance=menu, clinic=clinic)
+
+    return render(request, "staff/treatment_menu_form.html", {
+        "active": "treatment_menus",
+        "page_title": "施術メニューを編集",
+        "clinic": clinic,
+        "form": form,
+        "is_edit": True,
+        "menu": menu,
+    })
+
+
+@staff_required
+@require_POST
+def staff_treatment_menu_toggle_view(request, menu_id):
+    clinic, forbidden_response = _require_staff_clinic(
+        request,
+        "所属院の施術メニューのみ変更できます。",
+    )
+    if forbidden_response:
+        return forbidden_response
+
+    menu = get_object_or_404(TreatmentMenu, pk=menu_id, clinic=clinic)
+    menu.is_active = not menu.is_active
+    menu.save(update_fields=["is_active", "updated_at"])
+    if menu.is_active:
+        messages.success(request, "施術メニューを再有効化しました。")
+    else:
+        messages.success(request, "施術メニューを無効化しました。")
+    return redirect("staff:treatment_menu_list")
 
 
 def _choice_dict(choices):
@@ -2699,13 +3284,27 @@ def _minutes_from_time(dt, base_day):
     return local_dt.hour * 60 + local_dt.minute
 
 
-def _build_day_timeline_rows(appointments, staff_users, base_day):
+def _build_day_timeline_rows(
+    appointments,
+    staff_users,
+    base_day,
+    clinic_settings=None,
+):
     """
     日表示用：横型スケジュール表データを作成する。
     横軸は 9:00〜19:00、縦軸は施術者。
     """
-    start_hour = 8
-    end_hour = 20
+    start_hour = (
+        clinic_settings.business_start_time.hour
+        if clinic_settings
+        else 8
+    )
+    end_hour = (
+        clinic_settings.business_end_time.hour
+        + (1 if clinic_settings.business_end_time.minute else 0)
+        if clinic_settings
+        else 20
+    )
     start_minutes = start_hour * 60
     end_minutes = end_hour * 60
     total_minutes = end_minutes - start_minutes

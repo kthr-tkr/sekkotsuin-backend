@@ -1968,7 +1968,12 @@
             <div>
               <h3 class="day-timeline-title">{{ day|date:"Y年n月j日(D)" }}</h3>
               <div class="day-timeline-note">
-                8:00〜20:00 の予約状況を施術者別に確認できます
+                {% if clinic_settings %}
+                  {{ clinic_settings.business_start_time|time:"H:i" }}〜{{ clinic_settings.business_end_time|time:"H:i" }}
+                {% else %}
+                  8:00〜20:00
+                {% endif %}
+                の予約状況を施術者別に確認できます
               </div>
             </div>
             <div class="day-timeline-note">
@@ -2424,8 +2429,8 @@
 
       firstDay: 1,
       navLinks: true,
-      slotDuration: "00:30:00",
-      snapDuration: "00:30:00",
+      slotDuration: "{{ calendar_slot_duration }}",
+      snapDuration: "{{ calendar_slot_duration }}",
       scrollTimeReset: false,
       editable: "{{ period }}" === "week",
       eventStartEditable: "{{ period }}" === "week",
@@ -2575,9 +2580,9 @@
       views: {
         timeGridWeek: {
           allDaySlot: false,
-          slotMinTime: "08:00:00",
-          slotMaxTime: "20:00:00",
-          slotDuration: "00:30:00",
+          slotMinTime: "{{ calendar_slot_min }}",
+          slotMaxTime: "{{ calendar_slot_max }}",
+          slotDuration: "{{ calendar_slot_duration }}",
           eventMinHeight: 36
         },
         dayGridMonth: {

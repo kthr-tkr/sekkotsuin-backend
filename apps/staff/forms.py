@@ -2,6 +2,8 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
+from apps.clinics.models import ClinicSettings, TreatmentMenu
+
 User = get_user_model()
 
 SYMPTOM_TYPE_CHOICES = [
@@ -87,6 +89,203 @@ class StaffCreateForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class ClinicSettingsForm(forms.ModelForm):
+    clinic_name = forms.CharField(
+        label="院名",
+        max_length=100,
+        widget=forms.TextInput(attrs={"placeholder": "CareFrow整骨院"}),
+    )
+    closed_weekdays = forms.MultipleChoiceField(
+        label="休診曜日",
+        choices=ClinicSettings.WEEKDAY_CHOICES,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = ClinicSettings
+        fields = (
+            "display_name",
+            "phone",
+            "address",
+            "booking_description",
+            "business_start_time",
+            "business_end_time",
+            "break_start_time",
+            "break_end_time",
+            "appointment_interval_minutes",
+            "closed_weekdays",
+            "primary_color",
+            "secondary_color",
+            "accent_color",
+        )
+        widgets = {
+            "display_name": forms.TextInput(
+                attrs={"placeholder": "予約画面などに表示する院名"}
+            ),
+            "phone": forms.TextInput(attrs={"placeholder": "03-1234-5678"}),
+            "address": forms.TextInput(
+                attrs={"placeholder": "東京都〇〇区〇〇 1-2-3"}
+            ),
+            "booking_description": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "予約時の注意事項や患者様へのご案内",
+                }
+            ),
+            "business_start_time": forms.TimeInput(
+                attrs={"type": "time"},
+                format="%H:%M",
+            ),
+            "business_end_time": forms.TimeInput(
+                attrs={"type": "time"},
+                format="%H:%M",
+            ),
+            "break_start_time": forms.TimeInput(
+                attrs={"type": "time"},
+                format="%H:%M",
+            ),
+            "break_end_time": forms.TimeInput(
+                attrs={"type": "time"},
+                format="%H:%M",
+            ),
+            "primary_color": forms.TextInput(
+                attrs={"placeholder": "#1D4ED8", "data-color-input": "1"}
+            ),
+            "secondary_color": forms.TextInput(
+                attrs={"placeholder": "#0F172A", "data-color-input": "1"}
+            ),
+            "accent_color": forms.TextInput(
+                attrs={"placeholder": "#16A34A", "data-color-input": "1"}
+            ),
+        }
+
+    def __init__(self, *args, clinic=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.clinic = clinic or getattr(self.instance, "clinic", None)
+        if self.clinic is not None:
+            self.fields["clinic_name"].initial = self.clinic.name
+        self.fields["closed_weekdays"].initial = (
+            self.instance.closed_weekdays or []
+            if self.instance and self.instance.pk
+            else []
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        business_start = cleaned_data.get("business_start_time")
+        business_end = cleaned_data.get("business_end_time")
+        break_start = cleaned_data.get("break_start_time")
+        break_end = cleaned_data.get("break_end_time")
+
+        if business_start and business_end and business_start >= business_end:
+            self.add_error(
+                "business_end_time",
+                "営業終了時刻は営業開始時刻より後にしてください。",
+            )
+
+        if bool(break_start) != bool(break_end):
+            self.add_error(
+                "break_end_time",
+                "休憩時間を設定する場合は開始・終了の両方を入力してください。",
+            )
+        elif break_start and break_end:
+            if break_start >= break_end:
+                self.add_error(
+                    "break_end_time",
+                    "休憩終了時刻は休憩開始時刻より後にしてください。",
+                )
+            elif (
+                business_start
+                and business_end
+                and (
+                    break_start < business_start
+                    or break_end > business_end
+                )
+            ):
+                self.add_error(
+                    "break_end_time",
+                    "休憩時間は営業時間内に設定してください。",
+                )
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        settings = super().save(commit=False)
+        if self.clinic is None:
+            raise ValueError("ClinicSettingsFormにはclinicが必要です。")
+        settings.clinic = self.clinic
+        settings.closed_weekdays = list(
+            self.cleaned_data.get("closed_weekdays") or []
+        )
+        self.clinic.name = self.cleaned_data["clinic_name"]
+
+        if commit:
+            self.clinic.save(update_fields=["name"])
+            settings.save()
+        return settings
+
+
+class TreatmentMenuForm(forms.ModelForm):
+    class Meta:
+        model = TreatmentMenu
+        fields = (
+            "name",
+            "description",
+            "price",
+            "duration_minutes",
+            "is_active",
+            "display_order",
+        )
+        widgets = {
+            "name": forms.TextInput(
+                attrs={"placeholder": "例：全身調整 30分"}
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": (
+                        "予約画面やスタッフ確認用の説明を入力してください。"
+                    ),
+                }
+            ),
+            "price": forms.NumberInput(attrs={"min": 0, "step": 1}),
+            "duration_minutes": forms.NumberInput(
+                attrs={"min": 5, "step": 5}
+            ),
+            "display_order": forms.NumberInput(attrs={"step": 1}),
+        }
+
+    def __init__(self, *args, clinic=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.clinic = clinic or getattr(self.instance, "clinic", None)
+
+    def clean_price(self):
+        price = self.cleaned_data.get("price")
+        if price is not None and price < 0:
+            raise forms.ValidationError("料金は0円以上で入力してください。")
+        return price
+
+    def clean_duration_minutes(self):
+        duration = self.cleaned_data.get("duration_minutes")
+        if duration is None:
+            return duration
+        if duration < 5:
+            raise forms.ValidationError("所要時間は5分以上で入力してください。")
+        if duration % 5 != 0:
+            raise forms.ValidationError("所要時間は5分単位で入力してください。")
+        return duration
+
+    def save(self, commit=True):
+        menu = super().save(commit=False)
+        if self.clinic is None:
+            raise ValueError("TreatmentMenuFormにはclinicが必要です。")
+        menu.clinic = self.clinic
+        if commit:
+            menu.save()
+        return menu
 
 def _list_to_text(value):
     """

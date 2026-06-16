@@ -8,9 +8,10 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.ai_usage.models import AiUsageLog, ClinicAiPlan
 from apps.appointments.models import Appointment
 from apps.clinical_notes.models import ClinicalNote
-from apps.clinics.models import Clinic
+from apps.clinics.models import Clinic, ClinicSettings, TreatmentMenu
 from apps.intakes import views as intake_views
 from apps.intakes.models import Intake, InterviewRecording
 from apps.patients.models import Patient
@@ -26,7 +27,11 @@ from apps.treatment_sessions.models import TreatmentSession
 class MajorWorkflowCopyTests(SimpleTestCase):
     template_paths = (
         "templates/staff/dashboard.html",
+        "templates/staff/ai_usage_dashboard.html",
+        "templates/staff/clinic_settings.html",
         "templates/staff/kpi_dashboard.html",
+        "templates/staff/treatment_menu_form.html",
+        "templates/staff/treatment_menu_list.html",
         "templates/staff/partials/recording_start_cards.html",
         "templates/staff/patients/search.html",
         "templates/staff/patients/detail.html",
@@ -330,7 +335,10 @@ class ProductionReadinessSmokeTests(TestCase):
     def _major_urls(self):
         return {
             "dashboard": reverse("staff:dashboard"),
+            "ai_usage_dashboard": reverse("staff:ai_usage_dashboard"),
+            "clinic_settings": reverse("staff:clinic_settings"),
             "kpi_dashboard": reverse("staff:kpi_dashboard"),
+            "treatment_menu_list": reverse("staff:treatment_menu_list"),
             "patient_list": reverse("staff:patient_search"),
             "patient_detail": reverse(
                 "staff:patient_detail",
@@ -901,6 +909,667 @@ class StaffKpiDashboardTests(TestCase):
         source = (
             inspect.getsource(staff_views.build_staff_kpi_context)
             + inspect.getsource(staff_views.staff_kpi_dashboard_view)
+        )
+
+        self.assertNotIn(".path", source)
+
+
+class StaffAiUsageDashboardTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.clinic = Clinic.objects.create(name="AI Usage Clinic")
+        self.other_clinic = Clinic.objects.create(name="Other AI Usage Clinic")
+        self.user = user_model.objects.create_user(
+            username="ai-usage-staff",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.ADMIN,
+        )
+        self.other_user = user_model.objects.create_user(
+            username="ai-usage-other",
+            password="test-password",
+            clinic=self.other_clinic,
+            role=user_model.Role.ADMIN,
+        )
+        self.no_clinic_user = user_model.objects.create_user(
+            username="ai-usage-no-clinic",
+            password="test-password",
+            role=user_model.Role.ADMIN,
+        )
+        self.patient = self._patient(
+            clinic=self.clinic,
+            card_no="AIUSE-A-001",
+            last_name="利用",
+            first_name="患者",
+            phone="09000000091",
+        )
+        self.other_patient = self._patient(
+            clinic=self.other_clinic,
+            card_no="AIUSE-B-001",
+            last_name="他院利用",
+            first_name="患者",
+            phone="09000000092",
+        )
+        now = timezone.now()
+        self.appointment = self._appointment(
+            clinic=self.clinic,
+            patient=self.patient,
+            user=self.user,
+            start_at=now,
+        )
+        self.other_appointment = self._appointment(
+            clinic=self.other_clinic,
+            patient=self.other_patient,
+            user=self.other_user,
+            start_at=now,
+        )
+        self.recording = InterviewRecording.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            appointment=self.appointment,
+            created_by=self.user,
+        )
+        self.session = TreatmentSession.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            status=TreatmentSession.Status.DONE,
+            created_by=self.user,
+            updated_by=self.user,
+        )
+        self.posture = PostureAssessment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            status=PostureAssessment.Status.ANALYZED,
+            created_by=self.user,
+        )
+        self.plan = ClinicAiPlan.objects.create(
+            clinic=self.clinic,
+            plan_name="CareFrow 100",
+            monthly_base_fee=12000,
+            included_minutes=100,
+            overage_unit_minutes=20,
+            overage_unit_price=1000,
+            hard_limit_minutes=160,
+            is_ai_enabled=True,
+        )
+        self.initial_stt = self._usage_log(
+            clinic=self.clinic,
+            patient=self.patient,
+            appointment=self.appointment,
+            recording=self.recording,
+            user=self.user,
+            usage_type=AiUsageLog.UsageType.STT,
+            billing_minutes=30,
+            cost=120,
+            input_tokens=100,
+            output_tokens=20,
+            model_name="gpt-4o-mini-transcribe",
+            metadata={"source": "interview_recording"},
+        )
+        self.session_stt = self._usage_log(
+            clinic=self.clinic,
+            patient=self.patient,
+            appointment=self.appointment,
+            user=self.user,
+            usage_type=AiUsageLog.UsageType.STT,
+            billing_minutes=15,
+            cost=80,
+            input_tokens=80,
+            output_tokens=10,
+            model_name="gpt-4o-mini-transcribe",
+            metadata={
+                "source": "treatment_session_chunk",
+                "treatment_session_id": self.session.id,
+            },
+        )
+        self._usage_log(
+            clinic=self.clinic,
+            patient=self.patient,
+            appointment=self.appointment,
+            user=self.user,
+            usage_type=AiUsageLog.UsageType.SUMMARY,
+            billing_minutes=0,
+            cost=40,
+            input_tokens=200,
+            output_tokens=70,
+            model_name="gpt-4.1-mini",
+            metadata={
+                "source": "treatment_session",
+                "treatment_session_id": self.session.id,
+            },
+        )
+        self._usage_log(
+            clinic=self.clinic,
+            patient=self.patient,
+            appointment=self.appointment,
+            user=self.user,
+            usage_type=AiUsageLog.UsageType.POSTURE,
+            billing_minutes=0,
+            cost=60,
+            input_tokens=300,
+            output_tokens=100,
+            model_name="gpt-4.1-mini",
+            metadata={
+                "source": "posture_assessment",
+                "assessment_id": self.posture.id,
+            },
+        )
+        self._usage_log(
+            clinic=self.other_clinic,
+            patient=self.other_patient,
+            appointment=self.other_appointment,
+            user=self.other_user,
+            usage_type=AiUsageLog.UsageType.STT,
+            billing_minutes=900,
+            cost=9999,
+            input_tokens=9999,
+            output_tokens=9999,
+            model_name="OTHER_CLINIC_MODEL",
+            metadata={"source": "interview_recording"},
+        )
+        self.client.force_login(self.user)
+
+    @staticmethod
+    def _patient(*, clinic, card_no, last_name, first_name, phone):
+        return Patient.objects.create(
+            clinic=clinic,
+            card_no=card_no,
+            last_name=last_name,
+            first_name=first_name,
+            last_name_kana="テスト",
+            first_name_kana="カンジャ",
+            birth_date=date(1990, 1, 1),
+            phone=phone,
+        )
+
+    @staticmethod
+    def _appointment(*, clinic, patient, user, start_at):
+        return Appointment.objects.create(
+            clinic=clinic,
+            patient=patient,
+            start_at=start_at,
+            end_at=start_at + timedelta(hours=1),
+            menu="AI利用確認",
+            status=Appointment.Status.COMPLETED,
+            assigned_staff=user,
+            created_by=user,
+        )
+
+    @staticmethod
+    def _usage_log(
+        *,
+        clinic,
+        patient,
+        appointment,
+        user,
+        usage_type,
+        billing_minutes,
+        cost,
+        input_tokens,
+        output_tokens,
+        model_name,
+        metadata,
+        recording=None,
+    ):
+        return AiUsageLog.objects.create(
+            clinic=clinic,
+            patient=patient,
+            appointment=appointment,
+            recording=recording,
+            usage_type=usage_type,
+            status=AiUsageLog.Status.SUCCESS,
+            model_name=model_name,
+            billing_minutes=billing_minutes,
+            audio_duration_sec=billing_minutes * 60,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            estimated_cost_yen=cost,
+            metadata=metadata,
+            created_by=user,
+        )
+
+    def _url(self):
+        return reverse("staff:ai_usage_dashboard")
+
+    def test_ai_usage_aggregates_only_own_clinic_logs(self):
+        response = self.client.get(self._url())
+
+        self.assertEqual(response.status_code, 200)
+        monthly = response.context["monthly_usage"]
+        self.assertEqual(monthly["recording_minutes"], 45)
+        self.assertEqual(monthly["transcription_count"], 2)
+        self.assertEqual(monthly["summary_count"], 1)
+        self.assertEqual(monthly["posture_count"], 1)
+        self.assertEqual(monthly["estimated_cost_yen"], 300)
+        self.assertEqual(monthly["usage_percent"], 45)
+        self.assertContains(response, "利用 患者")
+        self.assertNotContains(response, "他院利用 患者")
+        self.assertNotContains(response, "OTHER_CLINIC_MODEL")
+
+    def test_ai_usage_displays_plan_and_usage_rate(self):
+        response = self.client.get(self._url())
+
+        self.assertContains(response, "CareFrow 100")
+        self.assertContains(response, "月間使用率")
+        self.assertContains(response, "45%")
+        self.assertContains(response, "55分")
+        self.assertContains(response, "実際の請求額とは異なる場合があります")
+
+    def test_ai_usage_without_plan_does_not_fail(self):
+        self.plan.delete()
+
+        response = self.client.get(self._url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["plan"])
+        self.assertContains(response, "AI料金プランはまだ設定されていません")
+        self.assertContains(response, "プラン未設定")
+
+    def test_recent_usage_logs_and_related_links_are_displayed(self):
+        response = self.client.get(self._url())
+
+        self.assertContains(response, "gpt-4o-mini-transcribe")
+        self.assertContains(
+            response,
+            reverse(
+                "intakes:recording_detail",
+                args=[self.recording.id],
+            ),
+        )
+        self.assertContains(
+            response,
+            reverse(
+                "treatment_sessions:detail",
+                args=[self.session.id],
+            ),
+        )
+        self.assertContains(
+            response,
+            reverse(
+                "posture_assessments:detail",
+                args=[self.posture.id],
+            ),
+        )
+
+    def test_dashboard_links_to_ai_usage_screen(self):
+        response = self.client.get(reverse("staff:dashboard"))
+
+        self.assertContains(response, "AI利用量を見る")
+        self.assertContains(response, self._url())
+
+    def test_user_without_clinic_cannot_open_ai_usage(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self.client.get(self._url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_ai_usage_view_does_not_use_file_path(self):
+        source = (
+            inspect.getsource(staff_views.build_ai_usage_dashboard_context)
+            + inspect.getsource(staff_views.staff_ai_usage_dashboard_view)
+        )
+
+        self.assertNotIn(".path", source)
+
+
+class StaffClinicSettingsTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.clinic = Clinic.objects.create(name="設定前院名")
+        self.other_clinic = Clinic.objects.create(name="他院設定")
+        self.user = user_model.objects.create_user(
+            username="clinic-settings-staff",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.ADMIN,
+        )
+        self.other_user = user_model.objects.create_user(
+            username="clinic-settings-other",
+            password="test-password",
+            clinic=self.other_clinic,
+            role=user_model.Role.ADMIN,
+        )
+        self.no_clinic_user = user_model.objects.create_user(
+            username="clinic-settings-no-clinic",
+            password="test-password",
+            role=user_model.Role.ADMIN,
+        )
+        self.other_settings = ClinicSettings.objects.create(
+            clinic=self.other_clinic,
+            display_name="他院表示名",
+            phone="099-999-9999",
+            primary_color="#999999",
+        )
+        self.client.force_login(self.user)
+
+    def _url(self):
+        return reverse("staff:clinic_settings")
+
+    def _valid_data(self, **overrides):
+        data = {
+            "clinic_name": "CareFrow中央院",
+            "display_name": "CareFrow 中央",
+            "phone": "03-1234-5678",
+            "address": "東京都中央区1-2-3",
+            "booking_description": "ご予約時間の5分前にお越しください。",
+            "business_start_time": "09:00",
+            "business_end_time": "20:00",
+            "break_start_time": "13:00",
+            "break_end_time": "15:00",
+            "appointment_interval_minutes": "30",
+            "closed_weekdays": ["sun", "wed"],
+            "primary_color": "#1D4ED8",
+            "secondary_color": "#0F172A",
+            "accent_color": "#16A34A",
+        }
+        data.update(overrides)
+        return data
+
+    def test_own_clinic_settings_page_returns_200(self):
+        response = self.client.get(self._url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "staff/clinic_settings.html")
+        self.assertEqual(response.context["clinic"], self.clinic)
+        self.assertTrue(
+            ClinicSettings.objects.filter(clinic=self.clinic).exists()
+        )
+        self.assertContains(response, "院設定を保存")
+
+    def test_clinic_settings_can_be_saved(self):
+        response = self.client.post(self._url(), self._valid_data())
+
+        self.assertRedirects(response, self._url())
+        self.clinic.refresh_from_db()
+        settings = ClinicSettings.objects.get(clinic=self.clinic)
+        self.assertEqual(self.clinic.name, "CareFrow中央院")
+        self.assertEqual(settings.display_name, "CareFrow 中央")
+        self.assertEqual(settings.appointment_interval_minutes, 30)
+        self.assertEqual(settings.closed_weekdays, ["sun", "wed"])
+        self.assertEqual(settings.primary_color, "#1D4ED8")
+
+    def test_business_start_must_be_before_end(self):
+        response = self.client.post(
+            self._url(),
+            self._valid_data(
+                business_start_time="20:00",
+                business_end_time="09:00",
+            ),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            "business_end_time",
+            response.context["form"].errors,
+        )
+
+    def test_break_time_must_be_inside_business_hours(self):
+        response = self.client.post(
+            self._url(),
+            self._valid_data(
+                break_start_time="08:00",
+                break_end_time="10:00",
+            ),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            "break_end_time",
+            response.context["form"].errors,
+        )
+
+    def test_invalid_color_code_is_rejected(self):
+        response = self.client.post(
+            self._url(),
+            self._valid_data(primary_color="blue"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("primary_color", response.context["form"].errors)
+
+    def test_invalid_appointment_interval_is_rejected(self):
+        response = self.client.post(
+            self._url(),
+            self._valid_data(appointment_interval_minutes="25"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            "appointment_interval_minutes",
+            response.context["form"].errors,
+        )
+
+    def test_post_cannot_modify_other_clinic_settings(self):
+        data = self._valid_data()
+        data["clinic"] = str(self.other_clinic.id)
+
+        response = self.client.post(self._url(), data)
+
+        self.assertRedirects(response, self._url())
+        self.other_settings.refresh_from_db()
+        self.assertEqual(self.other_settings.display_name, "他院表示名")
+        self.assertEqual(self.other_settings.phone, "099-999-9999")
+        self.assertEqual(self.other_settings.primary_color, "#999999")
+
+    def test_user_without_clinic_cannot_open_settings(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self.client.get(self._url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_saved_schedule_is_exposed_to_appointment_calendar(self):
+        settings = ClinicSettings.objects.create(
+            clinic=self.clinic,
+            business_start_time=time(10, 0),
+            business_end_time=time(18, 0),
+            appointment_interval_minutes=15,
+        )
+
+        response = self.client.get(reverse("staff:appointments"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["clinic_settings"], settings)
+        self.assertEqual(response.context["calendar_slot_min"], "10:00:00")
+        self.assertEqual(response.context["calendar_slot_max"], "18:00:00")
+        self.assertEqual(
+            response.context["calendar_slot_duration"],
+            "00:15:00",
+        )
+
+    def test_staff_layout_exposes_clinic_theme_variables(self):
+        ClinicSettings.objects.create(
+            clinic=self.clinic,
+            primary_color="#123456",
+            secondary_color="#234567",
+            accent_color="#345678",
+        )
+
+        response = self.client.get(self._url())
+
+        self.assertContains(response, "--clinic-primary-color:#123456")
+        self.assertContains(response, "--clinic-secondary-color:#234567")
+        self.assertContains(response, "--clinic-accent-color:#345678")
+
+    def test_clinic_settings_view_does_not_use_file_path(self):
+        source = inspect.getsource(
+            staff_views.staff_clinic_settings_view
+        )
+
+        self.assertNotIn(".path", source)
+
+
+class StaffTreatmentMenuTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.clinic = Clinic.objects.create(name="料金設定院")
+        self.other_clinic = Clinic.objects.create(name="他院料金")
+        self.user = user_model.objects.create_user(
+            username="treatment-menu-staff",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.ADMIN,
+        )
+        self.other_user = user_model.objects.create_user(
+            username="treatment-menu-other",
+            password="test-password",
+            clinic=self.other_clinic,
+            role=user_model.Role.ADMIN,
+        )
+        self.no_clinic_user = user_model.objects.create_user(
+            username="treatment-menu-no-clinic",
+            password="test-password",
+            role=user_model.Role.ADMIN,
+        )
+        self.other_menu = TreatmentMenu.objects.create(
+            clinic=self.other_clinic,
+            name="他院限定メニュー",
+            description="他院の料金です。",
+            price=99999,
+            duration_minutes=60,
+        )
+        self.client.force_login(self.user)
+
+    def _list_url(self):
+        return reverse("staff:treatment_menu_list")
+
+    def _create_url(self):
+        return reverse("staff:treatment_menu_create")
+
+    def _update_url(self, menu):
+        return reverse("staff:treatment_menu_update", args=[menu.id])
+
+    def _toggle_url(self, menu):
+        return reverse("staff:treatment_menu_toggle", args=[menu.id])
+
+    def _valid_data(self, **overrides):
+        data = {
+            "name": "全身調整 30分",
+            "description": "姿勢や動作の状態に合わせて調整します。",
+            "price": "5000",
+            "duration_minutes": "30",
+            "is_active": "on",
+            "display_order": "10",
+        }
+        data.update(overrides)
+        return data
+
+    def test_own_staff_can_open_treatment_menu_list(self):
+        response = self.client.get(self._list_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "staff/treatment_menu_list.html")
+        self.assertContains(response, "施術メニュー・料金設定")
+        self.assertContains(response, "施術メニューはまだ登録されていません")
+        self.assertNotContains(response, "他院限定メニュー")
+
+    def test_user_without_clinic_cannot_open_treatment_menu_list(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self.client.get(self._list_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_treatment_menu_can_be_created(self):
+        response = self.client.post(self._create_url(), self._valid_data())
+
+        self.assertRedirects(response, self._list_url())
+        menu = TreatmentMenu.objects.get(clinic=self.clinic)
+        self.assertEqual(menu.name, "全身調整 30分")
+        self.assertEqual(menu.price, 5000)
+        self.assertEqual(menu.duration_minutes, 30)
+        self.assertTrue(menu.is_active)
+
+    def test_treatment_menu_can_be_updated(self):
+        menu = TreatmentMenu.objects.create(
+            clinic=self.clinic,
+            name="旧メニュー",
+            price=3000,
+            duration_minutes=20,
+        )
+
+        response = self.client.post(
+            self._update_url(menu),
+            self._valid_data(
+                name="骨盤バランス調整",
+                price="6500",
+                duration_minutes="45",
+                display_order="2",
+            ),
+        )
+
+        self.assertRedirects(response, self._list_url())
+        menu.refresh_from_db()
+        self.assertEqual(menu.name, "骨盤バランス調整")
+        self.assertEqual(menu.price, 6500)
+        self.assertEqual(menu.duration_minutes, 45)
+        self.assertEqual(menu.display_order, 2)
+
+    def test_other_clinic_menu_update_returns_404(self):
+        response = self.client.get(self._update_url(self.other_menu))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_negative_price_is_rejected(self):
+        response = self.client.post(
+            self._create_url(),
+            self._valid_data(price="-1"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("price", response.context["form"].errors)
+
+    def test_invalid_duration_is_rejected(self):
+        response = self.client.post(
+            self._create_url(),
+            self._valid_data(duration_minutes="7"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("duration_minutes", response.context["form"].errors)
+
+    def test_treatment_menu_can_be_disabled_and_reenabled(self):
+        menu = TreatmentMenu.objects.create(
+            clinic=self.clinic,
+            name="アクティブメニュー",
+            price=4000,
+            duration_minutes=30,
+        )
+
+        response = self.client.post(self._toggle_url(menu))
+
+        self.assertRedirects(response, self._list_url())
+        menu.refresh_from_db()
+        self.assertFalse(menu.is_active)
+
+        response = self.client.post(self._toggle_url(menu))
+
+        self.assertRedirects(response, self._list_url())
+        menu.refresh_from_db()
+        self.assertTrue(menu.is_active)
+
+    def test_other_clinic_menu_is_not_displayed_on_list(self):
+        TreatmentMenu.objects.create(
+            clinic=self.clinic,
+            name="自院メニュー",
+            price=5000,
+            duration_minutes=30,
+        )
+
+        response = self.client.get(self._list_url())
+
+        self.assertContains(response, "自院メニュー")
+        self.assertContains(response, "¥5,000")
+        self.assertNotContains(response, "他院限定メニュー")
+        self.assertNotContains(response, "99999")
+
+    def test_treatment_menu_views_do_not_use_file_path(self):
+        source = (
+            inspect.getsource(staff_views.staff_treatment_menu_list_view)
+            + inspect.getsource(staff_views.staff_treatment_menu_create_view)
+            + inspect.getsource(staff_views.staff_treatment_menu_update_view)
+            + inspect.getsource(staff_views.staff_treatment_menu_toggle_view)
         )
 
         self.assertNotIn(".path", source)

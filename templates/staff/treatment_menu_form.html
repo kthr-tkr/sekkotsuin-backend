@@ -1,0 +1,87 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | {{ page_title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .menu-form-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
+  .menu-form-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;padding:28px;border-radius:28px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 24px 56px rgba(20,48,91,.2)}
+  .menu-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.menu-title{margin:8px 0 10px;font-size:32px;letter-spacing:-.04em}.menu-lead{margin:0;color:#e2edff;line-height:1.7}
+  .menu-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.menu-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.menu-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}
+  .menu-form-card{padding:24px;border:1px solid #e1e8f1;border-radius:24px;background:#fff;box-shadow:0 13px 32px rgba(20,42,76,.06)}
+  .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.field.full{grid-column:1/-1}.field label{display:block;margin-bottom:7px;font-size:12px;font-weight:900;color:#425873}
+  .field input,.field textarea{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #ccd7e5;border-radius:12px;background:#fbfcfe;color:#1b304d;font:inherit;outline:none}.field textarea{resize:vertical;line-height:1.65}
+  .field input:focus,.field textarea:focus{border-color:#4b83c7;box-shadow:0 0 0 3px rgba(75,131,199,.11);background:#fff}
+  .check-row{display:flex;align-items:center;gap:9px;padding:13px;border:1px solid #d9e2ed;border-radius:12px;background:#f8fafc}.check-row input{width:auto}
+  .field-error{margin-top:6px;color:#b42323;font-size:12px;font-weight:700}.form-errors{padding:14px 16px;margin-bottom:16px;border:1px solid #f1caca;border-radius:14px;background:#fff6f6;color:#a52a2a;font-size:13px}
+  .form-note{margin-top:18px;padding:14px 16px;border-radius:15px;background:#f1f7ff;border:1px solid #d9e8fa;color:#335a88;font-size:13px;line-height:1.7}
+  .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+  @media(max-width:800px){.menu-form-hero{flex-direction:column;align-items:flex-start}.field-grid{grid-template-columns:1fr}.menu-form-card{padding:18px}.form-actions{flex-direction:column}.menu-btn{width:100%}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="menu-form-page">
+  <header class="menu-form-hero">
+    <div>
+      <div class="menu-eyebrow">PRICE MASTER</div>
+      <h1 class="menu-title">{{ page_title }}</h1>
+      <p class="menu-lead">施術メニューの料金と所要時間を設定します。売上KPIや予約管理へつながる基礎情報です。</p>
+    </div>
+    <a class="menu-btn soft" href="{% url 'staff:treatment_menu_list' %}">一覧へ戻る</a>
+  </header>
+
+  <form method="post" class="menu-form-card" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="field-grid">
+      <div class="field full">
+        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% for error in form.name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field full">
+        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}
+        {% for error in form.description.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.price.id_for_label }}">{{ form.price.label }}</label>
+        {{ form.price }}
+        {% for error in form.price.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.duration_minutes.id_for_label }}">{{ form.duration_minutes.label }}</label>
+        {{ form.duration_minutes }}
+        {% for error in form.duration_minutes.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.display_order.id_for_label }}">{{ form.display_order.label }}</label>
+        {{ form.display_order }}
+        {% for error in form.display_order.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label>{{ form.is_active.label }}</label>
+        <label class="check-row" for="{{ form.is_active.id_for_label }}">
+          {{ form.is_active }}
+          <span>予約・売上KPIで利用するメニューとして有効にする</span>
+        </label>
+        {% for error in form.is_active.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="form-note">
+      所要時間は5分以上、5分単位で登録してください。削除したい場合は物理削除ではなく、一覧から無効化してください。
+    </div>
+
+    <div class="form-actions">
+      <a class="menu-btn" href="{% url 'staff:treatment_menu_list' %}">キャンセル</a>
+      <button class="menu-btn primary" type="submit">
+        {% if is_edit %}施術メニューを保存{% else %}施術メニューを登録{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

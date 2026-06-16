@@ -1,0 +1,105 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | 施術メニュー・料金設定{% endblock %}
+
+{% block extra_head %}
+<style>
+  .menu-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
+  .menu-hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;padding:28px;border-radius:28px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 24px 56px rgba(20,48,91,.2)}
+  .menu-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.menu-title{margin:8px 0 10px;font-size:32px;letter-spacing:-.04em}.menu-lead{margin:0;color:#e2edff;line-height:1.7}
+  .menu-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .menu-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}
+  .menu-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.menu-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}.menu-btn.danger{border-color:#f3c4c4;background:#fff6f6;color:#b42323}
+  .menu-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.menu-stat{padding:18px;border:1px solid #e1e8f1;border-radius:20px;background:#fff;box-shadow:0 12px 30px rgba(20,42,76,.06)}.menu-stat small{display:block;color:#71839b;font-weight:800}.menu-stat strong{display:block;margin-top:7px;font-size:26px;color:#17345f}
+  .menu-card{border:1px solid #e1e8f1;border-radius:24px;background:#fff;box-shadow:0 13px 32px rgba(20,42,76,.06);overflow:hidden}
+  .menu-card-head{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:20px 22px;border-bottom:1px solid #edf2f7;background:#fbfdff}.menu-card-head h2{margin:0;font-size:20px;color:#17345f}.menu-card-head p{margin:5px 0 0;color:#71839b;font-size:12px}
+  .menu-table{width:100%;border-collapse:collapse}.menu-table th,.menu-table td{padding:15px 18px;border-bottom:1px solid #eef3f8;text-align:left;vertical-align:top}.menu-table th{font-size:11px;letter-spacing:.08em;color:#6b7d94;background:#f8fbff}.menu-table td{font-size:13px;color:#263d5d}
+  .menu-name{font-weight:900;color:#17345f}.menu-desc{margin-top:4px;color:#75849a;line-height:1.6}.menu-price{font-size:16px;font-weight:900;color:#17345f}.menu-status{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:900}.menu-status.active{background:#e8f8ee;color:#177245}.menu-status.inactive{background:#f1f4f8;color:#67768a}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap}.row-actions form{margin:0}.empty-state{padding:42px;text-align:center;color:#667890}.empty-state strong{display:block;margin-bottom:8px;color:#17345f;font-size:18px}
+  @media(max-width:860px){.menu-hero{flex-direction:column;align-items:flex-start}.menu-summary{grid-template-columns:1fr}.menu-table,.menu-table thead,.menu-table tbody,.menu-table tr,.menu-table th,.menu-table td{display:block}.menu-table thead{display:none}.menu-table tr{border-bottom:1px solid #eef3f8}.menu-table td{border:0;padding:10px 18px}.row-actions{padding-bottom:12px}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="menu-page">
+  <header class="menu-hero">
+    <div>
+      <div class="menu-eyebrow">TREATMENT MENU</div>
+      <h1 class="menu-title">施術メニュー・料金設定</h1>
+      <p class="menu-lead">院ごとの施術メニュー、料金、所要時間を管理します。売上KPIや予約管理へ活用するための土台です。</p>
+    </div>
+    <div class="menu-actions">
+      <a class="menu-btn soft" href="{% url 'staff:clinic_settings' %}">院設定へ戻る</a>
+      <a class="menu-btn primary" href="{% url 'staff:treatment_menu_create' %}">新規メニューを追加</a>
+    </div>
+  </header>
+
+  <section class="menu-summary">
+    <div class="menu-stat"><small>登録メニュー</small><strong>{{ menus|length }}</strong></div>
+    <div class="menu-stat"><small>有効メニュー</small><strong>{{ active_menu_count }}</strong></div>
+    <div class="menu-stat"><small>管理単位</small><strong>{{ clinic.name }}</strong></div>
+  </section>
+
+  <section class="menu-card">
+    <div class="menu-card-head">
+      <div>
+        <h2>メニュー一覧</h2>
+        <p>無効化したメニューは履歴を残したまま停止できます。物理削除は行いません。</p>
+      </div>
+    </div>
+
+    {% if menus %}
+      <table class="menu-table">
+        <thead>
+          <tr>
+            <th>メニュー</th>
+            <th>料金</th>
+            <th>所要時間</th>
+            <th>状態</th>
+            <th>並び順</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for menu in menus %}
+            <tr>
+              <td>
+                <div class="menu-name">{{ menu.name }}</div>
+                {% if menu.description %}<div class="menu-desc">{{ menu.description|linebreaksbr }}</div>{% endif %}
+              </td>
+              <td><div class="menu-price">{{ menu.price_display }}</div></td>
+              <td>{{ menu.duration_minutes }}分</td>
+              <td>
+                {% if menu.is_active %}
+                  <span class="menu-status active">有効</span>
+                {% else %}
+                  <span class="menu-status inactive">無効</span>
+                {% endif %}
+              </td>
+              <td>{{ menu.display_order }}</td>
+              <td>
+                <div class="row-actions">
+                  <a class="menu-btn" href="{% url 'staff:treatment_menu_update' menu.id %}">編集</a>
+                  <form method="post" action="{% url 'staff:treatment_menu_toggle' menu.id %}">
+                    {% csrf_token %}
+                    {% if menu.is_active %}
+                      <button class="menu-btn danger" type="submit">無効化</button>
+                    {% else %}
+                      <button class="menu-btn" type="submit">再有効化</button>
+                    {% endif %}
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <strong>施術メニューはまだ登録されていません。</strong>
+        <p>料金設定を登録すると、売上KPIや予約管理に活用できます。</p>
+        <a class="menu-btn primary" href="{% url 'staff:treatment_menu_create' %}">最初のメニューを追加</a>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

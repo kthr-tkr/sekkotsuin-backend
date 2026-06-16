@@ -23,6 +23,9 @@
       --blue:#3b82f6;
       --blue-2:#5b8cff;
       --violet:#7c3aed;
+      --clinic-primary-color:{{ request.user.clinic.settings.primary_color|default:"#1D4ED8" }};
+      --clinic-secondary-color:{{ request.user.clinic.settings.secondary_color|default:"#0F172A" }};
+      --clinic-accent-color:{{ request.user.clinic.settings.accent_color|default:"#16A34A" }};
 
       --shadow-xs:0 6px 18px rgba(15,23,42,.05);
       --shadow-sm:0 16px 36px rgba(15,23,42,.06);
@@ -731,14 +734,24 @@
             <span class="label-text">KPI</span>
           </a>
 
+          <a href="{% url 'staff:ai_usage_dashboard' %}" class="{% if active == 'ai_usage' %}active{% endif %}">
+            <span class="nav-icon">AI</span>
+            <span class="label-text">AI利用量</span>
+          </a>
+
           <a href="{% url 'staff:manual' %}" class="{% if active == 'manual' %}active{% endif %}">
             <span class="nav-icon">❔</span>
             <span class="label-text">操作マニュアル</span>
           </a>
 
-          <a href="{% url 'staff:settings' %}" class="{% if active == 'settings' %}active{% endif %}">
+          <a href="{% url 'staff:clinic_settings' %}" class="{% if active == 'settings' %}active{% endif %}">
             <span class="nav-icon">📚</span>
-            <span class="label-text">設定</span>
+            <span class="label-text">院設定</span>
+          </a>
+
+          <a href="{% url 'staff:treatment_menu_list' %}" class="{% if active == 'treatment_menus' %}active{% endif %}">
+            <span class="nav-icon">¥</span>
+            <span class="label-text">料金設定</span>
           </a>
         </nav>
 
