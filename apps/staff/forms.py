@@ -2,7 +2,10 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
-from apps.clinics.models import ClinicSettings, TreatmentMenu
+from apps.appointments.models import Appointment
+from apps.clinical_notes.models import ClinicalNote
+from apps.clinics.models import ClinicSettings, SalesRecord, TreatmentMenu
+from apps.patients.models import Patient
 
 User = get_user_model()
 
@@ -286,6 +289,130 @@ class TreatmentMenuForm(forms.ModelForm):
         if commit:
             menu.save()
         return menu
+
+
+class SalesRecordForm(forms.ModelForm):
+    amount = forms.IntegerField(
+        label="金額",
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={"min": 0, "step": 1}),
+    )
+
+    class Meta:
+        model = SalesRecord
+        fields = (
+            "patient",
+            "appointment",
+            "clinical_note",
+            "treatment_menu",
+            "staff",
+            "treatment_date",
+            "amount",
+            "payment_method",
+            "status",
+            "memo",
+        )
+        widgets = {
+            "treatment_date": forms.DateInput(attrs={"type": "date"}),
+            "memo": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "会計時の補足や返金・キャンセル理由など",
+                }
+            ),
+        }
+
+    def __init__(self, *args, clinic=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.clinic = clinic or getattr(self.instance, "clinic", None)
+        if self.clinic is not None:
+            self.instance.clinic = self.clinic
+            self.fields["patient"].queryset = Patient.objects.filter(
+                clinic=self.clinic,
+            ).order_by("last_name", "first_name", "id")
+            self.fields["appointment"].queryset = Appointment.objects.filter(
+                clinic=self.clinic,
+            ).select_related("patient").order_by("-start_at")
+            self.fields["clinical_note"].queryset = ClinicalNote.objects.filter(
+                patient__clinic=self.clinic,
+            ).select_related("patient", "appointment").order_by("-created_at")
+            self.fields["treatment_menu"].queryset = TreatmentMenu.objects.filter(
+                clinic=self.clinic,
+            ).order_by("-is_active", "display_order", "name", "id")
+            self.fields["staff"].queryset = User.objects.filter(
+                clinic=self.clinic,
+                role__in=[
+                    User.Role.ADMIN,
+                    User.Role.RECEPTION,
+                    User.Role.PRACTITIONER,
+                ],
+            ).order_by("last_name", "first_name", "username")
+
+        self.fields["appointment"].required = False
+        self.fields["clinical_note"].required = False
+        self.fields["treatment_menu"].required = False
+        self.fields["staff"].required = False
+        self.fields["patient"].empty_label = "患者を選択"
+        self.fields["appointment"].empty_label = "予約なし"
+        self.fields["clinical_note"].empty_label = "カルテなし"
+        self.fields["treatment_menu"].empty_label = "メニュー未選択"
+        self.fields["staff"].empty_label = "担当者未選択"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        patient = cleaned_data.get("patient")
+        appointment = cleaned_data.get("appointment")
+        clinical_note = cleaned_data.get("clinical_note")
+        treatment_menu = cleaned_data.get("treatment_menu")
+        staff = cleaned_data.get("staff")
+        amount = cleaned_data.get("amount")
+
+        if self.clinic is None:
+            raise forms.ValidationError("院情報が取得できません。")
+
+        if patient and patient.clinic_id != self.clinic.id:
+            self.add_error("patient", "他院の患者は選択できません。")
+
+        if appointment:
+            if appointment.clinic_id != self.clinic.id:
+                self.add_error("appointment", "他院の予約は選択できません。")
+            if (
+                patient
+                and appointment.patient_id
+                and appointment.patient_id != patient.id
+            ):
+                self.add_error("appointment", "予約の患者と選択患者が一致していません。")
+
+        if clinical_note:
+            if clinical_note.patient.clinic_id != self.clinic.id:
+                self.add_error("clinical_note", "他院のカルテは選択できません。")
+            if patient and clinical_note.patient_id != patient.id:
+                self.add_error("clinical_note", "カルテの患者と選択患者が一致していません。")
+
+        if treatment_menu and treatment_menu.clinic_id != self.clinic.id:
+            self.add_error("treatment_menu", "他院の施術メニューは選択できません。")
+
+        if staff and staff.clinic_id != self.clinic.id:
+            self.add_error("staff", "他院の担当者は選択できません。")
+
+        if amount is None:
+            if treatment_menu:
+                cleaned_data["amount"] = treatment_menu.price
+            else:
+                self.add_error("amount", "金額を入力してください。")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        record = super().save(commit=False)
+        if self.clinic is None:
+            raise ValueError("SalesRecordFormにはclinicが必要です。")
+        record.clinic = self.clinic
+        record.amount = self.cleaned_data["amount"]
+        if commit:
+            record.save()
+        return record
 
 def _list_to_text(value):
     """

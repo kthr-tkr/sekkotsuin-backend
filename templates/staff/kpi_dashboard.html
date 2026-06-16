@@ -14,6 +14,8 @@
   .kpi-title{margin:8px 0;font-size:34px;line-height:1.15}
   .kpi-lead{margin:0;color:#e1ebff;line-height:1.7}
   .kpi-date{padding:14px 18px;border:1px solid rgba(255,255,255,.2);border-radius:18px;background:rgba(255,255,255,.1);font-weight:800}
+  .kpi-hero-actions{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+  .kpi-hero-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid rgba(255,255,255,.28);border-radius:12px;background:rgba(255,255,255,.12);color:#fff;text-decoration:none;font-weight:900}
   .kpi-section{
     padding:24px;border:1px solid #e3eaf3;border-radius:24px;background:#fff;
     box-shadow:0 14px 34px rgba(20,33,61,.06)
@@ -62,7 +64,7 @@
     .attention-item{grid-template-columns:1fr auto}
   }
   @media(max-width:620px){
-    .kpi-hero{align-items:flex-start;flex-direction:column;padding:22px}
+    .kpi-hero{align-items:flex-start;flex-direction:column;padding:22px}.kpi-hero-actions{align-items:flex-start}
     .kpi-title{font-size:28px}.today-grid,.recent-grid,.attention-summary{grid-template-columns:1fr}
     .kpi-section{padding:18px}.attention-item{grid-template-columns:1fr}
   }
@@ -77,7 +79,10 @@
       <h1 class="kpi-title">院内KPI</h1>
       <p class="kpi-lead">今日の患者対応と、止まっている録音・カルテ案を30秒で確認できます。</p>
     </div>
-    <div class="kpi-date">{{ today|date:"Y年n月j日" }}</div>
+    <div class="kpi-hero-actions">
+      <div class="kpi-date">{{ today|date:"Y年n月j日" }}</div>
+      <a class="kpi-hero-btn" href="{% url 'staff:sales_record_list' %}">売上一覧へ</a>
+    </div>
   </header>
 
   <section class="kpi-section">

@@ -734,6 +734,11 @@
             <span class="label-text">KPI</span>
           </a>
 
+          <a href="{% url 'staff:sales_record_list' %}" class="{% if active == 'sales' %}active{% endif %}">
+            <span class="nav-icon">¥</span>
+            <span class="label-text">売上管理</span>
+          </a>
+
           <a href="{% url 'staff:ai_usage_dashboard' %}" class="{% if active == 'ai_usage' %}active{% endif %}">
             <span class="nav-icon">AI</span>
             <span class="label-text">AI利用量</span>
@@ -750,7 +755,7 @@
           </a>
 
           <a href="{% url 'staff:treatment_menu_list' %}" class="{% if active == 'treatment_menus' %}active{% endif %}">
-            <span class="nav-icon">¥</span>
+            <span class="nav-icon">≡</span>
             <span class="label-text">料金設定</span>
           </a>
         </nav>

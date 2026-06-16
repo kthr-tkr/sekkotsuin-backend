@@ -1,0 +1,121 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | {{ page_title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .sales-form-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
+  .sales-form-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;padding:28px;border-radius:28px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 24px 56px rgba(20,48,91,.2)}
+  .sales-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.sales-title{margin:8px 0 10px;font-size:32px;letter-spacing:-.04em}.sales-lead{margin:0;color:#e2edff;line-height:1.7}
+  .sales-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.sales-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.sales-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}
+  .sales-form-card{padding:24px;border:1px solid #e1e8f1;border-radius:24px;background:#fff;box-shadow:0 13px 32px rgba(20,42,76,.06)}
+  .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.field.full{grid-column:1/-1}.field label{display:block;margin-bottom:7px;font-size:12px;font-weight:900;color:#425873}
+  .field input,.field textarea,.field select{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #ccd7e5;border-radius:12px;background:#fbfcfe;color:#1b304d;font:inherit;outline:none}.field textarea{resize:vertical;line-height:1.65}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:#4b83c7;box-shadow:0 0 0 3px rgba(75,131,199,.11);background:#fff}.field-error{margin-top:6px;color:#b42323;font-size:12px;font-weight:700}.form-errors{padding:14px 16px;margin-bottom:16px;border:1px solid #f1caca;border-radius:14px;background:#fff6f6;color:#a52a2a;font-size:13px}
+  .form-note{margin-top:18px;padding:14px 16px;border-radius:15px;background:#f1f7ff;border:1px solid #d9e8fa;color:#335a88;font-size:13px;line-height:1.7}.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+  @media(max-width:800px){.sales-form-hero{flex-direction:column;align-items:flex-start}.field-grid{grid-template-columns:1fr}.sales-form-card{padding:18px}.form-actions{flex-direction:column}.sales-btn{width:100%}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sales-form-page">
+  <header class="sales-form-hero">
+    <div>
+      <div class="sales-eyebrow">SALES ENTRY</div>
+      <h1 class="sales-title">{{ page_title }}</h1>
+      <p class="sales-lead">患者様・施術メニュー・会計金額を登録します。キャンセル分も状態を分けて保持できます。</p>
+    </div>
+    <a class="sales-btn soft" href="{% url 'staff:sales_record_list' %}">売上一覧へ戻る</a>
+  </header>
+
+  <form method="post" class="sales-form-card" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="field-grid">
+      <div class="field">
+        <label for="{{ form.patient.id_for_label }}">{{ form.patient.label }}</label>
+        {{ form.patient }}
+        {% for error in form.patient.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.treatment_date.id_for_label }}">{{ form.treatment_date.label }}</label>
+        {{ form.treatment_date }}
+        {% for error in form.treatment_date.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.appointment.id_for_label }}">{{ form.appointment.label }}</label>
+        {{ form.appointment }}
+        {% for error in form.appointment.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.clinical_note.id_for_label }}">{{ form.clinical_note.label }}</label>
+        {{ form.clinical_note }}
+        {% for error in form.clinical_note.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.treatment_menu.id_for_label }}">{{ form.treatment_menu.label }}</label>
+        {{ form.treatment_menu }}
+        {% for error in form.treatment_menu.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
+        {{ form.amount }}
+        {% for error in form.amount.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.payment_method.id_for_label }}">{{ form.payment_method.label }}</label>
+        {{ form.payment_method }}
+        {% for error in form.payment_method.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+        {{ form.status }}
+        {% for error in form.status.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.staff.id_for_label }}">{{ form.staff.label }}</label>
+        {{ form.staff }}
+        {% for error in form.staff.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field full">
+        <label for="{{ form.memo.id_for_label }}">{{ form.memo.label }}</label>
+        {{ form.memo }}
+        {% for error in form.memo.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="form-note">
+      施術メニューを選ぶと、金額欄が空の場合にメニュー料金を反映します。キャンセル分は状態を「キャンセル」にして保持できます。
+    </div>
+
+    <div class="form-actions">
+      <a class="sales-btn" href="{% url 'staff:sales_record_list' %}">キャンセル</a>
+      <button class="sales-btn primary" type="submit">
+        {% if is_edit %}売上実績を保存{% else %}売上実績を登録{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{{ menu_prices|json_script:"menu-prices-json" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const menuSelect = document.getElementById("id_treatment_menu");
+    const amountInput = document.getElementById("id_amount");
+    const priceNode = document.getElementById("menu-prices-json");
+    if (!menuSelect || !amountInput || !priceNode) return;
+    const prices = JSON.parse(priceNode.textContent || "{}");
+
+    menuSelect.addEventListener("change", function () {
+      const price = prices[menuSelect.value];
+      if (price !== undefined && amountInput.value.trim() === "") {
+        amountInput.value = price;
+      }
+    });
+  })();
+</script>
+{% endblock %}

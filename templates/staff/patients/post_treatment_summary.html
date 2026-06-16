@@ -472,6 +472,9 @@
         <a class="post-btn light" href="{% url 'staff:patient_aftercare_report' note.id %}">
           患者向け説明レポートを開く
         </a>
+        <a class="post-btn light" href="{% url 'staff:sales_record_create' %}?clinical_note={{ note.id }}">
+          売上登録
+        </a>
         <button type="button" class="post-btn light" onclick="window.print()">印刷する</button>
         <a class="post-btn" href="{% url 'staff:clinical_note_detail' note.id %}">カルテ詳細へ戻る</a>
         <a class="post-btn" href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">患者詳細へ戻る</a>

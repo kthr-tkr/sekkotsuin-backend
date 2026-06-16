@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Clinic, ClinicSettings, TreatmentMenu
+from .models import Clinic, ClinicSettings, SalesRecord, TreatmentMenu
 
 
 @admin.register(Clinic)
@@ -35,3 +35,25 @@ class TreatmentMenuAdmin(admin.ModelAdmin):
     )
     list_filter = ("clinic", "is_active")
     search_fields = ("clinic__name", "name", "description")
+
+
+@admin.register(SalesRecord)
+class SalesRecordAdmin(admin.ModelAdmin):
+    list_display = (
+        "clinic",
+        "treatment_date",
+        "patient",
+        "treatment_menu",
+        "amount",
+        "payment_method",
+        "status",
+        "staff",
+    )
+    list_filter = ("clinic", "payment_method", "status", "treatment_date")
+    search_fields = (
+        "clinic__name",
+        "patient__last_name",
+        "patient__first_name",
+        "treatment_menu__name",
+        "memo",
+    )

@@ -11,7 +11,7 @@ from django.utils import timezone
 from apps.ai_usage.models import AiUsageLog, ClinicAiPlan
 from apps.appointments.models import Appointment
 from apps.clinical_notes.models import ClinicalNote
-from apps.clinics.models import Clinic, ClinicSettings, TreatmentMenu
+from apps.clinics.models import Clinic, ClinicSettings, SalesRecord, TreatmentMenu
 from apps.intakes import views as intake_views
 from apps.intakes.models import Intake, InterviewRecording
 from apps.patients.models import Patient
@@ -30,6 +30,8 @@ class MajorWorkflowCopyTests(SimpleTestCase):
         "templates/staff/ai_usage_dashboard.html",
         "templates/staff/clinic_settings.html",
         "templates/staff/kpi_dashboard.html",
+        "templates/staff/sales_record_form.html",
+        "templates/staff/sales_record_list.html",
         "templates/staff/treatment_menu_form.html",
         "templates/staff/treatment_menu_list.html",
         "templates/staff/partials/recording_start_cards.html",
@@ -344,6 +346,7 @@ class ProductionReadinessSmokeTests(TestCase):
                 "staff:patient_detail",
                 args=[self.patient.id],
             ),
+            "sales_record_list": reverse("staff:sales_record_list"),
             "patient_timeline": (
                 reverse("staff:patient_detail", args=[self.patient.id])
                 + "?tab=timeline"
@@ -1570,6 +1573,290 @@ class StaffTreatmentMenuTests(TestCase):
             + inspect.getsource(staff_views.staff_treatment_menu_create_view)
             + inspect.getsource(staff_views.staff_treatment_menu_update_view)
             + inspect.getsource(staff_views.staff_treatment_menu_toggle_view)
+        )
+
+        self.assertNotIn(".path", source)
+
+
+class StaffSalesRecordTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.clinic = Clinic.objects.create(name="売上管理院")
+        self.other_clinic = Clinic.objects.create(name="他院売上")
+        self.user = user_model.objects.create_user(
+            username="sales-staff",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.ADMIN,
+            last_name="売上",
+            first_name="太郎",
+        )
+        self.other_user = user_model.objects.create_user(
+            username="sales-other",
+            password="test-password",
+            clinic=self.other_clinic,
+            role=user_model.Role.ADMIN,
+        )
+        self.no_clinic_user = user_model.objects.create_user(
+            username="sales-no-clinic",
+            password="test-password",
+            role=user_model.Role.ADMIN,
+        )
+        self.patient = self._patient(
+            clinic=self.clinic,
+            card_no="SALE-A-001",
+            last_name="売上",
+            first_name="患者",
+            phone="09000001001",
+        )
+        self.other_patient = self._patient(
+            clinic=self.other_clinic,
+            card_no="SALE-B-001",
+            last_name="他院",
+            first_name="患者",
+            phone="09000001002",
+        )
+        now = timezone.now()
+        self.appointment = self._appointment(
+            clinic=self.clinic,
+            patient=self.patient,
+            user=self.user,
+            start_at=now,
+        )
+        self.other_appointment = self._appointment(
+            clinic=self.other_clinic,
+            patient=self.other_patient,
+            user=self.other_user,
+            start_at=now,
+        )
+        self.note = ClinicalNote.objects.create(
+            appointment=self.appointment,
+            patient=self.patient,
+            soap_json={},
+            extract_json={},
+            followups_json=[],
+            registered_by=self.user,
+        )
+        self.other_note = ClinicalNote.objects.create(
+            appointment=self.other_appointment,
+            patient=self.other_patient,
+            soap_json={},
+            extract_json={},
+            followups_json=[],
+            registered_by=self.other_user,
+        )
+        self.menu = TreatmentMenu.objects.create(
+            clinic=self.clinic,
+            name="全身調整",
+            price=5000,
+            duration_minutes=30,
+        )
+        self.other_menu = TreatmentMenu.objects.create(
+            clinic=self.other_clinic,
+            name="他院メニュー",
+            price=99999,
+            duration_minutes=60,
+        )
+        self.other_record = SalesRecord.objects.create(
+            clinic=self.other_clinic,
+            patient=self.other_patient,
+            appointment=self.other_appointment,
+            clinical_note=self.other_note,
+            treatment_menu=self.other_menu,
+            staff=self.other_user,
+            treatment_date=timezone.localdate(),
+            amount=99999,
+            payment_method=SalesRecord.PaymentMethod.CASH,
+            status=SalesRecord.Status.PAID,
+        )
+        self.client.force_login(self.user)
+
+    @staticmethod
+    def _patient(*, clinic, card_no, last_name, first_name, phone):
+        return Patient.objects.create(
+            clinic=clinic,
+            card_no=card_no,
+            last_name=last_name,
+            first_name=first_name,
+            last_name_kana="テスト",
+            first_name_kana="カンジャ",
+            birth_date=date(1990, 1, 1),
+            phone=phone,
+        )
+
+    @staticmethod
+    def _appointment(*, clinic, patient, user, start_at):
+        return Appointment.objects.create(
+            clinic=clinic,
+            patient=patient,
+            start_at=start_at,
+            end_at=start_at + timedelta(hours=1),
+            menu="会計確認",
+            status=Appointment.Status.COMPLETED,
+            assigned_staff=user,
+            created_by=user,
+        )
+
+    def _list_url(self):
+        return reverse("staff:sales_record_list")
+
+    def _create_url(self):
+        return reverse("staff:sales_record_create")
+
+    def _update_url(self, record):
+        return reverse("staff:sales_record_update", args=[record.id])
+
+    def _valid_data(self, **overrides):
+        data = {
+            "patient": str(self.patient.id),
+            "appointment": str(self.appointment.id),
+            "clinical_note": str(self.note.id),
+            "treatment_menu": str(self.menu.id),
+            "staff": str(self.user.id),
+            "treatment_date": timezone.localdate().isoformat(),
+            "amount": "5000",
+            "payment_method": SalesRecord.PaymentMethod.CASH,
+            "status": SalesRecord.Status.PAID,
+            "memo": "通常会計",
+        }
+        data.update(overrides)
+        return data
+
+    def test_own_staff_can_open_sales_record_list(self):
+        response = self.client.get(self._list_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "staff/sales_record_list.html")
+        self.assertContains(response, "売上管理")
+        self.assertNotContains(response, "他院メニュー")
+        self.assertNotContains(response, "99999")
+
+    def test_user_without_clinic_cannot_open_sales_record_list(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self.client.get(self._list_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_sales_record_can_be_created(self):
+        response = self.client.post(
+            self._create_url(),
+            self._valid_data(amount=""),
+        )
+
+        self.assertRedirects(response, self._list_url())
+        record = SalesRecord.objects.get(clinic=self.clinic)
+        self.assertEqual(record.patient, self.patient)
+        self.assertEqual(record.treatment_menu, self.menu)
+        self.assertEqual(record.amount, self.menu.price)
+        self.assertEqual(record.status, SalesRecord.Status.PAID)
+
+    def test_sales_record_can_be_updated(self):
+        record = SalesRecord.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            appointment=self.appointment,
+            clinical_note=self.note,
+            treatment_menu=self.menu,
+            staff=self.user,
+            treatment_date=timezone.localdate(),
+            amount=5000,
+            payment_method=SalesRecord.PaymentMethod.CASH,
+            status=SalesRecord.Status.PAID,
+        )
+
+        response = self.client.post(
+            self._update_url(record),
+            self._valid_data(
+                amount="6500",
+                payment_method=SalesRecord.PaymentMethod.CARD,
+                status=SalesRecord.Status.UNPAID,
+                memo="カード確認中",
+            ),
+        )
+
+        self.assertRedirects(response, self._list_url())
+        record.refresh_from_db()
+        self.assertEqual(record.amount, 6500)
+        self.assertEqual(record.payment_method, SalesRecord.PaymentMethod.CARD)
+        self.assertEqual(record.status, SalesRecord.Status.UNPAID)
+        self.assertEqual(record.memo, "カード確認中")
+
+    def test_other_clinic_sales_record_update_returns_404(self):
+        response = self.client.get(self._update_url(self.other_record))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_other_clinic_patient_cannot_be_linked(self):
+        response = self.client.post(
+            self._create_url(),
+            self._valid_data(
+                patient=str(self.other_patient.id),
+                appointment="",
+                clinical_note="",
+            ),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("patient", response.context["form"].errors)
+        self.assertFalse(SalesRecord.objects.filter(clinic=self.clinic).exists())
+
+    def test_other_clinic_treatment_menu_cannot_be_linked(self):
+        response = self.client.post(
+            self._create_url(),
+            self._valid_data(treatment_menu=str(self.other_menu.id)),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("treatment_menu", response.context["form"].errors)
+        self.assertFalse(SalesRecord.objects.filter(clinic=self.clinic).exists())
+
+    def test_negative_amount_is_rejected(self):
+        response = self.client.post(
+            self._create_url(),
+            self._valid_data(amount="-1"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("amount", response.context["form"].errors)
+
+    def test_canceled_sales_record_can_be_saved(self):
+        response = self.client.post(
+            self._create_url(),
+            self._valid_data(status=SalesRecord.Status.CANCELED),
+        )
+
+        self.assertRedirects(response, self._list_url())
+        record = SalesRecord.objects.get(clinic=self.clinic)
+        self.assertEqual(record.status, SalesRecord.Status.CANCELED)
+        self.assertEqual(record.amount, 5000)
+
+    def test_only_own_clinic_sales_are_displayed(self):
+        SalesRecord.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            appointment=self.appointment,
+            clinical_note=self.note,
+            treatment_menu=self.menu,
+            staff=self.user,
+            treatment_date=timezone.localdate(),
+            amount=5000,
+            payment_method=SalesRecord.PaymentMethod.CASH,
+            status=SalesRecord.Status.PAID,
+        )
+
+        response = self.client.get(self._list_url())
+
+        self.assertContains(response, "全身調整")
+        self.assertContains(response, "¥5,000")
+        self.assertNotContains(response, "他院メニュー")
+        self.assertNotContains(response, "99999")
+
+    def test_sales_views_do_not_use_file_path(self):
+        source = (
+            inspect.getsource(staff_views.staff_sales_record_list_view)
+            + inspect.getsource(staff_views.staff_sales_record_create_view)
+            + inspect.getsource(staff_views.staff_sales_record_update_view)
         )
 
         self.assertNotIn(".path", source)

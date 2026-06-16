@@ -1933,6 +1933,12 @@
           最新の患者向け説明レポートを開く
         </a>
       {% endif %}
+      <a href="{% url 'staff:sales_record_create' %}?patient={{ patient.id }}" class="pd-btn">
+        売上登録
+      </a>
+      <a href="{% url 'staff:sales_record_list' %}?q={{ patient.card_no|default:patient.last_name }}" class="pd-btn">
+        売上履歴
+      </a>
       <a href="{% url 'patients:staff_booking_calendar' patient.id %}" class="pd-btn primary">
         ＋ 予約を作成
       </a>

@@ -33,7 +33,7 @@ from apps.ai_jobs.usecases import run_ai_draft
 from apps.appointments.models import Appointment
 from apps.charts.models import ChartNote
 from apps.clinical_notes.models import ClinicalNote, ClinicalNoteHistory
-from apps.clinics.models import Clinic, ClinicSettings, TreatmentMenu
+from apps.clinics.models import Clinic, ClinicSettings, SalesRecord, TreatmentMenu
 from apps.intakes.forms import AREA_CHOICES, VISIT_TYPE_CHOICES, SYMPTOM_TYPE_CHOICES
 from apps.intakes.models import Intake, InterviewRecording
 from apps.patients.models import Patient
@@ -43,7 +43,7 @@ from apps.treatment_plans.models import TreatmentPlan
 from apps.treatment_sessions.models import TreatmentSession
 from apps.visits.models import Visit
 
-from .forms import ClinicSettingsForm, StaffCreateForm, TreatmentMenuForm
+from .forms import ClinicSettingsForm, SalesRecordForm, StaffCreateForm, TreatmentMenuForm
 from apps.ai_usage.models import AiUsageLog, ClinicAiPlan
 from apps.ai_usage.services import build_ai_usage_summary, get_month_range
 from apps.posture_assessments.models import PostureAssessment
@@ -3037,6 +3037,237 @@ def staff_treatment_menu_toggle_view(request, menu_id):
     else:
         messages.success(request, "施術メニューを無効化しました。")
     return redirect("staff:treatment_menu_list")
+
+
+def _own_object_or_none(model, clinic, pk, **extra_filters):
+    if not pk:
+        return None
+    try:
+        pk = int(pk)
+    except (TypeError, ValueError):
+        return None
+    filters = {"pk": pk, **extra_filters}
+    return model.objects.filter(**filters).first()
+
+
+def _build_sales_record_initial(request, clinic):
+    initial = {
+        "treatment_date": timezone.localdate(),
+        "staff": request.user if request.user.clinic_id == clinic.id else None,
+    }
+
+    patient = _own_object_or_none(
+        Patient,
+        clinic,
+        request.GET.get("patient") or request.GET.get("patient_id"),
+        clinic=clinic,
+    )
+    if patient:
+        initial["patient"] = patient
+
+    appointment = _own_object_or_none(
+        Appointment,
+        clinic,
+        request.GET.get("appointment") or request.GET.get("appointment_id"),
+        clinic=clinic,
+    )
+    if appointment:
+        initial["appointment"] = appointment
+        if appointment.patient_id:
+            initial["patient"] = appointment.patient
+        initial["treatment_date"] = timezone.localtime(
+            appointment.start_at
+        ).date()
+
+    clinical_note = _own_object_or_none(
+        ClinicalNote,
+        clinic,
+        request.GET.get("clinical_note") or request.GET.get("note_id"),
+        patient__clinic=clinic,
+    )
+    if clinical_note:
+        initial["clinical_note"] = clinical_note
+        initial["patient"] = clinical_note.patient
+        initial["appointment"] = clinical_note.appointment
+        initial["treatment_date"] = timezone.localtime(
+            clinical_note.appointment.start_at
+        ).date()
+
+    treatment_menu = _own_object_or_none(
+        TreatmentMenu,
+        clinic,
+        request.GET.get("treatment_menu") or request.GET.get("menu_id"),
+        clinic=clinic,
+    )
+    if treatment_menu:
+        initial["treatment_menu"] = treatment_menu
+        initial["amount"] = treatment_menu.price
+
+    return initial
+
+
+def _sales_form_context(clinic, form, *, is_edit=False, record=None):
+    menu_prices = {
+        str(menu.id): menu.price
+        for menu in form.fields["treatment_menu"].queryset
+    }
+    return {
+        "active": "sales",
+        "page_title": "売上実績を編集" if is_edit else "売上実績を登録",
+        "clinic": clinic,
+        "form": form,
+        "is_edit": is_edit,
+        "record": record,
+        "menu_prices": menu_prices,
+    }
+
+
+@staff_required
+def staff_sales_record_list_view(request):
+    clinic, forbidden_response = _require_staff_clinic(
+        request,
+        "所属院の売上実績のみ閲覧できます。",
+    )
+    if forbidden_response:
+        return forbidden_response
+
+    qs = (
+        SalesRecord.objects
+        .filter(clinic=clinic)
+        .select_related(
+            "patient",
+            "appointment",
+            "clinical_note",
+            "treatment_menu",
+            "staff",
+        )
+        .order_by("-treatment_date", "-created_at", "-id")
+    )
+
+    date_from = parse_date(request.GET.get("date_from") or "")
+    date_to = parse_date(request.GET.get("date_to") or "")
+    q = (request.GET.get("q") or "").strip()
+    payment_method = request.GET.get("payment_method") or ""
+    status = request.GET.get("status") or ""
+    menu_id = request.GET.get("treatment_menu") or ""
+
+    if date_from:
+        qs = qs.filter(treatment_date__gte=date_from)
+    if date_to:
+        qs = qs.filter(treatment_date__lte=date_to)
+    if q:
+        qs = qs.filter(
+            Q(patient__last_name__icontains=q)
+            | Q(patient__first_name__icontains=q)
+            | Q(patient__last_name_kana__icontains=q)
+            | Q(patient__first_name_kana__icontains=q)
+            | Q(patient__phone__icontains=q)
+            | Q(patient__card_no__icontains=q)
+            | Q(memo__icontains=q)
+        )
+    if payment_method:
+        qs = qs.filter(payment_method=payment_method)
+    if status:
+        qs = qs.filter(status=status)
+    if menu_id:
+        qs = qs.filter(treatment_menu_id=menu_id)
+
+    total_amount = qs.exclude(
+        status=SalesRecord.Status.CANCELED,
+    ).aggregate(total=Sum("amount"))["total"] or 0
+
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    for record in page_obj.object_list:
+        record.amount_display = _format_yen(record.amount)
+
+    return render(request, "staff/sales_record_list.html", {
+        "active": "sales",
+        "page_title": "売上管理",
+        "clinic": clinic,
+        "page_obj": page_obj,
+        "records": page_obj.object_list,
+        "total_amount_display": _format_yen(total_amount),
+        "payment_method_choices": SalesRecord.PaymentMethod.choices,
+        "status_choices": SalesRecord.Status.choices,
+        "treatment_menus": TreatmentMenu.objects.filter(
+            clinic=clinic,
+        ).order_by("display_order", "name", "id"),
+        "filters": {
+            "date_from": request.GET.get("date_from", ""),
+            "date_to": request.GET.get("date_to", ""),
+            "q": q,
+            "payment_method": payment_method,
+            "status": status,
+            "treatment_menu": menu_id,
+        },
+    })
+
+
+@staff_required
+def staff_sales_record_create_view(request):
+    clinic, forbidden_response = _require_staff_clinic(
+        request,
+        "所属院の売上実績のみ登録できます。",
+    )
+    if forbidden_response:
+        return forbidden_response
+
+    if request.method == "POST":
+        form = SalesRecordForm(request.POST, clinic=clinic)
+        if form.is_valid():
+            with transaction.atomic():
+                form.save()
+            messages.success(request, "売上実績を登録しました。")
+            return redirect("staff:sales_record_list")
+    else:
+        form = SalesRecordForm(
+            clinic=clinic,
+            initial=_build_sales_record_initial(request, clinic),
+        )
+
+    return render(
+        request,
+        "staff/sales_record_form.html",
+        _sales_form_context(clinic, form),
+    )
+
+
+@staff_required
+def staff_sales_record_update_view(request, record_id):
+    clinic, forbidden_response = _require_staff_clinic(
+        request,
+        "所属院の売上実績のみ編集できます。",
+    )
+    if forbidden_response:
+        return forbidden_response
+
+    record = get_object_or_404(
+        SalesRecord.objects.select_related(
+            "patient",
+            "appointment",
+            "clinical_note",
+            "treatment_menu",
+            "staff",
+        ),
+        pk=record_id,
+        clinic=clinic,
+    )
+    if request.method == "POST":
+        form = SalesRecordForm(request.POST, instance=record, clinic=clinic)
+        if form.is_valid():
+            with transaction.atomic():
+                form.save()
+            messages.success(request, "売上実績を保存しました。")
+            return redirect("staff:sales_record_list")
+    else:
+        form = SalesRecordForm(instance=record, clinic=clinic)
+
+    return render(
+        request,
+        "staff/sales_record_form.html",
+        _sales_form_context(clinic, form, is_edit=True, record=record),
+    )
 
 
 def _choice_dict(choices):

@@ -66,6 +66,13 @@ urlpatterns = [
         views.staff_treatment_menu_toggle_view,
         name="treatment_menu_toggle",
     ),
+    path("sales/", views.staff_sales_record_list_view, name="sales_record_list"),
+    path("sales/new/", views.staff_sales_record_create_view, name="sales_record_create"),
+    path(
+        "sales/<int:record_id>/edit/",
+        views.staff_sales_record_update_view,
+        name="sales_record_update",
+    ),
     path("recordings/<int:recording_id>/register/", views.register_clinical_note, name="register_clinical_note"),
     path("clinical_notes/<int:pk>/", views.staff_clinical_note_detail_view, name="clinical_note_detail"),
     path(

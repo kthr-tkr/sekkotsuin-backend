@@ -1121,6 +1121,10 @@
         患者向け説明レポートを開く
       </a>
 
+      <a href="{% url 'staff:sales_record_create' %}?clinical_note={{ note.id }}" class="cn-btn">
+        このカルテから売上登録
+      </a>
+
       {% if related_plan %}
         <a href="{% url 'treatment_plans:plan_detail' related_plan.id %}" class="cn-btn">
           施術計画を確認

@@ -1,8 +1,10 @@
 from datetime import time
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
+from django.utils import timezone
 
 class Clinic(models.Model):
     name = models.CharField(max_length=100)
@@ -208,6 +210,157 @@ class TreatmentMenu(models.Model):
                 errors["duration_minutes"] = "所要時間は5分以上で入力してください。"
             elif self.duration_minutes % 5 != 0:
                 errors["duration_minutes"] = "所要時間は5分単位で入力してください。"
+
+        if errors:
+            raise ValidationError(errors)
+
+
+class SalesRecord(models.Model):
+    class PaymentMethod(models.TextChoices):
+        CASH = "cash", "現金"
+        CARD = "card", "カード"
+        QR = "qr", "QR決済"
+        BANK_TRANSFER = "bank_transfer", "銀行振込"
+        OTHER = "other", "その他"
+
+    class Status(models.TextChoices):
+        UNPAID = "unpaid", "未払い"
+        PAID = "paid", "支払い済み"
+        CANCELED = "canceled", "キャンセル"
+
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        related_name="sales_records",
+        verbose_name="院",
+    )
+    patient = models.ForeignKey(
+        "patients.Patient",
+        on_delete=models.PROTECT,
+        related_name="sales_records",
+        verbose_name="患者",
+    )
+    appointment = models.ForeignKey(
+        "appointments.Appointment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sales_records",
+        verbose_name="予約",
+    )
+    clinical_note = models.ForeignKey(
+        "clinical_notes.ClinicalNote",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sales_records",
+        verbose_name="カルテ",
+    )
+    treatment_menu = models.ForeignKey(
+        TreatmentMenu,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sales_records",
+        verbose_name="施術メニュー",
+    )
+    staff = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sales_records",
+        verbose_name="担当者",
+    )
+    treatment_date = models.DateField(
+        "施術日",
+        default=timezone.localdate,
+        db_index=True,
+    )
+    amount = models.PositiveIntegerField(
+        "金額",
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
+    payment_method = models.CharField(
+        "支払方法",
+        max_length=20,
+        choices=PaymentMethod.choices,
+        default=PaymentMethod.CASH,
+    )
+    status = models.CharField(
+        "ステータス",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PAID,
+    )
+    memo = models.TextField("メモ", blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ("-treatment_date", "-created_at", "-id")
+        indexes = [
+            models.Index(fields=["clinic", "treatment_date"]),
+            models.Index(fields=["clinic", "status"]),
+            models.Index(fields=["clinic", "payment_method"]),
+        ]
+        verbose_name = "売上実績"
+        verbose_name_plural = "売上実績"
+
+    def __str__(self):
+        return f"{self.treatment_date} {self.patient} {self.amount}円"
+
+    def clean(self):
+        errors = {}
+
+        if not self.clinic_id:
+            errors["clinic"] = "院情報は必須です。"
+
+        if not self.patient_id:
+            errors["patient"] = "患者は必須です。"
+        elif self.clinic_id and self.patient.clinic_id != self.clinic_id:
+            errors["patient"] = "患者は同じ院に所属している必要があります。"
+
+        if not self.treatment_date:
+            errors["treatment_date"] = "施術日は必須です。"
+
+        if self.amount is not None and self.amount < 0:
+            errors["amount"] = "金額は0円以上で入力してください。"
+
+        if self.appointment_id:
+            if self.clinic_id and self.appointment.clinic_id != self.clinic_id:
+                errors["appointment"] = "予約は同じ院に所属している必要があります。"
+            if (
+                self.patient_id
+                and self.appointment.patient_id
+                and self.appointment.patient_id != self.patient_id
+            ):
+                errors["appointment"] = "予約の患者と売上の患者が一致していません。"
+
+        if self.clinical_note_id:
+            note_patient_id = self.clinical_note.patient_id
+            if self.patient_id and note_patient_id != self.patient_id:
+                errors["clinical_note"] = "カルテの患者と売上の患者が一致していません。"
+            note_clinic_id = getattr(
+                self.clinical_note.appointment,
+                "clinic_id",
+                None,
+            )
+            if self.clinic_id and note_clinic_id != self.clinic_id:
+                errors["clinical_note"] = "カルテは同じ院に所属している必要があります。"
+
+        if self.treatment_menu_id:
+            if (
+                self.clinic_id
+                and self.treatment_menu.clinic_id != self.clinic_id
+            ):
+                errors["treatment_menu"] = "施術メニューは同じ院に所属している必要があります。"
+
+        if self.staff_id:
+            staff_clinic_id = getattr(self.staff, "clinic_id", None)
+            if self.clinic_id and staff_clinic_id != self.clinic_id:
+                errors["staff"] = "担当者は同じ院に所属している必要があります。"
 
         if errors:
             raise ValidationError(errors)
