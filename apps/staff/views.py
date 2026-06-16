@@ -2,7 +2,7 @@
 import json
 import re
 from calendar import monthrange
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
@@ -33,7 +33,7 @@ from apps.ai_jobs.usecases import run_ai_draft
 from apps.appointments.models import Appointment
 from apps.charts.models import ChartNote
 from apps.clinical_notes.models import ClinicalNote, ClinicalNoteHistory
-from apps.clinics.models import Clinic, ClinicSettings, SalesRecord, TreatmentMenu
+from apps.clinics.models import Clinic, ClinicSettings, SalesRecord, StaffLeave, StaffShift, TreatmentMenu
 from apps.intakes.forms import AREA_CHOICES, VISIT_TYPE_CHOICES, SYMPTOM_TYPE_CHOICES
 from apps.intakes.models import Intake, InterviewRecording
 from apps.patients.models import Patient
@@ -43,7 +43,15 @@ from apps.treatment_plans.models import TreatmentPlan
 from apps.treatment_sessions.models import TreatmentSession
 from apps.visits.models import Visit
 
-from .forms import ClinicSettingsForm, SalesRecordForm, StaffCreateForm, TreatmentMenuForm
+from .forms import (
+    ClinicSettingsForm,
+    SalesRecordForm,
+    StaffCreateForm,
+    StaffLeaveForm,
+    StaffShiftForm,
+    StaffMemberEditForm,
+    TreatmentMenuForm,
+)
 from apps.ai_usage.models import AiUsageLog, ClinicAiPlan
 from apps.ai_usage.services import build_ai_usage_summary, get_month_range
 from apps.posture_assessments.models import PostureAssessment
@@ -1820,38 +1828,112 @@ def staff_appointments_view(request):
 @staff_required
 def staff_list(request):
     clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のスタッフのみ閲覧できます。")
 
-    users = User.objects.filter(
-        clinic=clinic,
-        is_active=True,
-        role__in=[
-            User.Role.ADMIN,
-            User.Role.RECEPTION,
-            User.Role.PRACTITIONER,
-        ],
-    ).order_by("last_name", "first_name", "username")
+    staff_roles = [
+        User.Role.ADMIN,
+        User.Role.RECEPTION,
+        User.Role.PRACTITIONER,
+    ]
+    today = timezone.localdate()
+    month_start, next_month = get_month_range(today)
+
+    users = list(
+        User.objects
+        .filter(clinic=clinic, role__in=staff_roles)
+        .order_by("-is_active", "last_name", "first_name", "username")
+    )
+    user_ids = [user.id for user in users]
+
+    today_appointments = {
+        row["assigned_staff"]: row["count"]
+        for row in (
+            Appointment.objects
+            .filter(
+                clinic=clinic,
+                assigned_staff_id__in=user_ids,
+                start_at__date=today,
+            )
+            .values("assigned_staff")
+            .annotate(count=Count("id"))
+        )
+    }
+    month_sales = {
+        row["staff"]: {
+            "count": row["count"],
+            "total": row["total"] or 0,
+        }
+        for row in (
+            SalesRecord.objects
+            .filter(
+                clinic=clinic,
+                staff_id__in=user_ids,
+                status=SalesRecord.Status.PAID,
+                treatment_date__gte=month_start,
+                treatment_date__lt=next_month,
+            )
+            .values("staff")
+            .annotate(count=Count("id"), total=Sum("amount"))
+        )
+    }
 
     staff_cards = []
     for user in users:
         full_name = user.get_full_name().strip() or user.username
+        sales = month_sales.get(user.id, {"count": 0, "total": 0})
+        show_in_assignment = user.is_active and user.role in staff_roles
         staff_cards.append({
             "id": user.id,
             "full_name": full_name,
+            "display_name": full_name,
             "username": user.username,
             "email": user.email,
             "is_superuser": user.is_superuser,
             "is_staff": user.is_staff,
             "role": user.get_role_display() if hasattr(user, "get_role_display") else user.role,
-            "today_appointments": 0,
-            "active_plans": 0,
-            "status_label": "稼働中" if user.is_active else "停止中",
+            "role_value": user.role,
+            "is_active": user.is_active,
+            "today_appointments": today_appointments.get(user.id, 0),
+            "month_sales_count": sales["count"],
+            "month_sales_total": sales["total"],
+            "month_sales_display": _format_yen(sales["total"]),
+            "last_login": user.last_login,
+            "show_in_reservations": show_in_assignment,
+            "show_in_sales": show_in_assignment,
+            "status_label": "有効" if user.is_active else "無効",
             "status_class": "running" if user.is_active else "stopped",
+            "edit_url": reverse("staff:staff_member_update", args=[user.id]),
+            "toggle_url": reverse("staff:staff_member_toggle", args=[user.id]),
+            "shift_url": (
+                reverse("staff:staff_shift_month")
+                + f"?staff={user.id}"
+            ),
+            "leave_url": (
+                reverse("staff:staff_leave_list")
+                + f"?staff={user.id}"
+            ),
         })
 
     return render(request, "staff/staff_list.html", {
         "active": "staffs",
         "page_title": "担当者一覧",
         "staff_cards": staff_cards,
+        "active_staff_count": sum(1 for user in users if user.is_active),
+        "inactive_staff_count": sum(1 for user in users if not user.is_active),
+        "today_appointment_total": sum(today_appointments.values()),
+        "month_sales_total_display": _format_yen(
+            sum(item["total"] for item in month_sales.values())
+        ),
+        "shift_month_url": reverse("staff:staff_shift_month"),
+        "leave_list_url": reverse("staff:staff_leave_list"),
+        "shift_features": [
+            "予約枠連動 準備中",
+        ],
     })
 
 
@@ -1859,10 +1941,15 @@ def superuser_required(user):
     return user.is_authenticated and user.is_superuser
 
 
-@login_required
-@user_passes_test(superuser_required)
+@staff_required
 def staff_create(request):
     clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のスタッフのみ作成できます。")
 
     if request.method == "POST":
         form = StaffCreateForm(request.POST, clinic=clinic)
@@ -1877,6 +1964,604 @@ def staff_create(request):
         "active": "staffs",
         "page_title": "スタッフ追加",
         "form": form,
+    })
+
+
+@staff_required
+def staff_member_update_view(request, staff_id):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のスタッフのみ編集できます。")
+
+    staff_user = get_object_or_404(
+        User,
+        pk=staff_id,
+        clinic=clinic,
+        role__in=[
+            User.Role.ADMIN,
+            User.Role.RECEPTION,
+            User.Role.PRACTITIONER,
+        ],
+    )
+    if request.method == "POST":
+        form = StaffMemberEditForm(
+            request.POST,
+            instance=staff_user,
+            clinic=clinic,
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(request, "スタッフ情報を保存しました。")
+            return redirect("staff:staff_list")
+    else:
+        form = StaffMemberEditForm(instance=staff_user, clinic=clinic)
+
+    return render(request, "staff/staff_member_form.html", {
+        "active": "staffs",
+        "page_title": "スタッフ編集",
+        "form": form,
+        "staff_user": staff_user,
+    })
+
+
+@staff_required
+@require_POST
+def staff_member_toggle_view(request, staff_id):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のスタッフのみ変更できます。")
+
+    staff_user = get_object_or_404(
+        User,
+        pk=staff_id,
+        clinic=clinic,
+        role__in=[
+            User.Role.ADMIN,
+            User.Role.RECEPTION,
+            User.Role.PRACTITIONER,
+        ],
+    )
+    if staff_user.id == request.user.id and staff_user.is_active:
+        messages.error(request, "自分自身を無効化することはできません。")
+        return redirect("staff:staff_list")
+
+    staff_user.is_active = not staff_user.is_active
+    staff_user.save(update_fields=["is_active"])
+    if staff_user.is_active:
+        messages.success(request, "スタッフを再有効化しました。")
+    else:
+        messages.success(request, "スタッフを無効化しました。")
+    return redirect("staff:staff_list")
+
+
+def _parse_shift_month(request):
+    today = timezone.localdate()
+    try:
+        year = int(request.GET.get("year") or today.year)
+        month = int(request.GET.get("month") or today.month)
+        if month < 1 or month > 12:
+            raise ValueError
+        month_start = date(year, month, 1)
+    except (TypeError, ValueError):
+        month_start = date(today.year, today.month, 1)
+
+    last_day = monthrange(month_start.year, month_start.month)[1]
+    month_end = date(month_start.year, month_start.month, last_day)
+    if month_start.month == 12:
+        next_month = date(month_start.year + 1, 1, 1)
+    else:
+        next_month = date(month_start.year, month_start.month + 1, 1)
+    if month_start.month == 1:
+        prev_month = date(month_start.year - 1, 12, 1)
+    else:
+        prev_month = date(month_start.year, month_start.month - 1, 1)
+    return month_start, month_end, next_month, prev_month
+
+
+def _shift_staff_roles():
+    return [
+        User.Role.ADMIN,
+        User.Role.RECEPTION,
+        User.Role.PRACTITIONER,
+    ]
+
+
+def _shift_status_class(status):
+    return {
+        StaffShift.Status.WORKING: "working",
+        StaffShift.Status.OFF: "off",
+        StaffShift.Status.HALF_DAY: "half-day",
+        StaffShift.Status.TRAINING: "training",
+        StaffShift.Status.OTHER: "other",
+    }.get(status, "other")
+
+
+def _leave_type_class(leave_type):
+    return {
+        StaffLeave.LeaveType.PAID_LEAVE: "paid-leave",
+        StaffLeave.LeaveType.MORNING_OFF: "morning-off",
+        StaffLeave.LeaveType.AFTERNOON_OFF: "afternoon-off",
+        StaffLeave.LeaveType.ABSENCE: "absence",
+        StaffLeave.LeaveType.TRAINING: "training",
+        StaffLeave.LeaveType.OTHER: "other",
+    }.get(leave_type, "other")
+
+
+def _leave_status_class(status):
+    return {
+        StaffLeave.Status.REQUESTED: "requested",
+        StaffLeave.Status.APPROVED: "approved",
+        StaffLeave.Status.REJECTED: "rejected",
+        StaffLeave.Status.CANCELED: "canceled",
+    }.get(status, "requested")
+
+
+def _format_leave_period(leave):
+    if leave.start_date == leave.end_date:
+        return leave.start_date.strftime("%Y/%m/%d")
+    return f"{leave.start_date.strftime('%Y/%m/%d')}〜{leave.end_date.strftime('%Y/%m/%d')}"
+
+
+def _format_leave_time(leave):
+    if leave.start_time and leave.end_time:
+        return f"{leave.start_time.strftime('%H:%M')}〜{leave.end_time.strftime('%H:%M')}"
+    return "終日"
+
+
+def _format_shift_time(shift):
+    if shift.status == StaffShift.Status.OFF:
+        return "休み"
+    if shift.start_time and shift.end_time:
+        return f"{shift.start_time.strftime('%H:%M')}〜{shift.end_time.strftime('%H:%M')}"
+    return shift.get_status_display()
+
+
+def _staff_shift_initial(clinic, request):
+    clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
+    initial = {
+        "date": timezone.localdate(),
+        "status": StaffShift.Status.WORKING,
+        "start_time": time(9, 0),
+        "end_time": time(18, 0),
+        "break_start": time(13, 0),
+        "break_end": time(14, 0),
+    }
+    if clinic_settings:
+        initial.update({
+            "start_time": clinic_settings.business_start_time,
+            "end_time": clinic_settings.business_end_time,
+            "break_start": clinic_settings.break_start_time,
+            "break_end": clinic_settings.break_end_time,
+        })
+
+    shift_date = parse_date(request.GET.get("date") or "")
+    if shift_date:
+        initial["date"] = shift_date
+
+    staff_id = request.GET.get("staff")
+    if staff_id:
+        staff_user = (
+            User.objects
+            .filter(
+                pk=staff_id,
+                clinic=clinic,
+                is_active=True,
+                role__in=_shift_staff_roles(),
+            )
+            .first()
+        )
+        if staff_user:
+            initial["staff"] = staff_user
+    return initial
+
+
+@staff_required
+def staff_shift_month_view(request):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のシフトのみ閲覧できます。")
+
+    month_start, month_end, next_month, prev_month = _parse_shift_month(request)
+    month_days = [
+        month_start + timedelta(days=offset)
+        for offset in range((month_end - month_start).days + 1)
+    ]
+    selected_staff_id = request.GET.get("staff") or ""
+    selected_staff = None
+
+    shifts = list(
+        StaffShift.objects
+        .filter(
+            clinic=clinic,
+            date__gte=month_start,
+            date__lt=next_month,
+        )
+        .select_related("staff")
+        .order_by("staff__last_name", "staff__first_name", "date")
+    )
+    shifted_staff_ids = {shift.staff_id for shift in shifts}
+    leaves = list(
+        StaffLeave.objects
+        .filter(
+            clinic=clinic,
+            start_date__lte=month_end,
+            end_date__gte=month_start,
+        )
+        .exclude(status__in=[
+            StaffLeave.Status.REJECTED,
+            StaffLeave.Status.CANCELED,
+        ])
+        .select_related("staff")
+        .order_by("staff__last_name", "staff__first_name", "start_date")
+    )
+    leave_staff_ids = {leave.staff_id for leave in leaves}
+    staff_qs = (
+        User.objects
+        .filter(clinic=clinic, role__in=_shift_staff_roles())
+        .filter(Q(is_active=True) | Q(id__in=shifted_staff_ids | leave_staff_ids))
+        .order_by("-is_active", "last_name", "first_name", "username")
+    )
+    if selected_staff_id:
+        selected_staff = get_object_or_404(
+            User,
+            pk=selected_staff_id,
+            clinic=clinic,
+            role__in=_shift_staff_roles(),
+        )
+        staff_qs = staff_qs.filter(pk=selected_staff.id)
+
+    shift_map = {}
+    for shift in shifts:
+        shift.status_class = _shift_status_class(shift.status)
+        shift.time_label = _format_shift_time(shift)
+        shift.edit_url = reverse("staff:staff_shift_update", args=[shift.id])
+        shift_map[(shift.staff_id, shift.date)] = shift
+
+    leave_map = {}
+    for leave in leaves:
+        leave.type_class = _leave_type_class(leave.leave_type)
+        leave.status_class = _leave_status_class(leave.status)
+        leave.period_label = _format_leave_period(leave)
+        leave.time_label = _format_leave_time(leave)
+        leave.edit_url = reverse("staff:staff_leave_update", args=[leave.id])
+        current_day = max(leave.start_date, month_start)
+        last_day = min(leave.end_date, month_end)
+        while current_day <= last_day:
+            leave_map.setdefault((leave.staff_id, current_day), []).append(leave)
+            current_day += timedelta(days=1)
+
+    rows = []
+    for staff_user in staff_qs:
+        full_name = (
+            f"{staff_user.last_name} {staff_user.first_name}".strip()
+            or staff_user.username
+        )
+        cells = []
+        for day in month_days:
+            shift = shift_map.get((staff_user.id, day))
+            cells.append({
+                "date": day,
+                "is_today": day == timezone.localdate(),
+                "shift": shift,
+                "leaves": leave_map.get((staff_user.id, day), []),
+                "create_url": (
+                    reverse("staff:staff_shift_create")
+                    + f"?staff={staff_user.id}&date={day.isoformat()}"
+                ),
+            })
+        rows.append({
+            "staff": staff_user,
+            "name": full_name,
+            "is_active": staff_user.is_active,
+            "cells": cells,
+        })
+
+    query_staff = f"&staff={selected_staff.id}" if selected_staff else ""
+    return render(request, "staff/staff_shift_month.html", {
+        "active": "shifts",
+        "page_title": "スタッフシフト管理",
+        "clinic": clinic,
+        "month_start": month_start,
+        "month_end": month_end,
+        "today": timezone.localdate(),
+        "month_days": month_days,
+        "rows": rows,
+        "selected_staff": selected_staff,
+        "staff_options": (
+            User.objects
+            .filter(clinic=clinic, role__in=_shift_staff_roles())
+            .order_by("-is_active", "last_name", "first_name", "username")
+        ),
+        "prev_month_url": (
+            reverse("staff:staff_shift_month")
+            + f"?year={prev_month.year}&month={prev_month.month}{query_staff}"
+        ),
+        "next_month_url": (
+            reverse("staff:staff_shift_month")
+            + f"?year={next_month.year}&month={next_month.month}{query_staff}"
+        ),
+        "current_month_url": reverse("staff:staff_shift_month"),
+        "create_url": reverse("staff:staff_shift_create"),
+    })
+
+
+@staff_required
+def staff_shift_create_view(request):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のシフトのみ作成できます。")
+
+    if request.method == "POST":
+        form = StaffShiftForm(request.POST, clinic=clinic)
+        if form.is_valid():
+            shift = form.save()
+            messages.success(request, "スタッフシフトを登録しました。")
+            return redirect(
+                reverse("staff:staff_shift_month")
+                + f"?year={shift.date.year}&month={shift.date.month}"
+            )
+    else:
+        form = StaffShiftForm(
+            clinic=clinic,
+            initial=_staff_shift_initial(clinic, request),
+        )
+
+    return render(request, "staff/staff_shift_form.html", {
+        "active": "shifts",
+        "page_title": "シフト登録",
+        "form": form,
+        "is_edit": False,
+    })
+
+
+@staff_required
+def staff_shift_update_view(request, shift_id):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のシフトのみ編集できます。")
+
+    shift = get_object_or_404(
+        StaffShift.objects.select_related("clinic", "staff"),
+        pk=shift_id,
+        clinic=clinic,
+    )
+    if request.method == "POST":
+        form = StaffShiftForm(request.POST, instance=shift, clinic=clinic)
+        if form.is_valid():
+            shift = form.save()
+            messages.success(request, "スタッフシフトを保存しました。")
+            return redirect(
+                reverse("staff:staff_shift_month")
+                + f"?year={shift.date.year}&month={shift.date.month}&staff={shift.staff_id}"
+            )
+    else:
+        form = StaffShiftForm(instance=shift, clinic=clinic)
+
+    return render(request, "staff/staff_shift_form.html", {
+        "active": "shifts",
+        "page_title": "シフト編集",
+        "form": form,
+        "is_edit": True,
+        "shift": shift,
+    })
+
+
+def _parse_leave_month(request):
+    month_start, month_end, next_month, prev_month = _parse_shift_month(request)
+    return month_start, month_end, next_month, prev_month
+
+
+@staff_required
+def staff_leave_list_view(request):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の休暇のみ閲覧できます。")
+
+    month_start, month_end, next_month, prev_month = _parse_leave_month(request)
+    staff_id = request.GET.get("staff") or ""
+    leave_type = request.GET.get("leave_type") or ""
+    status = request.GET.get("status") or ""
+
+    leaves = (
+        StaffLeave.objects
+        .filter(
+            clinic=clinic,
+            start_date__lte=month_end,
+            end_date__gte=month_start,
+        )
+        .select_related("staff")
+        .order_by("start_date", "staff__last_name", "staff__first_name", "id")
+    )
+    selected_staff = None
+    if staff_id:
+        selected_staff = get_object_or_404(
+            User,
+            pk=staff_id,
+            clinic=clinic,
+            role__in=_shift_staff_roles(),
+        )
+        leaves = leaves.filter(staff=selected_staff)
+    if leave_type in dict(StaffLeave.LeaveType.choices):
+        leaves = leaves.filter(leave_type=leave_type)
+    else:
+        leave_type = ""
+    if status in dict(StaffLeave.Status.choices):
+        leaves = leaves.filter(status=status)
+    else:
+        status = ""
+
+    leave_items = []
+    for leave in leaves:
+        leave.type_class = _leave_type_class(leave.leave_type)
+        leave.status_class = _leave_status_class(leave.status)
+        leave.period_label = _format_leave_period(leave)
+        leave.time_label = _format_leave_time(leave)
+        leave.staff_name = (
+            f"{leave.staff.last_name} {leave.staff.first_name}".strip()
+            or leave.staff.username
+        )
+        leave.edit_url = reverse("staff:staff_leave_update", args=[leave.id])
+        leave_items.append(leave)
+
+    staff_options = (
+        User.objects
+        .filter(clinic=clinic, role__in=_shift_staff_roles())
+        .order_by("-is_active", "last_name", "first_name", "username")
+    )
+    query_staff = f"&staff={selected_staff.id}" if selected_staff else ""
+    query_type = f"&leave_type={leave_type}" if leave_type else ""
+    query_status = f"&status={status}" if status else ""
+    query_tail = f"{query_staff}{query_type}{query_status}"
+
+    return render(request, "staff/staff_leave_list.html", {
+        "active": "leaves",
+        "page_title": "休暇・有給管理",
+        "clinic": clinic,
+        "month_start": month_start,
+        "month_end": month_end,
+        "leaves": leave_items,
+        "staff_options": staff_options,
+        "selected_staff": selected_staff,
+        "filters": {
+            "staff": staff_id,
+            "leave_type": leave_type,
+            "status": status,
+        },
+        "leave_type_choices": StaffLeave.LeaveType.choices,
+        "status_choices": StaffLeave.Status.choices,
+        "prev_month_url": (
+            reverse("staff:staff_leave_list")
+            + f"?year={prev_month.year}&month={prev_month.month}{query_tail}"
+        ),
+        "next_month_url": (
+            reverse("staff:staff_leave_list")
+            + f"?year={next_month.year}&month={next_month.month}{query_tail}"
+        ),
+        "current_month_url": reverse("staff:staff_leave_list"),
+        "create_url": reverse("staff:staff_leave_create"),
+        "shift_month_url": reverse("staff:staff_shift_month"),
+    })
+
+
+def _staff_leave_initial(clinic, request):
+    today = timezone.localdate()
+    initial = {
+        "start_date": today,
+        "end_date": today,
+        "leave_type": StaffLeave.LeaveType.PAID_LEAVE,
+        "status": StaffLeave.Status.APPROVED,
+    }
+    leave_date = parse_date(request.GET.get("date") or "")
+    if leave_date:
+        initial["start_date"] = leave_date
+        initial["end_date"] = leave_date
+    staff_id = request.GET.get("staff")
+    if staff_id:
+        staff_user = (
+            User.objects
+            .filter(
+                pk=staff_id,
+                clinic=clinic,
+                is_active=True,
+                role__in=_shift_staff_roles(),
+            )
+            .first()
+        )
+        if staff_user:
+            initial["staff"] = staff_user
+    return initial
+
+
+@staff_required
+def staff_leave_create_view(request):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の休暇のみ作成できます。")
+
+    if request.method == "POST":
+        form = StaffLeaveForm(request.POST, clinic=clinic)
+        if form.is_valid():
+            leave = form.save()
+            messages.success(request, "スタッフ休暇を登録しました。")
+            return redirect(
+                reverse("staff:staff_leave_list")
+                + f"?year={leave.start_date.year}&month={leave.start_date.month}&staff={leave.staff_id}"
+            )
+    else:
+        form = StaffLeaveForm(
+            clinic=clinic,
+            initial=_staff_leave_initial(clinic, request),
+        )
+
+    return render(request, "staff/staff_leave_form.html", {
+        "active": "leaves",
+        "page_title": "休暇登録",
+        "form": form,
+        "is_edit": False,
+    })
+
+
+@staff_required
+def staff_leave_update_view(request, leave_id):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の休暇のみ編集できます。")
+
+    leave = get_object_or_404(
+        StaffLeave.objects.select_related("clinic", "staff"),
+        pk=leave_id,
+        clinic=clinic,
+    )
+    if request.method == "POST":
+        form = StaffLeaveForm(request.POST, instance=leave, clinic=clinic)
+        if form.is_valid():
+            leave = form.save()
+            messages.success(request, "スタッフ休暇を保存しました。")
+            return redirect(
+                reverse("staff:staff_leave_list")
+                + f"?year={leave.start_date.year}&month={leave.start_date.month}&staff={leave.staff_id}"
+            )
+    else:
+        form = StaffLeaveForm(instance=leave, clinic=clinic)
+
+    return render(request, "staff/staff_leave_form.html", {
+        "active": "leaves",
+        "page_title": "休暇編集",
+        "form": form,
+        "is_edit": True,
+        "leave": leave,
     })
 
 
@@ -2205,10 +2890,171 @@ def _kpi_recording_querysets(clinic):
     }
 
 
+def _build_staff_sales_kpi_context(clinic, today, seven_days_ago):
+    month_start, next_month = get_month_range(today)
+    paid_records = SalesRecord.objects.filter(
+        clinic=clinic,
+        status=SalesRecord.Status.PAID,
+    )
+    unpaid_records = SalesRecord.objects.filter(
+        clinic=clinic,
+        status=SalesRecord.Status.UNPAID,
+    )
+    canceled_records = SalesRecord.objects.filter(
+        clinic=clinic,
+        status=SalesRecord.Status.CANCELED,
+    )
+
+    today_paid = paid_records.filter(treatment_date=today)
+    month_paid = paid_records.filter(
+        treatment_date__gte=month_start,
+        treatment_date__lt=next_month,
+    )
+    seven_day_paid = paid_records.filter(
+        treatment_date__gte=seven_days_ago,
+        treatment_date__lte=today,
+    )
+    due_unpaid = unpaid_records.filter(treatment_date__lte=today)
+    month_canceled = canceled_records.filter(
+        treatment_date__gte=month_start,
+        treatment_date__lt=next_month,
+    )
+
+    today_sales = today_paid.aggregate(total=Sum("amount"))["total"] or 0
+    month_sales = month_paid.aggregate(total=Sum("amount"))["total"] or 0
+    seven_day_sales = (
+        seven_day_paid.aggregate(total=Sum("amount"))["total"] or 0
+    )
+
+    daily_rows = (
+        seven_day_paid
+        .annotate(day=TruncDate("treatment_date"))
+        .values("day")
+        .annotate(total=Sum("amount"), count=Count("id"))
+        .order_by("day")
+    )
+    daily_map = {row["day"]: row for row in daily_rows}
+    daily_sales = []
+    max_daily_sales = 0
+    for offset in range(7):
+        day = seven_days_ago + timedelta(days=offset)
+        row = daily_map.get(day, {})
+        amount = row.get("total") or 0
+        max_daily_sales = max(max_daily_sales, amount)
+        daily_sales.append({
+            "day": day,
+            "amount": amount,
+            "amount_display": _format_yen(amount),
+            "count": row.get("count") or 0,
+        })
+    for row in daily_sales:
+        row["bar_percent"] = (
+            round(row["amount"] / max_daily_sales * 100)
+            if max_daily_sales else 0
+        )
+
+    menu_rows = (
+        month_paid
+        .values("treatment_menu_id", "treatment_menu__name")
+        .annotate(total=Sum("amount"), count=Count("id"))
+        .order_by("-total", "treatment_menu__name")[:8]
+    )
+    menu_sales = [
+        {
+            "label": row["treatment_menu__name"] or "メニュー未設定",
+            "count": row["count"],
+            "total": row["total"] or 0,
+            "total_display": _format_yen(row["total"] or 0),
+        }
+        for row in menu_rows
+    ]
+
+    payment_rows = (
+        month_paid
+        .values("payment_method")
+        .annotate(total=Sum("amount"), count=Count("id"))
+    )
+    payment_map = {row["payment_method"]: row for row in payment_rows}
+    payment_sales = []
+    for value, label in SalesRecord.PaymentMethod.choices:
+        row = payment_map.get(value, {})
+        total = row.get("total") or 0
+        payment_sales.append({
+            "label": label,
+            "count": row.get("count") or 0,
+            "total": total,
+            "total_display": _format_yen(total),
+        })
+
+    staff_rows = (
+        month_paid
+        .values(
+            "staff_id",
+            "staff__last_name",
+            "staff__first_name",
+            "staff__username",
+        )
+        .annotate(total=Sum("amount"), count=Count("id"))
+        .order_by("-total", "staff__last_name", "staff__username")[:8]
+    )
+    staff_sales = []
+    for row in staff_rows:
+        if row["staff_id"]:
+            full_name = " ".join(
+                part for part in [
+                    row.get("staff__last_name"),
+                    row.get("staff__first_name"),
+                ] if part
+            )
+            label = full_name or row.get("staff__username") or "担当者未設定"
+        else:
+            label = "担当者未設定"
+        total = row["total"] or 0
+        staff_sales.append({
+            "label": label,
+            "count": row["count"],
+            "total": total,
+            "total_display": _format_yen(total),
+        })
+
+    unpaid_sales_items = list(
+        due_unpaid
+        .select_related("patient", "treatment_menu", "staff")
+        .order_by("treatment_date", "created_at")[:10]
+    )
+    for record in unpaid_sales_items:
+        record.amount_display = _format_yen(record.amount)
+        record.edit_url = reverse("staff:sales_record_update", args=[record.id])
+
+    return {
+        "sales_summary": {
+            "today_sales": today_sales,
+            "today_sales_display": _format_yen(today_sales),
+            "month_sales": month_sales,
+            "month_sales_display": _format_yen(month_sales),
+            "seven_day_sales": seven_day_sales,
+            "seven_day_sales_display": _format_yen(seven_day_sales),
+            "today_paid_count": today_paid.count(),
+            "unpaid_count": due_unpaid.count(),
+            "canceled_count": month_canceled.count(),
+        },
+        "daily_sales": daily_sales,
+        "menu_sales": menu_sales,
+        "payment_sales": payment_sales,
+        "staff_sales": staff_sales,
+        "unpaid_sales_items": unpaid_sales_items,
+    }
+
+
 def build_staff_kpi_context(clinic):
     today = timezone.localdate()
     seven_days_ago = today - timedelta(days=6)
     recordings = _kpi_recording_querysets(clinic)
+    sales_context = _build_staff_sales_kpi_context(
+        clinic,
+        today,
+        seven_days_ago,
+    )
 
     today_appointments = Appointment.objects.filter(
         clinic=clinic,
@@ -2416,6 +3262,17 @@ def build_staff_kpi_context(clinic):
         url_name="treatment_sessions:detail",
         priority=1,
     )
+    for record in sales_context["unpaid_sales_items"]:
+        attention_items.append({
+            "patient": record.patient,
+            "kind": "未会計",
+            "state": "未会計",
+            "created_at": record.created_at,
+            "treatment_date": record.treatment_date,
+            "amount_display": record.amount_display,
+            "url": record.edit_url,
+            "priority": 1,
+        })
     attention_items = sorted(
         attention_items,
         key=lambda item: (
@@ -2444,7 +3301,9 @@ def build_staff_kpi_context(clinic):
             "without_appointment": recordings[
                 "no_appointment_sessions"
             ].count(),
+            "unpaid_sales": sales_context["sales_summary"]["unpaid_count"],
         },
+        **sales_context,
     }
 
 

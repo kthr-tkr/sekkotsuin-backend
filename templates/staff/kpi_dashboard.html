@@ -41,7 +41,19 @@
   .recent-card{padding:17px;border-radius:17px;background:#f7f9fc;border:1px solid #e7ecf3;text-align:center}
   .recent-value{font-size:29px;font-weight:900;color:#1d4f91}
   .recent-label{margin-top:5px;font-size:13px;font-weight:800;color:#596b84}
-  .attention-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:18px}
+  .sales-kpi-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .sales-kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}
+  .sales-kpi-card{padding:20px;border:1px solid #e3eaf3;border-radius:20px;background:#f8fbff}
+  .sales-kpi-card.green{background:#f1fbf6;border-color:#d9f0e4}.sales-kpi-card.warning{background:#fff9ed;border-color:#f1d79e}.sales-kpi-card.muted{background:#f6f7f9}
+  .sales-kpi-label{font-size:12px;font-weight:900;color:#64758c}.sales-kpi-value{margin-top:8px;font-size:30px;font-weight:950;color:#17345f}.sales-kpi-note{margin-top:5px;font-size:12px;color:#708099}
+  .sales-board{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+  .sales-panel{padding:18px;border:1px solid #e6edf5;border-radius:19px;background:#fbfdff}
+  .sales-panel h3{margin:0 0 12px;color:#17345f;font-size:16px}.sales-panel-sub{margin:-8px 0 13px;color:#728299;font-size:12px}
+  .sales-trend-list,.sales-breakdown-list{display:flex;flex-direction:column;gap:10px}
+  .sales-trend-row{display:grid;grid-template-columns:92px 1fr 100px;align-items:center;gap:10px;font-size:13px;color:#304762}
+  .sales-bar{height:10px;border-radius:999px;background:#e7eef7;overflow:hidden}.sales-bar span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#2e68b2,#25a56a)}
+  .sales-total{font-weight:900;text-align:right;color:#17345f}.sales-breakdown-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf2f7;font-size:13px}.sales-breakdown-row:last-child{border-bottom:0}.sales-breakdown-name{font-weight:900;color:#253d5b}.sales-breakdown-count{color:#75849a}.sales-breakdown-total{font-weight:900;color:#17345f}
+  .attention-summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:18px}
   .attention-count{padding:14px;border-radius:16px;background:#fff8ea;border:1px solid #f3dfb5}
   .attention-count strong{display:block;font-size:24px;color:#a35b00}
   .attention-count span{font-size:12px;color:#785f35}
@@ -55,18 +67,21 @@
   .attention-kind{font-size:13px;color:#52647d}
   .state-badge{display:inline-flex;width:max-content;padding:6px 10px;border-radius:999px;background:#fff1d0;color:#925600;font-size:12px;font-weight:900}
   .state-badge.error{background:#ffe4e4;color:#b42323}
+  .state-badge.unpaid{background:#fff6d8;color:#8a6100}
   .attention-action{display:inline-flex;justify-content:center;padding:9px 12px;border-radius:11px;background:#173f78;color:#fff;text-decoration:none;font-size:12px;font-weight:800}
   .kpi-empty{padding:28px;border:1px dashed #cfd8e6;border-radius:18px;text-align:center;color:#718096;background:#fafcff}
   @media(max-width:980px){
     .today-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
     .recent-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .sales-kpi-grid{grid-template-columns:1fr 1fr}.sales-board{grid-template-columns:1fr}
     .attention-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
     .attention-item{grid-template-columns:1fr auto}
   }
   @media(max-width:620px){
     .kpi-hero{align-items:flex-start;flex-direction:column;padding:22px}.kpi-hero-actions{align-items:flex-start}
-    .kpi-title{font-size:28px}.today-grid,.recent-grid,.attention-summary{grid-template-columns:1fr}
+    .kpi-title{font-size:28px}.today-grid,.recent-grid,.sales-kpi-grid,.attention-summary{grid-template-columns:1fr}
     .kpi-section{padding:18px}.attention-item{grid-template-columns:1fr}
+    .sales-trend-row{grid-template-columns:1fr}.sales-total{text-align:left}
   }
 </style>
 {% endblock %}
@@ -121,6 +136,115 @@
     </div>
   </section>
 
+  <section class="kpi-section">
+    <div class="kpi-section-head">
+      <div>
+        <h2 class="kpi-section-title">売上実績</h2>
+        <div class="kpi-section-sub">支払い済みのみ売上合計に含め、未会計とキャンセルは別管理します</div>
+      </div>
+      <div class="sales-kpi-actions">
+        <a class="kpi-link" href="{% url 'staff:sales_record_list' %}">売上一覧を見る</a>
+        <a class="kpi-link" href="{% url 'staff:sales_record_create' %}">売上を登録</a>
+      </div>
+    </div>
+
+    <div class="sales-kpi-grid">
+      <div class="sales-kpi-card green">
+        <div class="sales-kpi-label">本日売上</div>
+        <div class="sales-kpi-value">{{ sales_summary.today_sales_display }}</div>
+        <div class="sales-kpi-note">本日会計 {{ sales_summary.today_paid_count }} 件</div>
+      </div>
+      <div class="sales-kpi-card">
+        <div class="sales-kpi-label">今月売上</div>
+        <div class="sales-kpi-value">{{ sales_summary.month_sales_display }}</div>
+        <div class="sales-kpi-note">支払い済み売上のみ</div>
+      </div>
+      <div class="sales-kpi-card">
+        <div class="sales-kpi-label">直近7日売上</div>
+        <div class="sales-kpi-value">{{ sales_summary.seven_day_sales_display }}</div>
+        <div class="sales-kpi-note">{{ seven_days_ago|date:"n/j" }}〜{{ today|date:"n/j" }}</div>
+      </div>
+      <div class="sales-kpi-card warning">
+        <div class="sales-kpi-label">未会計件数</div>
+        <div class="sales-kpi-value">{{ sales_summary.unpaid_count }}</div>
+        <div class="sales-kpi-note">本日以前の未払い</div>
+      </div>
+      <div class="sales-kpi-card muted">
+        <div class="sales-kpi-label">キャンセル件数</div>
+        <div class="sales-kpi-value">{{ sales_summary.canceled_count }}</div>
+        <div class="sales-kpi-note">今月のキャンセル売上</div>
+      </div>
+      <div class="sales-kpi-card">
+        <div class="sales-kpi-label">売上管理</div>
+        <div class="sales-kpi-value">KPI</div>
+        <div class="sales-kpi-note">詳細は売上一覧で確認できます</div>
+      </div>
+    </div>
+
+    <div class="sales-board">
+      <div class="sales-panel">
+        <h3>直近7日の売上推移</h3>
+        <div class="sales-panel-sub">0円の日も表示しています</div>
+        <div class="sales-trend-list">
+          {% for row in daily_sales %}
+            <div class="sales-trend-row">
+              <div>{{ row.day|date:"Y/m/d" }}</div>
+              <div class="sales-bar"><span style="width:{{ row.bar_percent }}%"></span></div>
+              <div class="sales-total">{{ row.amount_display }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="sales-panel">
+        <h3>今月のメニュー別売上</h3>
+        {% if menu_sales %}
+          <div class="sales-breakdown-list">
+            {% for row in menu_sales %}
+              <div class="sales-breakdown-row">
+                <div class="sales-breakdown-name">{{ row.label }}</div>
+                <div class="sales-breakdown-count">{{ row.count }}件</div>
+                <div class="sales-breakdown-total">{{ row.total_display }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="kpi-empty">今月の支払い済み売上はまだありません。</div>
+        {% endif %}
+      </div>
+
+      <div class="sales-panel">
+        <h3>支払方法別売上</h3>
+        <div class="sales-breakdown-list">
+          {% for row in payment_sales %}
+            <div class="sales-breakdown-row">
+              <div class="sales-breakdown-name">{{ row.label }}</div>
+              <div class="sales-breakdown-count">{{ row.count }}件</div>
+              <div class="sales-breakdown-total">{{ row.total_display }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="sales-panel">
+        <h3>担当者別売上</h3>
+        {% if staff_sales %}
+          <div class="sales-breakdown-list">
+            {% for row in staff_sales %}
+              <div class="sales-breakdown-row">
+                <div class="sales-breakdown-name">{{ row.label }}</div>
+                <div class="sales-breakdown-count">{{ row.count }}件</div>
+                <div class="sales-breakdown-total">{{ row.total_display }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="kpi-empty">担当者別の支払い済み売上はまだありません。</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
   <section class="kpi-section" id="attention">
     <div class="kpi-section-head">
       <div>
@@ -134,6 +258,7 @@
       <div class="attention-count"><strong>{{ attention_counts.summary_waiting }}</strong><span>カルテ案作成待ち</span></div>
       <div class="attention-count"><strong>{{ attention_counts.unconfirmed }}</strong><span>未確認のカルテ案</span></div>
       <div class="attention-count"><strong>{{ attention_counts.without_appointment }}</strong><span>予約情報なし</span></div>
+      <div class="attention-count"><strong>{{ attention_counts.unpaid_sales }}</strong><span>未会計</span></div>
     </div>
     {% if attention_items %}
       <div class="attention-list">
@@ -143,8 +268,13 @@
               <div class="attention-patient">{{ item.patient.last_name }} {{ item.patient.first_name }}</div>
               <div class="attention-meta">{{ item.created_at|date:"Y/m/d H:i" }}</div>
             </div>
-            <div class="attention-kind">{{ item.kind }}</div>
-            <span class="state-badge {% if item.state == 'エラーあり' %}error{% endif %}">{{ item.state }}</span>
+            <div class="attention-kind">
+              {{ item.kind }}
+              {% if item.treatment_date %}
+                <div class="attention-meta">{{ item.treatment_date|date:"Y/m/d" }} / {{ item.amount_display }}</div>
+              {% endif %}
+            </div>
+            <span class="state-badge {% if item.state == 'エラーあり' %}error{% elif item.state == '未会計' %}unpaid{% endif %}">{{ item.state }}</span>
             <a class="attention-action" href="{{ item.url }}">詳細を確認</a>
           </div>
         {% endfor %}

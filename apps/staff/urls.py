@@ -39,6 +39,11 @@ urlpatterns = [
     
     path("patients/", views.staff_patient_search_view, name="patient_search"),
     path("staff/", views.staff_list, name="staff_list"),
+    path(
+        "settings/members/",
+        views.staff_list,
+        name="staff_member_list",
+    ),
     path("manual/", views.staff_manual_view, name="manual"),
     path("settings/", views.staff_settings_view, name="settings"),
     path(
@@ -94,6 +99,35 @@ urlpatterns = [
     path("clinical_notes/<int:note_id>/edit/", views.staff_clinical_note_edit, name="clinical_note_edit"),
     path("api/appointments/<int:pk>/move/", views.move_appointment_view, name="appointment_move"),
     path("staffs/create/", views.staff_create, name="staff_create"),
+    path(
+        "settings/members/new/",
+        views.staff_create,
+        name="staff_member_create",
+    ),
+    path(
+        "settings/members/<int:staff_id>/edit/",
+        views.staff_member_update_view,
+        name="staff_member_update",
+    ),
+    path(
+        "settings/members/<int:staff_id>/toggle/",
+        views.staff_member_toggle_view,
+        name="staff_member_toggle",
+    ),
+    path("shifts/", views.staff_shift_month_view, name="staff_shift_month"),
+    path("shifts/new/", views.staff_shift_create_view, name="staff_shift_create"),
+    path(
+        "shifts/<int:shift_id>/edit/",
+        views.staff_shift_update_view,
+        name="staff_shift_update",
+    ),
+    path("leaves/", views.staff_leave_list_view, name="staff_leave_list"),
+    path("leaves/new/", views.staff_leave_create_view, name="staff_leave_create"),
+    path(
+        "leaves/<int:leave_id>/edit/",
+        views.staff_leave_update_view,
+        name="staff_leave_update",
+    ),
     path(
         "clinical_notes/<int:pk>/print/",
         views.staff_clinical_note_print_view,

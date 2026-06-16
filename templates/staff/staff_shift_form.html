@@ -1,0 +1,93 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | {{ page_title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .shift-form-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
+  .shift-form-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;padding:28px;border-radius:28px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 24px 56px rgba(20,48,91,.2)}
+  .shift-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.shift-title{margin:8px 0 10px;font-size:32px;letter-spacing:-.04em}.shift-lead{margin:0;color:#e2edff;line-height:1.7}
+  .shift-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.shift-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.shift-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}
+  .shift-form-card{padding:24px;border:1px solid #e1e8f1;border-radius:24px;background:#fff;box-shadow:0 13px 32px rgba(20,42,76,.06)}
+  .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.field.full{grid-column:1/-1}.field label{display:block;margin-bottom:7px;font-size:12px;font-weight:900;color:#425873}
+  .field input,.field textarea,.field select{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #ccd7e5;border-radius:12px;background:#fbfcfe;color:#1b304d;font:inherit;outline:none}.field textarea{resize:vertical;line-height:1.65}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:#4b83c7;box-shadow:0 0 0 3px rgba(75,131,199,.11);background:#fff}
+  .field-error{margin-top:6px;color:#b42323;font-size:12px;font-weight:700}.form-errors{padding:14px 16px;margin-bottom:16px;border:1px solid #f1caca;border-radius:14px;background:#fff6f6;color:#a52a2a;font-size:13px}
+  .form-note{margin-top:18px;padding:14px 16px;border-radius:15px;background:#f1f7ff;border:1px solid #d9e8fa;color:#335a88;font-size:13px;line-height:1.7}
+  .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+  @media(max-width:800px){.shift-form-hero{flex-direction:column;align-items:flex-start}.field-grid{grid-template-columns:1fr}.shift-form-card{padding:18px}.form-actions{flex-direction:column}.shift-btn{width:100%}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="shift-form-page">
+  <header class="shift-form-hero">
+    <div>
+      <div class="shift-eyebrow">SHIFT FORM</div>
+      <h1 class="shift-title">{{ page_title }}</h1>
+      <p class="shift-lead">スタッフの勤務日、勤務時間、休憩、休み・研修などを登録します。後続の予約枠連動に使いやすい形で管理します。</p>
+    </div>
+    <a class="shift-btn soft" href="{% url 'staff:staff_shift_month' %}">月表示へ戻る</a>
+  </header>
+
+  <form method="post" class="shift-form-card" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="field-grid">
+      <div class="field">
+        <label for="{{ form.staff.id_for_label }}">{{ form.staff.label }}</label>
+        {{ form.staff }}
+        {% for error in form.staff.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.date.id_for_label }}">{{ form.date.label }}</label>
+        {{ form.date }}
+        {% for error in form.date.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+        {{ form.status }}
+        {% for error in form.status.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.start_time.id_for_label }}">{{ form.start_time.label }}</label>
+        {{ form.start_time }}
+        {% for error in form.start_time.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.end_time.id_for_label }}">{{ form.end_time.label }}</label>
+        {{ form.end_time }}
+        {% for error in form.end_time.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.break_start.id_for_label }}">{{ form.break_start.label }}</label>
+        {{ form.break_start }}
+        {% for error in form.break_start.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.break_end.id_for_label }}">{{ form.break_end.label }}</label>
+        {{ form.break_end }}
+        {% for error in form.break_end.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field full">
+        <label for="{{ form.memo.id_for_label }}">{{ form.memo.label }}</label>
+        {{ form.memo }}
+        {% for error in form.memo.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="form-note">
+      「休み」の場合は勤務開始・終了を空欄にできます。休憩時間を設定する場合は、勤務時間内で開始・終了の両方を入力してください。
+    </div>
+
+    <div class="form-actions">
+      <a class="shift-btn" href="{% url 'staff:staff_shift_month' %}">キャンセル</a>
+      <button class="shift-btn primary" type="submit">
+        {% if is_edit %}シフトを保存{% else %}シフトを登録{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

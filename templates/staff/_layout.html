@@ -729,6 +729,16 @@
             <span class="label-text">担当者一覧</span>
           </a>
 
+          <a href="{% url 'staff:staff_shift_month' %}" class="{% if active == 'shifts' %}active{% endif %}">
+            <span class="nav-icon">📅</span>
+            <span class="label-text">シフト管理</span>
+          </a>
+
+          <a href="{% url 'staff:staff_leave_list' %}" class="{% if active == 'leaves' %}active{% endif %}">
+            <span class="nav-icon">休</span>
+            <span class="label-text">休暇管理</span>
+          </a>
+
           <a href="{% url 'staff:kpi_dashboard' %}" class="{% if active == 'kpi' %}active{% endif %}">
             <span class="nav-icon">📈</span>
             <span class="label-text">KPI</span>

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Clinic, ClinicSettings, SalesRecord, TreatmentMenu
+from .models import Clinic, ClinicSettings, SalesRecord, StaffLeave, StaffShift, TreatmentMenu
 
 
 @admin.register(Clinic)
@@ -55,5 +55,50 @@ class SalesRecordAdmin(admin.ModelAdmin):
         "patient__last_name",
         "patient__first_name",
         "treatment_menu__name",
+        "memo",
+    )
+
+
+@admin.register(StaffShift)
+class StaffShiftAdmin(admin.ModelAdmin):
+    list_display = (
+        "clinic",
+        "date",
+        "staff",
+        "status",
+        "start_time",
+        "end_time",
+        "break_start",
+        "break_end",
+    )
+    list_filter = ("clinic", "status", "date")
+    search_fields = (
+        "clinic__name",
+        "staff__username",
+        "staff__last_name",
+        "staff__first_name",
+        "memo",
+    )
+
+
+@admin.register(StaffLeave)
+class StaffLeaveAdmin(admin.ModelAdmin):
+    list_display = (
+        "clinic",
+        "staff",
+        "leave_type",
+        "start_date",
+        "end_date",
+        "status",
+        "start_time",
+        "end_time",
+    )
+    list_filter = ("clinic", "leave_type", "status", "start_date")
+    search_fields = (
+        "clinic__name",
+        "staff__username",
+        "staff__last_name",
+        "staff__first_name",
+        "reason",
         "memo",
     )

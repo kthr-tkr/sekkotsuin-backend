@@ -1,10 +1,11 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.db.models import Q
 
 from apps.appointments.models import Appointment
 from apps.clinical_notes.models import ClinicalNote
-from apps.clinics.models import ClinicSettings, SalesRecord, TreatmentMenu
+from apps.clinics.models import ClinicSettings, SalesRecord, StaffLeave, StaffShift, TreatmentMenu
 from apps.patients.models import Patient
 
 User = get_user_model()
@@ -89,6 +90,61 @@ class StaffCreateForm(UserCreationForm):
         user.is_active = True
         user.is_staff = user.role == User.Role.ADMIN
 
+        if commit:
+            user.save()
+        return user
+
+
+class StaffMemberEditForm(forms.ModelForm):
+    role = forms.ChoiceField(
+        label="権限/ロール",
+        choices=[
+            (User.Role.ADMIN, "管理者"),
+            (User.Role.RECEPTION, "受付"),
+            (User.Role.PRACTITIONER, "施術者"),
+        ],
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            "last_name",
+            "first_name",
+            "email",
+            "role",
+            "is_active",
+        )
+        labels = {
+            "last_name": "姓",
+            "first_name": "名",
+            "email": "メールアドレス",
+            "is_active": "有効",
+        }
+        widgets = {
+            "last_name": forms.TextInput(attrs={"placeholder": "山田"}),
+            "first_name": forms.TextInput(attrs={"placeholder": "太郎"}),
+            "email": forms.EmailInput(attrs={"placeholder": "example@clinic.com"}),
+        }
+
+    def __init__(self, *args, clinic=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.clinic = clinic
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.clinic is None:
+            raise forms.ValidationError("院情報が取得できません。")
+        if self.instance and self.instance.pk:
+            if self.instance.clinic_id != self.clinic.id:
+                raise forms.ValidationError("他院のスタッフは編集できません。")
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if self.clinic is None:
+            raise ValueError("StaffMemberEditFormにはclinicが必要です。")
+        user.clinic = self.clinic
+        user.is_staff = user.role == User.Role.ADMIN
         if commit:
             user.save()
         return user
@@ -413,6 +469,222 @@ class SalesRecordForm(forms.ModelForm):
         if commit:
             record.save()
         return record
+
+
+class StaffShiftForm(forms.ModelForm):
+    class Meta:
+        model = StaffShift
+        fields = (
+            "staff",
+            "date",
+            "status",
+            "start_time",
+            "end_time",
+            "break_start",
+            "break_end",
+            "memo",
+        )
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}),
+            "start_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "end_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "break_start": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "break_end": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "memo": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "シフトに関する補足、研修内容、予約枠調整メモなど",
+                }
+            ),
+        }
+
+    def __init__(self, *args, clinic=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.clinic = clinic or getattr(self.instance, "clinic", None)
+        if self.clinic is not None:
+            self.instance.clinic = self.clinic
+        for field_name in ("start_time", "end_time", "break_start", "break_end"):
+            self.fields[field_name].input_formats = ["%H:%M", "%H:%M:%S"]
+
+        if self.clinic is not None:
+            staff_roles = [
+                User.Role.ADMIN,
+                User.Role.RECEPTION,
+                User.Role.PRACTITIONER,
+            ]
+            staff_filter = Q(
+                clinic=self.clinic,
+                is_active=True,
+                role__in=staff_roles,
+            )
+            if self.instance and self.instance.pk and self.instance.staff_id:
+                staff_filter |= Q(pk=self.instance.staff_id, clinic=self.clinic)
+            self.fields["staff"].queryset = (
+                User.objects
+                .filter(staff_filter)
+                .order_by("-is_active", "last_name", "first_name", "username")
+                .distinct()
+            )
+        else:
+            self.fields["staff"].queryset = User.objects.none()
+
+        self.fields["staff"].empty_label = "スタッフを選択"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        staff = cleaned_data.get("staff")
+        shift_date = cleaned_data.get("date")
+        status = cleaned_data.get("status")
+        start_time = cleaned_data.get("start_time")
+        end_time = cleaned_data.get("end_time")
+        break_start = cleaned_data.get("break_start")
+        break_end = cleaned_data.get("break_end")
+
+        if self.clinic is None:
+            raise forms.ValidationError("院情報が取得できません。")
+
+        if staff and staff.clinic_id != self.clinic.id:
+            self.add_error("staff", "他院のスタッフは選択できません。")
+
+        if status != StaffShift.Status.OFF:
+            if not start_time:
+                self.add_error("start_time", "休み以外では勤務開始時刻を入力してください。")
+            if not end_time:
+                self.add_error("end_time", "休み以外では勤務終了時刻を入力してください。")
+
+        if start_time and end_time and start_time >= end_time:
+            self.add_error("end_time", "勤務終了時刻は勤務開始時刻より後にしてください。")
+
+        if bool(break_start) != bool(break_end):
+            self.add_error("break_end", "休憩時間を設定する場合は開始・終了の両方を入力してください。")
+        elif break_start and break_end:
+            if break_start >= break_end:
+                self.add_error("break_end", "休憩終了時刻は休憩開始時刻より後にしてください。")
+            elif start_time and end_time and (
+                break_start < start_time
+                or break_end > end_time
+            ):
+                self.add_error("break_end", "休憩時間は勤務時間内に設定してください。")
+
+        if staff and shift_date:
+            duplicate = StaffShift.objects.filter(
+                clinic=self.clinic,
+                staff=staff,
+                date=shift_date,
+            )
+            if self.instance and self.instance.pk:
+                duplicate = duplicate.exclude(pk=self.instance.pk)
+            if duplicate.exists():
+                self.add_error("date", "同じスタッフ・日付のシフトはすでに登録されています。")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        shift = super().save(commit=False)
+        if self.clinic is None:
+            raise ValueError("StaffShiftFormにはclinicが必要です。")
+        shift.clinic = self.clinic
+        if commit:
+            shift.full_clean()
+            shift.save()
+        return shift
+
+
+class StaffLeaveForm(forms.ModelForm):
+    class Meta:
+        model = StaffLeave
+        fields = (
+            "staff",
+            "leave_type",
+            "start_date",
+            "end_date",
+            "start_time",
+            "end_time",
+            "status",
+            "reason",
+            "memo",
+        )
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+            "start_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "end_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "reason": forms.TextInput(
+                attrs={"placeholder": "例：私用、体調不良、研修参加など"}
+            ),
+            "memo": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "予約枠調整やスタッフ間共有用の補足",
+                }
+            ),
+        }
+
+    def __init__(self, *args, clinic=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.clinic = clinic or getattr(self.instance, "clinic", None)
+        if self.clinic is not None:
+            self.instance.clinic = self.clinic
+        for field_name in ("start_time", "end_time"):
+            self.fields[field_name].input_formats = ["%H:%M", "%H:%M:%S"]
+
+        if self.clinic is not None:
+            staff_roles = [
+                User.Role.ADMIN,
+                User.Role.RECEPTION,
+                User.Role.PRACTITIONER,
+            ]
+            staff_filter = Q(
+                clinic=self.clinic,
+                is_active=True,
+                role__in=staff_roles,
+            )
+            if self.instance and self.instance.pk and self.instance.staff_id:
+                staff_filter |= Q(pk=self.instance.staff_id, clinic=self.clinic)
+            self.fields["staff"].queryset = (
+                User.objects
+                .filter(staff_filter)
+                .order_by("-is_active", "last_name", "first_name", "username")
+                .distinct()
+            )
+        else:
+            self.fields["staff"].queryset = User.objects.none()
+
+        self.fields["staff"].empty_label = "スタッフを選択"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        staff = cleaned_data.get("staff")
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+        start_time = cleaned_data.get("start_time")
+        end_time = cleaned_data.get("end_time")
+
+        if self.clinic is None:
+            raise forms.ValidationError("院情報が取得できません。")
+
+        if staff and staff.clinic_id != self.clinic.id:
+            self.add_error("staff", "他院のスタッフは選択できません。")
+
+        if start_date and end_date and start_date > end_date:
+            self.add_error("end_date", "終了日は開始日以降にしてください。")
+
+        if bool(start_time) != bool(end_time):
+            self.add_error("end_time", "時間帯を設定する場合は開始・終了の両方を入力してください。")
+        elif start_time and end_time and start_time >= end_time:
+            self.add_error("end_time", "終了時刻は開始時刻より後にしてください。")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        leave = super().save(commit=False)
+        if self.clinic is None:
+            raise ValueError("StaffLeaveFormにはclinicが必要です。")
+        leave.clinic = self.clinic
+        if commit:
+            leave.full_clean()
+            leave.save()
+        return leave
 
 def _list_to_text(value):
     """

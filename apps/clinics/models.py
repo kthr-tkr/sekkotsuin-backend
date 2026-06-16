@@ -364,3 +364,192 @@ class SalesRecord(models.Model):
 
         if errors:
             raise ValidationError(errors)
+
+
+class StaffShift(models.Model):
+    class Status(models.TextChoices):
+        WORKING = "working", "勤務"
+        OFF = "off", "休み"
+        HALF_DAY = "half_day", "半休"
+        TRAINING = "training", "研修"
+        OTHER = "other", "その他"
+
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        related_name="staff_shifts",
+        verbose_name="院",
+    )
+    staff = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="staff_shifts",
+        verbose_name="スタッフ",
+    )
+    date = models.DateField("日付", db_index=True)
+    start_time = models.TimeField("勤務開始", null=True, blank=True)
+    end_time = models.TimeField("勤務終了", null=True, blank=True)
+    break_start = models.TimeField("休憩開始", null=True, blank=True)
+    break_end = models.TimeField("休憩終了", null=True, blank=True)
+    status = models.CharField(
+        "ステータス",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.WORKING,
+    )
+    memo = models.TextField("メモ", blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ("date", "staff__last_name", "staff__first_name", "staff__username")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["clinic", "staff", "date"],
+                name="unique_staff_shift_per_clinic_staff_date",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["clinic", "date"]),
+            models.Index(fields=["clinic", "staff", "date"]),
+            models.Index(fields=["clinic", "status"]),
+        ]
+        verbose_name = "スタッフシフト"
+        verbose_name_plural = "スタッフシフト"
+
+    def __str__(self):
+        return f"{self.date} {self.staff} {self.get_status_display()}"
+
+    def clean(self):
+        errors = {}
+
+        if not self.clinic_id:
+            errors["clinic"] = "院情報は必須です。"
+
+        if not self.staff_id:
+            errors["staff"] = "スタッフは必須です。"
+        else:
+            staff_clinic_id = getattr(self.staff, "clinic_id", None)
+            if self.clinic_id and staff_clinic_id != self.clinic_id:
+                errors["staff"] = "スタッフは同じ院に所属している必要があります。"
+
+        if not self.date:
+            errors["date"] = "日付は必須です。"
+
+        if self.status != self.Status.OFF:
+            if not self.start_time:
+                errors["start_time"] = "休み以外では勤務開始時刻を入力してください。"
+            if not self.end_time:
+                errors["end_time"] = "休み以外では勤務終了時刻を入力してください。"
+
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            errors["end_time"] = "勤務終了時刻は勤務開始時刻より後にしてください。"
+
+        has_break_start = self.break_start is not None
+        has_break_end = self.break_end is not None
+        if has_break_start != has_break_end:
+            errors["break_end"] = "休憩時間を設定する場合は開始・終了の両方を入力してください。"
+        elif has_break_start and has_break_end:
+            if self.break_start >= self.break_end:
+                errors["break_end"] = "休憩終了時刻は休憩開始時刻より後にしてください。"
+            elif self.start_time and self.end_time and (
+                self.break_start < self.start_time
+                or self.break_end > self.end_time
+            ):
+                errors["break_end"] = "休憩時間は勤務時間内に設定してください。"
+
+        if errors:
+            raise ValidationError(errors)
+
+
+class StaffLeave(models.Model):
+    class LeaveType(models.TextChoices):
+        PAID_LEAVE = "paid_leave", "有給"
+        MORNING_OFF = "morning_off", "午前休"
+        AFTERNOON_OFF = "afternoon_off", "午後休"
+        ABSENCE = "absence", "欠勤"
+        TRAINING = "training", "研修"
+        OTHER = "other", "その他"
+
+    class Status(models.TextChoices):
+        REQUESTED = "requested", "申請中"
+        APPROVED = "approved", "承認済み"
+        REJECTED = "rejected", "却下"
+        CANCELED = "canceled", "取消"
+
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        related_name="staff_leaves",
+        verbose_name="院",
+    )
+    staff = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="staff_leaves",
+        verbose_name="スタッフ",
+    )
+    leave_type = models.CharField(
+        "休暇種別",
+        max_length=30,
+        choices=LeaveType.choices,
+        default=LeaveType.PAID_LEAVE,
+    )
+    start_date = models.DateField("開始日", db_index=True)
+    end_date = models.DateField("終了日", db_index=True)
+    start_time = models.TimeField("開始時刻", null=True, blank=True)
+    end_time = models.TimeField("終了時刻", null=True, blank=True)
+    status = models.CharField(
+        "ステータス",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.REQUESTED,
+    )
+    reason = models.CharField("理由", max_length=255, blank=True)
+    memo = models.TextField("メモ", blank=True)
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+
+    class Meta:
+        ordering = ("-start_date", "-created_at", "-id")
+        indexes = [
+            models.Index(fields=["clinic", "start_date", "end_date"]),
+            models.Index(fields=["clinic", "staff", "start_date"]),
+            models.Index(fields=["clinic", "leave_type"]),
+            models.Index(fields=["clinic", "status"]),
+        ]
+        verbose_name = "スタッフ休暇"
+        verbose_name_plural = "スタッフ休暇"
+
+    def __str__(self):
+        return f"{self.start_date} {self.staff} {self.get_leave_type_display()}"
+
+    def clean(self):
+        errors = {}
+
+        if not self.clinic_id:
+            errors["clinic"] = "院情報は必須です。"
+
+        if not self.staff_id:
+            errors["staff"] = "スタッフは必須です。"
+        else:
+            staff_clinic_id = getattr(self.staff, "clinic_id", None)
+            if self.clinic_id and staff_clinic_id != self.clinic_id:
+                errors["staff"] = "スタッフは同じ院に所属している必要があります。"
+
+        if not self.start_date:
+            errors["start_date"] = "開始日は必須です。"
+        if not self.end_date:
+            errors["end_date"] = "終了日は必須です。"
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            errors["end_date"] = "終了日は開始日以降にしてください。"
+
+        has_start_time = self.start_time is not None
+        has_end_time = self.end_time is not None
+        if has_start_time != has_end_time:
+            errors["end_time"] = "時間帯を設定する場合は開始・終了の両方を入力してください。"
+        elif has_start_time and has_end_time and self.start_time >= self.end_time:
+            errors["end_time"] = "終了時刻は開始時刻より後にしてください。"
+
+        if errors:
+            raise ValidationError(errors)

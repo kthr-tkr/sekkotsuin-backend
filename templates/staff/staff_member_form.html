@@ -1,0 +1,90 @@
+{% extends "staff/_layout.html" %}
+{% block title %}CareFrow | スタッフ編集{% endblock %}
+
+{% block extra_head %}
+<style>
+  .member-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
+  .member-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;padding:28px;border-radius:28px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 24px 56px rgba(20,48,91,.2)}
+  .member-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.member-title{margin:8px 0 10px;font-size:32px;letter-spacing:-.04em}.member-lead{margin:0;color:#e2edff;line-height:1.7}
+  .member-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.member-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.member-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}
+  .member-card{padding:24px;border:1px solid #e1e8f1;border-radius:24px;background:#fff;box-shadow:0 13px 32px rgba(20,42,76,.06)}
+  .readonly-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:18px}.readonly-box{padding:14px 16px;border:1px solid #edf2f7;border-radius:15px;background:#fbfdff}.readonly-label{font-size:11px;font-weight:900;color:#728299}.readonly-value{margin-top:5px;font-weight:950;color:#17345f}
+  .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.field.full{grid-column:1/-1}.field label{display:block;margin-bottom:7px;font-size:12px;font-weight:900;color:#425873}
+  .field input,.field select{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #ccd7e5;border-radius:12px;background:#fbfcfe;color:#1b304d;font:inherit;outline:none}.field input:focus,.field select:focus{border-color:#4b83c7;box-shadow:0 0 0 3px rgba(75,131,199,.11);background:#fff}
+  .check-row{display:flex;align-items:center;gap:9px;padding:13px;border:1px solid #d9e2ed;border-radius:12px;background:#f8fafc}.check-row input{width:auto}
+  .field-error{margin-top:6px;color:#b42323;font-size:12px;font-weight:700}.form-errors{padding:14px 16px;margin-bottom:16px;border:1px solid #f1caca;border-radius:14px;background:#fff6f6;color:#a52a2a;font-size:13px}
+  .member-note{margin-top:18px;padding:14px 16px;border-radius:15px;background:#f1f7ff;border:1px solid #d9e8fa;color:#335a88;font-size:13px;line-height:1.7}.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+  @media(max-width:800px){.member-hero{flex-direction:column;align-items:flex-start}.readonly-row,.field-grid{grid-template-columns:1fr}.member-card{padding:18px}.form-actions{flex-direction:column}.member-btn{width:100%}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="member-page">
+  <header class="member-hero">
+    <div>
+      <div class="member-eyebrow">STAFF MEMBER</div>
+      <h1 class="member-title">スタッフ編集</h1>
+      <p class="member-lead">ログインIDは維持したまま、表示名・メール・ロール・有効状態を更新します。</p>
+    </div>
+    <a class="member-btn soft" href="{% url 'staff:staff_list' %}">一覧へ戻る</a>
+  </header>
+
+  <form method="post" class="member-card" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="readonly-row">
+      <div class="readonly-box">
+        <div class="readonly-label">ログインID</div>
+        <div class="readonly-value">{{ staff_user.username }}</div>
+      </div>
+      <div class="readonly-box">
+        <div class="readonly-label">最終ログイン</div>
+        <div class="readonly-value">{% if staff_user.last_login %}{{ staff_user.last_login|date:"Y/m/d H:i" }}{% else %}未ログイン{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+        {{ form.last_name }}
+        {% for error in form.last_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+        {{ form.first_name }}
+        {% for error in form.first_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+        {{ form.email }}
+        {% for error in form.email.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
+        {{ form.role }}
+        {% for error in form.role.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="field full">
+        <label>{{ form.is_active.label }}</label>
+        <label class="check-row" for="{{ form.is_active.id_for_label }}">
+          {{ form.is_active }}
+          <span>有効スタッフとして予約担当・売上担当に表示する</span>
+        </label>
+        {% for error in form.is_active.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="member-note">
+      無効化したスタッフも、過去の売上・カルテ・予約担当履歴には残ります。パスワード変更は既存の認証フローに合わせて別途管理してください。
+    </div>
+
+    <div class="form-actions">
+      <a class="member-btn" href="{% url 'staff:staff_list' %}">キャンセル</a>
+      <button class="member-btn primary" type="submit">スタッフ情報を保存</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

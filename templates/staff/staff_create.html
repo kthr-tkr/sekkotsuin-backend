@@ -217,7 +217,8 @@
     color:#475569;
   }
 
-  .field input{
+  .field input,
+  .field select{
     width:100%;
     min-height:48px;
     padding:0 14px;
@@ -232,7 +233,8 @@
     transition:.18s ease;
   }
 
-  .field input:focus{
+  .field input:focus,
+  .field select:focus{
     border-color:#7c3aed;
     box-shadow:0 0 0 4px rgba(124,58,237,.10);
   }
@@ -443,13 +445,10 @@
         </div>
 
         <div class="field full">
-          <label>権限設定</label>
-          <div class="checkbox-wrap">
-            {{ form.is_staff }}
-            <span>スタッフ権限を付与する</span>
-          </div>
-          <div class="help">通常はONのままで問題ありません。</div>
-          {{ form.is_staff.errors }}
+          <label for="{{ form.role.id_for_label }}">権限/ロール</label>
+          {{ form.role }}
+          <div class="help">管理者・受付・施術者から選択してください。過去の売上や担当履歴を残すため、退職時は削除ではなく無効化を使います。</div>
+          {{ form.role.errors }}
         </div>
       </div>
 
