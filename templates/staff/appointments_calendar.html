@@ -1032,6 +1032,493 @@
     pointer-events:none;
   }
 
+  /* ===== Staff Availability ===== */
+  .view-switch{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .staff-availability-card{
+    position:relative;
+    overflow:hidden;
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:0 16px 36px rgba(15,23,42,.06);
+    backdrop-filter:blur(16px);
+  }
+
+  .staff-availability-card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  .staff-availability-head{
+    position:relative;
+    z-index:1;
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    align-items:flex-start;
+    margin-bottom:18px;
+  }
+
+  .staff-availability-title{
+    margin:0;
+    color:#0b1220;
+    font-size:22px;
+    font-weight:900;
+    letter-spacing:-0.03em;
+  }
+
+  .staff-availability-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:13px;
+    font-weight:700;
+    line-height:1.6;
+  }
+
+  .clinic-hours-pill{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:8px;
+  }
+
+  .clinic-hours-pill span{
+    display:inline-flex;
+    align-items:center;
+    min-height:32px;
+    padding:0 11px;
+    border-radius:999px;
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    color:#1d4ed8;
+    font-size:11px;
+    font-weight:900;
+  }
+
+  .staff-availability-grid{
+    position:relative;
+    z-index:1;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:14px;
+  }
+
+  .staff-availability-row{
+    border:1px solid #e5edf7;
+    border-radius:22px;
+    padding:16px;
+    background:linear-gradient(180deg, rgba(255,255,255,.94), rgba(248,251,255,.94));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
+  }
+
+  .staff-row-top{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-start;
+    margin-bottom:12px;
+  }
+
+  .staff-row-name{
+    color:#0f172a;
+    font-size:17px;
+    font-weight:900;
+    line-height:1.35;
+  }
+
+  .staff-row-meta{
+    margin-top:4px;
+    color:#64748b;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.6;
+  }
+
+  .availability-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:32px;
+    padding:0 11px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+    white-space:nowrap;
+    border:1px solid transparent;
+  }
+
+  .availability-badge.available{
+    color:#047857;
+    background:#dcfce7;
+    border-color:#bbf7d0;
+  }
+
+  .availability-badge.crowded,
+  .availability-badge.check{
+    color:#92400e;
+    background:#fef3c7;
+    border-color:#fde68a;
+  }
+
+  .availability-badge.busy{
+    color:#9a3412;
+    background:#ffedd5;
+    border-color:#fed7aa;
+  }
+
+  .availability-badge.unavailable{
+    color:#475569;
+    background:#f1f5f9;
+    border-color:#e2e8f0;
+  }
+
+  .staff-info-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    gap:8px;
+    margin-bottom:12px;
+  }
+
+  .staff-info-item{
+    border-radius:14px;
+    padding:10px;
+    background:#fff;
+    border:1px solid #edf2f7;
+  }
+
+  .staff-info-label{
+    color:#94a3b8;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.04em;
+    margin-bottom:4px;
+  }
+
+  .staff-info-value{
+    color:#0f172a;
+    font-size:12px;
+    font-weight:900;
+    line-height:1.45;
+  }
+
+  .staff-leave-badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-bottom:12px;
+  }
+
+  .staff-leave-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    min-height:28px;
+    padding:0 9px;
+    border-radius:999px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#475569;
+    font-size:10px;
+    font-weight:900;
+  }
+
+  .staff-leave-badge.morning-off,
+  .staff-leave-badge.afternoon-off{
+    background:#fff7ed;
+    border-color:#fed7aa;
+    color:#9a3412;
+  }
+
+  .staff-leave-badge.paid-leave,
+  .staff-leave-badge.absence{
+    background:#f1f5f9;
+    border-color:#cbd5e1;
+    color:#334155;
+  }
+
+  .staff-leave-badge.training{
+    background:#eef2ff;
+    border-color:#c7d2fe;
+    color:#3730a3;
+  }
+
+  .staff-appt-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .staff-appt-item{
+    display:grid;
+    grid-template-columns:72px minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    border:1px solid #edf2f7;
+    border-radius:15px;
+    padding:10px;
+    background:#fff;
+  }
+
+  .staff-appt-time{
+    color:#1d4ed8;
+    font-size:11px;
+    font-weight:900;
+  }
+
+  .staff-appt-main{
+    min-width:0;
+  }
+
+  .staff-appt-name{
+    color:#0f172a;
+    font-size:13px;
+    font-weight:900;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .staff-appt-meta{
+    margin-top:3px;
+    color:#64748b;
+    font-size:11px;
+    font-weight:800;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .staff-appt-actions{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .staff-mini-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:28px;
+    padding:0 8px;
+    border-radius:999px;
+    border:1px solid #dbeafe;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:10px;
+    font-weight:900;
+    text-decoration:none;
+  }
+
+  .staff-empty-appt{
+    border:1px dashed #cbd5e1;
+    border-radius:15px;
+    padding:12px;
+    color:#94a3b8;
+    font-size:12px;
+    font-weight:800;
+    background:#f8fafc;
+  }
+
+  .appointment-modal-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:80;
+    background:rgba(15,23,42,.42);
+    backdrop-filter:blur(8px);
+  }
+
+  .appointment-modal{
+    position:fixed;
+    inset:50% auto auto 50%;
+    transform:translate(-50%, -50%);
+    z-index:90;
+    width:min(760px, calc(100vw - 32px));
+    max-height:calc(100vh - 48px);
+    overflow:auto;
+    border-radius:28px;
+    padding:24px;
+    background:rgba(255,255,255,.96);
+    border:1px solid rgba(226,232,240,.92);
+    box-shadow:0 30px 90px rgba(15,23,42,.28);
+  }
+
+  .appointment-modal[hidden],
+  .appointment-modal-backdrop[hidden]{
+    display:none;
+  }
+
+  .appointment-modal-head{
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    align-items:flex-start;
+    margin-bottom:18px;
+  }
+
+  .appointment-modal-title{
+    margin:0;
+    color:#0b1220;
+    font-size:24px;
+    font-weight:900;
+    letter-spacing:-0.03em;
+  }
+
+  .appointment-modal-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:13px;
+    line-height:1.7;
+    font-weight:700;
+  }
+
+  .appointment-modal-close{
+    border:none;
+    width:38px;
+    height:38px;
+    border-radius:14px;
+    background:#f1f5f9;
+    color:#334155;
+    font-size:20px;
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  .appointment-form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  .appointment-field{
+    border-radius:18px;
+    padding:12px 14px;
+    border:1px solid #dbe5f0;
+    background:#fff;
+  }
+
+  .appointment-field.wide{
+    grid-column:1 / -1;
+  }
+
+  .appointment-field label{
+    display:block;
+    margin-bottom:8px;
+    color:#64748b;
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .appointment-field input,
+  .appointment-field select,
+  .appointment-field textarea{
+    width:100%;
+    border:none;
+    outline:none;
+    background:transparent;
+    color:#0f172a;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .appointment-field textarea{
+    min-height:86px;
+    resize:vertical;
+  }
+
+  .appointment-form-note{
+    grid-column:1 / -1;
+    padding:12px 14px;
+    border-radius:15px;
+    border:1px solid #d9e8fa;
+    background:#f1f7ff;
+    color:#335a88;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.65;
+  }
+
+  .appointment-form-errors{
+    display:none;
+    grid-column:1 / -1;
+    padding:12px 14px;
+    border-radius:15px;
+    border:1px solid #fecaca;
+    background:#fef2f2;
+    color:#991b1b;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.65;
+  }
+
+  .appointment-form-errors.is-visible{
+    display:block;
+  }
+
+  .appointment-form-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:18px;
+    flex-wrap:wrap;
+  }
+
+  .appointment-form-actions .btn[disabled]{
+    opacity:.55;
+    cursor:not-allowed;
+    transform:none;
+  }
+
+  @media (max-width: 980px){
+    .staff-availability-head{
+      flex-direction:column;
+    }
+
+    .clinic-hours-pill{
+      justify-content:flex-start;
+    }
+
+    .staff-availability-grid{
+      grid-template-columns:1fr;
+    }
+
+    .staff-appt-item{
+      grid-template-columns:1fr;
+    }
+
+    .staff-appt-actions{
+      justify-content:flex-start;
+    }
+
+    .appointment-form-grid{
+      grid-template-columns:1fr;
+    }
+
+    .appointment-modal{
+      padding:18px;
+      border-radius:22px;
+    }
+  }
+
+  @media (max-width: 640px){
+    .staff-info-grid{
+      grid-template-columns:1fr;
+    }
+
+    .staff-row-top{
+      flex-direction:column;
+    }
+  }
+
   .compact-hero{
     position:relative;
     overflow:hidden;
@@ -1811,6 +2298,9 @@
     </div>
 
     <div class="page-tools">
+      <button type="button" class="tool-btn" id="appointmentAddBtn">
+        予約を追加
+      </button>
       <a href="{% url 'staff:dashboard' %}" class="tool-btn">ダッシュボードへ</a>
       <a href="{% url 'staff:patient_search' %}" class="tool-btn">患者検索へ</a>
     </div>
@@ -1981,8 +2471,100 @@
     </section>
   </details>
 
+  <div class="view-switch" aria-label="予約表示切り替え">
+    <a class="period-link" href="#calendar-area">通常カレンダー</a>
+    <a class="period-link active" href="#staff-availability">スタッフ別表示</a>
+  </div>
+
+  <section class="staff-availability-card" id="staff-availability">
+    <div class="staff-availability-head">
+      <div>
+        <h3 class="staff-availability-title">スタッフ別表示</h3>
+        <div class="staff-availability-sub">
+          {{ day|date:"Y年n月j日(D)" }} の勤務時間・休暇・予約状況から、担当者ごとの空き目安を確認できます。
+        </div>
+      </div>
+      <div class="clinic-hours-pill">
+        {% if clinic_settings %}
+          <span>営業時間 {{ clinic_settings.business_start_time|time:"H:i" }}〜{{ clinic_settings.business_end_time|time:"H:i" }}</span>
+          {% if clinic_settings.break_start_time and clinic_settings.break_end_time %}
+            <span>休憩 {{ clinic_settings.break_start_time|time:"H:i" }}〜{{ clinic_settings.break_end_time|time:"H:i" }}</span>
+          {% endif %}
+          <span>受付単位 {{ clinic_settings.appointment_interval_minutes }}分</span>
+        {% else %}
+          <span>営業時間 8:00〜20:00</span>
+          <span>受付単位 30分</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="staff-availability-grid">
+      {% for row in staff_availability_rows %}
+        <article class="staff-availability-row">
+          <div class="staff-row-top">
+            <div>
+              <div class="staff-row-name">{{ row.staff_name }}</div>
+              <div class="staff-row-meta">{{ row.shift_label }} / 予約 {{ row.appointment_count }} 件</div>
+            </div>
+            <span class="availability-badge {{ row.availability_class }}">{{ row.availability_label }}</span>
+          </div>
+
+          <div class="staff-info-grid">
+            <div class="staff-info-item">
+              <div class="staff-info-label">勤務時間</div>
+              <div class="staff-info-value">{{ row.work_time_label }}</div>
+            </div>
+            <div class="staff-info-item">
+              <div class="staff-info-label">休憩</div>
+              <div class="staff-info-value">{{ row.break_time_label }}</div>
+            </div>
+            <div class="staff-info-item">
+              <div class="staff-info-label">空き目安</div>
+              <div class="staff-info-value">{{ row.availability_label }}</div>
+            </div>
+          </div>
+
+          {% if row.leave_badges %}
+            <div class="staff-leave-badges">
+              {% for leave in row.leave_badges %}
+                <span class="staff-leave-badge {{ leave.class }} {{ leave.status_class }}">
+                  {{ leave.label }}{% if leave.time_label %} {{ leave.time_label }}{% endif %} / {{ leave.status_label }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="staff-appt-list">
+            {% for appt in row.appointments %}
+              <div class="staff-appt-item">
+                <div class="staff-appt-time">{{ appt.time_label }}</div>
+                <div class="staff-appt-main">
+                  <div class="staff-appt-name">{{ appt.patient_name }}</div>
+                  <div class="staff-appt-meta">{{ appt.menu }} / {{ appt.status_label }}</div>
+                </div>
+                <div class="staff-appt-actions">
+                  {% if appt.pre_check_url %}
+                    <a class="staff-mini-link" href="{{ appt.pre_check_url }}">施術前チェック</a>
+                  {% endif %}
+                  <a class="staff-mini-link" href="{{ appt.day_url }}">予約確認</a>
+                </div>
+              </div>
+            {% empty %}
+              <div class="staff-empty-appt">このスタッフの予約はまだありません。</div>
+            {% endfor %}
+          </div>
+        </article>
+      {% empty %}
+        <article class="staff-availability-row">
+          <div class="staff-row-name">スタッフ未登録</div>
+          <div class="staff-row-meta">スタッフを登録すると、勤務・休暇・予約状況がここに表示されます。</div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
   <div class="calendar-layout">
-    <section class="calendar-card">
+    <section class="calendar-card" id="calendar-area">
       <div class="card-head">
         <h3 class="card-title">カレンダービュー</h3>
         <div class="card-sub">予約をクリックすると右側に詳細が表示されます</div>
@@ -2038,12 +2620,19 @@
                             type="button"
                             class="timeline-appt {{ a.status }}"
                             style="left:{{ a.left_percent }}%; width:{{ a.width_percent }}%;"
+                            data-appointment-id="{{ a.id }}"
+                            data-patient-id="{{ a.patient_id }}"
                             data-patient-name="{{ a.patient_name|escape }}"
+                            data-appointment-date="{{ a.appointment_date|escape }}"
                             data-start-time="{{ a.start_time|escape }}"
                             data-end-time="{{ a.end_time|escape }}"
                             data-menu="{{ a.menu|escape }}"
+                            data-menu-value="{{ a.menu_value|escape }}"
+                            data-assigned-staff-id="{{ a.assigned_staff_id }}"
                             data-staff-name="{{ row.staff_name|escape }}"
+                            data-status="{{ a.status|escape }}"
                             data-status-label="{{ a.status_label|escape }}"
+                            data-notes="{{ a.notes|escape }}"
                             data-intake-state="{{ a.intake_state|escape }}"
                             data-intake-kind-label="{{ a.intake_kind_label|default:'-'|escape }}"
                             data-visit-type-label="{{ a.visit_type_label|escape }}"
@@ -2103,6 +2692,94 @@
 
 </div>
 
+<div class="appointment-modal-backdrop" id="appointmentModalBackdrop" hidden></div>
+<section class="appointment-modal" id="appointmentModal" aria-modal="true" role="dialog" hidden>
+  <div class="appointment-modal-head">
+    <div>
+      <h2 class="appointment-modal-title" id="appointmentModalTitle">予約を追加</h2>
+      <div class="appointment-modal-sub">
+        予約日時・担当者を入力して保存します。保存時に重複、営業時間外、休診日、シフト外、休暇中を確認します。
+      </div>
+    </div>
+    <button type="button" class="appointment-modal-close" id="appointmentModalClose" aria-label="閉じる">×</button>
+  </div>
+
+  <form id="appointmentForm">
+    <input type="hidden" name="appointment_id" id="appointmentId">
+
+    <div class="appointment-form-grid">
+      <div class="appointment-field wide">
+        <label for="appointmentPatient">患者</label>
+        <select name="patient_id" id="appointmentPatient" required>
+          <option value="">患者を選択してください</option>
+          {% for patient in appointment_form_patients %}
+            <option value="{{ patient.id }}">
+              {{ patient.last_name }} {{ patient.first_name }}{% if patient.card_no %}（{{ patient.card_no }}）{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="appointment-field">
+        <label for="appointmentDate">予約日</label>
+        <input type="date" name="appointment_date" id="appointmentDate" required>
+      </div>
+
+      <div class="appointment-field">
+        <label for="appointmentStatus">ステータス</label>
+        <select name="status" id="appointmentStatus">
+          {% for value, label in status_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="appointment-field">
+        <label for="appointmentStartTime">開始時刻</label>
+        <input type="time" name="start_time" id="appointmentStartTime" required>
+      </div>
+
+      <div class="appointment-field">
+        <label for="appointmentEndTime">終了時刻</label>
+        <input type="time" name="end_time" id="appointmentEndTime" required>
+      </div>
+
+      <div class="appointment-field">
+        <label for="appointmentStaff">担当者</label>
+        <select name="assigned_staff_id" id="appointmentStaff" required>
+          <option value="">担当者を選択してください</option>
+          {% for staff in appointment_form_staff %}
+            <option value="{{ staff.id }}">
+              {% if staff.get_full_name %}{{ staff.get_full_name }}{% else %}{{ staff.username }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="appointment-field">
+        <label for="appointmentMenu">メニュー</label>
+        <input type="text" name="menu" id="appointmentMenu" maxlength="50" value="初診">
+      </div>
+
+      <div class="appointment-field wide">
+        <label for="appointmentNotes">メモ</label>
+        <textarea name="notes" id="appointmentNotes" placeholder="予約メモや注意事項を入力できます"></textarea>
+      </div>
+
+      <div class="appointment-form-note">
+        担当者候補は院内スタッフのみ表示しています。保存時に、対象日のシフト・休暇・予約重複を再確認します。
+      </div>
+
+      <div class="appointment-form-errors" id="appointmentFormErrors"></div>
+    </div>
+
+    <div class="appointment-form-actions">
+      <button type="button" class="btn" id="appointmentCancelBtn">キャンセル</button>
+      <button type="submit" class="btn primary" id="appointmentSaveBtn">予約を保存</button>
+    </div>
+  </form>
+</section>
+
 {{ calendar_events|json_script:"calendar-events" }}
 {{ calendar_day_summary|json_script:"calendar-day-summary" }}
 
@@ -2111,6 +2788,11 @@
   const events = JSON.parse(document.getElementById('calendar-events').textContent);
   const daySummary = JSON.parse(document.getElementById('calendar-day-summary').textContent);
   const panel = document.getElementById('detailPanel');
+  const appointmentCreateUrl = "{% url 'staff:appointment_create_api' %}";
+  const appointmentUpdateUrlTemplate = "{% url 'staff:appointment_update_api' 0 %}";
+  const defaultAppointmentDate = "{{ day|date:'Y-m-d' }}";
+  const defaultStartTime = "{{ calendar_slot_min|slice:':5' }}";
+  const defaultSlotMinutes = Number("{{ calendar_slot_minutes|default:30 }}") || 30;
 
   function escapeHtml(value) {
     if (value === null || value === undefined) return '';
@@ -2172,6 +2854,181 @@
       .split('; ')
       .find(row => row.startsWith('csrftoken='))
       ?.split('=')[1] || '';
+  }
+
+  function addMinutesToTime(timeText, minutes) {
+    const [h, m] = String(timeText || '09:00').split(':').map(Number);
+    const total = (h * 60 + (m || 0)) + minutes;
+    const nextHour = Math.floor(total / 60) % 24;
+    const nextMinute = total % 60;
+    return `${String(nextHour).padStart(2, '0')}:${String(nextMinute).padStart(2, '0')}`;
+  }
+
+  function getAppointmentUpdateUrl(id) {
+    return appointmentUpdateUrlTemplate.replace('/0/update/', `/${id}/update/`);
+  }
+
+  function setAppointmentField(id, value) {
+    const field = document.getElementById(id);
+    if (field) field.value = value || '';
+  }
+
+  function showAppointmentErrors(payload) {
+    const box = document.getElementById('appointmentFormErrors');
+    if (!box) return;
+
+    const messages = []
+      .concat(payload?.errors || [])
+      .concat(payload?.warnings || []);
+
+    if (payload?.error && messages.length === 0) {
+      messages.push(payload.error);
+    }
+
+    if (messages.length === 0) {
+      box.classList.remove('is-visible');
+      box.innerHTML = '';
+      return;
+    }
+
+    box.innerHTML = `
+      <div>予約を保存できませんでした。内容を確認してください。</div>
+      <ul style="margin:8px 0 0; padding-left:18px;">
+        ${messages.map((message) => `<li>${escapeHtml(message)}</li>`).join('')}
+      </ul>
+    `;
+    box.classList.add('is-visible');
+  }
+
+  function appointmentDataFromEvent(event) {
+    const p = event.extendedProps || {};
+    const start = event.start || null;
+    const end = event.end || null;
+    return {
+      appointment_id: p.appointmentId || event.id || '',
+      patient_id: p.patientId || '',
+      appointment_date: p.startDate || (start ? formatLocalDate(start) : defaultAppointmentDate),
+      start_time: p.startTime || (start ? String(start.getHours()).padStart(2, '0') + ':' + String(start.getMinutes()).padStart(2, '0') : defaultStartTime),
+      end_time: p.endTime || (end ? String(end.getHours()).padStart(2, '0') + ':' + String(end.getMinutes()).padStart(2, '0') : addMinutesToTime(defaultStartTime, defaultSlotMinutes)),
+      assigned_staff_id: p.assignedStaffId || '',
+      status: p.status || 'booked',
+      menu: p.menuValue || (p.menu === '-' ? '' : p.menu) || '初診',
+      notes: p.notes || '',
+    };
+  }
+
+  function appointmentDataFromTimeline(button) {
+    const p = button.dataset || {};
+    return {
+      appointment_id: p.appointmentId || '',
+      patient_id: p.patientId || '',
+      appointment_date: p.appointmentDate || defaultAppointmentDate,
+      start_time: p.startTime || defaultStartTime,
+      end_time: p.endTime || addMinutesToTime(defaultStartTime, defaultSlotMinutes),
+      assigned_staff_id: p.assignedStaffId || '',
+      status: p.status || 'booked',
+      menu: p.menuValue || (p.menu === '-' ? '' : p.menu) || '初診',
+      notes: p.notes || '',
+    };
+  }
+
+  function openAppointmentModal(data = {}) {
+    const modal = document.getElementById('appointmentModal');
+    const backdrop = document.getElementById('appointmentModalBackdrop');
+    const title = document.getElementById('appointmentModalTitle');
+    const errors = document.getElementById('appointmentFormErrors');
+
+    if (!modal || !backdrop) return;
+
+    const startTime = data.start_time || defaultStartTime || '09:00';
+    const endTime = data.end_time || addMinutesToTime(startTime, defaultSlotMinutes);
+
+    setAppointmentField('appointmentId', data.appointment_id || '');
+    setAppointmentField('appointmentPatient', data.patient_id || '');
+    setAppointmentField('appointmentDate', data.appointment_date || defaultAppointmentDate);
+    setAppointmentField('appointmentStartTime', startTime);
+    setAppointmentField('appointmentEndTime', endTime);
+    setAppointmentField('appointmentStaff', data.assigned_staff_id || '');
+    setAppointmentField('appointmentStatus', data.status || 'booked');
+    setAppointmentField('appointmentMenu', data.menu || '初診');
+    setAppointmentField('appointmentNotes', data.notes || '');
+
+    if (title) {
+      title.textContent = data.appointment_id ? '予約を編集' : '予約を追加';
+    }
+    if (errors) {
+      errors.classList.remove('is-visible');
+      errors.innerHTML = '';
+    }
+
+    backdrop.hidden = false;
+    modal.hidden = false;
+  }
+
+  function closeAppointmentModal() {
+    const modal = document.getElementById('appointmentModal');
+    const backdrop = document.getElementById('appointmentModalBackdrop');
+    if (modal) modal.hidden = true;
+    if (backdrop) backdrop.hidden = true;
+  }
+
+  function initAppointmentModal() {
+    const addBtn = document.getElementById('appointmentAddBtn');
+    const closeBtn = document.getElementById('appointmentModalClose');
+    const cancelBtn = document.getElementById('appointmentCancelBtn');
+    const backdrop = document.getElementById('appointmentModalBackdrop');
+    const form = document.getElementById('appointmentForm');
+    const saveBtn = document.getElementById('appointmentSaveBtn');
+
+    if (addBtn) {
+      addBtn.addEventListener('click', () => openAppointmentModal());
+    }
+    if (closeBtn) closeBtn.addEventListener('click', closeAppointmentModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeAppointmentModal);
+    if (backdrop) backdrop.addEventListener('click', closeAppointmentModal);
+
+    if (!form || !saveBtn) return;
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const formData = new FormData(form);
+      const payload = Object.fromEntries(formData.entries());
+      const appointmentId = payload.appointment_id || '';
+      delete payload.appointment_id;
+
+      const url = appointmentId
+        ? getAppointmentUpdateUrl(appointmentId)
+        : appointmentCreateUrl;
+
+      const originalText = saveBtn.textContent;
+      saveBtn.disabled = true;
+      saveBtn.textContent = '保存中...';
+      showAppointmentErrors({});
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          throw data;
+        }
+        window.location.reload();
+      })
+      .catch((payload) => {
+        showAppointmentErrors(payload || { error: '予約の保存に失敗しました。' });
+      })
+      .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      });
+    });
   }
 
   function formatLocalDate(date) {
@@ -2301,9 +3158,17 @@
 
       <div class="panel-actions">
         ${p.intakeDetailUrl ? `<a class="btn" href="${p.intakeDetailUrl}">問診を確認</a>` : ''}
+        <button class="btn primary" type="button" data-appointment-edit>予約を編集</button>
         <a class="btn" href="${p.dayUrl}">日表示で見る</a>
       </div>
     `;
+
+    const editButton = panel.querySelector('[data-appointment-edit]');
+    if (editButton) {
+      editButton.addEventListener('click', () => {
+        openAppointmentModal(appointmentDataFromEvent(event));
+      });
+    }
   }
 
   function renderTimelinePanel(button) {
@@ -2358,9 +3223,17 @@
 
       <div class="panel-actions">
         ${p.intakeDetailUrl ? `<a class="btn" href="${p.intakeDetailUrl}">問診を確認</a>` : ''}
+        <button class="btn primary" type="button" data-appointment-edit>予約を編集</button>
         <a class="btn" href="${p.dayUrl}">日表示で見る</a>
       </div>
     `;
+
+    const editButton = panel.querySelector('[data-appointment-edit]');
+    if (editButton) {
+      editButton.addEventListener('click', () => {
+        openAppointmentModal(appointmentDataFromTimeline(button));
+      });
+    }
   }
 
   function updateEventDatetime(info) {
@@ -2410,6 +3283,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    initAppointmentModal();
+
     const timelineButtons = document.querySelectorAll('.timeline-appt');
 
     if (timelineButtons.length > 0) {

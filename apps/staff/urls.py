@@ -97,6 +97,16 @@ urlpatterns = [
         name="pre_treatment_check",
     ),
     path("clinical_notes/<int:note_id>/edit/", views.staff_clinical_note_edit, name="clinical_note_edit"),
+    path(
+        "api/appointments/create/",
+        views.staff_appointment_create_api,
+        name="appointment_create_api",
+    ),
+    path(
+        "api/appointments/<int:pk>/update/",
+        views.staff_appointment_update_api,
+        name="appointment_update_api",
+    ),
     path("api/appointments/<int:pk>/move/", views.move_appointment_view, name="appointment_move"),
     path("staffs/create/", views.staff_create, name="staff_create"),
     path(

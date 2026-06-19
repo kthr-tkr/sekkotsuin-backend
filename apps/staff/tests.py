@@ -94,6 +94,35 @@ class MajorWorkflowCopyTests(SimpleTestCase):
         ):
             self.assertIn(expected, source)
 
+    def test_staff_sidebar_contains_main_menu_and_scroll_layout(self):
+        source = (
+            Path(settings.BASE_DIR) / "templates/staff/_layout.html"
+        ).read_text(encoding="utf-8")
+
+        for expected in (
+            "ホーム",
+            "問診",
+            "予約管理",
+            "患者様一覧",
+            "担当者一覧",
+            "シフト管理",
+            "休暇管理",
+            "KPI",
+            "売上管理",
+            "AI利用量",
+            "操作マニュアル",
+            "院設定",
+            "料金設定",
+            "選択画面に戻る",
+            "ログアウト",
+        ):
+            self.assertIn(expected, source)
+
+        self.assertIn("flex-direction:column", source)
+        self.assertIn("overflow-y:auto", source)
+        self.assertIn("min-height:0", source)
+        self.assertIn("flex-shrink:0", source)
+
 
 class ProductionReadinessSmokeTests(TestCase):
     def setUp(self):
@@ -2499,6 +2528,46 @@ class AppointmentStaffAvailabilityTests(TestCase):
             if user.is_appointment_staff_candidate
         }
 
+    def _availability_for_time(self, staff_user, hour, minute=0, duration_minutes=30, exclude_id=None):
+        start = timezone.make_aware(datetime(2026, 6, 17, hour, minute))
+        return staff_views.check_appointment_availability(
+            clinic=self.clinic,
+            start_at=start,
+            end_at=start + timedelta(minutes=duration_minutes),
+            assigned_staff=staff_user,
+            exclude_appointment_id=exclude_id,
+        )
+
+    def _appointment_api_payload(self, staff_user=None, patient=None, hour=10, minute=0, **overrides):
+        start = time(hour, minute)
+        end_dt = datetime.combine(self.target_date, start) + timedelta(minutes=30)
+        data = {
+            "patient_id": str((patient or self.patient).id),
+            "appointment_date": self.target_date.isoformat(),
+            "start_time": start.strftime("%H:%M"),
+            "end_time": end_dt.time().strftime("%H:%M"),
+            "assigned_staff_id": str((staff_user or self.working_staff).id),
+            "status": Appointment.Status.BOOKED,
+            "menu": "再診",
+            "notes": "予約APIテスト",
+        }
+        data.update({key: str(value) for key, value in overrides.items()})
+        return data
+
+    def _post_create_appointment_api(self, **payload):
+        return self.client.post(
+            reverse("staff:appointment_create_api"),
+            data=json.dumps(payload or self._appointment_api_payload()),
+            content_type="application/json",
+        )
+
+    def _post_update_appointment_api(self, appointment, **payload):
+        return self.client.post(
+            reverse("staff:appointment_update_api", args=[appointment.id]),
+            data=json.dumps(payload or self._appointment_api_payload()),
+            content_type="application/json",
+        )
+
     def test_working_shift_staff_is_candidate(self):
         response = self.client.get(self._appointments_url())
 
@@ -2531,6 +2600,92 @@ class AppointmentStaffAvailabilityTests(TestCase):
         response = self.client.get(self._appointments_url())
 
         self.assertNotIn(self.other_staff.id, self._candidate_ids(response))
+
+    def test_staff_availability_rows_are_rendered_for_own_clinic_staff(self):
+        response = self.client.get(self._appointments_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "スタッフ別表示")
+        rows = {
+            row["staff_id"]: row
+            for row in response.context["staff_availability_rows"]
+        }
+        self.assertIn(self.working_staff.id, rows)
+        self.assertIn(self.off_staff.id, rows)
+        self.assertNotIn(self.other_staff.id, rows)
+        self.assertEqual(rows[self.working_staff.id]["work_time_label"], "09:00〜18:00")
+        self.assertEqual(rows[self.working_staff.id]["availability_label"], "空きあり")
+
+    def test_staff_availability_marks_off_and_approved_leave_unavailable(self):
+        response = self.client.get(self._appointments_url())
+
+        rows = {
+            row["staff_id"]: row
+            for row in response.context["staff_availability_rows"]
+        }
+        self.assertEqual(rows[self.off_staff.id]["availability_label"], "予約不可")
+        self.assertEqual(
+            rows[self.approved_leave_staff.id]["availability_label"],
+            "予約不可",
+        )
+
+    def test_staff_availability_displays_morning_and_afternoon_leave_badges(self):
+        response = self.client.get(self._appointments_url())
+
+        rows = {
+            row["staff_id"]: row
+            for row in response.context["staff_availability_rows"]
+        }
+        morning_badges = rows[self.morning_leave_staff.id]["leave_badges"]
+        afternoon_badges = rows[self.afternoon_leave_staff.id]["leave_badges"]
+        self.assertTrue(any(badge["label"] == "午前休" for badge in morning_badges))
+        self.assertTrue(any(badge["label"] == "午後休" for badge in afternoon_badges))
+        self.assertEqual(rows[self.morning_leave_staff.id]["availability_label"], "要確認")
+        self.assertEqual(rows[self.afternoon_leave_staff.id]["availability_label"], "要確認")
+
+    def test_staff_availability_counts_own_staff_appointments_only(self):
+        Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="再診",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+        other_patient = Patient.objects.create(
+            clinic=self.other_clinic,
+            card_no="AVAIL-B-001",
+            last_name="他院",
+            first_name="患者",
+            birth_date=date(1991, 1, 1),
+            phone="09000004002",
+        )
+        Appointment.objects.create(
+            clinic=self.other_clinic,
+            patient=other_patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 11, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 11, 30)),
+            menu="他院予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.other_staff,
+            created_by=self.other_staff,
+        )
+
+        response = self.client.get(self._appointments_url())
+
+        rows = {
+            row["staff_id"]: row
+            for row in response.context["staff_availability_rows"]
+        }
+        self.assertEqual(rows[self.working_staff.id]["appointment_count"], 1)
+        self.assertEqual(
+            rows[self.working_staff.id]["appointments"][0]["patient_name"],
+            "予約 患者",
+        )
+        self.assertNotIn(self.other_staff.id, rows)
+        self.assertNotContains(response, "他院予約")
 
     def test_morning_off_staff_is_excluded_from_morning_appointment(self):
         ids = self._candidate_ids_for_time(10, 0)
@@ -2566,6 +2721,136 @@ class AppointmentStaffAvailabilityTests(TestCase):
 
         self.assertIn(self.working_staff.id, ids)
         self.assertNotIn(self.other_staff.id, ids)
+
+    def test_availability_rejects_same_staff_overlapping_appointment(self):
+        Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="再診",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+
+        result = self._availability_for_time(self.working_staff, 10, 15)
+
+        self.assertFalse(result["is_valid"])
+        self.assertIn("この担当者は同じ時間帯に別の予約があります。", result["errors"])
+        self.assertEqual(len(result["conflict_appointments"]), 1)
+
+    def test_availability_allows_same_time_for_different_staff(self):
+        Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="再診",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+
+        result = self._availability_for_time(self.requested_leave_staff, 10, 0)
+
+        self.assertTrue(result["is_valid"])
+        self.assertEqual(result["conflict_appointments"], [])
+
+    def test_availability_ignores_self_when_editing_existing_appointment(self):
+        appt = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="再診",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+
+        result = self._availability_for_time(
+            self.working_staff,
+            10,
+            0,
+            exclude_id=appt.id,
+        )
+
+        self.assertTrue(result["is_valid"])
+        self.assertEqual(result["conflict_appointments"], [])
+
+    def test_availability_rejects_outside_business_hours(self):
+        result = self._availability_for_time(self.working_staff, 8, 30)
+
+        self.assertFalse(result["is_valid"])
+        self.assertIn("営業時間外です。予約日時を確認してください。", result["errors"])
+
+    def test_availability_warns_break_time_overlap(self):
+        result = self._availability_for_time(self.working_staff, 13, 30)
+
+        self.assertTrue(result["is_valid"])
+        self.assertIn("休憩時間と重なっています。予約日時を確認してください。", result["warnings"])
+
+    def test_availability_rejects_closed_weekday(self):
+        settings = ClinicSettings.objects.get(clinic=self.clinic)
+        settings.closed_weekdays = ["wed"]
+        settings.save(update_fields=["closed_weekdays"])
+
+        result = self._availability_for_time(self.working_staff, 10, 0)
+
+        self.assertFalse(result["is_valid"])
+        self.assertIn("休診曜日です。予約日時を確認してください。", result["errors"])
+
+    def test_availability_rejects_off_shift_staff(self):
+        result = self._availability_for_time(self.off_staff, 10, 0)
+
+        self.assertFalse(result["is_valid"])
+        self.assertIn("この担当者は対象日に休みです。", result["errors"])
+
+    def test_availability_rejects_approved_leave_staff(self):
+        result = self._availability_for_time(self.approved_leave_staff, 10, 0)
+
+        self.assertFalse(result["is_valid"])
+        self.assertTrue(any("休暇" in error or "勤務候補外" in error for error in result["errors"]))
+
+    def test_availability_rejects_half_day_and_timed_leave_overlap(self):
+        morning_result = self._availability_for_time(self.morning_leave_staff, 10, 0)
+        afternoon_result = self._availability_for_time(self.afternoon_leave_staff, 16, 0)
+        timed_result = self._availability_for_time(self.timed_leave_staff, 10, 45)
+
+        self.assertFalse(morning_result["is_valid"])
+        self.assertFalse(afternoon_result["is_valid"])
+        self.assertFalse(timed_result["is_valid"])
+
+    def test_availability_allows_requested_leave_staff(self):
+        result = self._availability_for_time(self.requested_leave_staff, 10, 0)
+
+        self.assertTrue(result["is_valid"])
+
+    def test_availability_ignores_other_clinic_appointments(self):
+        other_patient = Patient.objects.create(
+            clinic=self.other_clinic,
+            card_no="AVAIL-C-001",
+            last_name="他院",
+            first_name="予約",
+            birth_date=date(1992, 1, 1),
+            phone="09000004003",
+        )
+        Appointment.objects.create(
+            clinic=self.other_clinic,
+            patient=other_patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="他院予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.other_staff,
+            created_by=self.other_staff,
+        )
+
+        result = self._availability_for_time(self.working_staff, 10, 0)
+
+        self.assertTrue(result["is_valid"])
+        self.assertEqual(result["conflict_appointments"], [])
 
     def test_user_without_clinic_gets_403(self):
         self.client.force_login(self.no_clinic_user)
@@ -2628,7 +2913,7 @@ class AppointmentStaffAvailabilityTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("勤務候補外", response.json()["error"])
+        self.assertIn("勤務シフト", response.json()["error"])
 
     def test_move_appointment_rejects_afternoon_off_overlap(self):
         appt = Appointment.objects.create(
@@ -2655,11 +2940,240 @@ class AppointmentStaffAvailabilityTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("午後休", response.json()["error"])
 
+    def test_move_appointment_rejects_overlapping_staff_appointment(self):
+        existing = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="既存予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+        appt = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 11, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 11, 30)),
+            menu="移動予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+        target = timezone.make_aware(datetime(2026, 6, 17, 10, 15))
+
+        response = self.client.post(
+            reverse("staff:appointment_move", args=[appt.id]),
+            data=json.dumps({
+                "start": target.isoformat(),
+                "end": (target + timedelta(minutes=30)).isoformat(),
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("同じ時間帯", response.json()["error"])
+        existing.refresh_from_db()
+        self.assertEqual(existing.start_at, timezone.make_aware(datetime(2026, 6, 17, 10, 0)))
+
+    def test_appointment_create_api_creates_own_clinic_appointment(self):
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(self.working_staff)
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        appt = Appointment.objects.get(pk=data["appointment_id"])
+        self.assertEqual(appt.clinic, self.clinic)
+        self.assertEqual(appt.patient, self.patient)
+        self.assertEqual(appt.assigned_staff, self.working_staff)
+        self.assertEqual(appt.menu, "再診")
+
+    def test_appointment_create_api_rejects_other_clinic_patient(self):
+        other_patient = Patient.objects.create(
+            clinic=self.other_clinic,
+            card_no="AVAIL-D-001",
+            last_name="他院",
+            first_name="患者",
+            birth_date=date(1992, 1, 1),
+            phone="09000004004",
+        )
+
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(
+                self.working_staff,
+                patient=other_patient,
+            )
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("患者情報", response.json()["error"])
+
+    def test_appointment_create_api_rejects_other_clinic_staff(self):
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(
+                self.working_staff,
+                assigned_staff_id=self.other_staff.id,
+            )
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("担当者情報", response.json()["error"])
+
+    def test_appointment_create_api_rejects_overlapping_same_staff(self):
+        Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="既存予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(self.working_staff, hour=10, minute=15)
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("同じ時間帯", response.json()["error"])
+
+    def test_appointment_create_api_allows_same_time_for_different_staff(self):
+        Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="既存予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(self.requested_leave_staff, hour=10)
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+
+    def test_appointment_create_api_rejects_outside_business_hours(self):
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(self.working_staff, hour=8, minute=30)
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("営業時間外", response.json()["error"])
+
+    def test_appointment_create_api_rejects_closed_weekday(self):
+        settings = ClinicSettings.objects.get(clinic=self.clinic)
+        settings.closed_weekdays = ["wed"]
+        settings.save(update_fields=["closed_weekdays"])
+
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(self.working_staff)
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("休診曜日", response.json()["error"])
+
+    def test_appointment_create_api_rejects_off_shift_staff(self):
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(self.off_staff)
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("休み", response.json()["error"])
+
+    def test_appointment_create_api_rejects_approved_leave_staff(self):
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(self.approved_leave_staff)
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue(
+            "休暇" in response.json()["error"]
+            or "勤務候補外" in response.json()["error"]
+        )
+
+    def test_appointment_create_api_allows_requested_leave_staff(self):
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(self.requested_leave_staff)
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+
+    def test_appointment_update_api_ignores_self_overlap(self):
+        appt = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="更新前",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+
+        response = self._post_update_appointment_api(
+            appt,
+            **self._appointment_api_payload(self.working_staff, menu="更新後"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        appt.refresh_from_db()
+        self.assertEqual(appt.menu, "更新後")
+
+    def test_appointment_update_api_other_clinic_appointment_returns_404(self):
+        other_patient = Patient.objects.create(
+            clinic=self.other_clinic,
+            card_no="AVAIL-E-001",
+            last_name="他院",
+            first_name="予約",
+            birth_date=date(1992, 1, 1),
+            phone="09000004005",
+        )
+        other_appt = Appointment.objects.create(
+            clinic=self.other_clinic,
+            patient=other_patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="他院予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.other_staff,
+            created_by=self.other_staff,
+        )
+
+        response = self._post_update_appointment_api(
+            other_appt,
+            **self._appointment_api_payload(self.working_staff),
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_appointment_create_api_user_without_clinic_gets_403(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self._post_create_appointment_api(
+            **self._appointment_api_payload(self.working_staff)
+        )
+
+        self.assertEqual(response.status_code, 403)
+
     def test_appointment_staff_candidate_views_do_not_use_file_path(self):
         source = (
             inspect.getsource(staff_views._build_appointment_staff_candidates)
             + inspect.getsource(staff_views._is_staff_available_for_appointment)
+            + inspect.getsource(staff_views.check_appointment_availability)
+            + inspect.getsource(staff_views._build_staff_availability_rows)
+            + inspect.getsource(staff_views._build_staff_appointment_item)
             + inspect.getsource(staff_views.staff_appointments_view)
+            + inspect.getsource(staff_views.staff_appointment_create_api)
+            + inspect.getsource(staff_views.staff_appointment_update_api)
             + inspect.getsource(staff_views.move_appointment_view)
         )
 

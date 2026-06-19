@@ -7,6 +7,7 @@ from datetime import date, datetime, time, timedelta
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import (
@@ -26,7 +27,7 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.dateparse import parse_date, parse_datetime
+from django.utils.dateparse import parse_date, parse_datetime, parse_time
 from django.views.decorators.http import require_POST
 
 from apps.ai_jobs.usecases import run_ai_draft
@@ -1798,6 +1799,26 @@ def staff_appointments_view(request):
             "現在の担当者は、この日時では勤務候補外です。必要に応じて担当者を変更してください。"
         )
 
+    appointment_form_patients = (
+        Patient.objects
+        .filter(clinic=clinic)
+        .order_by("last_name", "first_name", "card_no", "id")[:500]
+    )
+    appointment_form_staff = (
+        User.objects
+        .filter(
+            clinic=clinic,
+            is_active=True,
+            role__in=_shift_staff_roles(),
+        )
+        .order_by("last_name", "first_name", "username")
+    )
+    appointment_form_menus = (
+        TreatmentMenu.objects
+        .filter(clinic=clinic, is_active=True)
+        .order_by("display_order", "name", "id")
+    )
+
     context = {
         "active": "appointments",
         "page_title": "予約管理",
@@ -1809,6 +1830,9 @@ def staff_appointments_view(request):
         "appointments": appointments,
         "stats": stats,
         "staff_users": staff_users,
+        "appointment_form_patients": appointment_form_patients,
+        "appointment_form_staff": appointment_form_staff,
+        "appointment_form_menus": appointment_form_menus,
         "appointment_staff_notice": appointment_staff_notice,
         "appointment_staff_warning": appointment_staff_warning,
         "filter_staff": staff_id,
@@ -1836,10 +1860,20 @@ def staff_appointments_view(request):
                 else "00:30:00"
             )
         ),
+        "calendar_slot_minutes": (
+            clinic_settings.appointment_interval_minutes
+            if clinic_settings
+            else 30
+        ),
     }
 
     context["calendar_events"] = _build_calendar_events(appointments)
     context["calendar_day_summary"] = _build_calendar_day_summary(appointments)
+    context["staff_availability_rows"] = _build_staff_availability_rows(
+        clinic,
+        base_day,
+        clinic_settings=clinic_settings,
+    )
 
     if period == "day":
         context["timeline"] = _build_day_timeline_rows(
@@ -2121,6 +2155,14 @@ def _appointment_staff_local_datetime(value):
     return timezone.localtime(value)
 
 
+def _normalize_appointment_datetime(value):
+    if not value or not isinstance(value, datetime):
+        return None
+    if timezone.is_naive(value):
+        value = timezone.make_aware(value, timezone.get_current_timezone())
+    return value
+
+
 def _appointment_staff_target_range(target_date=None, target_start=None, target_end=None):
     start_dt = _appointment_staff_local_datetime(target_start)
     end_dt = _appointment_staff_local_datetime(target_end)
@@ -2351,6 +2393,158 @@ def _is_staff_available_for_appointment(clinic, staff_user, target_dt, target_en
     )
 
 
+def _closed_weekday_key(target_date):
+    return ["mon", "tue", "wed", "thu", "fri", "sat", "sun"][target_date.weekday()]
+
+
+def check_appointment_availability(
+    *,
+    clinic,
+    start_at,
+    end_at=None,
+    assigned_staff=None,
+    exclude_appointment_id=None,
+):
+    errors = []
+    warnings = []
+    conflict_appointments = []
+
+    def add_error(message):
+        if message not in errors:
+            errors.append(message)
+
+    def add_warning(message):
+        if message not in warnings:
+            warnings.append(message)
+
+    start_at = _normalize_appointment_datetime(start_at)
+    end_at = _normalize_appointment_datetime(end_at)
+    clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
+    if start_at and not end_at:
+        minutes = (
+            clinic_settings.appointment_interval_minutes
+            if clinic_settings
+            else 30
+        )
+        end_at = start_at + timedelta(minutes=minutes or 30)
+
+    if not start_at:
+        add_error("予約開始日時が不正です。")
+        return {
+            "is_valid": False,
+            "errors": errors,
+            "warnings": warnings,
+            "conflict_appointments": conflict_appointments,
+        }
+
+    if not end_at or end_at <= start_at:
+        add_error("予約終了日時は開始日時より後にしてください。")
+        return {
+            "is_valid": False,
+            "errors": errors,
+            "warnings": warnings,
+            "conflict_appointments": conflict_appointments,
+        }
+
+    local_start = timezone.localtime(start_at)
+    local_end = timezone.localtime(end_at)
+    target_date = local_start.date()
+    start_time = local_start.time()
+    end_time = local_end.time()
+
+    if local_start.date() != local_end.date():
+        add_error("日付をまたぐ予約は登録できません。")
+
+    if clinic_settings:
+        closed_weekdays = clinic_settings.closed_weekdays or []
+        if _closed_weekday_key(target_date) in closed_weekdays:
+            add_error("休診曜日です。予約日時を確認してください。")
+
+        if (
+            clinic_settings.business_start_time
+            and start_time < clinic_settings.business_start_time
+        ) or (
+            clinic_settings.business_end_time
+            and end_time > clinic_settings.business_end_time
+        ):
+            add_error("営業時間外です。予約日時を確認してください。")
+
+        if (
+            clinic_settings.break_start_time
+            and clinic_settings.break_end_time
+            and _time_ranges_overlap(
+                start_time,
+                end_time,
+                clinic_settings.break_start_time,
+                clinic_settings.break_end_time,
+            )
+        ):
+            add_warning("休憩時間と重なっています。予約日時を確認してください。")
+
+    if assigned_staff:
+        if getattr(assigned_staff, "clinic_id", None) != clinic.id:
+            add_error("他院の担当者は選択できません。")
+        else:
+            shift = (
+                StaffShift.objects
+                .filter(
+                    clinic=clinic,
+                    staff=assigned_staff,
+                    date=target_date,
+                )
+                .first()
+            )
+            if shift is None:
+                add_error("対象日の勤務シフトがありません。")
+            elif shift.status == StaffShift.Status.OFF:
+                add_error("この担当者は対象日に休みです。")
+            elif shift.start_time and shift.end_time and (
+                start_time < shift.start_time
+                or end_time > shift.end_time
+            ):
+                add_error("この担当者の勤務時間外です。")
+
+            is_available, availability_error = _is_staff_available_for_appointment(
+                clinic,
+                assigned_staff,
+                start_at,
+                end_at,
+            )
+            if not is_available:
+                add_error(availability_error)
+
+            overlap_qs = (
+                Appointment.objects
+                .filter(
+                    clinic=clinic,
+                    assigned_staff=assigned_staff,
+                    start_at__lt=end_at,
+                    end_at__gt=start_at,
+                )
+                .exclude(
+                    status__in=[
+                        Appointment.Status.CANCELLED,
+                        Appointment.Status.NO_SHOW,
+                    ]
+                )
+                .select_related("patient", "assigned_staff")
+                .order_by("start_at")
+            )
+            if exclude_appointment_id:
+                overlap_qs = overlap_qs.exclude(pk=exclude_appointment_id)
+
+            conflict_appointments = list(overlap_qs)
+            if conflict_appointments:
+                add_error("この担当者は同じ時間帯に別の予約があります。")
+
+    return {
+        "is_valid": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "conflict_appointments": conflict_appointments,
+    }
+
+
 def _shift_status_class(status):
     return {
         StaffShift.Status.WORKING: "working",
@@ -2399,6 +2593,208 @@ def _format_shift_time(shift):
     if shift.start_time and shift.end_time:
         return f"{shift.start_time.strftime('%H:%M')}〜{shift.end_time.strftime('%H:%M')}"
     return shift.get_status_display()
+
+
+def _format_time_range(start_value, end_value, fallback="-"):
+    if start_value and end_value:
+        return f"{start_value.strftime('%H:%M')}〜{end_value.strftime('%H:%M')}"
+    return fallback
+
+
+def _build_staff_appointment_item(appointment):
+    patient_name = "（患者未確定）"
+    if appointment.patient:
+        patient_name = f"{appointment.patient.last_name} {appointment.patient.first_name}"
+
+    local_start = timezone.localtime(appointment.start_at)
+    local_end = (
+        timezone.localtime(appointment.end_at)
+        if appointment.end_at
+        else local_start + timedelta(minutes=30)
+    )
+    return {
+        "id": appointment.id,
+        "time_label": f"{local_start.strftime('%H:%M')}〜{local_end.strftime('%H:%M')}",
+        "patient_name": patient_name,
+        "menu": appointment.menu or "-",
+        "status": appointment.status,
+        "status_label": appointment.get_status_display(),
+        "pre_check_url": (
+            reverse("staff:pre_treatment_check", args=[appointment.patient_id])
+            if appointment.patient_id
+            else ""
+        ),
+        "day_url": (
+            f"{reverse('staff:appointments')}?period=day&day={local_start.date().isoformat()}"
+        ),
+    }
+
+
+def _build_staff_availability_rows(clinic, base_day, clinic_settings=None):
+    staff_users = list(
+        User.objects
+        .filter(
+            clinic=clinic,
+            is_active=True,
+            role__in=_shift_staff_roles(),
+        )
+        .order_by("last_name", "first_name", "username")
+    )
+    staff_ids = [user.id for user in staff_users]
+
+    shifts = {
+        shift.staff_id: shift
+        for shift in StaffShift.objects.filter(
+            clinic=clinic,
+            staff_id__in=staff_ids,
+            date=base_day,
+        ).select_related("staff")
+    }
+
+    leaves_by_staff = {staff_id: [] for staff_id in staff_ids}
+    for leave in (
+        StaffLeave.objects
+        .filter(
+            clinic=clinic,
+            staff_id__in=staff_ids,
+            start_date__lte=base_day,
+            end_date__gte=base_day,
+        )
+        .select_related("staff")
+        .order_by("start_time", "leave_type", "id")
+    ):
+        leaves_by_staff.setdefault(leave.staff_id, []).append(leave)
+
+    appointments_by_staff = {staff_id: [] for staff_id in staff_ids}
+    unassigned_appointments = []
+    day_appointments = (
+        Appointment.objects
+        .select_related("patient", "assigned_staff")
+        .filter(clinic=clinic, start_at__date=base_day)
+        .order_by("start_at")
+    )
+    for appointment in day_appointments:
+        item = _build_staff_appointment_item(appointment)
+        if appointment.assigned_staff_id in appointments_by_staff:
+            appointments_by_staff[appointment.assigned_staff_id].append(item)
+        elif appointment.assigned_staff_id is None:
+            unassigned_appointments.append(item)
+
+    rows = []
+    for user in staff_users:
+        shift = shifts.get(user.id)
+        leaves = leaves_by_staff.get(user.id, [])
+        approved_leaves = [
+            leave
+            for leave in leaves
+            if leave.status == StaffLeave.Status.APPROVED
+        ]
+        full_day_leave = any(
+            _staff_leave_overlaps_appointment(
+                leave,
+                None,
+                None,
+                clinic_settings,
+            )
+            and leave.leave_type not in [
+                StaffLeave.LeaveType.MORNING_OFF,
+                StaffLeave.LeaveType.AFTERNOON_OFF,
+            ]
+            and not (leave.start_time and leave.end_time)
+            for leave in approved_leaves
+        )
+        partial_leave = any(
+            leave.leave_type in [
+                StaffLeave.LeaveType.MORNING_OFF,
+                StaffLeave.LeaveType.AFTERNOON_OFF,
+            ]
+            or (leave.start_time and leave.end_time)
+            for leave in approved_leaves
+        )
+        appointment_items = appointments_by_staff.get(user.id, [])
+        appointment_count = len(appointment_items)
+
+        if not shift:
+            shift_label = "シフト未設定"
+            work_time_label = "-"
+            break_time_label = "-"
+            availability_label = "予約不可" if appointment_count == 0 else "要確認"
+            availability_class = "unavailable" if appointment_count == 0 else "check"
+        elif shift.status == StaffShift.Status.OFF:
+            shift_label = shift.get_status_display()
+            work_time_label = "休み"
+            break_time_label = "-"
+            availability_label = "予約不可" if appointment_count == 0 else "要確認"
+            availability_class = "unavailable" if appointment_count == 0 else "check"
+        elif full_day_leave:
+            shift_label = "承認済み休暇"
+            work_time_label = _format_time_range(shift.start_time, shift.end_time)
+            break_time_label = _format_time_range(shift.break_start, shift.break_end)
+            availability_label = "予約不可" if appointment_count == 0 else "要確認"
+            availability_class = "unavailable" if appointment_count == 0 else "check"
+        elif partial_leave:
+            shift_label = shift.get_status_display()
+            work_time_label = _format_time_range(shift.start_time, shift.end_time)
+            break_time_label = _format_time_range(shift.break_start, shift.break_end)
+            availability_label = "要確認"
+            availability_class = "check"
+        elif appointment_count >= 6:
+            shift_label = shift.get_status_display()
+            work_time_label = _format_time_range(shift.start_time, shift.end_time)
+            break_time_label = _format_time_range(shift.break_start, shift.break_end)
+            availability_label = "混雑"
+            availability_class = "busy"
+        elif appointment_count >= 3:
+            shift_label = shift.get_status_display()
+            work_time_label = _format_time_range(shift.start_time, shift.end_time)
+            break_time_label = _format_time_range(shift.break_start, shift.break_end)
+            availability_label = "やや混雑"
+            availability_class = "crowded"
+        else:
+            shift_label = shift.get_status_display()
+            work_time_label = _format_time_range(shift.start_time, shift.end_time)
+            break_time_label = _format_time_range(shift.break_start, shift.break_end)
+            availability_label = "空きあり"
+            availability_class = "available"
+
+        leave_badges = []
+        for leave in leaves:
+            leave_badges.append({
+                "label": leave.get_leave_type_display(),
+                "status_label": leave.get_status_display(),
+                "time_label": _format_leave_time(leave),
+                "class": _leave_type_class(leave.leave_type),
+                "status_class": _leave_status_class(leave.status),
+            })
+
+        rows.append({
+            "staff_id": user.id,
+            "staff_name": user.get_full_name().strip() or user.username,
+            "shift_label": shift_label,
+            "work_time_label": work_time_label,
+            "break_time_label": break_time_label,
+            "leave_badges": leave_badges,
+            "appointment_count": appointment_count,
+            "appointments": appointment_items,
+            "availability_label": availability_label,
+            "availability_class": availability_class,
+        })
+
+    if unassigned_appointments:
+        rows.append({
+            "staff_id": None,
+            "staff_name": "未割当",
+            "shift_label": "担当未設定",
+            "work_time_label": "-",
+            "break_time_label": "-",
+            "leave_badges": [],
+            "appointment_count": len(unassigned_appointments),
+            "appointments": unassigned_appointments,
+            "availability_label": "要確認",
+            "availability_class": "check",
+        })
+
+    return rows
 
 
 def _staff_shift_initial(clinic, request):
@@ -4516,6 +4912,12 @@ def _build_calendar_events(appointments):
         patient_name = "（患者未確定）"
         if a.patient:
             patient_name = f"{a.patient.last_name} {a.patient.first_name}"
+        local_start = timezone.localtime(a.start_at)
+        local_end = (
+            timezone.localtime(a.end_at)
+            if getattr(a, "end_at", None)
+            else local_start + timedelta(minutes=30)
+        )
 
         chief = summary["chief_label"] or "主訴未入力"
         intake_state = "問診未着手"
@@ -4557,8 +4959,11 @@ def _build_calendar_events(appointments):
             "textColor": text,
             "extendedProps": {
                 "appointmentId": a.id,
+                "patientId": a.patient_id or "",
                 "patientName": patient_name,
                 "menu": a.menu or "-",
+                "menuValue": a.menu or "",
+                "assignedStaffId": a.assigned_staff_id or "",
                 "staffName": a.assigned_staff.username if a.assigned_staff else "未割当",
                 "statusLabel": a.get_status_display(),
                 "intakeState": intake_state,
@@ -4569,6 +4974,10 @@ def _build_calendar_events(appointments):
                 "painLevelDisplay": pain,
                 "areasDisplay": areas,
                 "status": a.status,
+                "notes": a.notes or "",
+                "startDate": local_start.date().isoformat(),
+                "startTime": local_start.strftime("%H:%M"),
+                "endTime": local_end.strftime("%H:%M"),
                 "intakeDetailUrl": reverse("staff:intake_detail", args=[a.intake.id]) if intake else "",
                 "initialRecordingUrl": (
                     reverse("intakes:recording_new", args=[a.id])
@@ -4580,7 +4989,7 @@ def _build_calendar_events(appointments):
                     if a.patient_id
                     else ""
                 ),
-                "dayUrl": f"{reverse('staff:appointments')}?period=day&day={a.start_at.date().isoformat()}",
+                "dayUrl": f"{reverse('staff:appointments')}?period=day&day={local_start.date().isoformat()}",
             }
         })
 
@@ -4730,10 +5139,13 @@ def _build_day_timeline_rows(
 
         staff_map[row_key]["appointments"].append({
             "id": a.id,
+            "patient_id": a.patient_id or "",
             "patient_name": patient_name,
             "start_time": start_dt.strftime("%H:%M"),
             "end_time": end_dt.strftime("%H:%M"),
             "menu": a.menu or "-",
+            "menu_value": a.menu or "",
+            "assigned_staff_id": a.assigned_staff_id or "",
             "status": a.status,
             "status_label": a.get_status_display(),
             "intake_state": intake_state,
@@ -4741,6 +5153,8 @@ def _build_day_timeline_rows(
             "pain_level_display": summary["pain_level_display"] or "-",
             "visit_type_label": summary["visit_type_label"] or "-",
             "areas_display": "、".join(summary["areas_display"]) if summary["areas_display"] else "-",
+            "notes": a.notes or "",
+            "appointment_date": start_dt.date().isoformat(),
             "left_percent": round(left_percent, 3),
             "width_percent": round(width_percent, 3),
             "intake_detail_url": reverse("staff:intake_detail", args=[a.intake.id]) if intake else "",
@@ -4773,6 +5187,494 @@ def _build_day_timeline_rows(
         "rows": rows,
     }
 
+
+def _appointment_json_error(errors, status=400, warnings=None):
+    if isinstance(errors, str):
+        errors = [errors]
+    errors = [str(error) for error in (errors or []) if str(error).strip()]
+    warnings = [
+        str(warning)
+        for warning in (warnings or [])
+        if str(warning).strip()
+    ]
+    message = errors[0] if errors else (warnings[0] if warnings else "予約の保存に失敗しました。")
+    return JsonResponse({
+        "ok": False,
+        "error": message,
+        "errors": errors,
+        "warnings": warnings,
+    }, status=status)
+
+
+def _appointment_request_payload(request):
+    if request.content_type and "application/json" in request.content_type:
+        try:
+            return json.loads(request.body.decode("utf-8") or "{}")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return None
+    return request.POST.dict()
+
+
+def _appointment_validation_messages(exc):
+    if hasattr(exc, "message_dict"):
+        messages_to_show = []
+        for field, messages_for_field in exc.message_dict.items():
+            for message in messages_for_field:
+                messages_to_show.append(f"{field}: {message}")
+        return messages_to_show
+    return [str(message) for message in getattr(exc, "messages", [str(exc)])]
+
+
+def _combine_appointment_local_datetime(target_date, target_time):
+    if not target_date or not target_time:
+        return None
+    value = datetime.combine(target_date, target_time)
+    if timezone.is_naive(value):
+        value = timezone.make_aware(value)
+    return value
+
+
+def _appointment_default_end_at(clinic, start_at):
+    clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
+    minutes = (
+        clinic_settings.appointment_interval_minutes
+        if clinic_settings
+        else 30
+    )
+    return start_at + timedelta(minutes=minutes or 30)
+
+
+def _parse_optional_positive_int(value, label):
+    if value in [None, ""]:
+        return None, []
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return None, [f"{label}が不正です。"]
+    if number <= 0:
+        return None, [f"{label}が不正です。"]
+    return number, []
+
+
+def _appointment_slot_duration_minutes(clinic_settings, treatment_menu=None, duration_minutes=None):
+    if duration_minutes:
+        return duration_minutes
+    if treatment_menu and treatment_menu.duration_minutes:
+        return treatment_menu.duration_minutes
+    if clinic_settings and clinic_settings.appointment_interval_minutes:
+        return clinic_settings.appointment_interval_minutes
+    return 30
+
+
+def _appointment_slot_interval_minutes(clinic_settings):
+    if clinic_settings and clinic_settings.appointment_interval_minutes:
+        return clinic_settings.appointment_interval_minutes
+    return 30
+
+
+def _appointment_slot_staff_queryset(clinic):
+    return (
+        User.objects
+        .filter(
+            clinic=clinic,
+            is_active=True,
+            role__in=_shift_staff_roles(),
+        )
+        .order_by("last_name", "first_name", "username", "id")
+    )
+
+
+def _appointment_staff_display_name(staff_user):
+    full_name = staff_user.get_full_name().strip()
+    return full_name or staff_user.username
+
+
+def build_appointment_available_slots(
+    *,
+    clinic,
+    target_date,
+    staff_id=None,
+    treatment_menu_id=None,
+    duration_minutes=None,
+    exclude_appointment_id=None,
+    limit=50,
+):
+    clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
+    errors = []
+
+    if target_date is None:
+        return {
+            "ok": False,
+            "status": 400,
+            "date": "",
+            "slots": [],
+            "errors": ["日付を選択してください。"],
+            "message": "",
+        }
+
+    duration_minutes, duration_errors = _parse_optional_positive_int(
+        duration_minutes,
+        "予約時間",
+    )
+    errors.extend(duration_errors)
+
+    parsed_staff_id, staff_errors = _parse_optional_positive_int(
+        staff_id,
+        "担当者",
+    )
+    errors.extend(staff_errors)
+
+    parsed_menu_id, menu_errors = _parse_optional_positive_int(
+        treatment_menu_id,
+        "施術メニュー",
+    )
+    errors.extend(menu_errors)
+
+    parsed_exclude_id, exclude_errors = _parse_optional_positive_int(
+        exclude_appointment_id,
+        "除外予約",
+    )
+    errors.extend(exclude_errors)
+
+    if errors:
+        return {
+            "ok": False,
+            "status": 400,
+            "date": target_date.isoformat(),
+            "slots": [],
+            "errors": errors,
+            "message": "",
+        }
+
+    treatment_menu = None
+    if parsed_menu_id:
+        treatment_menu = get_object_or_404(
+            TreatmentMenu,
+            pk=parsed_menu_id,
+            clinic=clinic,
+            is_active=True,
+        )
+
+    if parsed_exclude_id:
+        get_object_or_404(
+            Appointment,
+            pk=parsed_exclude_id,
+            clinic=clinic,
+        )
+
+    if clinic_settings and _closed_weekday_key(target_date) in (clinic_settings.closed_weekdays or []):
+        return {
+            "ok": False,
+            "status": 400,
+            "date": target_date.isoformat(),
+            "slots": [],
+            "errors": ["休診曜日です。"],
+            "message": "休診日のため候補を表示できません。",
+        }
+
+    business_start = (
+        clinic_settings.business_start_time
+        if clinic_settings and clinic_settings.business_start_time
+        else time(9, 0)
+    )
+    business_end = (
+        clinic_settings.business_end_time
+        if clinic_settings and clinic_settings.business_end_time
+        else time(18, 0)
+    )
+    slot_interval = _appointment_slot_interval_minutes(clinic_settings)
+    duration = _appointment_slot_duration_minutes(
+        clinic_settings,
+        treatment_menu=treatment_menu,
+        duration_minutes=duration_minutes,
+    )
+
+    if business_start >= business_end:
+        return {
+            "ok": False,
+            "status": 400,
+            "date": target_date.isoformat(),
+            "slots": [],
+            "errors": ["営業時間設定を確認してください。"],
+            "message": "",
+        }
+
+    if parsed_staff_id:
+        staff_users = [
+            get_object_or_404(
+                _appointment_slot_staff_queryset(clinic),
+                pk=parsed_staff_id,
+            )
+        ]
+    else:
+        staff_users = list(_appointment_slot_staff_queryset(clinic))
+
+    slots = []
+    current_at = _combine_appointment_local_datetime(target_date, business_start)
+    close_at = _combine_appointment_local_datetime(target_date, business_end)
+    step = timedelta(minutes=slot_interval)
+    duration_delta = timedelta(minutes=duration)
+
+    while current_at and close_at and current_at + duration_delta <= close_at:
+        end_at = current_at + duration_delta
+        for staff_user in staff_users:
+            availability = check_appointment_availability(
+                clinic=clinic,
+                start_at=current_at,
+                end_at=end_at,
+                assigned_staff=staff_user,
+                exclude_appointment_id=parsed_exclude_id,
+            )
+            if availability["is_valid"] and not availability["warnings"]:
+                start_label = timezone.localtime(current_at).strftime("%H:%M")
+                end_label = timezone.localtime(end_at).strftime("%H:%M")
+                staff_name = _appointment_staff_display_name(staff_user)
+                slots.append({
+                    "start_time": start_label,
+                    "end_time": end_label,
+                    "staff_id": staff_user.id,
+                    "staff_name": staff_name,
+                    "label": f"{start_label}〜{end_label} {staff_name}",
+                })
+                if len(slots) >= limit:
+                    break
+        if len(slots) >= limit:
+            break
+        current_at = current_at + step
+
+    message = ""
+    if not staff_users:
+        message = "勤務可能な担当者がいません。"
+    elif not slots:
+        message = "この条件で空き枠はありません。"
+
+    return {
+        "ok": True,
+        "status": 200,
+        "date": target_date.isoformat(),
+        "slots": slots,
+        "errors": [],
+        "message": message,
+    }
+
+
+def _parse_appointment_api_data(request, clinic, appointment=None):
+    payload = _appointment_request_payload(request)
+    if payload is None:
+        return None, ["不正なリクエストです。"]
+
+    errors = []
+
+    patient_id = payload.get("patient_id") or payload.get("patient")
+    patient = None
+    if not patient_id:
+        errors.append("患者を選択してください。")
+    else:
+        patient = Patient.objects.filter(pk=patient_id, clinic=clinic).first()
+        if patient is None:
+            errors.append("患者情報が不正です。")
+
+    assigned_staff_id = payload.get("assigned_staff_id") or payload.get("assigned_staff")
+    assigned_staff = None
+    if not assigned_staff_id:
+        errors.append("担当者を選択してください。")
+    else:
+        assigned_staff = (
+            User.objects
+            .filter(
+                pk=assigned_staff_id,
+                clinic=clinic,
+                is_active=True,
+                role__in=_shift_staff_roles(),
+            )
+            .first()
+        )
+        if assigned_staff is None:
+            errors.append("担当者情報が不正です。")
+
+    date_value = parse_date(str(payload.get("appointment_date") or payload.get("date") or ""))
+    start_time = parse_time(str(payload.get("start_time") or ""))
+    end_time = parse_time(str(payload.get("end_time") or ""))
+
+    if date_value is None:
+        errors.append("予約日を入力してください。")
+    if start_time is None:
+        errors.append("開始時刻を入力してください。")
+
+    start_at = _combine_appointment_local_datetime(date_value, start_time)
+    end_at = _combine_appointment_local_datetime(date_value, end_time)
+    if start_at and end_at is None:
+        end_at = _appointment_default_end_at(clinic, start_at)
+
+    status = (payload.get("status") or "").strip()
+    valid_statuses = {choice[0] for choice in Appointment.Status.choices}
+    if not status:
+        status = appointment.status if appointment else Appointment.Status.BOOKED
+    elif status not in valid_statuses:
+        errors.append("予約ステータスが不正です。")
+
+    menu = (payload.get("menu") or "").strip() or "初診"
+    notes = (payload.get("notes") or payload.get("memo") or "").strip()
+
+    if errors:
+        return None, errors
+
+    return {
+        "patient": patient,
+        "assigned_staff": assigned_staff,
+        "start_at": start_at,
+        "end_at": end_at,
+        "status": status,
+        "menu": menu,
+        "notes": notes,
+    }, []
+
+
+def _require_appointment_api_clinic(request):
+    clinic = getattr(request.user, "clinic", None)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+        or not _is_staff_user(request.user, clinic)
+    ):
+        return None
+    return clinic
+
+
+@staff_required
+def staff_appointment_available_slots_api(request):
+    clinic = _require_appointment_api_clinic(request)
+    if clinic is None:
+        return _appointment_json_error("権限がありません。", status=403)
+
+    target_date = parse_date(str(request.GET.get("date") or ""))
+    result = build_appointment_available_slots(
+        clinic=clinic,
+        target_date=target_date,
+        staff_id=request.GET.get("staff_id"),
+        treatment_menu_id=request.GET.get("treatment_menu_id"),
+        duration_minutes=request.GET.get("duration_minutes"),
+        exclude_appointment_id=request.GET.get("exclude_appointment_id"),
+    )
+
+    if not result["ok"]:
+        return JsonResponse({
+            "ok": False,
+            "date": result["date"],
+            "slots": [],
+            "errors": result["errors"],
+            "message": result["message"],
+        }, status=result["status"])
+
+    return JsonResponse({
+        "ok": True,
+        "date": result["date"],
+        "slots": result["slots"],
+        "message": result["message"],
+    })
+
+
+@staff_required
+@require_POST
+def staff_appointment_create_api(request):
+    clinic = _require_appointment_api_clinic(request)
+    if clinic is None:
+        return _appointment_json_error("権限がありません。", status=403)
+
+    parsed, errors = _parse_appointment_api_data(request, clinic)
+    if errors:
+        return _appointment_json_error(errors)
+
+    availability = check_appointment_availability(
+        clinic=clinic,
+        start_at=parsed["start_at"],
+        end_at=parsed["end_at"],
+        assigned_staff=parsed["assigned_staff"],
+    )
+    if not availability["is_valid"] or availability["warnings"]:
+        return _appointment_json_error(
+            availability["errors"] or availability["warnings"],
+            warnings=availability["warnings"],
+        )
+
+    appointment = Appointment(
+        clinic=clinic,
+        patient=parsed["patient"],
+        start_at=parsed["start_at"],
+        end_at=parsed["end_at"],
+        menu=parsed["menu"],
+        status=parsed["status"],
+        assigned_staff=parsed["assigned_staff"],
+        created_by=request.user,
+        notes=parsed["notes"],
+    )
+    try:
+        with transaction.atomic():
+            appointment.save()
+    except ValidationError as exc:
+        return _appointment_json_error(_appointment_validation_messages(exc))
+
+    return JsonResponse({
+        "ok": True,
+        "appointment_id": appointment.id,
+        "message": "予約を登録しました。",
+    })
+
+
+@staff_required
+@require_POST
+def staff_appointment_update_api(request, pk):
+    clinic = _require_appointment_api_clinic(request)
+    if clinic is None:
+        return _appointment_json_error("権限がありません。", status=403)
+
+    with transaction.atomic():
+        appointment = get_object_or_404(
+            Appointment.objects.select_for_update(of=("self",)),
+            pk=pk,
+            clinic=clinic,
+        )
+        parsed, errors = _parse_appointment_api_data(
+            request,
+            clinic,
+            appointment=appointment,
+        )
+        if errors:
+            return _appointment_json_error(errors)
+
+        availability = check_appointment_availability(
+            clinic=clinic,
+            start_at=parsed["start_at"],
+            end_at=parsed["end_at"],
+            assigned_staff=parsed["assigned_staff"],
+            exclude_appointment_id=appointment.pk,
+        )
+        if not availability["is_valid"] or availability["warnings"]:
+            return _appointment_json_error(
+                availability["errors"] or availability["warnings"],
+                warnings=availability["warnings"],
+            )
+
+        appointment.patient = parsed["patient"]
+        appointment.start_at = parsed["start_at"]
+        appointment.end_at = parsed["end_at"]
+        appointment.menu = parsed["menu"]
+        appointment.status = parsed["status"]
+        appointment.assigned_staff = parsed["assigned_staff"]
+        appointment.notes = parsed["notes"]
+        try:
+            appointment.save()
+        except ValidationError as exc:
+            return _appointment_json_error(_appointment_validation_messages(exc))
+
+    return JsonResponse({
+        "ok": True,
+        "appointment_id": appointment.id,
+        "message": "予約を更新しました。",
+    })
+
+
 @staff_required
 @require_POST
 def staff_appointment_status_update_view(request, pk):
@@ -4799,6 +5701,8 @@ def staff_appointment_status_update_view(request, pk):
 @staff_required
 @require_POST
 def move_appointment_view(request, pk):
+    # TODO: スタッフ側の予約作成/編集APIを追加する場合も、
+    # check_appointment_availability() で同じ可否判定を通す。
     clinic = getattr(request.user, "clinic", None)
 
     if (
@@ -4831,33 +5735,24 @@ def move_appointment_view(request, pk):
         else:
             end_dt = start_dt
 
-    is_available, availability_error = _is_staff_available_for_appointment(
-        clinic,
-        appt.assigned_staff,
-        start_dt,
-        end_dt,
-    )
-    if not is_available:
-        return JsonResponse({
-            "ok": False,
-            "error": availability_error,
-        }, status=400)
-
-    overlap_qs = Appointment.objects.filter(
+    availability = check_appointment_availability(
         clinic=clinic,
+        start_at=start_dt,
+        end_at=end_dt,
         assigned_staff=appt.assigned_staff,
-        start_at__lt=end_dt,
-        end_at__gt=start_dt,
-    ).exclude(pk=appt.pk).exclude(status=Appointment.Status.CANCELLED)
-
-    if overlap_qs.exists():
+        exclude_appointment_id=appt.pk,
+    )
+    if not availability["is_valid"] or availability["warnings"]:
+        messages_to_show = availability["errors"] or availability["warnings"]
         return JsonResponse({
             "ok": False,
-            "error": "同じ施術者の予約と時間が重複しています。"
+            "error": messages_to_show[0],
+            "errors": availability["errors"],
+            "warnings": availability["warnings"],
         }, status=400)
 
-    appt.start_at = start_dt
-    appt.end_at = end_dt
+    appt.start_at = _normalize_appointment_datetime(start_dt)
+    appt.end_at = _normalize_appointment_datetime(end_dt)
     appt.save(update_fields=["start_at", "end_at", "updated_at"])
 
     return JsonResponse({
