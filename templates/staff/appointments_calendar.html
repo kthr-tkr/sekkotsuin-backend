@@ -1464,6 +1464,70 @@
     display:block;
   }
 
+  .appointment-slot-tools{
+    grid-column:1 / -1;
+    border:1px solid #d9e8fa;
+    background:linear-gradient(135deg, #f8fbff 0%, #eef7ff 100%);
+    border-radius:18px;
+    padding:14px;
+  }
+
+  .appointment-slot-tools-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .appointment-slot-title{
+    color:#0f172a;
+    font-size:13px;
+    font-weight:900;
+  }
+
+  .appointment-slot-help{
+    margin-top:4px;
+    color:#64748b;
+    font-size:12px;
+    font-weight:700;
+    line-height:1.6;
+  }
+
+  .appointment-slot-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:12px;
+  }
+
+  .appointment-slot-list.is-empty{
+    display:block;
+    color:#64748b;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.7;
+  }
+
+  .appointment-slot-button{
+    border:1px solid #bfdbfe;
+    border-radius:999px;
+    padding:8px 11px;
+    background:#fff;
+    color:#1e40af;
+    font-size:12px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(37,99,235,.08);
+  }
+
+  .appointment-slot-button:hover,
+  .appointment-slot-button.is-selected{
+    border-color:#2563eb;
+    background:#eff6ff;
+    color:#1d4ed8;
+  }
+
   .appointment-form-actions{
     display:flex;
     justify-content:flex-end;
@@ -2757,6 +2821,27 @@
       </div>
 
       <div class="appointment-field">
+        <label for="appointmentTreatmentMenu">施術メニュー設定</label>
+        <select name="treatment_menu_id" id="appointmentTreatmentMenu">
+          <option value="">メニュー設定を使わない</option>
+          {% for menu in appointment_form_menus %}
+            <option
+              value="{{ menu.id }}"
+              data-duration="{{ menu.duration_minutes }}"
+              data-name="{{ menu.name|escape }}"
+            >
+              {{ menu.name }}（{{ menu.duration_minutes }}分）
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="appointment-field">
+        <label for="appointmentDurationMinutes">予約時間（分）</label>
+        <input type="number" name="duration_minutes" id="appointmentDurationMinutes" min="5" step="5" value="{{ calendar_slot_minutes|default:30 }}">
+      </div>
+
+      <div class="appointment-field">
         <label for="appointmentMenu">メニュー</label>
         <input type="text" name="menu" id="appointmentMenu" maxlength="50" value="初診">
       </div>
@@ -2768,6 +2853,21 @@
 
       <div class="appointment-form-note">
         担当者候補は院内スタッフのみ表示しています。保存時に、対象日のシフト・休暇・予約重複を再確認します。
+      </div>
+
+      <div class="appointment-slot-tools">
+        <div class="appointment-slot-tools-head">
+          <div>
+            <div class="appointment-slot-title">空き枠候補</div>
+            <div class="appointment-slot-help">
+              予約日・担当者・施術メニューまたは予約時間をもとに、勤務シフト・休暇・予約重複を確認して候補を表示します。
+            </div>
+          </div>
+          <button type="button" class="btn" id="appointmentCheckSlotsBtn">空き枠を確認</button>
+        </div>
+        <div class="appointment-slot-list is-empty" id="appointmentAvailableSlots">
+          条件を入力して「空き枠を確認」を押してください。
+        </div>
       </div>
 
       <div class="appointment-form-errors" id="appointmentFormErrors"></div>
@@ -2790,6 +2890,7 @@
   const panel = document.getElementById('detailPanel');
   const appointmentCreateUrl = "{% url 'staff:appointment_create_api' %}";
   const appointmentUpdateUrlTemplate = "{% url 'staff:appointment_update_api' 0 %}";
+  const appointmentAvailableSlotsUrl = "{% url 'staff:appointment_available_slots_api' %}";
   const defaultAppointmentDate = "{{ day|date:'Y-m-d' }}";
   const defaultStartTime = "{{ calendar_slot_min|slice:':5' }}";
   const defaultSlotMinutes = Number("{{ calendar_slot_minutes|default:30 }}") || 30;
@@ -2900,6 +3001,123 @@
     box.classList.add('is-visible');
   }
 
+  function clearAvailableSlots(message) {
+    const box = document.getElementById('appointmentAvailableSlots');
+    if (!box) return;
+    box.classList.add('is-empty');
+    box.innerHTML = escapeHtml(message || '条件を入力して「空き枠を確認」を押してください。');
+  }
+
+  function getSelectedTreatmentMenuOption() {
+    const menuSelect = document.getElementById('appointmentTreatmentMenu');
+    if (!menuSelect || !menuSelect.value) return null;
+    return menuSelect.options[menuSelect.selectedIndex] || null;
+  }
+
+  function syncTreatmentMenuFields() {
+    const option = getSelectedTreatmentMenuOption();
+    if (!option) return;
+
+    const duration = Number(option.dataset.duration || 0);
+    const menuName = option.dataset.name || option.textContent.replace(/（.*$/, '').trim();
+    const menuField = document.getElementById('appointmentMenu');
+    const durationField = document.getElementById('appointmentDurationMinutes');
+    const startField = document.getElementById('appointmentStartTime');
+
+    if (menuField && menuName) {
+      menuField.value = menuName;
+    }
+    if (durationField && duration > 0) {
+      durationField.value = duration;
+    }
+    if (startField && startField.value && duration > 0) {
+      setAppointmentField('appointmentEndTime', addMinutesToTime(startField.value, duration));
+    }
+  }
+
+  function renderAvailableSlots(payload) {
+    const box = document.getElementById('appointmentAvailableSlots');
+    if (!box) return;
+
+    const slots = payload?.slots || [];
+    if (!payload?.ok || slots.length === 0) {
+      const messages = []
+        .concat(payload?.errors || [])
+        .concat(payload?.message ? [payload.message] : []);
+      clearAvailableSlots(messages[0] || 'この条件で空き枠はありません。');
+      return;
+    }
+
+    box.classList.remove('is-empty');
+    box.innerHTML = slots.map((slot) => `
+      <button
+        type="button"
+        class="appointment-slot-button"
+        data-start-time="${escapeHtml(slot.start_time)}"
+        data-end-time="${escapeHtml(slot.end_time)}"
+        data-staff-id="${escapeHtml(slot.staff_id)}"
+      >
+        ${escapeHtml(slot.label)}
+      </button>
+    `).join('');
+
+    box.querySelectorAll('.appointment-slot-button').forEach((button) => {
+      button.addEventListener('click', () => {
+        box.querySelectorAll('.appointment-slot-button').forEach((b) => b.classList.remove('is-selected'));
+        button.classList.add('is-selected');
+        setAppointmentField('appointmentStartTime', button.dataset.startTime || '');
+        setAppointmentField('appointmentEndTime', button.dataset.endTime || '');
+        setAppointmentField('appointmentStaff', button.dataset.staffId || '');
+      });
+    });
+  }
+
+  function fetchAvailableSlots() {
+    const dateField = document.getElementById('appointmentDate');
+    const staffField = document.getElementById('appointmentStaff');
+    const menuField = document.getElementById('appointmentTreatmentMenu');
+    const durationField = document.getElementById('appointmentDurationMinutes');
+    const appointmentIdField = document.getElementById('appointmentId');
+    const button = document.getElementById('appointmentCheckSlotsBtn');
+
+    if (!dateField || !dateField.value) {
+      clearAvailableSlots('予約日を選択してください。');
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('date', dateField.value);
+    if (staffField?.value) params.set('staff_id', staffField.value);
+    if (menuField?.value) params.set('treatment_menu_id', menuField.value);
+    if (durationField?.value) params.set('duration_minutes', durationField.value);
+    if (appointmentIdField?.value) params.set('exclude_appointment_id', appointmentIdField.value);
+
+    const originalText = button ? button.textContent : '';
+    if (button) {
+      button.disabled = true;
+      button.textContent = '確認中...';
+    }
+    clearAvailableSlots('空き枠を確認しています...');
+
+    fetch(`${appointmentAvailableSlotsUrl}?${params.toString()}`)
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          throw data;
+        }
+        renderAvailableSlots(data);
+      })
+      .catch((payload) => {
+        renderAvailableSlots(payload || { ok: false, message: '空き枠候補の取得に失敗しました。' });
+      })
+      .finally(() => {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+  }
+
   function appointmentDataFromEvent(event) {
     const p = event.extendedProps || {};
     const start = event.start || null;
@@ -2950,8 +3168,11 @@
     setAppointmentField('appointmentEndTime', endTime);
     setAppointmentField('appointmentStaff', data.assigned_staff_id || '');
     setAppointmentField('appointmentStatus', data.status || 'booked');
+    setAppointmentField('appointmentTreatmentMenu', '');
+    setAppointmentField('appointmentDurationMinutes', defaultSlotMinutes);
     setAppointmentField('appointmentMenu', data.menu || '初診');
     setAppointmentField('appointmentNotes', data.notes || '');
+    clearAvailableSlots();
 
     if (title) {
       title.textContent = data.appointment_id ? '予約を編集' : '予約を追加';
@@ -2979,6 +3200,12 @@
     const backdrop = document.getElementById('appointmentModalBackdrop');
     const form = document.getElementById('appointmentForm');
     const saveBtn = document.getElementById('appointmentSaveBtn');
+    const slotBtn = document.getElementById('appointmentCheckSlotsBtn');
+    const treatmentMenu = document.getElementById('appointmentTreatmentMenu');
+    const dateField = document.getElementById('appointmentDate');
+    const staffField = document.getElementById('appointmentStaff');
+    const startField = document.getElementById('appointmentStartTime');
+    const durationField = document.getElementById('appointmentDurationMinutes');
 
     if (addBtn) {
       addBtn.addEventListener('click', () => openAppointmentModal());
@@ -2986,6 +3213,41 @@
     if (closeBtn) closeBtn.addEventListener('click', closeAppointmentModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeAppointmentModal);
     if (backdrop) backdrop.addEventListener('click', closeAppointmentModal);
+    if (slotBtn) slotBtn.addEventListener('click', fetchAvailableSlots);
+    if (dateField) {
+      dateField.addEventListener('change', () => {
+        clearAvailableSlots('条件が変わりました。「空き枠を確認」を押してください。');
+      });
+    }
+    if (staffField) {
+      staffField.addEventListener('change', () => {
+        clearAvailableSlots('条件が変わりました。「空き枠を確認」を押してください。');
+      });
+    }
+    if (treatmentMenu) {
+      treatmentMenu.addEventListener('change', () => {
+        syncTreatmentMenuFields();
+        clearAvailableSlots('条件が変わりました。「空き枠を確認」を押してください。');
+      });
+    }
+    if (startField) {
+      startField.addEventListener('change', () => {
+        const minutes = Number(durationField?.value || defaultSlotMinutes) || defaultSlotMinutes;
+        if (startField.value) {
+          setAppointmentField('appointmentEndTime', addMinutesToTime(startField.value, minutes));
+        }
+        clearAvailableSlots('条件が変わりました。「空き枠を確認」を押してください。');
+      });
+    }
+    if (durationField) {
+      durationField.addEventListener('change', () => {
+        const minutes = Number(durationField.value || defaultSlotMinutes) || defaultSlotMinutes;
+        if (startField?.value) {
+          setAppointmentField('appointmentEndTime', addMinutesToTime(startField.value, minutes));
+        }
+        clearAvailableSlots('条件が変わりました。「空き枠を確認」を押してください。');
+      });
+    }
 
     if (!form || !saveBtn) return;
 

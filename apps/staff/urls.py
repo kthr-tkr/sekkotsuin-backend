@@ -107,6 +107,11 @@ urlpatterns = [
         views.staff_appointment_update_api,
         name="appointment_update_api",
     ),
+    path(
+        "appointments/api/available-slots/",
+        views.staff_appointment_available_slots_api,
+        name="appointment_available_slots_api",
+    ),
     path("api/appointments/<int:pk>/move/", views.move_appointment_view, name="appointment_move"),
     path("staffs/create/", views.staff_create, name="staff_create"),
     path(

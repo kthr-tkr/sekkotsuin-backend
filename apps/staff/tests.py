@@ -2417,6 +2417,20 @@ class AppointmentStaffAvailabilityTests(TestCase):
             birth_date=date(1990, 1, 1),
             phone="09000004001",
         )
+        self.treatment_menu = TreatmentMenu.objects.create(
+            clinic=self.clinic,
+            name="再診30分",
+            price=5000,
+            duration_minutes=30,
+            is_active=True,
+        )
+        self.other_treatment_menu = TreatmentMenu.objects.create(
+            clinic=self.other_clinic,
+            name="他院メニュー",
+            price=7000,
+            duration_minutes=30,
+            is_active=True,
+        )
         self.target_date = date(2026, 6, 17)
         ClinicSettings.objects.create(
             clinic=self.clinic,
@@ -2511,6 +2525,20 @@ class AppointmentStaffAvailabilityTests(TestCase):
         return reverse("staff:appointments") + "?" + "&".join(
             f"{key}={value}" for key, value in query.items()
         )
+
+    def _available_slots_response(self, **params):
+        query = {
+            "date": self.target_date.isoformat(),
+            "duration_minutes": 30,
+        }
+        query.update({key: value for key, value in params.items()})
+        return self.client.get(reverse("staff:appointment_available_slots_api"), query)
+
+    def _slot_starts(self, response):
+        return {slot["start_time"] for slot in response.json().get("slots", [])}
+
+    def _slot_staff_ids(self, response):
+        return {slot["staff_id"] for slot in response.json().get("slots", [])}
 
     def _candidate_ids(self, response):
         return {user.id for user in response.context["staff_users"]}
@@ -2977,6 +3005,183 @@ class AppointmentStaffAvailabilityTests(TestCase):
         existing.refresh_from_db()
         self.assertEqual(existing.start_at, timezone.make_aware(datetime(2026, 6, 17, 10, 0)))
 
+    def test_available_slots_api_returns_business_hour_slots(self):
+        response = self._available_slots_response(staff_id=self.working_staff.id)
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertIn("09:00", self._slot_starts(response))
+        self.assertIn(self.working_staff.id, self._slot_staff_ids(response))
+        self.assertTrue(any(slot["staff_id"] == self.working_staff.id for slot in data["slots"]))
+
+    def test_available_slots_api_uses_clinic_interval(self):
+        settings = ClinicSettings.objects.get(clinic=self.clinic)
+        settings.appointment_interval_minutes = 15
+        settings.save(update_fields=["appointment_interval_minutes"])
+
+        response = self._available_slots_response(staff_id=self.working_staff.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("09:15", self._slot_starts(response))
+
+    def test_available_slots_api_excludes_break_time_overlap(self):
+        response = self._available_slots_response(staff_id=self.working_staff.id)
+
+        self.assertEqual(response.status_code, 200)
+        starts = self._slot_starts(response)
+        self.assertNotIn("13:00", starts)
+        self.assertNotIn("14:30", starts)
+        self.assertIn("15:00", starts)
+
+    def test_available_slots_api_rejects_closed_weekday(self):
+        settings = ClinicSettings.objects.get(clinic=self.clinic)
+        settings.closed_weekdays = ["wed"]
+        settings.save(update_fields=["closed_weekdays"])
+
+        response = self._available_slots_response(staff_id=self.working_staff.id)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["ok"])
+        self.assertIn("休診曜日", response.json()["errors"][0])
+
+    def test_available_slots_api_excludes_existing_appointment_overlap(self):
+        Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="既存予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+
+        response = self._available_slots_response(staff_id=self.working_staff.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("10:00", self._slot_starts(response))
+
+    def test_available_slots_api_exclude_appointment_id_ignores_self(self):
+        appointment = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="編集予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+
+        blocked = self._available_slots_response(staff_id=self.working_staff.id)
+        allowed = self._available_slots_response(
+            staff_id=self.working_staff.id,
+            exclude_appointment_id=appointment.id,
+        )
+
+        self.assertNotIn("10:00", self._slot_starts(blocked))
+        self.assertIn("10:00", self._slot_starts(allowed))
+
+    def test_available_slots_api_excludes_off_and_approved_leave_staff(self):
+        off_response = self._available_slots_response(staff_id=self.off_staff.id)
+        leave_response = self._available_slots_response(staff_id=self.approved_leave_staff.id)
+
+        self.assertEqual(off_response.status_code, 200)
+        self.assertEqual(leave_response.status_code, 200)
+        self.assertEqual(off_response.json()["slots"], [])
+        self.assertEqual(leave_response.json()["slots"], [])
+
+    def test_available_slots_api_handles_half_day_and_timed_leave(self):
+        morning_response = self._available_slots_response(staff_id=self.morning_leave_staff.id)
+        afternoon_response = self._available_slots_response(staff_id=self.afternoon_leave_staff.id)
+        timed_response = self._available_slots_response(staff_id=self.timed_leave_staff.id)
+
+        self.assertNotIn("10:00", self._slot_starts(morning_response))
+        self.assertIn("15:00", self._slot_starts(morning_response))
+        self.assertIn("09:00", self._slot_starts(afternoon_response))
+        self.assertNotIn("15:00", self._slot_starts(afternoon_response))
+        self.assertNotIn("10:30", self._slot_starts(timed_response))
+        self.assertIn("12:00", self._slot_starts(timed_response))
+
+    def test_available_slots_api_keeps_requested_leave_staff(self):
+        response = self._available_slots_response(staff_id=self.requested_leave_staff.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("10:00", self._slot_starts(response))
+
+    def test_available_slots_api_ignores_other_clinic_appointments(self):
+        other_patient = Patient.objects.create(
+            clinic=self.other_clinic,
+            card_no="AVAIL-F-001",
+            last_name="他院",
+            first_name="予約",
+            birth_date=date(1992, 1, 1),
+            phone="09000004006",
+        )
+        Appointment.objects.create(
+            clinic=self.other_clinic,
+            patient=other_patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="他院予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.other_staff,
+            created_by=self.other_staff,
+        )
+
+        response = self._available_slots_response(staff_id=self.working_staff.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("10:00", self._slot_starts(response))
+
+    def test_available_slots_api_rejects_other_clinic_staff_and_menu(self):
+        staff_response = self._available_slots_response(staff_id=self.other_staff.id)
+        menu_response = self._available_slots_response(
+            staff_id=self.working_staff.id,
+            treatment_menu_id=self.other_treatment_menu.id,
+        )
+
+        self.assertEqual(staff_response.status_code, 404)
+        self.assertEqual(menu_response.status_code, 404)
+
+    def test_available_slots_api_uses_treatment_menu_duration(self):
+        long_menu = TreatmentMenu.objects.create(
+            clinic=self.clinic,
+            name="長め施術",
+            price=9000,
+            duration_minutes=60,
+            is_active=True,
+        )
+
+        response = self._available_slots_response(
+            staff_id=self.working_staff.id,
+            treatment_menu_id=long_menu.id,
+            duration_minutes="",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        first = response.json()["slots"][0]
+        self.assertEqual(first["start_time"], "09:00")
+        self.assertEqual(first["end_time"], "10:00")
+
+    def test_available_slots_api_without_staff_returns_own_available_staff_only(self):
+        response = self._available_slots_response()
+
+        self.assertEqual(response.status_code, 200)
+        staff_ids = self._slot_staff_ids(response)
+        self.assertIn(self.working_staff.id, staff_ids)
+        self.assertIn(self.requested_leave_staff.id, staff_ids)
+        self.assertNotIn(self.off_staff.id, staff_ids)
+        self.assertNotIn(self.other_staff.id, staff_ids)
+
+    def test_available_slots_api_user_without_clinic_gets_403(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self._available_slots_response(staff_id=self.working_staff.id)
+
+        self.assertEqual(response.status_code, 403)
+
     def test_appointment_create_api_creates_own_clinic_appointment(self):
         response = self._post_create_appointment_api(
             **self._appointment_api_payload(self.working_staff)
@@ -3172,6 +3377,8 @@ class AppointmentStaffAvailabilityTests(TestCase):
             + inspect.getsource(staff_views._build_staff_availability_rows)
             + inspect.getsource(staff_views._build_staff_appointment_item)
             + inspect.getsource(staff_views.staff_appointments_view)
+            + inspect.getsource(staff_views.build_appointment_available_slots)
+            + inspect.getsource(staff_views.staff_appointment_available_slots_api)
             + inspect.getsource(staff_views.staff_appointment_create_api)
             + inspect.getsource(staff_views.staff_appointment_update_api)
             + inspect.getsource(staff_views.move_appointment_view)
