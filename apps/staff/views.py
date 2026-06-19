@@ -2,7 +2,7 @@
 import json
 import re
 from calendar import monthrange
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
@@ -1763,15 +1763,40 @@ def staff_appointments_view(request):
         "arrived": sum(1 for x in base_list if x.status == Appointment.Status.ARRIVED),
     }
 
-    staff_users = User.objects.filter(
-        clinic=clinic,
-        is_active=True,
-        role__in=[
-            User.Role.ADMIN,
-            User.Role.RECEPTION,
-            User.Role.PRACTITIONER,
-        ],
-    ).order_by("username")
+    selected_staff = None
+    if staff_id:
+        selected_staff = (
+            User.objects
+            .filter(
+                pk=staff_id,
+                clinic=clinic,
+                role__in=_shift_staff_roles(),
+            )
+            .first()
+        )
+    staff_candidate_context = _build_appointment_staff_candidates(
+        clinic,
+        target_date=base_day,
+        current_staff=selected_staff,
+    )
+    staff_users = staff_candidate_context["users"]
+    if staff_candidate_context["date_unknown"]:
+        appointment_staff_notice = (
+            "予約日時を選択すると、シフト・休暇情報に基づいて担当者候補を絞り込めます。"
+        )
+    else:
+        appointment_staff_notice = (
+            "担当者候補は、対象日のシフト・休暇情報をもとに表示しています。シフト反映済み / 勤務可能な担当者のみ表示"
+        )
+    appointment_staff_warning = ""
+    if not staff_candidate_context["has_candidates"]:
+        appointment_staff_warning = (
+            "対象日に勤務可能な担当者がいません。シフトまたは休暇設定を確認してください。"
+        )
+    elif staff_candidate_context["current_staff_outside_candidates"]:
+        appointment_staff_warning = (
+            "現在の担当者は、この日時では勤務候補外です。必要に応じて担当者を変更してください。"
+        )
 
     context = {
         "active": "appointments",
@@ -1784,6 +1809,8 @@ def staff_appointments_view(request):
         "appointments": appointments,
         "stats": stats,
         "staff_users": staff_users,
+        "appointment_staff_notice": appointment_staff_notice,
+        "appointment_staff_warning": appointment_staff_warning,
         "filter_staff": staff_id,
         "filter_status": status,
         "filter_q": q,
@@ -2072,6 +2099,256 @@ def _shift_staff_roles():
         User.Role.RECEPTION,
         User.Role.PRACTITIONER,
     ]
+
+
+def _appointment_staff_target_date(value):
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        if timezone.is_naive(value):
+            value = timezone.make_aware(value, timezone.get_current_timezone())
+        return timezone.localtime(value).date()
+    if isinstance(value, date):
+        return value
+    return None
+
+
+def _appointment_staff_local_datetime(value):
+    if not value or not isinstance(value, datetime):
+        return None
+    if timezone.is_naive(value):
+        value = timezone.make_aware(value, timezone.get_current_timezone())
+    return timezone.localtime(value)
+
+
+def _appointment_staff_target_range(target_date=None, target_start=None, target_end=None):
+    start_dt = _appointment_staff_local_datetime(target_start)
+    end_dt = _appointment_staff_local_datetime(target_end)
+    resolved_date = (
+        _appointment_staff_target_date(start_dt)
+        or _appointment_staff_target_date(target_date)
+    )
+    start_time = start_dt.time() if start_dt else None
+    # TODO: 予約作成フォーム側で終了時刻が未確定の場合は開始時刻のみで判定する。
+    end_time = end_dt.time() if end_dt else None
+    return resolved_date, start_time, end_time
+
+
+def _time_ranges_overlap(start_a, end_a, start_b, end_b):
+    if start_a is None or start_b is None:
+        return True
+
+    if end_a is None:
+        end_a = start_a
+    if end_b is None:
+        end_b = start_b
+
+    if start_a == end_a:
+        return start_b <= start_a < end_b
+    if start_b == end_b:
+        return start_a <= start_b < end_a
+    return start_a < end_b and start_b < end_a
+
+
+def _clinic_half_day_leave_window(clinic_settings, leave_type):
+    if (
+        clinic_settings
+        and clinic_settings.break_start_time
+        and clinic_settings.break_end_time
+    ):
+        if leave_type == StaffLeave.LeaveType.MORNING_OFF:
+            return (
+                clinic_settings.business_start_time or time(0, 0),
+                clinic_settings.break_start_time,
+            )
+        if leave_type == StaffLeave.LeaveType.AFTERNOON_OFF:
+            return (
+                clinic_settings.break_end_time,
+                clinic_settings.business_end_time or time(23, 59, 59),
+            )
+
+    if leave_type == StaffLeave.LeaveType.MORNING_OFF:
+        return time(0, 0), time(12, 0)
+    if leave_type == StaffLeave.LeaveType.AFTERNOON_OFF:
+        return time(12, 0), time(23, 59, 59)
+    return None, None
+
+
+def _staff_leave_candidate_reason(leave):
+    return {
+        StaffLeave.LeaveType.MORNING_OFF: "午前休のため候補外",
+        StaffLeave.LeaveType.AFTERNOON_OFF: "午後休のため候補外",
+        StaffLeave.LeaveType.PAID_LEAVE: "承認済み休暇のため候補外",
+        StaffLeave.LeaveType.ABSENCE: "欠勤のため候補外",
+        StaffLeave.LeaveType.TRAINING: "研修のため候補外",
+        StaffLeave.LeaveType.OTHER: "承認済み休暇のため候補外",
+    }.get(leave.leave_type, "承認済み休暇のため候補外")
+
+
+def _staff_leave_overlaps_appointment(leave, target_start_time, target_end_time, clinic_settings):
+    if leave.start_time and leave.end_time:
+        return _time_ranges_overlap(
+            target_start_time,
+            target_end_time,
+            leave.start_time,
+            leave.end_time,
+        )
+
+    if leave.leave_type in [
+        StaffLeave.LeaveType.PAID_LEAVE,
+        StaffLeave.LeaveType.ABSENCE,
+        StaffLeave.LeaveType.TRAINING,
+        StaffLeave.LeaveType.OTHER,
+    ]:
+        return True
+
+    if leave.leave_type in [
+        StaffLeave.LeaveType.MORNING_OFF,
+        StaffLeave.LeaveType.AFTERNOON_OFF,
+    ]:
+        leave_start, leave_end = _clinic_half_day_leave_window(
+            clinic_settings,
+            leave.leave_type,
+        )
+        if target_start_time is None:
+            return True
+        return _time_ranges_overlap(
+            target_start_time,
+            target_end_time,
+            leave_start,
+            leave_end,
+        )
+
+    return True
+
+
+def _build_appointment_staff_candidates(
+    clinic,
+    target_date=None,
+    target_start=None,
+    target_end=None,
+    current_staff=None,
+):
+    """
+    予約担当者候補を、対象日のシフト・承認済み休暇から絞り込む。
+    予約時刻が分かる場合は、午前休・午後休・時間帯指定休暇を重なりで判定する。
+    """
+    target_date, target_start_time, target_end_time = _appointment_staff_target_range(
+        target_date=target_date,
+        target_start=target_start,
+        target_end=target_end,
+    )
+    base_qs = (
+        User.objects
+        .filter(
+            clinic=clinic,
+            is_active=True,
+            role__in=_shift_staff_roles(),
+        )
+        .order_by("last_name", "first_name", "username")
+    )
+
+    if target_date is None:
+        users = list(base_qs)
+        return {
+            "users": users,
+            "is_filtered": False,
+            "date_unknown": True,
+            "has_candidates": bool(users),
+            "current_staff_outside_candidates": False,
+            "excluded_reasons": {},
+        }
+
+    available_shift_statuses = [
+        StaffShift.Status.WORKING,
+        StaffShift.Status.HALF_DAY,
+        StaffShift.Status.TRAINING,
+    ]
+    shift_staff_ids = set(
+        StaffShift.objects
+        .filter(
+            clinic=clinic,
+            date=target_date,
+            status__in=available_shift_statuses,
+        )
+        .values_list("staff_id", flat=True)
+    )
+    clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
+    leave_staff_ids = set()
+    excluded_reasons = {}
+    approved_leaves = (
+        StaffLeave.objects
+        .filter(
+            clinic=clinic,
+            status=StaffLeave.Status.APPROVED,
+            start_date__lte=target_date,
+            end_date__gte=target_date,
+        )
+        .select_related("staff")
+    )
+    for leave in approved_leaves:
+        if _staff_leave_overlaps_appointment(
+            leave,
+            target_start_time,
+            target_end_time,
+            clinic_settings,
+        ):
+            leave_staff_ids.add(leave.staff_id)
+            excluded_reasons[leave.staff_id] = _staff_leave_candidate_reason(leave)
+
+    candidate_ids = shift_staff_ids - leave_staff_ids
+    users = list(base_qs.filter(id__in=candidate_ids))
+
+    current_staff_outside = False
+    if (
+        current_staff
+        and getattr(current_staff, "clinic_id", None) == clinic.id
+        and current_staff.id not in {user.id for user in users}
+    ):
+        current_staff_outside = True
+        users.append(current_staff)
+
+    for user in users:
+        user.is_appointment_staff_candidate = user.id in candidate_ids
+        user.appointment_staff_note = (
+            "勤務候補"
+            if user.is_appointment_staff_candidate
+            else excluded_reasons.get(user.id, "シフト外のため候補外")
+        )
+
+    return {
+        "users": users,
+        "is_filtered": True,
+        "date_unknown": False,
+        "has_candidates": bool(candidate_ids),
+        "current_staff_outside_candidates": current_staff_outside,
+        "excluded_reasons": excluded_reasons,
+    }
+
+
+def _is_staff_available_for_appointment(clinic, staff_user, target_dt, target_end_dt=None):
+    if not staff_user:
+        return True, ""
+    target_date = _appointment_staff_target_date(target_dt)
+    if target_date is None:
+        return True, ""
+    candidates = _build_appointment_staff_candidates(
+        clinic,
+        target_date=target_date,
+        target_start=target_dt,
+        target_end=target_end_dt,
+    )
+    candidate_ids = {user.id for user in candidates["users"] if user.is_appointment_staff_candidate}
+    if staff_user.id in candidate_ids:
+        return True, ""
+    reason = candidates.get("excluded_reasons", {}).get(
+        staff_user.id,
+        "シフト外のため候補外",
+    )
+    return (
+        False,
+        f"この日時では、担当者が勤務候補外です（{reason}）。シフトまたは休暇設定を確認してください。",
+    )
 
 
 def _shift_status_class(status):
@@ -4553,6 +4830,18 @@ def move_appointment_view(request, pk):
             end_dt = start_dt + duration
         else:
             end_dt = start_dt
+
+    is_available, availability_error = _is_staff_available_for_appointment(
+        clinic,
+        appt.assigned_staff,
+        start_dt,
+        end_dt,
+    )
+    if not is_available:
+        return JsonResponse({
+            "ok": False,
+            "error": availability_error,
+        }, status=400)
 
     overlap_qs = Appointment.objects.filter(
         clinic=clinic,

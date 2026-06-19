@@ -391,6 +391,24 @@
     font-weight:700;
   }
 
+  .staff-candidate-note{
+    grid-column:1 / -1;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1px solid #d9e8fa;
+    background:#f1f7ff;
+    color:#335a88;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.65;
+  }
+
+  .staff-candidate-note.warning{
+    border-color:#f5d79a;
+    background:#fff8e6;
+    color:#8a5a00;
+  }
+
   .btn{
     display:inline-flex;
     align-items:center;
@@ -1930,7 +1948,7 @@
             <option value="">全員</option>
             {% for u in staff_users %}
               <option value="{{ u.id }}" {% if filter_staff|add:'' == u.id|add:'' %}selected{% endif %}>
-                {{ u.username }}
+                {{ u.get_full_name|default:u.username }}{% if u.appointment_staff_note %}（{{ u.appointment_staff_note }}）{% endif %}
               </option>
             {% endfor %}
           </select>
@@ -1952,6 +1970,13 @@
         </div>
 
         <button class="btn primary" type="submit">検索</button>
+
+        {% if appointment_staff_notice %}
+          <div class="staff-candidate-note">{{ appointment_staff_notice }}</div>
+        {% endif %}
+        {% if appointment_staff_warning %}
+          <div class="staff-candidate-note warning">{{ appointment_staff_warning }}</div>
+        {% endif %}
       </form>
     </section>
   </details>

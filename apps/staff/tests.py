@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta
 import inspect
+import json
 from pathlib import Path
 
 from django.conf import settings
@@ -2283,6 +2284,383 @@ class StaffLeaveManagementTests(TestCase):
             inspect.getsource(staff_views.staff_leave_list_view)
             + inspect.getsource(staff_views.staff_leave_create_view)
             + inspect.getsource(staff_views.staff_leave_update_view)
+        )
+
+        self.assertNotIn(".path", source)
+
+
+class AppointmentStaffAvailabilityTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.User = user_model
+        self.clinic = Clinic.objects.create(name="予約担当候補院")
+        self.other_clinic = Clinic.objects.create(name="他院予約担当")
+        self.user = user_model.objects.create_user(
+            username="availability-admin",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.ADMIN,
+            last_name="管理",
+            first_name="太郎",
+        )
+        self.working_staff = user_model.objects.create_user(
+            username="availability-working",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="勤務",
+            first_name="可能",
+        )
+        self.no_shift_staff = user_model.objects.create_user(
+            username="availability-no-shift",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="未設定",
+            first_name="太郎",
+        )
+        self.off_staff = user_model.objects.create_user(
+            username="availability-off",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="休み",
+            first_name="太郎",
+        )
+        self.approved_leave_staff = user_model.objects.create_user(
+            username="availability-approved-leave",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="有給",
+            first_name="太郎",
+        )
+        self.requested_leave_staff = user_model.objects.create_user(
+            username="availability-requested-leave",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="申請中",
+            first_name="太郎",
+        )
+        self.morning_leave_staff = user_model.objects.create_user(
+            username="availability-morning-leave",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="午前休",
+            first_name="太郎",
+        )
+        self.afternoon_leave_staff = user_model.objects.create_user(
+            username="availability-afternoon-leave",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="午後休",
+            first_name="太郎",
+        )
+        self.timed_leave_staff = user_model.objects.create_user(
+            username="availability-timed-leave",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="時間休",
+            first_name="太郎",
+        )
+        self.other_staff = user_model.objects.create_user(
+            username="availability-other",
+            password="test-password",
+            clinic=self.other_clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="他院",
+            first_name="太郎",
+        )
+        self.no_clinic_user = user_model.objects.create_user(
+            username="availability-no-clinic",
+            password="test-password",
+            role=user_model.Role.ADMIN,
+        )
+        self.patient = Patient.objects.create(
+            clinic=self.clinic,
+            card_no="AVAIL-A-001",
+            last_name="予約",
+            first_name="患者",
+            birth_date=date(1990, 1, 1),
+            phone="09000004001",
+        )
+        self.target_date = date(2026, 6, 17)
+        ClinicSettings.objects.create(
+            clinic=self.clinic,
+            business_start_time=time(9, 0),
+            business_end_time=time(20, 0),
+            break_start_time=time(13, 0),
+            break_end_time=time(15, 0),
+        )
+        for staff_user, status in (
+            (self.working_staff, StaffShift.Status.WORKING),
+            (self.off_staff, StaffShift.Status.OFF),
+            (self.approved_leave_staff, StaffShift.Status.WORKING),
+            (self.requested_leave_staff, StaffShift.Status.WORKING),
+            (self.morning_leave_staff, StaffShift.Status.WORKING),
+            (self.afternoon_leave_staff, StaffShift.Status.WORKING),
+            (self.timed_leave_staff, StaffShift.Status.WORKING),
+        ):
+            StaffShift.objects.create(
+                clinic=self.clinic,
+                staff=staff_user,
+                date=self.target_date,
+                status=status,
+                start_time=time(9, 0) if status != StaffShift.Status.OFF else None,
+                end_time=time(18, 0) if status != StaffShift.Status.OFF else None,
+            )
+        StaffLeave.objects.create(
+            clinic=self.clinic,
+            staff=self.approved_leave_staff,
+            leave_type=StaffLeave.LeaveType.PAID_LEAVE,
+            start_date=self.target_date,
+            end_date=self.target_date,
+            status=StaffLeave.Status.APPROVED,
+        )
+        StaffLeave.objects.create(
+            clinic=self.clinic,
+            staff=self.requested_leave_staff,
+            leave_type=StaffLeave.LeaveType.PAID_LEAVE,
+            start_date=self.target_date,
+            end_date=self.target_date,
+            status=StaffLeave.Status.REQUESTED,
+        )
+        StaffLeave.objects.create(
+            clinic=self.clinic,
+            staff=self.morning_leave_staff,
+            leave_type=StaffLeave.LeaveType.MORNING_OFF,
+            start_date=self.target_date,
+            end_date=self.target_date,
+            status=StaffLeave.Status.APPROVED,
+        )
+        StaffLeave.objects.create(
+            clinic=self.clinic,
+            staff=self.afternoon_leave_staff,
+            leave_type=StaffLeave.LeaveType.AFTERNOON_OFF,
+            start_date=self.target_date,
+            end_date=self.target_date,
+            status=StaffLeave.Status.APPROVED,
+        )
+        StaffLeave.objects.create(
+            clinic=self.clinic,
+            staff=self.timed_leave_staff,
+            leave_type=StaffLeave.LeaveType.OTHER,
+            start_date=self.target_date,
+            end_date=self.target_date,
+            start_time=time(10, 30),
+            end_time=time(11, 30),
+            status=StaffLeave.Status.APPROVED,
+        )
+        StaffShift.objects.create(
+            clinic=self.other_clinic,
+            staff=self.other_staff,
+            date=self.target_date,
+            status=StaffShift.Status.WORKING,
+            start_time=time(9, 0),
+            end_time=time(18, 0),
+        )
+        StaffLeave.objects.create(
+            clinic=self.other_clinic,
+            staff=self.other_staff,
+            leave_type=StaffLeave.LeaveType.PAID_LEAVE,
+            start_date=self.target_date,
+            end_date=self.target_date,
+            status=StaffLeave.Status.APPROVED,
+        )
+        self.client.force_login(self.user)
+
+    def _appointments_url(self, **params):
+        query = {
+            "period": "day",
+            "day": self.target_date.isoformat(),
+        }
+        query.update({key: str(value) for key, value in params.items()})
+        return reverse("staff:appointments") + "?" + "&".join(
+            f"{key}={value}" for key, value in query.items()
+        )
+
+    def _candidate_ids(self, response):
+        return {user.id for user in response.context["staff_users"]}
+
+    def _candidate_ids_for_time(self, hour, minute=0, duration_minutes=30):
+        start = timezone.make_aware(datetime(2026, 6, 17, hour, minute))
+        result = staff_views._build_appointment_staff_candidates(
+            self.clinic,
+            target_start=start,
+            target_end=start + timedelta(minutes=duration_minutes),
+        )
+        return {
+            user.id
+            for user in result["users"]
+            if user.is_appointment_staff_candidate
+        }
+
+    def test_working_shift_staff_is_candidate(self):
+        response = self.client.get(self._appointments_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.working_staff.id, self._candidate_ids(response))
+        self.assertContains(response, "シフト反映済み")
+        self.assertContains(response, "勤務可能な担当者のみ表示")
+
+    def test_staff_without_shift_is_not_candidate(self):
+        response = self.client.get(self._appointments_url())
+
+        self.assertNotIn(self.no_shift_staff.id, self._candidate_ids(response))
+
+    def test_off_shift_staff_is_not_candidate(self):
+        response = self.client.get(self._appointments_url())
+
+        self.assertNotIn(self.off_staff.id, self._candidate_ids(response))
+
+    def test_approved_leave_staff_is_not_candidate(self):
+        response = self.client.get(self._appointments_url())
+
+        self.assertNotIn(self.approved_leave_staff.id, self._candidate_ids(response))
+
+    def test_requested_leave_staff_remains_candidate(self):
+        response = self.client.get(self._appointments_url())
+
+        self.assertIn(self.requested_leave_staff.id, self._candidate_ids(response))
+
+    def test_other_clinic_staff_is_not_candidate(self):
+        response = self.client.get(self._appointments_url())
+
+        self.assertNotIn(self.other_staff.id, self._candidate_ids(response))
+
+    def test_morning_off_staff_is_excluded_from_morning_appointment(self):
+        ids = self._candidate_ids_for_time(10, 0)
+
+        self.assertNotIn(self.morning_leave_staff.id, ids)
+        self.assertIn(self.afternoon_leave_staff.id, ids)
+
+    def test_morning_off_staff_remains_candidate_for_afternoon_appointment(self):
+        ids = self._candidate_ids_for_time(16, 0)
+
+        self.assertIn(self.morning_leave_staff.id, ids)
+
+    def test_afternoon_off_staff_is_excluded_from_afternoon_appointment(self):
+        ids = self._candidate_ids_for_time(16, 0)
+
+        self.assertNotIn(self.afternoon_leave_staff.id, ids)
+        self.assertIn(self.morning_leave_staff.id, ids)
+
+    def test_afternoon_off_staff_remains_candidate_for_morning_appointment(self):
+        ids = self._candidate_ids_for_time(10, 0)
+
+        self.assertIn(self.afternoon_leave_staff.id, ids)
+
+    def test_timed_leave_excludes_only_overlapping_appointment(self):
+        overlapping_ids = self._candidate_ids_for_time(10, 45)
+        non_overlapping_ids = self._candidate_ids_for_time(12, 0)
+
+        self.assertNotIn(self.timed_leave_staff.id, overlapping_ids)
+        self.assertIn(self.timed_leave_staff.id, non_overlapping_ids)
+
+    def test_other_clinic_leave_does_not_affect_candidates(self):
+        ids = self._candidate_ids_for_time(10, 0)
+
+        self.assertIn(self.working_staff.id, ids)
+        self.assertNotIn(self.other_staff.id, ids)
+
+    def test_user_without_clinic_gets_403(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self.client.get(self._appointments_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_existing_assigned_staff_outside_candidates_does_not_break_view(self):
+        appt = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="再診",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.no_shift_staff,
+            created_by=self.user,
+        )
+
+        response = self.client.get(self._appointments_url(staff=self.no_shift_staff.id))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.no_shift_staff.id, self._candidate_ids(response))
+        self.assertContains(response, "現在の担当者は、この日時では勤務候補外です")
+        self.assertContains(response, appt.menu)
+
+    def test_unknown_date_returns_active_staff_without_crashing(self):
+        result = staff_views._build_appointment_staff_candidates(
+            self.clinic,
+            target_date=None,
+        )
+
+        ids = {user.id for user in result["users"]}
+        self.assertFalse(result["is_filtered"])
+        self.assertTrue(result["date_unknown"])
+        self.assertIn(self.working_staff.id, ids)
+        self.assertIn(self.no_shift_staff.id, ids)
+
+    def test_move_appointment_rejects_candidate_outside_target_day(self):
+        appt = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="再診",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+        target = timezone.make_aware(datetime(2026, 6, 18, 10, 0))
+
+        response = self.client.post(
+            reverse("staff:appointment_move", args=[appt.id]),
+            data=json.dumps({
+                "start": target.isoformat(),
+                "end": (target + timedelta(minutes=30)).isoformat(),
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("勤務候補外", response.json()["error"])
+
+    def test_move_appointment_rejects_afternoon_off_overlap(self):
+        appt = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="再診",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.afternoon_leave_staff,
+            created_by=self.user,
+        )
+        target = timezone.make_aware(datetime(2026, 6, 17, 16, 0))
+
+        response = self.client.post(
+            reverse("staff:appointment_move", args=[appt.id]),
+            data=json.dumps({
+                "start": target.isoformat(),
+                "end": (target + timedelta(minutes=30)).isoformat(),
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("午後休", response.json()["error"])
+
+    def test_appointment_staff_candidate_views_do_not_use_file_path(self):
+        source = (
+            inspect.getsource(staff_views._build_appointment_staff_candidates)
+            + inspect.getsource(staff_views._is_staff_available_for_appointment)
+            + inspect.getsource(staff_views.staff_appointments_view)
+            + inspect.getsource(staff_views.move_appointment_view)
         )
 
         self.assertNotIn(".path", source)
