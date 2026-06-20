@@ -2534,6 +2534,28 @@ class AppointmentStaffAvailabilityTests(TestCase):
         query.update({key: value for key, value in params.items()})
         return self.client.get(reverse("staff:appointment_available_slots_api"), query)
 
+    def _timeline_response(self, target_date=None):
+        return self.client.get(
+            reverse("staff:appointments"),
+            {
+                "view": "timeline",
+                "date": (target_date or self.target_date).isoformat(),
+            },
+        )
+
+    def _timeline_row(self, response, staff_user):
+        return next(
+            row
+            for row in response.context["staff_slot_timeline"]["rows"]
+            if row["staff_id"] == staff_user.id
+        )
+
+    def _timeline_cell(self, response, staff_user, start_time):
+        row = self._timeline_row(response, staff_user)
+        return next(
+            cell for cell in row["cells"] if cell["start_time"] == start_time
+        )
+
     def _slot_starts(self, response):
         return {slot["start_time"] for slot in response.json().get("slots", [])}
 
@@ -3005,6 +3027,148 @@ class AppointmentStaffAvailabilityTests(TestCase):
         existing.refresh_from_db()
         self.assertEqual(existing.start_at, timezone.make_aware(datetime(2026, 6, 17, 10, 0)))
 
+    def test_staff_timeline_view_renders_own_clinic_staff_and_business_slots(self):
+        response = self._timeline_response()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "担当者別タイムライン")
+        timeline = response.context["staff_slot_timeline"]
+        staff_ids = {row["staff_id"] for row in timeline["rows"]}
+        slot_starts = {slot["start_time"] for slot in timeline["slots"]}
+        self.assertIn(self.working_staff.id, staff_ids)
+        self.assertNotIn(self.other_staff.id, staff_ids)
+        self.assertIn("09:00", slot_starts)
+        self.assertIn("19:30", slot_starts)
+
+    def test_staff_timeline_marks_available_break_and_outside_shift(self):
+        response = self._timeline_response()
+
+        self.assertEqual(
+            self._timeline_cell(response, self.working_staff, "09:00")["state"],
+            "available",
+        )
+        self.assertEqual(
+            self._timeline_cell(response, self.working_staff, "13:00")["state"],
+            "break",
+        )
+        self.assertEqual(
+            self._timeline_cell(response, self.working_staff, "18:00")["state"],
+            "outside_shift",
+        )
+
+    def test_staff_timeline_marks_off_shift_and_approved_leave(self):
+        response = self._timeline_response()
+
+        self.assertEqual(
+            self._timeline_cell(response, self.off_staff, "09:00")["state"],
+            "off",
+        )
+        self.assertEqual(
+            self._timeline_cell(
+                response,
+                self.approved_leave_staff,
+                "09:00",
+            )["state"],
+            "leave",
+        )
+
+    def test_staff_timeline_applies_half_day_and_timed_leave_windows(self):
+        response = self._timeline_response()
+
+        self.assertEqual(
+            self._timeline_cell(response, self.morning_leave_staff, "09:00")["state"],
+            "leave",
+        )
+        self.assertEqual(
+            self._timeline_cell(response, self.morning_leave_staff, "15:00")["state"],
+            "available",
+        )
+        self.assertEqual(
+            self._timeline_cell(response, self.afternoon_leave_staff, "15:00")["state"],
+            "leave",
+        )
+        self.assertEqual(
+            self._timeline_cell(response, self.timed_leave_staff, "10:30")["state"],
+            "leave",
+        )
+
+    def test_staff_timeline_marks_appointment_as_booked_and_excludes_other_clinic(self):
+        Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="再診",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+        other_patient = Patient.objects.create(
+            clinic=self.other_clinic,
+            card_no="TIMELINE-OTHER",
+            last_name="他院",
+            first_name="非表示",
+            birth_date=date(1990, 1, 1),
+            phone="09000004999",
+        )
+        Appointment.objects.create(
+            clinic=self.other_clinic,
+            patient=other_patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="他院予約",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.other_staff,
+            created_by=self.other_staff,
+        )
+
+        response = self._timeline_response()
+        cell = self._timeline_cell(response, self.working_staff, "10:00")
+
+        self.assertEqual(cell["state"], "booked")
+        self.assertEqual(cell["appointment"]["patient_name"], "予約 患者")
+        self.assertNotContains(response, "他院予約")
+        self.assertNotContains(response, "他院 非表示")
+
+    def test_staff_timeline_outputs_available_and_edit_modal_data_attributes(self):
+        Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=timezone.make_aware(datetime(2026, 6, 17, 10, 0)),
+            end_at=timezone.make_aware(datetime(2026, 6, 17, 10, 30)),
+            menu="再診",
+            status=Appointment.Status.BOOKED,
+            assigned_staff=self.working_staff,
+            created_by=self.user,
+        )
+
+        response = self._timeline_response()
+
+        self.assertContains(response, "data-timeline-available")
+        self.assertContains(response, "data-timeline-booked")
+        self.assertContains(
+            response,
+            f'data-assigned-staff-id="{self.working_staff.id}"',
+        )
+
+    def test_staff_timeline_closed_weekday_has_no_available_cells(self):
+        settings = ClinicSettings.objects.get(clinic=self.clinic)
+        settings.closed_weekdays = ["wed"]
+        settings.save(update_fields=["closed_weekdays"])
+
+        response = self._timeline_response()
+        row = self._timeline_row(response, self.working_staff)
+
+        self.assertTrue(response.context["staff_slot_timeline"]["is_closed"])
+        self.assertNotIn("available", {cell["state"] for cell in row["cells"]})
+
+    def test_staff_timeline_user_without_clinic_gets_403(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self._timeline_response()
+
+        self.assertEqual(response.status_code, 403)
+
     def test_available_slots_api_returns_business_hour_slots(self):
         response = self._available_slots_response(staff_id=self.working_staff.id)
 
@@ -3376,6 +3540,7 @@ class AppointmentStaffAvailabilityTests(TestCase):
             + inspect.getsource(staff_views.check_appointment_availability)
             + inspect.getsource(staff_views._build_staff_availability_rows)
             + inspect.getsource(staff_views._build_staff_appointment_item)
+            + inspect.getsource(staff_views.build_staff_appointment_timeline)
             + inspect.getsource(staff_views.staff_appointments_view)
             + inspect.getsource(staff_views.build_appointment_available_slots)
             + inspect.getsource(staff_views.staff_appointment_available_slots_api)

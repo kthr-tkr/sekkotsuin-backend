@@ -1329,6 +1329,239 @@
     background:#f8fafc;
   }
 
+  /* ===== Staff Slot Timeline ===== */
+  .staff-slot-timeline-card{
+    border:1px solid #e2e8f0;
+    border-radius:28px;
+    padding:22px;
+    background:rgba(255,255,255,.9);
+    box-shadow:0 18px 44px rgba(15,23,42,.07);
+  }
+
+  .staff-slot-timeline-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:16px;
+  }
+
+  .staff-slot-timeline-title{
+    margin:0;
+    color:#0f172a;
+    font-size:24px;
+    font-weight:900;
+    letter-spacing:-.03em;
+  }
+
+  .staff-slot-timeline-sub{
+    margin-top:6px;
+    color:#64748b;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .staff-slot-date-nav{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .staff-slot-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:14px;
+  }
+
+  .staff-slot-legend-item{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    color:#475569;
+    font-size:11px;
+    font-weight:800;
+  }
+
+  .staff-slot-legend-dot{
+    width:12px;
+    height:12px;
+    border-radius:4px;
+    border:1px solid rgba(148,163,184,.35);
+  }
+
+  .staff-slot-timeline-scroll{
+    overflow:auto;
+    max-height:68vh;
+    border:1px solid #dbe3ef;
+    border-radius:20px;
+    background:#fff;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .staff-slot-timeline-table{
+    width:max-content;
+    min-width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    table-layout:fixed;
+  }
+
+  .staff-slot-timeline-table th,
+  .staff-slot-timeline-table td{
+    border-right:1px solid #e7edf5;
+    border-bottom:1px solid #e7edf5;
+  }
+
+  .staff-slot-timeline-table thead th{
+    position:sticky;
+    top:0;
+    z-index:4;
+    width:106px;
+    min-width:106px;
+    padding:11px 7px;
+    background:#f8fafc;
+    color:#334155;
+    font-size:11px;
+    font-weight:900;
+    text-align:center;
+  }
+
+  .staff-slot-timeline-table .staff-slot-name-head,
+  .staff-slot-timeline-table .staff-slot-name-cell{
+    position:sticky;
+    left:0;
+    width:172px;
+    min-width:172px;
+    max-width:172px;
+    z-index:3;
+    background:#fff;
+    box-shadow:8px 0 18px rgba(15,23,42,.04);
+  }
+
+  .staff-slot-timeline-table .staff-slot-name-head{
+    z-index:6;
+    background:#f1f5f9;
+    text-align:left;
+    padding-left:14px;
+  }
+
+  .staff-slot-name-cell{
+    padding:12px 14px;
+    vertical-align:middle;
+  }
+
+  .staff-slot-name{
+    color:#0f172a;
+    font-size:13px;
+    font-weight:900;
+    line-height:1.4;
+  }
+
+  .staff-slot-shift{
+    margin-top:4px;
+    color:#64748b;
+    font-size:10px;
+    font-weight:800;
+    line-height:1.45;
+  }
+
+  .staff-slot-cell{
+    width:106px;
+    min-width:106px;
+    height:70px;
+    padding:4px;
+    vertical-align:middle;
+    text-align:center;
+  }
+
+  .staff-slot-cell.available{ background:#effcf6; }
+  .staff-slot-cell.booked{ background:#eef2ff; }
+  .staff-slot-cell.break{ background:#fffbeb; }
+  .staff-slot-cell.leave{ background:#fff1f2; }
+  .staff-slot-cell.off,
+  .staff-slot-cell.outside_shift{ background:#f1f5f9; }
+  .staff-slot-cell.warning{ background:#fefce8; }
+
+  .staff-slot-button{
+    width:100%;
+    min-height:58px;
+    border:0;
+    border-radius:12px;
+    padding:7px;
+    background:transparent;
+    color:inherit;
+    font:inherit;
+    cursor:default;
+  }
+
+  .staff-slot-button.available{
+    cursor:pointer;
+    color:#047857;
+    border:1px solid #a7f3d0;
+    background:#ecfdf5;
+    font-size:11px;
+    font-weight:900;
+  }
+
+  .staff-slot-button.available:hover{
+    background:#d1fae5;
+    transform:translateY(-1px);
+  }
+
+  .staff-slot-button.booked{
+    cursor:pointer;
+    color:#3730a3;
+    border:1px solid #c7d2fe;
+    background:#eef2ff;
+    text-align:left;
+  }
+
+  .staff-slot-button.booked:hover{ background:#e0e7ff; }
+
+  .staff-slot-booked-name{
+    display:block;
+    overflow:hidden;
+    color:#312e81;
+    font-size:11px;
+    font-weight:900;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+
+  .staff-slot-booked-meta,
+  .staff-slot-state-label{
+    display:block;
+    margin-top:3px;
+    color:#64748b;
+    font-size:9px;
+    font-weight:800;
+    line-height:1.35;
+  }
+
+  .staff-slot-continuing{
+    color:#6366f1;
+    font-size:10px;
+    font-weight:900;
+    text-align:center;
+  }
+
+  .staff-slot-empty{
+    padding:30px 20px;
+    color:#64748b;
+    font-size:13px;
+    font-weight:800;
+    text-align:center;
+  }
+
+  .staff-slot-legend-dot.available{ background:#d1fae5; }
+  .staff-slot-legend-dot.booked{ background:#e0e7ff; }
+  .staff-slot-legend-dot.break{ background:#fef3c7; }
+  .staff-slot-legend-dot.leave{ background:#ffe4e6; }
+  .staff-slot-legend-dot.off{ background:#e2e8f0; }
+
   .appointment-modal-backdrop{
     position:fixed;
     inset:0;
@@ -2454,19 +2687,19 @@
 
   <div class="period-switch">
     <a class="period-link {% if period == 'day' %}active{% endif %}"
-      href="?period=day&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      href="?view={{ view_mode }}&period=day&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
       日
     </a>
     <a class="period-link {% if period == 'week' %}active{% endif %}"
-      href="?period=week&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      href="?view=calendar&period=week&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
       週
     </a>
     <a class="period-link {% if period == 'month' %}active{% endif %}"
-      href="?period=month&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      href="?view=calendar&period=month&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
       月
     </a>
     <a class="period-link {% if period == 'year' %}active{% endif %}"
-      href="?period=year&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      href="?view=calendar&period=year&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
       年
     </a>
   </div>
@@ -2490,6 +2723,7 @@
 
       <form method="get" class="filters">
         <input type="hidden" name="period" value="{{ period }}">
+        <input type="hidden" name="view" value="{{ view_mode }}">
 
         <div class="field">
           <label>基準日</label>
@@ -2536,10 +2770,21 @@
   </details>
 
   <div class="view-switch" aria-label="予約表示切り替え">
-    <a class="period-link" href="#calendar-area">通常カレンダー</a>
-    <a class="period-link active" href="#staff-availability">スタッフ別表示</a>
+    <a class="period-link {% if view_mode == 'calendar' %}active{% endif %}"
+       href="?view=calendar&period={{ period }}&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      通常カレンダー
+    </a>
+    <a class="period-link {% if view_mode == 'staff' %}active{% endif %}"
+       href="?view=staff&period=day&day={{ day|date:'Y-m-d' }}&staff={{ filter_staff }}&status={{ filter_status }}&q={{ filter_q }}">
+      スタッフ別表示
+    </a>
+    <a class="period-link {% if view_mode == 'timeline' %}active{% endif %}"
+       href="?view=timeline&date={{ day|date:'Y-m-d' }}">
+      タイムライン表示
+    </a>
   </div>
 
+  {% if view_mode == "staff" %}
   <section class="staff-availability-card" id="staff-availability">
     <div class="staff-availability-head">
       <div>
@@ -2626,7 +2871,111 @@
       {% endfor %}
     </div>
   </section>
+  {% endif %}
 
+  {% if view_mode == "timeline" %}
+    <section class="staff-slot-timeline-card" id="staff-slot-timeline">
+      <div class="staff-slot-timeline-head">
+        <div>
+          <h3 class="staff-slot-timeline-title">担当者別タイムライン</h3>
+          <div class="staff-slot-timeline-sub">
+            {{ day|date:"Y年n月j日(D)" }} / {{ staff_slot_timeline.business_time_label }} / {{ staff_slot_timeline.slot_minutes }}分単位
+          </div>
+        </div>
+        <nav class="staff-slot-date-nav" aria-label="タイムライン日付移動">
+          <a class="period-link" href="?view=timeline&date={{ timeline_previous_date|date:'Y-m-d' }}">前日</a>
+          <a class="period-link" href="?view=timeline&date={% now 'Y-m-d' %}">今日</a>
+          <a class="period-link" href="?view=timeline&date={{ timeline_next_date|date:'Y-m-d' }}">翌日</a>
+        </nav>
+      </div>
+
+      <div class="staff-slot-legend" aria-label="タイムライン凡例">
+        <span class="staff-slot-legend-item"><i class="staff-slot-legend-dot available"></i>空き</span>
+        <span class="staff-slot-legend-item"><i class="staff-slot-legend-dot booked"></i>予約あり</span>
+        <span class="staff-slot-legend-item"><i class="staff-slot-legend-dot break"></i>休憩</span>
+        <span class="staff-slot-legend-item"><i class="staff-slot-legend-dot leave"></i>休暇</span>
+        <span class="staff-slot-legend-item"><i class="staff-slot-legend-dot off"></i>休み・勤務時間外</span>
+      </div>
+
+      {% if staff_slot_timeline.is_closed %}
+        <div class="staff-candidate-note warning">この日は院設定で休診曜日です。空き枠から予約を追加する前に院設定を確認してください。</div>
+      {% endif %}
+
+      {% if staff_slot_timeline.rows and staff_slot_timeline.slots %}
+        <div class="staff-slot-timeline-scroll">
+          <table class="staff-slot-timeline-table">
+            <thead>
+              <tr>
+                <th class="staff-slot-name-head">担当者</th>
+                {% for slot in staff_slot_timeline.slots %}
+                  <th>{{ slot.start_time }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in staff_slot_timeline.rows %}
+                <tr data-timeline-staff-id="{{ row.staff_id }}">
+                  <th class="staff-slot-name-cell" scope="row">
+                    <div class="staff-slot-name">{{ row.staff_name }}</div>
+                    <div class="staff-slot-shift">{{ row.shift_label }} / {{ row.shift_time_label }}</div>
+                  </th>
+                  {% for cell in row.cells %}
+                    <td class="staff-slot-cell {{ cell.state }}" data-slot-state="{{ cell.state }}" data-slot-start="{{ cell.start_time }}">
+                      {% if cell.state == "available" %}
+                        <button
+                          type="button"
+                          class="staff-slot-button available"
+                          data-timeline-available
+                          data-appointment-date="{{ cell.date }}"
+                          data-start-time="{{ cell.start_time }}"
+                          data-end-time="{{ cell.end_time }}"
+                          data-assigned-staff-id="{{ cell.staff_id }}"
+                        >
+                          空き
+                          <span class="staff-slot-state-label">予約を追加</span>
+                        </button>
+                      {% elif cell.state == "booked" and cell.appointment %}
+                        <button
+                          type="button"
+                          class="staff-slot-button booked"
+                          data-timeline-booked
+                          data-appointment-id="{{ cell.appointment.id }}"
+                          data-patient-id="{{ cell.appointment.patient_id }}"
+                          data-patient-name="{{ cell.appointment.patient_name|escape }}"
+                          data-appointment-date="{{ cell.appointment.appointment_date }}"
+                          data-start-time="{{ cell.appointment.start_time }}"
+                          data-end-time="{{ cell.appointment.end_time }}"
+                          data-menu="{{ cell.appointment.menu|escape }}"
+                          data-menu-value="{{ cell.appointment.menu_value|escape }}"
+                          data-assigned-staff-id="{{ cell.appointment.assigned_staff_id }}"
+                          data-status="{{ cell.appointment.status }}"
+                          data-status-label="{{ cell.appointment.status_label|escape }}"
+                          data-notes="{{ cell.appointment.notes|escape }}"
+                        >
+                          {% if cell.is_appointment_start %}
+                            <span class="staff-slot-booked-name">{{ cell.appointment.patient_name }}</span>
+                            <span class="staff-slot-booked-meta">{{ cell.appointment.start_time }}〜{{ cell.appointment.end_time }} / {{ cell.appointment.status_label }}</span>
+                          {% else %}
+                            <span class="staff-slot-continuing">予約中</span>
+                          {% endif %}
+                        </button>
+                      {% else %}
+                        <span class="staff-slot-state-label">{{ cell.state_label }}</span>
+                      {% endif %}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="staff-slot-empty">表示できる担当者または時間枠がありません。スタッフ・院設定を確認してください。</div>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {% if view_mode == "calendar" %}
   <div class="calendar-layout">
     <section class="calendar-card" id="calendar-area">
       <div class="card-head">
@@ -2767,6 +3116,7 @@
     </div>
     <button type="button" class="appointment-modal-close" id="appointmentModalClose" aria-label="閉じる">×</button>
   </div>
+  {% endif %}
 
   <form id="appointmentForm">
     <input type="hidden" name="appointment_id" id="appointmentId">
@@ -3546,6 +3896,26 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     initAppointmentModal();
+
+    document.querySelectorAll('[data-timeline-available]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const p = button.dataset || {};
+        openAppointmentModal({
+          appointment_date: p.appointmentDate || defaultAppointmentDate,
+          start_time: p.startTime || defaultStartTime,
+          end_time: p.endTime || addMinutesToTime(defaultStartTime, defaultSlotMinutes),
+          assigned_staff_id: p.assignedStaffId || '',
+          status: 'booked',
+          menu: '初診',
+        });
+      });
+    });
+
+    document.querySelectorAll('[data-timeline-booked]').forEach((button) => {
+      button.addEventListener('click', () => {
+        openAppointmentModal(appointmentDataFromTimeline(button));
+      });
+    });
 
     const timelineButtons = document.querySelectorAll('.timeline-appt');
 

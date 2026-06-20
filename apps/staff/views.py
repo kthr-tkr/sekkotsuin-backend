@@ -1683,9 +1683,15 @@ def staff_appointments_view(request):
     today = timezone.localdate()
     clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
 
-    day_str = request.GET.get("day") or today.isoformat()
+    view_mode = (request.GET.get("view") or "calendar").strip()
+    if view_mode not in ["calendar", "staff", "timeline"]:
+        view_mode = "calendar"
+
+    day_str = request.GET.get("date") or request.GET.get("day") or today.isoformat()
     period = (request.GET.get("period") or "day").strip()
     if period not in ["day", "week", "month", "year"]:
+        period = "day"
+    if view_mode == "timeline":
         period = "day"
 
     staff_id = request.GET.get("staff", "")
@@ -1824,6 +1830,7 @@ def staff_appointments_view(request):
         "page_title": "予約管理",
         "day": base_day,
         "period": period,
+        "view_mode": view_mode,
         "range_start": range_start,
         "range_end": range_end,
         "range_label": range_label,
@@ -1874,6 +1881,15 @@ def staff_appointments_view(request):
         base_day,
         clinic_settings=clinic_settings,
     )
+
+    if view_mode == "timeline":
+        context["staff_slot_timeline"] = build_staff_appointment_timeline(
+            clinic,
+            base_day,
+            clinic_settings=clinic_settings,
+        )
+        context["timeline_previous_date"] = base_day - timedelta(days=1)
+        context["timeline_next_date"] = base_day + timedelta(days=1)
 
     if period == "day":
         context["timeline"] = _build_day_timeline_rows(
@@ -5185,6 +5201,262 @@ def _build_day_timeline_rows(
         "end_hour": end_hour,
         "hours": list(range(start_hour, end_hour + 1)),
         "rows": rows,
+    }
+
+
+def _timeline_local_datetime(target_date, target_time):
+    value = datetime.combine(target_date, target_time)
+    return timezone.make_aware(value) if timezone.is_naive(value) else value
+
+
+def _timeline_patient_name(appointment):
+    if not appointment.patient:
+        return "（患者未確定）"
+    return f"{appointment.patient.last_name} {appointment.patient.first_name}"
+
+
+def _timeline_appointment_data(appointment):
+    local_start = timezone.localtime(appointment.start_at)
+    local_end = timezone.localtime(appointment.end_at)
+    return {
+        "id": appointment.id,
+        "patient_id": appointment.patient_id or "",
+        "patient_name": _timeline_patient_name(appointment),
+        "appointment_date": local_start.date().isoformat(),
+        "start_time": local_start.strftime("%H:%M"),
+        "end_time": local_end.strftime("%H:%M"),
+        "assigned_staff_id": appointment.assigned_staff_id or "",
+        "menu": appointment.menu or "-",
+        "menu_value": appointment.menu or "",
+        "status": appointment.status,
+        "status_label": appointment.get_status_display(),
+        "notes": appointment.notes or "",
+    }
+
+
+def build_staff_appointment_timeline(clinic, target_date, clinic_settings=None):
+    """担当者別の日次タイムラインを、対象日分の一括取得データから生成する。"""
+    clinic_settings = clinic_settings or ClinicSettings.objects.filter(
+        clinic=clinic,
+    ).first()
+    business_start = (
+        clinic_settings.business_start_time
+        if clinic_settings and clinic_settings.business_start_time
+        else time(9, 0)
+    )
+    business_end = (
+        clinic_settings.business_end_time
+        if clinic_settings and clinic_settings.business_end_time
+        else time(18, 0)
+    )
+    slot_minutes = (
+        clinic_settings.appointment_interval_minutes
+        if clinic_settings and clinic_settings.appointment_interval_minutes
+        else 30
+    )
+    slot_minutes = max(int(slot_minutes or 30), 5)
+    is_closed = bool(
+        clinic_settings
+        and _closed_weekday_key(target_date)
+        in (clinic_settings.closed_weekdays or [])
+    )
+
+    day_start = _timeline_local_datetime(target_date, business_start)
+    day_end = _timeline_local_datetime(target_date, business_end)
+    slot_ranges = []
+    cursor = day_start
+    while cursor < day_end:
+        slot_end = min(cursor + timedelta(minutes=slot_minutes), day_end)
+        slot_ranges.append((cursor, slot_end))
+        cursor += timedelta(minutes=slot_minutes)
+
+    staff_users = list(
+        User.objects.filter(
+            clinic=clinic,
+            is_active=True,
+            role__in=_shift_staff_roles(),
+        ).order_by("last_name", "first_name", "username")
+    )
+    staff_ids = [staff.id for staff in staff_users]
+    shifts = {
+        shift.staff_id: shift
+        for shift in StaffShift.objects.filter(
+            clinic=clinic,
+            staff_id__in=staff_ids,
+            date=target_date,
+        ).select_related("staff")
+    }
+    leaves_by_staff = {staff_id: [] for staff_id in staff_ids}
+    for leave in StaffLeave.objects.filter(
+        clinic=clinic,
+        staff_id__in=staff_ids,
+        status=StaffLeave.Status.APPROVED,
+        start_date__lte=target_date,
+        end_date__gte=target_date,
+    ).select_related("staff").order_by("start_time", "leave_type", "id"):
+        leaves_by_staff.setdefault(leave.staff_id, []).append(leave)
+
+    appointments_by_staff = {staff_id: [] for staff_id in staff_ids}
+    blocking_statuses = [
+        Appointment.Status.PENDING,
+        Appointment.Status.BOOKED,
+        Appointment.Status.ARRIVED,
+        Appointment.Status.COMPLETED,
+    ]
+    appointments = list(
+        Appointment.objects.filter(
+            clinic=clinic,
+            assigned_staff_id__in=staff_ids,
+            start_at__lt=day_end,
+            end_at__gt=day_start,
+            status__in=blocking_statuses,
+        )
+        .select_related("patient", "assigned_staff")
+        .order_by("start_at", "id")
+    )
+    for appointment in appointments:
+        appointments_by_staff.setdefault(
+            appointment.assigned_staff_id,
+            [],
+        ).append(appointment)
+
+    rows = []
+    for staff in staff_users:
+        shift = shifts.get(staff.id)
+        leaves = leaves_by_staff.get(staff.id, [])
+        staff_appointments = appointments_by_staff.get(staff.id, [])
+        rendered_appointments = set()
+        cells = []
+
+        for slot_start, slot_end in slot_ranges:
+            start_time = timezone.localtime(slot_start).time()
+            end_time = timezone.localtime(slot_end).time()
+            cell = {
+                "state": "available",
+                "state_label": "空き",
+                "date": target_date.isoformat(),
+                "start_time": slot_start.strftime("%H:%M"),
+                "end_time": slot_end.strftime("%H:%M"),
+                "staff_id": staff.id,
+                "appointment": None,
+                "is_appointment_start": False,
+            }
+
+            overlapping = next(
+                (
+                    appointment
+                    for appointment in staff_appointments
+                    if appointment.start_at < slot_end
+                    and appointment.end_at > slot_start
+                ),
+                None,
+            )
+            if overlapping:
+                cell["state"] = "booked"
+                cell["state_label"] = "予約あり"
+                cell["appointment"] = _timeline_appointment_data(overlapping)
+                cell["is_appointment_start"] = overlapping.id not in rendered_appointments
+                rendered_appointments.add(overlapping.id)
+                cells.append(cell)
+                continue
+
+            if is_closed:
+                cell["state"] = "off"
+                cell["state_label"] = "休診日"
+                cells.append(cell)
+                continue
+
+            if shift is None or shift.status == StaffShift.Status.OFF:
+                cell["state"] = "off"
+                cell["state_label"] = "休み" if shift else "シフトなし"
+                cells.append(cell)
+                continue
+
+            if (
+                not shift.start_time
+                or not shift.end_time
+                or start_time < shift.start_time
+                or end_time > shift.end_time
+            ):
+                cell["state"] = "outside_shift"
+                cell["state_label"] = "勤務時間外"
+                cells.append(cell)
+                continue
+
+            overlapping_leave = next(
+                (
+                    leave
+                    for leave in leaves
+                    if _staff_leave_overlaps_appointment(
+                        leave,
+                        start_time,
+                        end_time,
+                        clinic_settings,
+                    )
+                ),
+                None,
+            )
+            if overlapping_leave:
+                cell["state"] = "leave"
+                cell["state_label"] = overlapping_leave.get_leave_type_display()
+                cells.append(cell)
+                continue
+
+            staff_break_overlap = (
+                shift.break_start
+                and shift.break_end
+                and _time_ranges_overlap(
+                    start_time,
+                    end_time,
+                    shift.break_start,
+                    shift.break_end,
+                )
+            )
+            clinic_break_overlap = (
+                clinic_settings
+                and clinic_settings.break_start_time
+                and clinic_settings.break_end_time
+                and _time_ranges_overlap(
+                    start_time,
+                    end_time,
+                    clinic_settings.break_start_time,
+                    clinic_settings.break_end_time,
+                )
+            )
+            if staff_break_overlap or clinic_break_overlap:
+                cell["state"] = "break"
+                cell["state_label"] = "休憩"
+            elif shift.status == StaffShift.Status.OTHER:
+                cell["state"] = "warning"
+                cell["state_label"] = "要確認"
+
+            cells.append(cell)
+
+        staff_name = staff.get_full_name().strip() or staff.username
+        rows.append({
+            "staff_id": staff.id,
+            "staff_name": staff_name,
+            "shift_label": shift.get_status_display() if shift else "シフト未設定",
+            "shift_time_label": _format_shift_time(shift) if shift else "-",
+            "cells": cells,
+        })
+
+    return {
+        "date": target_date,
+        "slot_minutes": slot_minutes,
+        "slot_count": len(slot_ranges),
+        "slots": [
+            {
+                "start_time": slot_start.strftime("%H:%M"),
+                "end_time": slot_end.strftime("%H:%M"),
+            }
+            for slot_start, slot_end in slot_ranges
+        ],
+        "rows": rows,
+        "business_time_label": (
+            f"{business_start.strftime('%H:%M')}〜{business_end.strftime('%H:%M')}"
+        ),
+        "is_closed": is_closed,
     }
 
 
