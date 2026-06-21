@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 import inspect
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -448,3 +448,89 @@ class InterviewRecordingFlowTests(TestCase):
             status=AiUsageLog.Status.SUCCESS,
         )
         self.assertEqual(usage_log.model_name, "gpt-4o-mini-transcribe")
+
+
+class PatientIntakeAccessSafetyTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.clinic = Clinic.objects.create(name="問診安全院")
+        self.user = user_model.objects.create_user(
+            username="intake-patient-owner",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PATIENT,
+        )
+        self.other_user = user_model.objects.create_user(
+            username="intake-patient-other",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PATIENT,
+        )
+        self.patient = Patient.objects.create(
+            user=self.user,
+            clinic=self.clinic,
+            card_no="INTAKE-SAFE-1",
+            last_name="問診",
+            first_name="本人",
+            birth_date=date(1990, 1, 1),
+            phone="09000007001",
+        )
+        self.other_patient = Patient.objects.create(
+            user=self.other_user,
+            clinic=self.clinic,
+            card_no="INTAKE-SAFE-2",
+            last_name="別人",
+            first_name="患者",
+            birth_date=date(1991, 1, 1),
+            phone="09000007002",
+        )
+        self.unlinked_patient = Patient.objects.create(
+            clinic=self.clinic,
+            card_no="INTAKE-SAFE-3",
+            last_name="未連携",
+            first_name="患者",
+            birth_date=date(1992, 1, 1),
+            phone="09000007003",
+        )
+        start_at = timezone.now() + timedelta(days=7)
+        self.own_appointment = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            start_at=start_at,
+            end_at=start_at + timedelta(minutes=30),
+        )
+        self.other_appointment = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.other_patient,
+            start_at=start_at + timedelta(hours=1),
+            end_at=start_at + timedelta(hours=1, minutes=30),
+        )
+        self.unlinked_appointment = Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.unlinked_patient,
+            start_at=start_at + timedelta(hours=2),
+            end_at=start_at + timedelta(hours=2, minutes=30),
+        )
+        self.client.force_login(self.user)
+
+    def test_patient_can_open_own_intake_start(self):
+        response = self.client.get(
+            reverse("intakes:intake_start", args=[self.own_appointment.id])
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_patient_cannot_open_other_patient_intake(self):
+        start_response = self.client.get(
+            reverse("intakes:intake_start", args=[self.other_appointment.id])
+        )
+        done_response = self.client.get(
+            reverse("intakes:intake_done", args=[self.other_appointment.id])
+        )
+        self.assertEqual(start_response.status_code, 403)
+        self.assertEqual(done_response.status_code, 403)
+
+    def test_patient_cannot_open_unlinked_patient_intake(self):
+        response = self.client.get(
+            reverse("intakes:intake_start", args=[self.unlinked_appointment.id])
+        )
+        self.assertEqual(response.status_code, 403)

@@ -90,6 +90,21 @@ urlpatterns = [
         views.staff_patient_aftercare_report_view,
         name="patient_aftercare_report",
     ),
+    path(
+        "clinical-notes/<int:note_id>/share/create/",
+        views.staff_patient_share_token_create_view,
+        name="patient_share_token_create",
+    ),
+    path(
+        "clinical-notes/<int:note_id>/share/<int:share_id>/revoke/",
+        views.staff_patient_share_token_revoke_view,
+        name="patient_share_token_revoke",
+    ),
+    path(
+        "share-tokens/<int:share_id>/qr/",
+        views.staff_patient_share_token_qr_view,
+        name="patient_share_token_qr",
+    ),
     path("patients/<int:patient_id>/", views.staff_patient_detail_view, name="patient_detail"),
     path(
         "patients/<int:patient_id>/pre-check/",

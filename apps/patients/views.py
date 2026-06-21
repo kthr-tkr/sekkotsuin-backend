@@ -10,16 +10,22 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
+from django.core import signing
 from django.db import IntegrityError, transaction
-from django.http import HttpResponseBase
+from django.http import Http404, HttpResponseBase, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
 from apps.appointments.models import Appointment
-from apps.clinics.models import Clinic
-from apps.clinics.utils import get_current_clinic
+from apps.clinics.models import (
+    Clinic,
+    ClinicSettings,
+    PatientShareToken,
+    TreatmentMenu,
+)
 from apps.intakes.forms import (
     AREA_CHOICES,
     FOLLOWUP_CHANGE_CHOICES,
@@ -48,12 +54,13 @@ from .forms import PatientInquiryForm
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
+BOOKING_STAFF_TOKEN_SALT = "carefrow.patient-booking.staff.v1"
 
-# ========= 設定（A案：スタッフ共通営業時間・30分刻み） =========
-OPEN_TIME = time(9, 0)#9に戻す
-CLOSE_TIME = time(23, 30) #19,00に戻す
-SLOT_MIN = 30 #30に戻す
-DURATION_MIN = 60 #60に戻す
+# ClinicSettings がない既存院向けの安全な予約デフォルト。
+OPEN_TIME = time(9, 0)
+CLOSE_TIME = time(18, 0)
+SLOT_MIN = 30
+DURATION_MIN = 30
 
 BLOCKING_STATUSES = [
     Appointment.Status.PENDING,
@@ -148,66 +155,167 @@ def _patient_from_user(request):
     return Patient.objects.filter(user=request.user).select_related("clinic").first()
 
 
-def _get_staff_candidates():
+def _booking_staff_roles():
+    return [
+        User.Role.ADMIN,
+        User.Role.RECEPTION,
+        User.Role.PRACTITIONER,
+    ]
+
+
+def _is_booking_staff_user(user):
+    return bool(
+        user
+        and user.is_authenticated
+        and (
+            user.is_superuser
+            or getattr(user, "role", None) in _booking_staff_roles()
+        )
+    )
+
+
+def _booking_staff_token(clinic, staff):
+    return signing.dumps(
+        {"clinic_id": clinic.id, "staff_id": staff.id},
+        salt=BOOKING_STAFF_TOKEN_SALT,
+        compress=True,
+    )
+
+
+def _staff_from_booking_token(clinic, token):
+    try:
+        payload = signing.loads(
+            token or "",
+            salt=BOOKING_STAFF_TOKEN_SALT,
+            max_age=60 * 60,
+        )
+    except signing.BadSignature as exc:
+        raise Http404("予約担当者を確認できません。") from exc
+    if payload.get("clinic_id") != clinic.id:
+        raise Http404("予約担当者を確認できません。")
+    return get_object_or_404(
+        User,
+        pk=payload.get("staff_id"),
+        clinic=clinic,
+        is_active=True,
+        role__in=_booking_staff_roles(),
+    )
+
+
+def _get_staff_candidates(clinic):
     """
     予約担当候補のユーザーのみ返す。
     patient や一般ユーザーは表示しない。
     """
-    therapist_qs = (
+    return (
         User.objects
-        .filter(groups__name="therapist")
-        .exclude(groups__name="patient")
-        .distinct()
-        .order_by("id")
+        .filter(
+            clinic=clinic,
+            is_active=True,
+            role__in=_booking_staff_roles(),
+        )
+        .order_by("last_name", "first_name", "username")
     )
-    if therapist_qs.exists():
-        return therapist_qs
-
-    staff_qs = (
-        User.objects
-        .filter(is_staff=True)
-        .exclude(groups__name="patient")
-        .distinct()
-        .order_by("id")
-    )
-    if staff_qs.exists():
-        return staff_qs
-
-    return User.objects.none()
 
 def _aware(dt: datetime):
     return timezone.make_aware(dt, timezone.get_current_timezone())
 
-def _make_day_slots(day: date):
-    """指定日の候補枠 (start,end) を生成"""
-    start = _aware(datetime.combine(day, OPEN_TIME))
-    end = _aware(datetime.combine(day, CLOSE_TIME))
-    step = timedelta(minutes=SLOT_MIN)
-    dur = timedelta(minutes=DURATION_MIN)
+def _resolve_patient_treatment_menu(clinic, treatment_menu_id=None, menu_name=""):
+    if treatment_menu_id:
+        return get_object_or_404(
+            TreatmentMenu,
+            pk=treatment_menu_id,
+            clinic=clinic,
+            is_active=True,
+        )
+    if menu_name:
+        return TreatmentMenu.objects.filter(
+            clinic=clinic,
+            is_active=True,
+            name=menu_name,
+        ).first()
+    return None
 
-    slots = []
-    cur = start
-    while cur + dur <= end:
-        slots.append((cur, cur + dur))
-        cur += step
-    return slots
+
+def _patient_booking_duration(clinic, treatment_menu=None):
+    if treatment_menu and treatment_menu.duration_minutes:
+        return treatment_menu.duration_minutes
+    clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
+    if clinic_settings and clinic_settings.appointment_interval_minutes:
+        return clinic_settings.appointment_interval_minutes
+    return DURATION_MIN
+
+
+def _build_patient_available_slots(
+    clinic,
+    day,
+    *,
+    staff=None,
+    treatment_menu=None,
+    duration_minutes=None,
+    limit=500,
+):
+    # スタッフ予約画面と同じ判定を使い、表示と保存のルール差を防ぐ。
+    from apps.staff.views import build_appointment_available_slots
+
+    return build_appointment_available_slots(
+        clinic=clinic,
+        target_date=day,
+        staff_id=staff.id if staff else None,
+        treatment_menu_id=treatment_menu.id if treatment_menu else None,
+        duration_minutes=duration_minutes,
+        limit=limit,
+    )
+
+
+def _check_patient_appointment_availability(clinic, staff, start_at, end_at):
+    from apps.staff.views import check_appointment_availability
+
+    result = check_appointment_availability(
+        clinic=clinic,
+        start_at=start_at,
+        end_at=end_at,
+        assigned_staff=staff,
+    )
+    # スタッフ画面では警告扱いの休憩重複も、患者予約では安全側で予約不可にする。
+    return {
+        **result,
+        "is_valid": bool(result["is_valid"] and not result["warnings"]),
+        "errors": list(result["errors"]) + list(result["warnings"]),
+    }
+
+
+def _patient_booking_error_message(availability):
+    source = " ".join(availability.get("errors") or [])
+    if "休診" in source:
+        return "休診日のため予約できません。別の日を選択してください。"
+    if "営業時間" in source:
+        return "この時間は予約できません。営業時間内の別の時間を選択してください。"
+    if "休憩" in source:
+        return "この時間は休憩時間のため予約できません。別の時間を選択してください。"
+    if "同じ時間帯" in source or "予約" in source:
+        return "この日時は予約できません。別の時間を選択してください。"
+    if any(word in source for word in ["シフト", "勤務", "休暇", "休み", "候補外"]):
+        return "この担当者は選択した時間に対応できません。別の時間を選択してください。"
+    return "この日時は予約できません。別の時間を選択してください。"
 
 def _slot_free_for_staff(clinic, staff, start_at, end_at) -> bool:
-    """同院・同スタッフで重複がなければ空き"""
-    return not Appointment.objects.filter(
-        clinic=clinic,
-        assigned_staff=staff,
-        status__in=BLOCKING_STATUSES,
-        start_at__lt=end_at,
-        end_at__gt=start_at,
-    ).exists()
+    return _check_patient_appointment_availability(
+        clinic,
+        staff,
+        start_at,
+        end_at,
+    )["is_valid"]
 
-def _count_free_slots_for_staff(clinic, staff, day: date) -> int:
-    n = 0
-    for s, e in _make_day_slots(day):
-        if _slot_free_for_staff(clinic, staff, s, e):
-            n += 1
-    return n
+def _count_free_slots_for_staff(clinic, staff, day: date, duration_minutes=None) -> int:
+    result = _build_patient_available_slots(
+        clinic,
+        day,
+        staff=staff,
+        duration_minutes=duration_minutes,
+        limit=500,
+    )
+    return len(result.get("slots") or []) if result.get("ok") else 0
 
 @require_http_methods(["GET", "POST"])
 def patient_login_view(request):
@@ -268,7 +376,11 @@ def patient_login_view(request):
         login(request, auth_user)
 
         next_url = request.POST.get("next") or request.GET.get("next")
-        if next_url:
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
             return redirect(next_url)
 
         return redirect("patients:dashboard")
@@ -288,6 +400,7 @@ def patient_dashboard_view(request):
         Appointment.objects
         .filter(
             patient=patient,
+            clinic=patient.clinic,
             start_at__gte=now,
             status__in=[
                 Appointment.Status.PENDING,
@@ -302,7 +415,7 @@ def patient_dashboard_view(request):
 
     recent_appointments = (
         Appointment.objects
-        .filter(patient=patient, start_at__lt=now)
+        .filter(patient=patient, clinic=patient.clinic, start_at__lt=now)
         .select_related("assigned_staff", "clinic", "intake")
         .order_by("-start_at")[:3]
     )
@@ -351,7 +464,14 @@ def patient_register_view(request):
         if pending_clinic_id:
             clinic = get_object_or_404(Clinic, pk=pending_clinic_id)
         else:
-            clinic = get_current_clinic()
+            clinics = list(Clinic.objects.order_by("id")[:2])
+            if len(clinics) != 1:
+                messages.error(
+                    request,
+                    "院情報を確認できません。院から案内された登録ページをご利用ください。",
+                )
+                return redirect("/")
+            clinic = clinics[0]
     except Exception:
         logger.exception("Clinic resolution failed in patient_register_view")
         messages.error(request, "クリニック情報が未設定です。管理者にお問い合わせください。")
@@ -432,16 +552,14 @@ def patient_register_view(request):
             return render(request, "patients/register.html", {"form": form})
 
         if pending_clinic_id:
-            request.session["booking_patient_id"] = patient.id
-            request.session["booking_clinic_id"] = clinic.id
-
             request.session.pop("pending_booking_last_name", None)
             request.session.pop("pending_booking_first_name", None)
             request.session.pop("pending_booking_phone", None)
             request.session.pop("pending_booking_clinic_id", None)
 
+            login(request, user)
             messages.success(request, "患者登録が完了しました。続けて予約日時を選択してください。")
-            return redirect("appointments:book_new")
+            return redirect("patients:booking_calendar")
 
         request.session["registered_card_no"] = patient.card_no
         messages.success(request, "患者登録が完了しました。")
@@ -499,7 +617,12 @@ def booking_calendar_view(request):
     # --- 再予約導線 ---
     rebook_from = request.GET.get("rebook_from")
     if rebook_from:
-        base_appt = get_object_or_404(Appointment, pk=rebook_from, patient=patient)
+        base_appt = get_object_or_404(
+            Appointment,
+            pk=rebook_from,
+            patient=patient,
+            clinic=clinic,
+        )
 
         request.session["rebook_menu"] = base_appt.menu
         request.session["rebook_staff_id"] = base_appt.assigned_staff_id
@@ -529,7 +652,13 @@ def booking_calendar_view(request):
     prev_month = (first_day.replace(day=1) - timedelta(days=1)).replace(day=1)
     next_month = (first_day.replace(day=28) + timedelta(days=10)).replace(day=1)
 
-    staffs = list(_get_staff_candidates())
+    treatment_menu_id = request.GET.get("treatment_menu_id")
+    treatment_menu = _resolve_patient_treatment_menu(
+        clinic,
+        treatment_menu_id=treatment_menu_id,
+        menu_name=request.session.get("rebook_menu") or "初診",
+    )
+    duration_minutes = _patient_booking_duration(clinic, treatment_menu)
 
     # 日曜始まりを明示
     cal = calendar.Calendar(firstweekday=calendar.SUNDAY)
@@ -547,9 +676,14 @@ def booking_calendar_view(request):
                 day_stats[day.isoformat()] = {"free": 0, "disabled": True}
                 continue
 
-            free_total = 0
-            for st in staffs:
-                free_total += _count_free_slots_for_staff(clinic, st, day)
+            slot_result = _build_patient_available_slots(
+                clinic,
+                day,
+                treatment_menu=treatment_menu,
+                duration_minutes=duration_minutes,
+                limit=1,
+            )
+            free_total = 1 if slot_result.get("slots") else 0
 
             day_stats[day.isoformat()] = {
                 "free": free_total,
@@ -581,6 +715,8 @@ def booking_calendar_view(request):
         "today": today,
         "suggest_date": suggest_date,
         "treatment_plan_id": treatment_plan_id,
+        "treatment_menu": treatment_menu,
+        "treatment_menu_id": treatment_menu.id if treatment_menu else "",
     })
 
 @login_required(login_url="/patients/login/")
@@ -592,6 +728,7 @@ def booking_day_view(request, ymd: str):
     clinic = patient.clinic
 
     treatment_plan_id = request.GET.get("treatment_plan_id")
+    treatment_menu_id = request.GET.get("treatment_menu_id")
 
     try:
         day = datetime.strptime(ymd, "%Y-%m-%d").date()
@@ -602,7 +739,13 @@ def booking_day_view(request, ymd: str):
         messages.error(request, "過去の日付は選択できません。")
         return redirect("patients:booking_calendar")
 
-    staffs = list(_get_staff_candidates())
+    treatment_menu = _resolve_patient_treatment_menu(
+        clinic,
+        treatment_menu_id=treatment_menu_id,
+        menu_name=request.session.get("rebook_menu") or "初診",
+    )
+    duration_minutes = _patient_booking_duration(clinic, treatment_menu)
+    staffs = list(_get_staff_candidates(clinic))
 
     rebook_staff_id = request.session.get("rebook_staff_id")
     if rebook_staff_id:
@@ -611,13 +754,33 @@ def booking_day_view(request, ymd: str):
             key=lambda s: 0 if s.id == rebook_staff_id else 1
         )
 
-    staff_slots = []
-    for st in staffs:
-        slots = []
-        for s, e in _make_day_slots(day):
-            if _slot_free_for_staff(clinic, st, s, e):
-                slots.append({"start": s, "end": e})
-        staff_slots.append({"staff": st, "slots": slots})
+    slot_result = _build_patient_available_slots(
+        clinic,
+        day,
+        treatment_menu=treatment_menu,
+        duration_minutes=duration_minutes,
+        limit=500,
+    )
+    slots_by_staff = {staff.id: [] for staff in staffs}
+    for slot in slot_result.get("slots") or []:
+        slot_start = _aware(
+            datetime.combine(day, datetime.strptime(slot["start_time"], "%H:%M").time())
+        )
+        slot_end = _aware(
+            datetime.combine(day, datetime.strptime(slot["end_time"], "%H:%M").time())
+        )
+        slots_by_staff.setdefault(slot["staff_id"], []).append({
+            "start": slot_start,
+            "end": slot_end,
+        })
+    staff_slots = [
+        {
+            "staff": staff,
+            "staff_token": _booking_staff_token(clinic, staff),
+            "slots": slots_by_staff.get(staff.id, []),
+        }
+        for staff in staffs
+    ]
 
     return render(request, "patients/booking_day.html", {
         "clinic": clinic,
@@ -625,6 +788,9 @@ def booking_day_view(request, ymd: str):
         "day": day,
         "staff_slots": staff_slots,
         "treatment_plan_id": treatment_plan_id,
+        "treatment_menu": treatment_menu,
+        "treatment_menu_id": treatment_menu.id if treatment_menu else "",
+        "booking_notice": (slot_result.get("errors") or [""])[0],
     })
 
 @login_required(login_url="/patients/login/")
@@ -636,16 +802,24 @@ def booking_review_view(request):
     patient = patient_or_resp
     clinic = patient.clinic
 
-    staff_id = request.POST.get("staff_id")
+    staff_token = request.POST.get("staff_token")
     start_iso = request.POST.get("start_at")
     menu = request.POST.get("menu") or request.session.get("rebook_menu") or "初診"
     treatment_plan_id = request.POST.get("treatment_plan_id")
+    treatment_menu_id = request.POST.get("treatment_menu_id")
 
-    if not staff_id or not start_iso:
+    if not staff_token or not start_iso:
         messages.error(request, "予約枠の情報が不足しています。")
         return redirect("patients:booking_calendar")
 
-    staff = get_object_or_404(User, pk=staff_id)
+    staff = _staff_from_booking_token(clinic, staff_token)
+    treatment_menu = _resolve_patient_treatment_menu(
+        clinic,
+        treatment_menu_id=treatment_menu_id,
+        menu_name=menu,
+    )
+    if treatment_menu:
+        menu = treatment_menu.name
 
     try:
         start_naive = datetime.strptime(start_iso, "%Y-%m-%dT%H:%M")
@@ -654,14 +828,21 @@ def booking_review_view(request):
         messages.error(request, "日時の形式が不正です。")
         return redirect("patients:booking_calendar")
 
-    end_at = start_at + timedelta(minutes=DURATION_MIN)
+    duration_minutes = _patient_booking_duration(clinic, treatment_menu)
+    end_at = start_at + timedelta(minutes=duration_minutes)
 
     if start_at < timezone.now():
         messages.error(request, "過去の日時は選択できません。")
         return redirect("patients:booking_calendar")
 
-    if not _slot_free_for_staff(clinic, staff, start_at, end_at):
-        messages.error(request, "選択した枠は埋まりました。別の枠を選択してください。")
+    availability = _check_patient_appointment_availability(
+        clinic,
+        staff,
+        start_at,
+        end_at,
+    )
+    if not availability["is_valid"]:
+        messages.error(request, _patient_booking_error_message(availability))
         return redirect(
             f"{reverse('patients:booking_calendar')}?suggest_date={start_at.date().isoformat()}"
         )
@@ -671,7 +852,8 @@ def booking_review_view(request):
         from apps.treatment_plans.models import TreatmentPlan
         treatment_plan = TreatmentPlan.objects.filter(
             pk=treatment_plan_id,
-            patient=patient
+            patient=patient,
+            clinic=clinic,
         ).first()
 
     request.session["booking_draft"] = {
@@ -682,6 +864,10 @@ def booking_review_view(request):
         "menu": menu,
         "clinic_name": clinic.name,
         "treatment_plan_id": treatment_plan.id if treatment_plan else None,
+        "treatment_menu_id": treatment_menu.id if treatment_menu else None,
+        "duration_minutes": duration_minutes,
+        "clinic_id": clinic.id,
+        "patient_id": patient.id,
     }
 
     return render(request, "patients/booking_review.html", {
@@ -713,13 +899,32 @@ def booking_confirm_view(request):
     start_iso = draft.get("start_at")
     menu = draft.get("menu") or request.session.get("rebook_menu") or "初診"
     treatment_plan_id = draft.get("treatment_plan_id")
+    treatment_menu_id = draft.get("treatment_menu_id")
 
     if not staff_id or not start_iso:
         _clear_booking_draft_session(request)
         messages.error(request, "予約情報が不足しています。もう一度やり直してください。")
         return redirect("patients:booking_calendar")
 
-    staff = get_object_or_404(User, pk=staff_id)
+    if draft.get("clinic_id") != clinic.id or draft.get("patient_id") != patient.id:
+        _clear_booking_draft_session(request)
+        messages.error(request, "予約情報を確認できませんでした。もう一度やり直してください。")
+        return redirect("patients:booking_calendar")
+
+    staff = get_object_or_404(
+        User,
+        pk=staff_id,
+        clinic=clinic,
+        is_active=True,
+        role__in=_booking_staff_roles(),
+    )
+    treatment_menu = _resolve_patient_treatment_menu(
+        clinic,
+        treatment_menu_id=treatment_menu_id,
+        menu_name=menu,
+    )
+    if treatment_menu:
+        menu = treatment_menu.name
 
     try:
         start_at = datetime.fromisoformat(start_iso)
@@ -730,39 +935,55 @@ def booking_confirm_view(request):
         messages.error(request, "日時の形式が不正です。")
         return redirect("patients:booking_calendar")
 
-    end_at = start_at + timedelta(minutes=DURATION_MIN)
+    duration_minutes = _patient_booking_duration(clinic, treatment_menu)
+    end_at = start_at + timedelta(minutes=duration_minutes)
 
     if start_at < timezone.now():
         _clear_booking_draft_session(request)
         messages.error(request, "過去の日時は選択できません。")
         return redirect("patients:booking_calendar")
 
-    if not _slot_free_for_staff(clinic, staff, start_at, end_at):
-        _clear_booking_draft_session(request)
-        messages.error(request, "選択した枠は埋まりました。別の枠を選択してください。")
-        return redirect(
-            f"{reverse('patients:booking_calendar')}?suggest_date={start_at.date().isoformat()}"
-        )
-
     treatment_plan = None
     if treatment_plan_id:
         from apps.treatment_plans.models import TreatmentPlan
         treatment_plan = TreatmentPlan.objects.filter(
             pk=treatment_plan_id,
-            patient=patient
+            patient=patient,
+            clinic=clinic,
         ).first()
 
-    appt = Appointment.objects.create(
-        clinic=clinic,
-        patient=patient,
-        assigned_staff=staff,
-        start_at=start_at,
-        end_at=end_at,
-        menu=menu,
-        status=Appointment.Status.PENDING,
-        created_by=request.user,
-        treatment_plan=treatment_plan,
-    )
+    with transaction.atomic():
+        # 同一担当者への同時予約を直列化し、確認後の二重予約を防ぐ。
+        staff = get_object_or_404(
+            User.objects.select_for_update(),
+            pk=staff.id,
+            clinic=clinic,
+            is_active=True,
+        )
+        availability = _check_patient_appointment_availability(
+            clinic,
+            staff,
+            start_at,
+            end_at,
+        )
+        if not availability["is_valid"]:
+            _clear_booking_draft_session(request)
+            messages.error(request, _patient_booking_error_message(availability))
+            return redirect(
+                f"{reverse('patients:booking_calendar')}?suggest_date={start_at.date().isoformat()}"
+            )
+
+        appt = Appointment.objects.create(
+            clinic=clinic,
+            patient=patient,
+            assigned_staff=staff,
+            start_at=start_at,
+            end_at=end_at,
+            menu=menu,
+            status=Appointment.Status.PENDING,
+            created_by=request.user,
+            treatment_plan=treatment_plan,
+        )
 
     _clear_booking_draft_session(request)
     request.session.pop("rebook_menu", None)
@@ -774,10 +995,16 @@ def booking_confirm_view(request):
 
 @login_required(login_url="/patients/login/")
 def booking_complete_view(request, appointment_id: int):
-    appt = get_object_or_404(Appointment, pk=appointment_id)
-    if appt.created_by_id != request.user.id:
-        messages.error(request, "この予約は表示できません。")
-        return redirect("patients:booking_calendar")
+    patient_or_resp = require_patient_or_redirect(request)
+    if isinstance(patient_or_resp, HttpResponseBase):
+        return patient_or_resp
+    patient = patient_or_resp
+    appt = get_object_or_404(
+        Appointment.objects.select_related("clinic", "assigned_staff"),
+        pk=appointment_id,
+        patient=patient,
+        clinic=patient.clinic,
+    )
 
     return render(request, "patients/booking_complete.html", {"appointment": appt})
 
@@ -793,7 +1020,7 @@ def patient_my_appointments_view(request):
 
     appointments = list(
         Appointment.objects
-        .filter(patient=patient)
+        .filter(patient=patient, clinic=patient.clinic)
         .select_related("clinic", "assigned_staff", "intake")
         .order_by("start_at")
     )
@@ -853,7 +1080,12 @@ def appointment_cancel_view(request, appointment_id):
         return patient_or_resp
     patient = patient_or_resp
 
-    appt = get_object_or_404(Appointment, pk=appointment_id, patient=patient)
+    appt = get_object_or_404(
+        Appointment,
+        pk=appointment_id,
+        patient=patient,
+        clinic=patient.clinic,
+    )
 
     if appt.start_at <= timezone.now():
         messages.error(request, "過去または当日の予約はキャンセルできません。")
@@ -871,12 +1103,18 @@ def appointment_cancel_view(request, appointment_id):
 
 @login_required
 def staff_booking_calendar_view(request, patient_id):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not _is_booking_staff_user(request.user):
         messages.error(request, "スタッフのみ利用できます。")
         return redirect("patients:login")
 
-    patient = get_object_or_404(Patient.objects.select_related("clinic"), pk=patient_id)
-    clinic = patient.clinic
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or getattr(request.user, "clinic_id", None) != clinic.id:
+        return HttpResponseForbidden("所属院の患者のみ予約できます。")
+    patient = get_object_or_404(
+        Patient.objects.select_related("clinic"),
+        pk=patient_id,
+        clinic=clinic,
+    )
 
     suggest_date = request.GET.get("suggest_date")
     treatment_plan_id = request.GET.get("treatment_plan_id")
@@ -903,7 +1141,7 @@ def staff_booking_calendar_view(request, patient_id):
     prev_month = (first_day.replace(day=1) - timedelta(days=1)).replace(day=1)
     next_month = (first_day.replace(day=28) + timedelta(days=10)).replace(day=1)
 
-    staffs = list(_get_staff_candidates())
+    duration_minutes = _patient_booking_duration(clinic)
     cal = calendar.Calendar(firstweekday=calendar.SUNDAY)
     weeks = cal.monthdayscalendar(first_day.year, first_day.month)
 
@@ -918,9 +1156,13 @@ def staff_booking_calendar_view(request, patient_id):
                 day_stats[day.isoformat()] = {"free": 0, "disabled": True}
                 continue
 
-            free_total = 0
-            for st in staffs:
-                free_total += _count_free_slots_for_staff(clinic, st, day)
+            slot_result = _build_patient_available_slots(
+                clinic,
+                day,
+                duration_minutes=duration_minutes,
+                limit=1,
+            )
+            free_total = 1 if slot_result.get("slots") else 0
 
             day_stats[day.isoformat()] = {
                 "free": free_total,
@@ -952,12 +1194,18 @@ def staff_booking_calendar_view(request, patient_id):
     
 @login_required
 def staff_booking_day_view(request, patient_id, ymd):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not _is_booking_staff_user(request.user):
         messages.error(request, "スタッフのみ利用できます。")
         return redirect("patients:login")
 
-    patient = get_object_or_404(Patient.objects.select_related("clinic"), pk=patient_id)
-    clinic = patient.clinic
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or getattr(request.user, "clinic_id", None) != clinic.id:
+        return HttpResponseForbidden("所属院の患者のみ予約できます。")
+    patient = get_object_or_404(
+        Patient.objects.select_related("clinic"),
+        pk=patient_id,
+        clinic=clinic,
+    )
     treatment_plan_id = request.GET.get("treatment_plan_id")
 
     try:
@@ -969,15 +1217,34 @@ def staff_booking_day_view(request, patient_id, ymd):
         messages.error(request, "過去の日付は選択できません。")
         return redirect("patients:staff_booking_calendar", patient_id=patient.pk)
 
-    staffs = list(_get_staff_candidates())
-
-    staff_slots = []
-    for st in staffs:
-        slots = []
-        for s, e in _make_day_slots(day):
-            if _slot_free_for_staff(clinic, st, s, e):
-                slots.append({"start": s, "end": e})
-        staff_slots.append({"staff": st, "slots": slots})
+    staffs = list(_get_staff_candidates(clinic))
+    duration_minutes = _patient_booking_duration(clinic)
+    slot_result = _build_patient_available_slots(
+        clinic,
+        day,
+        duration_minutes=duration_minutes,
+        limit=500,
+    )
+    slots_by_staff = {staff.id: [] for staff in staffs}
+    for slot in slot_result.get("slots") or []:
+        slot_start = _aware(
+            datetime.combine(day, datetime.strptime(slot["start_time"], "%H:%M").time())
+        )
+        slot_end = _aware(
+            datetime.combine(day, datetime.strptime(slot["end_time"], "%H:%M").time())
+        )
+        slots_by_staff.setdefault(slot["staff_id"], []).append({
+            "start": slot_start,
+            "end": slot_end,
+        })
+    staff_slots = [
+        {
+            "staff": staff,
+            "staff_token": _booking_staff_token(clinic, staff),
+            "slots": slots_by_staff.get(staff.id, []),
+        }
+        for staff in staffs
+    ]
 
     return render(request, "patients/staff_booking_day.html", {
         "clinic": clinic,
@@ -990,87 +1257,62 @@ def staff_booking_day_view(request, patient_id, ymd):
 @login_required
 @require_http_methods(["POST"])
 def staff_booking_confirm_view(request, patient_id):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not _is_booking_staff_user(request.user):
         messages.error(request, "スタッフのみ利用できます。")
         return redirect("patients:login")
 
-    patient = get_object_or_404(Patient.objects.select_related("clinic"), pk=patient_id)
-    clinic = patient.clinic
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or getattr(request.user, "clinic_id", None) != clinic.id:
+        return HttpResponseForbidden("所属院の患者のみ予約できます。")
+    patient = get_object_or_404(
+        Patient.objects.select_related("clinic"),
+        pk=patient_id,
+        clinic=clinic,
+    )
 
-    logger.info("staff_booking_confirm POST=%s", request.POST.dict())
-
-    staff_id = request.POST.get("staff_id")
+    staff_token = request.POST.get("staff_token")
     start_iso = request.POST.get("start_at")
     menu = request.POST.get("menu") or "再診"
     treatment_plan_id = request.POST.get("treatment_plan_id")
 
-    print("POST:", request.POST)
-
-    logger.info(
-        "staff_booking_confirm params staff_id=%r start_iso=%r treatment_plan_id=%r patient_id=%s clinic_id=%s user_id=%s",
-        staff_id,
-        start_iso,
-        treatment_plan_id,
-        patient.pk,
-        clinic.pk if clinic else None,
-        request.user.pk,
-    )
-
-    if not staff_id or not start_iso:
+    if not staff_token or not start_iso:
         messages.error(
             request,
-            f"予約枠の情報が不足しています。staff_id={staff_id!r}, start_at={start_iso!r}"
+            "予約枠の情報が不足しています。もう一度時間を選択してください。"
         )
         logger.warning(
-            "staff_booking_confirm missing params staff_id=%r start_at=%r patient_id=%s",
-            staff_id,
+            "staff_booking_confirm missing params start_at=%r patient_id=%s",
             start_iso,
             patient.pk,
         )
         return redirect("patients:staff_booking_calendar", patient_id=patient.pk)
 
-    staff = get_object_or_404(User, pk=staff_id)
+    staff = _staff_from_booking_token(clinic, staff_token)
 
     try:
         start_naive = datetime.strptime(start_iso, "%Y-%m-%dT%H:%M")
         start_at = timezone.make_aware(start_naive, timezone.get_current_timezone())
-        logger.info("staff_booking_confirm parsed start_at=%s", start_at.isoformat())
     except Exception:
-        logger.exception(
-            "staff_booking_confirm datetime parse error start_iso=%r patient_id=%s",
-            start_iso,
-            patient.pk,
-        )
         messages.error(request, "日時の形式が不正です。")
         return redirect("patients:staff_booking_calendar", patient_id=patient.pk)
 
-    end_at = start_at + timedelta(minutes=DURATION_MIN)
+    duration_minutes = _patient_booking_duration(clinic)
+    end_at = start_at + timedelta(minutes=duration_minutes)
 
     now = timezone.now()
-    logger.info("staff_booking_confirm now=%s", now.isoformat())
 
     if start_at < now:
-        logger.warning(
-            "staff_booking_confirm rejected past datetime start_at=%s now=%s patient_id=%s",
-            start_at.isoformat(),
-            now.isoformat(),
-            patient.pk,
-        )
         messages.error(request, "過去の日時は選択できません。")
         return redirect("patients:staff_booking_calendar", patient_id=patient.pk)
 
-    is_free = True
-    logger.info(
-        "staff_booking_confirm slot availability is_free=%s clinic_id=%s staff_id=%s start_at=%s end_at=%s",
-        is_free,
-        clinic.pk if clinic else None,
-        staff.pk,
-        start_at.isoformat(),
-        end_at.isoformat(),
+    availability = _check_patient_appointment_availability(
+        clinic,
+        staff,
+        start_at,
+        end_at,
     )
-
-    if not is_free:
-        messages.error(request, "選択した枠は埋まっています。別の枠を選択してください。")
+    if not availability["is_valid"]:
+        messages.error(request, _patient_booking_error_message(availability))
         return redirect(
             "patients:staff_booking_day",
             patient_id=patient.pk,
@@ -1083,32 +1325,41 @@ def staff_booking_confirm_view(request, patient_id):
         treatment_plan = TreatmentPlan.objects.filter(
             pk=treatment_plan_id,
             patient=patient,
+            clinic=clinic,
         ).first()
-        logger.info(
-            "staff_booking_confirm treatment_plan resolved treatment_plan_id=%r found=%s",
-            treatment_plan_id,
-            treatment_plan.pk if treatment_plan else None,
+
+    with transaction.atomic():
+        staff = get_object_or_404(
+            User.objects.select_for_update(),
+            pk=staff.id,
+            clinic=clinic,
+            is_active=True,
         )
+        availability = _check_patient_appointment_availability(
+            clinic,
+            staff,
+            start_at,
+            end_at,
+        )
+        if not availability["is_valid"]:
+            messages.error(request, _patient_booking_error_message(availability))
+            return redirect(
+                "patients:staff_booking_day",
+                patient_id=patient.pk,
+                ymd=start_at.date().isoformat(),
+            )
 
-    appt = Appointment.objects.create(
-        clinic=clinic,
-        patient=patient,
-        assigned_staff=staff,
-        start_at=start_at,
-        end_at=end_at,
-        menu=menu,
-        status=Appointment.Status.PENDING,
-        created_by=request.user,
-        treatment_plan=treatment_plan,
-    )
-
-    logger.info(
-        "staff_booking_confirm appointment created appointment_id=%s patient_id=%s clinic_id=%s staff_id=%s",
-        appt.pk,
-        patient.pk,
-        clinic.pk if clinic else None,
-        staff.pk,
-    )
+        Appointment.objects.create(
+            clinic=clinic,
+            patient=patient,
+            assigned_staff=staff,
+            start_at=start_at,
+            end_at=end_at,
+            menu=menu,
+            status=Appointment.Status.PENDING,
+            created_by=request.user,
+            treatment_plan=treatment_plan,
+        )
 
     messages.success(request, "予約を作成しました。")
     return redirect("staff:patient_detail", patient_id=patient.pk)
@@ -1169,18 +1420,13 @@ def patient_inquiry_done_view(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def staff_patient_create_view(request):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not _is_booking_staff_user(request.user):
         messages.error(request, "スタッフのみ利用できます。")
         return redirect("patients:login")
 
-    try:
-        clinic = get_current_clinic(request)
-    except TypeError:
-        clinic = get_current_clinic()
-    except Exception:
-        logger.exception("Clinic resolution failed in staff_patient_create_view")
-        messages.error(request, "クリニック情報が取得できませんでした。")
-        return redirect("staff:patient_search")
+    clinic = getattr(request.user, "clinic", None)
+    if clinic is None or getattr(request.user, "clinic_id", None) != clinic.id:
+        return HttpResponseForbidden("所属院にのみ患者を登録できます。")
 
     form = StaffPatientCreateForm(request.POST or None)
 
@@ -1225,7 +1471,7 @@ def patient_link_verify_view(request):
             phone = form.cleaned_data["phone"]
             birth_date = form.cleaned_data["birth_date"]
 
-            patient = (
+            candidates = (
                 Patient.objects
                 .filter(
                     last_name=last_name,
@@ -1235,11 +1481,16 @@ def patient_link_verify_view(request):
                     user__isnull=True,
                 )
                 .select_related("clinic")
-                .first()
             )
+            pending_clinic_id = request.session.get("pending_booking_clinic_id")
+            if pending_clinic_id:
+                candidates = candidates.filter(clinic_id=pending_clinic_id)
+            matched = list(candidates[:2])
+            patient = matched[0] if len(matched) == 1 else None
 
             if patient:
                 request.session["link_patient_id"] = patient.id
+                request.session["link_patient_clinic_id"] = patient.clinic_id
                 messages.success(request, "本人確認が完了しました。ログイン情報を設定してください。")
                 return redirect("patients:link_account")
 
@@ -1251,14 +1502,16 @@ def patient_link_verify_view(request):
 @require_http_methods(["GET", "POST"])
 def patient_link_account_view(request):
     patient_id = request.session.get("link_patient_id")
+    clinic_id = request.session.get("link_patient_clinic_id")
 
-    if not patient_id:
+    if not patient_id or not clinic_id:
         messages.error(request, "本人確認からやり直してください。")
         return redirect("patients:link_verify")
 
     patient = get_object_or_404(
         Patient.objects.select_related("clinic"),
         pk=patient_id,
+        clinic_id=clinic_id,
         user__isnull=True,
     )
 
@@ -1289,6 +1542,7 @@ def patient_link_account_view(request):
                 patient.save(update_fields=["user"])
 
             request.session.pop("link_patient_id", None)
+            request.session.pop("link_patient_clinic_id", None)
 
             login(request, user)
             messages.success(request, "患者アカウントを作成しました。")
@@ -1298,3 +1552,62 @@ def patient_link_account_view(request):
         "form": form,
         "patient": patient,
     })
+
+
+def shared_patient_page_view(request, token):
+    now = timezone.now()
+    with transaction.atomic():
+        share_token = get_object_or_404(
+            PatientShareToken.objects.select_for_update(of=("self",)).select_related(
+                "clinic",
+                "patient",
+                "appointment",
+                "clinical_note",
+                "clinical_note__appointment",
+            ),
+            token=token,
+            purpose=PatientShareToken.Purpose.AFTERCARE_REPORT,
+            is_active=True,
+            expires_at__gt=now,
+        )
+        note = share_token.clinical_note
+        if (
+            note is None
+            or share_token.patient.clinic_id != share_token.clinic_id
+            or note.patient_id != share_token.patient_id
+            or note.appointment.clinic_id != share_token.clinic_id
+            or (
+                share_token.appointment_id
+                and share_token.appointment_id != note.appointment_id
+            )
+        ):
+            raise Http404("共有ページを確認できません。")
+
+        share_token.access_count += 1
+        share_token.last_accessed_at = now
+        share_token.save(
+            update_fields=["access_count", "last_accessed_at", "updated_at"]
+        )
+
+    from apps.staff.views import build_patient_aftercare_report_context
+
+    report_context = build_patient_aftercare_report_context(
+        note,
+        share_token.clinic,
+    )
+    response = render(
+        request,
+        "patients/shared_aftercare_report.html",
+        {
+            "clinic": share_token.clinic,
+            "patient": share_token.patient,
+            "appointment": note.appointment,
+            "share_expires_at": share_token.expires_at,
+            **report_context,
+        },
+    )
+    response["Cache-Control"] = "private, no-store, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["Referrer-Policy"] = "no-referrer"
+    response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+    return response

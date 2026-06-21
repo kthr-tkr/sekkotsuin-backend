@@ -3,6 +3,9 @@ import json
 import re
 from calendar import monthrange
 from datetime import date, datetime, time, timedelta
+from io import BytesIO
+
+import qrcode
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
@@ -23,18 +26,26 @@ from django.db.models import (
     Sum,
 )
 from django.db.models.functions import TruncDate
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime, parse_time
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.ai_jobs.usecases import run_ai_draft
 from apps.appointments.models import Appointment
 from apps.charts.models import ChartNote
 from apps.clinical_notes.models import ClinicalNote, ClinicalNoteHistory
-from apps.clinics.models import Clinic, ClinicSettings, SalesRecord, StaffLeave, StaffShift, TreatmentMenu
+from apps.clinics.models import (
+    Clinic,
+    ClinicSettings,
+    PatientShareToken,
+    SalesRecord,
+    StaffLeave,
+    StaffShift,
+    TreatmentMenu,
+)
 from apps.intakes.forms import AREA_CHOICES, VISIT_TYPE_CHOICES, SYMPTOM_TYPE_CHOICES
 from apps.intakes.models import Intake, InterviewRecording
 from apps.patients.models import Patient
@@ -5679,7 +5690,20 @@ def build_appointment_available_slots(
             )
         ]
     else:
-        staff_users = list(_appointment_slot_staff_queryset(clinic))
+        working_staff_ids = StaffShift.objects.filter(
+            clinic=clinic,
+            date=target_date,
+            status__in=[
+                StaffShift.Status.WORKING,
+                StaffShift.Status.HALF_DAY,
+                StaffShift.Status.TRAINING,
+            ],
+        ).values_list("staff_id", flat=True)
+        staff_users = list(
+            _appointment_slot_staff_queryset(clinic).filter(
+                id__in=working_staff_ids,
+            )
+        )
 
     slots = []
     current_at = _combine_appointment_local_datetime(target_date, business_start)
@@ -8004,6 +8028,97 @@ def _build_post_treatment_related_context(note, clinic):
     }
 
 
+def build_patient_aftercare_report_context(note, clinic):
+    """スタッフ版と共有版で共通の患者向け表示データを構築する。"""
+    related_context = _build_post_treatment_related_context(note, clinic)
+    patient_report = _build_patient_aftercare_content(
+        related_context["post_summary"],
+        posture_summary_text=related_context["posture_summary_text"],
+        include_posture=bool(related_context["related_posture_assessment"]),
+        related_plan=related_context["related_plan"],
+    )
+    next_after = max(timezone.now(), note.appointment.end_at)
+    next_appointment = (
+        Appointment.objects
+        .filter(
+            clinic=clinic,
+            patient=note.patient,
+            patient__clinic=clinic,
+            start_at__gt=next_after,
+        )
+        .exclude(
+            status__in=[
+                Appointment.Status.CANCELLED,
+                Appointment.Status.NO_SHOW,
+            ]
+        )
+        .select_related("assigned_staff")
+        .order_by("start_at")
+        .first()
+    )
+    return {
+        "patient_report": patient_report,
+        "next_appointment": next_appointment,
+    }
+
+
+def _patient_share_public_url(request, share_token):
+    return request.build_absolute_uri(
+        reverse("patients:shared_patient_page", args=[share_token.token])
+    )
+
+
+def _render_qr_png(value):
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=8,
+        border=4,
+    )
+    qr.add_data(value)
+    qr.make(fit=True)
+    image = qr.make_image(fill_color="#0f172a", back_color="white")
+    output = BytesIO()
+    image.save(output, format="PNG")
+    return output.getvalue()
+
+
+def _patient_share_context(request, note, clinic):
+    share_token = (
+        PatientShareToken.objects
+        .filter(
+            clinic=clinic,
+            patient=note.patient,
+            clinical_note=note,
+            purpose=PatientShareToken.Purpose.AFTERCARE_REPORT,
+        )
+        .order_by("-created_at", "-id")
+        .first()
+    )
+    if share_token is None:
+        status_key = "not_issued"
+        status_label = "未発行"
+    elif not share_token.is_active:
+        status_key = "revoked"
+        status_label = "無効"
+    elif share_token.is_expired:
+        status_key = "expired"
+        status_label = "期限切れ"
+    else:
+        status_key = "active"
+        status_label = "有効"
+
+    share_url = ""
+    if share_token and share_token.is_available:
+        share_url = _patient_share_public_url(request, share_token)
+    return {
+        "share_token": share_token,
+        "share_status_key": status_key,
+        "share_status_label": status_label,
+        "share_url": share_url,
+    }
+
+
 @staff_required
 def staff_post_treatment_summary_view(request, note_id):
     clinic = get_current_clinic(request)
@@ -8059,35 +8174,8 @@ def staff_patient_aftercare_report_view(request, note_id):
         patient__clinic=clinic,
         appointment__clinic=clinic,
     )
-    related_context = _build_post_treatment_related_context(note, clinic)
-    patient_report = _build_patient_aftercare_content(
-        related_context["post_summary"],
-        posture_summary_text=related_context["posture_summary_text"],
-        include_posture=bool(
-            related_context["related_posture_assessment"]
-        ),
-        related_plan=related_context["related_plan"],
-    )
-
-    next_after = max(timezone.now(), note.appointment.end_at)
-    next_appointment = (
-        Appointment.objects
-        .filter(
-            clinic=clinic,
-            patient=note.patient,
-            patient__clinic=clinic,
-            start_at__gt=next_after,
-        )
-        .exclude(
-            status__in=[
-                Appointment.Status.CANCELLED,
-                Appointment.Status.NO_SHOW,
-            ]
-        )
-        .select_related("assigned_staff")
-        .order_by("start_at")
-        .first()
-    )
+    report_context = build_patient_aftercare_report_context(note, clinic)
+    share_context = _patient_share_context(request, note, clinic)
 
     return render(
         request,
@@ -8098,10 +8186,136 @@ def staff_patient_aftercare_report_view(request, note_id):
             "note": note,
             "patient": note.patient,
             "appointment": note.appointment,
-            "patient_report": patient_report,
-            "next_appointment": next_appointment,
+            **report_context,
+            **share_context,
         },
     )
+
+
+@staff_required
+@require_POST
+def staff_patient_share_token_create_view(request, note_id):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のカルテのみ共有できます。")
+
+    with transaction.atomic():
+        note = get_object_or_404(
+            ClinicalNote.objects.select_for_update(of=("self",)).select_related(
+                "patient",
+                "appointment",
+            ),
+            pk=note_id,
+            patient__clinic=clinic,
+            appointment__clinic=clinic,
+        )
+        PatientShareToken.objects.filter(
+            clinic=clinic,
+            patient=note.patient,
+            clinical_note=note,
+            purpose=PatientShareToken.Purpose.AFTERCARE_REPORT,
+            is_active=True,
+        ).update(is_active=False, updated_at=timezone.now())
+        PatientShareToken.objects.create(
+            clinic=clinic,
+            patient=note.patient,
+            appointment=note.appointment,
+            clinical_note=note,
+            purpose=PatientShareToken.Purpose.AFTERCARE_REPORT,
+            expires_at=timezone.now() + timedelta(days=7),
+            created_by=request.user,
+        )
+
+    messages.success(
+        request,
+        "患者向け共有URLを発行しました。有効期限は7日間です。",
+    )
+    return redirect("staff:patient_aftercare_report", note_id=note.id)
+
+
+@staff_required
+@require_POST
+def staff_patient_share_token_revoke_view(request, note_id, share_id):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の共有URLのみ無効化できます。")
+
+    with transaction.atomic():
+        share_token = get_object_or_404(
+            PatientShareToken.objects.select_for_update(of=("self",)).select_related(
+                "clinical_note",
+                "patient",
+            ),
+            pk=share_id,
+            clinic=clinic,
+            patient__clinic=clinic,
+            clinical_note_id=note_id,
+            clinical_note__appointment__clinic=clinic,
+            purpose=PatientShareToken.Purpose.AFTERCARE_REPORT,
+        )
+        if share_token.is_active:
+            share_token.is_active = False
+            share_token.save(update_fields=["is_active", "updated_at"])
+    messages.success(request, "患者向け共有URLを無効化しました。")
+    return redirect(
+        "staff:patient_aftercare_report",
+        note_id=share_token.clinical_note_id,
+    )
+
+
+@staff_required
+@require_GET
+def staff_patient_share_token_qr_view(request, share_id):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院の共有QRのみ表示できます。")
+
+    share_token = get_object_or_404(
+        PatientShareToken.objects.select_related(
+            "patient",
+            "appointment",
+            "clinical_note",
+            "clinical_note__appointment",
+        ),
+        pk=share_id,
+        clinic=clinic,
+        patient__clinic=clinic,
+        clinical_note__appointment__clinic=clinic,
+        purpose=PatientShareToken.Purpose.AFTERCARE_REPORT,
+        is_active=True,
+        expires_at__gt=timezone.now(),
+    )
+    note = share_token.clinical_note
+    if (
+        note is None
+        or note.patient_id != share_token.patient_id
+        or note.appointment.clinic_id != clinic.id
+        or (
+            share_token.appointment_id
+            and share_token.appointment_id != note.appointment_id
+        )
+    ):
+        raise Http404("共有QRを確認できません。")
+
+    share_url = _patient_share_public_url(request, share_token)
+    response = HttpResponse(_render_qr_png(share_url), content_type="image/png")
+    response["Content-Disposition"] = 'inline; filename="aftercare-report-qr.png"'
+    response["Cache-Control"] = "private, no-store, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @staff_required

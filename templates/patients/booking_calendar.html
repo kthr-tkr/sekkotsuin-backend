@@ -12,9 +12,14 @@
   </div>
 
   <div class="p-monthbar">
-    <a class="p-iconbtn" href="?ym={{ prev_ym }}" aria-label="前月">‹</a>
+    <a class="p-iconbtn" href="?ym={{ prev_ym }}{% if treatment_menu_id %}&treatment_menu_id={{ treatment_menu_id }}{% endif %}" aria-label="前月">‹</a>
     <div class="p-month">{{ first_day|date:"Y年n月" }}</div>
-    <a class="p-iconbtn" href="?ym={{ next_ym }}" aria-label="翌月">›</a>
+    <a class="p-iconbtn" href="?ym={{ next_ym }}{% if treatment_menu_id %}&treatment_menu_id={{ treatment_menu_id }}{% endif %}" aria-label="翌月">›</a>
+  </div>
+
+  <div class="p-booking-guide">
+    営業時間・休診日・担当者の勤務予定・休暇・既存予約を確認した、現在予約可能な日時だけを表示しています。
+    {% if treatment_menu %}<strong>{{ treatment_menu.name }}（{{ treatment_menu.duration_minutes }}分）</strong>{% endif %}
   </div>
 
   <div class="p-card">
@@ -36,9 +41,9 @@
           {% else %}
             {% with stat=cell.stat %}
               {% if stat and not stat.disabled %}
-                <a class="p-cell p-cell-active" href="{% url 'patients:booking_day' cell.ds %}{% if treatment_plan_id %}?treatment_plan_id={{ treatment_plan_id }}{% endif %}">
+                <a class="p-cell p-cell-active" href="{% url 'patients:booking_day' cell.ds %}?{% if treatment_plan_id %}treatment_plan_id={{ treatment_plan_id }}&{% endif %}{% if treatment_menu_id %}treatment_menu_id={{ treatment_menu_id }}{% endif %}">
                   <div class="p-day">{{ cell.day }}</div>
-                  <div class="p-meta">残り {{ stat.free }}</div>
+                  <div class="p-meta">予約可 {{ stat.free }}</div>
                 </a>
               {% else %}
                 <div class="p-cell p-cell-disabled">
@@ -128,6 +133,17 @@
     border-radius:24px;
     padding:16px;
     overflow:hidden;
+  }
+
+  .p-booking-guide{
+    margin-bottom:14px;
+    padding:13px 15px;
+    border:1px solid #bfdbfe;
+    border-radius:16px;
+    background:#eff6ff;
+    color:#31577d;
+    font-size:13px;
+    line-height:1.7;
   }
 
   .p-weekdays{

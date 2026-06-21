@@ -295,6 +295,10 @@ def intake_staff_edit(request, appointment_id):
 @login_required
 def intake_done(request, appointment_id):
     appt = get_object_or_404(Appointment, pk=appointment_id)
+    try:
+        _must_own_appointment(request.user, appt)
+    except PermissionError:
+        return HttpResponseForbidden("この予約にはアクセスできません。")
     return render(
         request,
         "intakes/patient/intake_done.html",
@@ -501,7 +505,7 @@ def _must_own_recording(user, rec: InterviewRecording):
 
 def _must_own_appointment(user, appt: Appointment):
     patient_user_id = getattr(appt.patient, "user_id", None)
-    if patient_user_id and patient_user_id != user.id:
+    if not patient_user_id or patient_user_id != user.id:
         raise PermissionError("Permission denied")
 
 @staff_required

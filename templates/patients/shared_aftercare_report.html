@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>施術後説明レポート</title>
+  <style>
+    :root{color-scheme:light;--navy:#17324d;--blue:#2874a6;--green:#16806f;--line:#dbe7f2;--soft:#f5f9fd}
+    *{box-sizing:border-box}
+    body{margin:0;color:var(--navy);background:#edf4f8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic UI","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;line-height:1.75}
+    .page{max-width:900px;margin:28px auto;padding:0 16px}
+    .sheet{overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#fff;box-shadow:0 20px 60px rgba(15,23,42,.09)}
+    .hero{padding:28px 32px;color:#fff;background:linear-gradient(135deg,#0b1b33,#174e78 58%,#14806e)}
+    .hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+    .clinic{color:#a7f3d0;font-size:12px;font-weight:900;letter-spacing:.08em}
+    h1{margin:5px 0 0;font-size:29px;line-height:1.3}
+    .lead{margin:8px 0 0;color:rgba(255,255,255,.82);font-size:14px}
+    .print-button{min-height:42px;padding:0 16px;border:1px solid rgba(255,255,255,.45);border-radius:12px;color:#164e63;background:#fff;font:inherit;font-weight:800;cursor:pointer}
+    .meta{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:22px;padding-top:17px;border-top:1px solid rgba(255,255,255,.18)}
+    .meta-item{min-width:155px}
+    .meta-label{color:rgba(255,255,255,.65);font-size:10px;font-weight:800;letter-spacing:.08em}
+    .meta-value{margin-top:3px;font-size:15px;font-weight:900}
+    .content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:22px;background:linear-gradient(180deg,#f8fbfe,#fff 44%)}
+    .card{min-width:0;padding:19px;border:1px solid var(--line);border-radius:18px;background:#fff;break-inside:avoid}
+    .card.wide{grid-column:1/-1}
+    .card.summary{border-color:#b9e5dc;background:linear-gradient(135deg,#effbf8,#f4faff)}
+    .card.caution{border-color:#f0d79b;background:#fffaf0}
+    .heading{display:flex;align-items:center;gap:10px;margin:0;color:#102a43;font-size:17px}
+    .number{display:grid;width:32px;height:32px;flex:none;place-items:center;border-radius:10px;color:#0f766e;background:#e8faf5;font-size:10px;font-weight:900}
+    .summary-text{margin-top:14px;color:#24475c;font-size:15px;font-weight:700}
+    ul{display:grid;gap:9px;margin:14px 0 0;padding:0;list-style:none}
+    li{position:relative;padding:10px 11px 10px 29px;border-radius:12px;color:#334e68;background:#f7fafc;font-size:13px}
+    li::before{content:"";position:absolute;top:17px;left:13px;width:6px;height:6px;border-radius:50%;background:#38a997}
+    .next{margin:0 22px 22px;padding:17px 19px;border:1px solid #cbdced;border-radius:18px;background:var(--soft);break-inside:avoid}
+    .next-label{color:var(--blue);font-size:10px;font-weight:900;letter-spacing:.08em}
+    .next-value{margin-top:5px;font-weight:900}
+    .next-note{margin-top:4px;color:#64748b;font-size:12px}
+    footer{padding:18px 23px;color:#52677d;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px}
+    .expiry{margin-top:8px;color:#718096;font-size:10px}
+    @media(max-width:680px){.page{margin:0;padding:0}.sheet{border:0;border-radius:0;box-shadow:none}.hero{padding:24px 20px}.hero-top{flex-direction:column}.content{grid-template-columns:1fr;padding:15px}.card.wide{grid-column:auto}.next{margin:0 15px 15px}}
+    @page{size:A4 portrait;margin:10mm}
+    @media print{body{background:#fff}.page{max-width:none;margin:0;padding:0}.sheet{border:0;border-radius:0;box-shadow:none}.print-button{display:none}.hero{padding:20px 22px;color:#102a43;background:#eaf5f5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.clinic{color:#0f766e}.lead,.meta-label{color:#52677d}.meta{border-top-color:#bdd7dc}.content{gap:9px;padding:14px}.card{padding:14px}.next{margin:0 14px 12px}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article class="sheet">
+      <header class="hero">
+        <div class="hero-top">
+          <div>
+            <div class="clinic">{{ clinic.name }}</div>
+            <h1>施術後説明レポート</h1>
+            <p class="lead">本日確認した内容と、ご自宅で意識していただきたいことをまとめました。</p>
+          </div>
+          <button type="button" class="print-button" onclick="window.print()">印刷する</button>
+        </div>
+        <div class="meta">
+          <div class="meta-item"><div class="meta-label">患者様</div><div class="meta-value">{{ patient.last_name }} {{ patient.first_name }} 様</div></div>
+          <div class="meta-item"><div class="meta-label">施術日</div><div class="meta-value">{{ appointment.start_at|date:"Y年m月d日" }}</div></div>
+          <div class="meta-item"><div class="meta-label">施術内容</div><div class="meta-value">{{ appointment.menu|default:"施術" }}</div></div>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="card summary wide"><h2 class="heading"><span class="number">01</span>本日のまとめ</h2><div class="summary-text">{{ patient_report.overall_summary }}</div></section>
+        <section class="card"><h2 class="heading"><span class="number">02</span>本日の施術内容</h2><ul>{% for item in patient_report.treatment_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
+        <section class="card"><h2 class="heading"><span class="number">03</span>今日確認した身体の状態</h2><ul>{% for item in patient_report.body_condition_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
+        <section class="card"><h2 class="heading"><span class="number">04</span>ご自宅で気をつけること</h2><ul>{% for item in patient_report.home_attention_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
+        <section class="card"><h2 class="heading"><span class="number">05</span>セルフケア</h2><ul>{% for item in patient_report.home_care_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
+        <section class="card"><h2 class="heading"><span class="number">06</span>次回確認すること</h2><ul>{% for item in patient_report.next_check_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
+        <section class="card caution"><h2 class="heading"><span class="number">07</span>注意事項</h2><ul>{% for item in patient_report.caution_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
+      </div>
+
+      <section class="next">
+        <div class="next-label">次回予約</div>
+        {% if next_appointment %}
+          <div class="next-value">{{ next_appointment.start_at|date:"Y年m月d日 H:i" }}{% if next_appointment.menu %} / {{ next_appointment.menu }}{% endif %}</div>
+          <div class="next-note">ご都合に変更がある場合は、事前に院へお知らせください。</div>
+        {% else %}
+          <div class="next-value">次回予約は未登録です。</div>
+          <div class="next-note">次回の確認時期については、院へご相談ください。</div>
+        {% endif %}
+        <div class="expiry">この共有ページの有効期限：{{ share_expires_at|date:"Y年m月d日 H:i" }}</div>
+      </section>
+
+      <footer>本レポートは、本日の施術内容と身体の状態を分かりやすく共有するための説明資料です。診断を行うものではなく、施術者の評価と合わせてご確認ください。痛みやしびれ、違和感が強い場合は無理をせず、セルフケアを中止して院へご相談ください。</footer>
+    </article>
+  </main>
+</body>
+</html>

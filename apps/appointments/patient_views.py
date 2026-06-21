@@ -1,7 +1,7 @@
 # apps/appointments/patient_views.py
-from datetime import timedelta
-
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
@@ -9,24 +9,23 @@ from apps.clinics.models import Clinic
 from apps.intakes.models import Intake
 from apps.patients.models import Patient
 from .models import Appointment
-from .patient_forms import PatientLookupForm, AppointmentCreateForm, IntakeForm
+from .patient_forms import PatientLookupForm, IntakeForm
 
 
 def _get_default_clinic():
-    # 単院運用：最初のClinicを採用
-    # SaaS化するなら、ここをサブドメイン・slug・院別URLなどで解決
-    return Clinic.objects.order_by("id").first()
+    # 院を特定できない公開URLで、複数院から先頭を暗黙選択しない。
+    clinics = list(Clinic.objects.order_by("id")[:2])
+    return clinics[0] if len(clinics) == 1 else None
 
 
 def _normalize_phone(phone: str) -> str:
     return "".join(ch for ch in (phone or "") if ch.isdigit())
 
 
-def _get_booking_clinic_from_session(request):
-    clinic_id = request.session.get("booking_clinic_id")
-    if clinic_id:
-        return get_object_or_404(Clinic, pk=clinic_id)
-    return _get_default_clinic()
+def _authenticated_patient(request):
+    if not request.user.is_authenticated:
+        return None
+    return Patient.objects.select_related("clinic").filter(user=request.user).first()
 
 
 def _clear_booking_session(request):
@@ -44,12 +43,15 @@ def _clear_booking_session(request):
 
 @require_http_methods(["GET", "POST"])
 def book_start(request):
+    if _authenticated_patient(request):
+        return redirect("patients:booking_calendar")
+
     clinic = _get_default_clinic()
     if not clinic:
         return render(
             request,
             "appointments/book_error.html",
-            {"message": "Clinicが未登録です。管理者がClinicを作成してください。"},
+            {"message": "院情報を確認できません。院から案内された予約ページをご利用ください。"},
         )
 
     form = PatientLookupForm(request.POST or None)
@@ -80,7 +82,9 @@ def book_start(request):
 
         request.session["booking_patient_id"] = patient.id
         request.session["booking_clinic_id"] = clinic.id
-        return redirect("appointments:book_new")
+        return redirect(
+            f"{reverse('patients:login')}?next={reverse('patients:booking_calendar')}"
+        )
 
     return render(
         request,
@@ -92,6 +96,7 @@ def book_start(request):
     )
 
 
+@login_required(login_url="/patients/login/")
 @require_http_methods(["GET", "POST"])
 def book_new(request):
     clinic_id = request.session.get("booking_clinic_id")
@@ -100,50 +105,26 @@ def book_new(request):
     if not clinic_id or not patient_id:
         return redirect("appointments:book_start")
 
-    clinic = get_object_or_404(Clinic, pk=clinic_id)
-    patient = get_object_or_404(Patient, pk=patient_id, clinic=clinic)
-
-    form = AppointmentCreateForm(request.POST or None)
-
-    if request.method == "POST" and form.is_valid():
-        start_at = form.cleaned_data["start_at"]
-        duration_min = form.cleaned_data["duration_min"]
-        menu = form.cleaned_data["menu"]
-
-        end_at = start_at + timedelta(minutes=duration_min)
-
-        appt = Appointment.objects.create(
-            clinic=clinic,
-            patient=patient,
-            start_at=start_at,
-            end_at=end_at,
-            menu=menu,
-            status=Appointment.Status.BOOKED,
-        )
-
-        return redirect("appointments:book_complete", appointment_id=appt.id)
-
-    return render(
-        request,
-        "appointments/book_new.html",
-        {
-            "form": form,
-            "clinic": clinic,
-            "patient": patient,
-        },
+    get_object_or_404(
+        Patient.objects.select_related("clinic"),
+        pk=patient_id,
+        clinic_id=clinic_id,
+        user=request.user,
     )
+    _clear_booking_session(request)
+    # 旧フォームはシフト・休暇判定を持たないため、共通判定済みの患者予約へ統合する。
+    return redirect("patients:booking_calendar")
 
 
+@login_required(login_url="/patients/login/")
 def book_complete(request, appointment_id):
-    clinic = _get_booking_clinic_from_session(request)
-    if not clinic:
-        return render(
-            request,
-            "appointments/book_error.html",
-            {"message": "Clinicが未登録です。管理者がClinicを作成してください。"},
-        )
-
-    appt = get_object_or_404(Appointment, pk=appointment_id, clinic=clinic)
+    patient = get_object_or_404(Patient, user=request.user)
+    appt = get_object_or_404(
+        Appointment,
+        pk=appointment_id,
+        clinic=patient.clinic,
+        patient=patient,
+    )
 
     # 予約完了後に最低限の予約セッションを整理
     request.session.pop("booking_patient_id", None)
@@ -158,17 +139,16 @@ def book_complete(request, appointment_id):
     )
 
 
+@login_required(login_url="/patients/login/")
 @require_http_methods(["GET", "POST"])
 def book_intake(request, appointment_id):
-    clinic = _get_booking_clinic_from_session(request)
-    if not clinic:
-        return render(
-            request,
-            "appointments/book_error.html",
-            {"message": "Clinicが未登録です。管理者がClinicを作成してください。"},
-        )
-
-    appt = get_object_or_404(Appointment, pk=appointment_id, clinic=clinic)
+    patient = get_object_or_404(Patient, user=request.user)
+    appt = get_object_or_404(
+        Appointment,
+        pk=appointment_id,
+        clinic=patient.clinic,
+        patient=patient,
+    )
 
     intake, created = Intake.objects.get_or_create(
         appointment=appt,

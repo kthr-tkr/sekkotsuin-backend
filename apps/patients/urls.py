@@ -9,6 +9,8 @@ from .forms import PatientPasswordResetForm, PatientSetPasswordForm
 app_name = "patients"
 
 urlpatterns = [
+    # 推測可能な内部IDを使わない患者向け共有ページ。
+    path("share/<str:token>/", views.shared_patient_page_view, name="shared_patient_page"),
     path("login/", views.patient_login_view, name="login"),
     path("register/", views.patient_register_view, name="register"),
     path("register/complete/", views.patient_register_complete_view, name="register_complete"),

@@ -2,6 +2,7 @@ from datetime import date, datetime, time, timedelta
 import inspect
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -12,7 +13,15 @@ from django.utils import timezone
 from apps.ai_usage.models import AiUsageLog, ClinicAiPlan
 from apps.appointments.models import Appointment
 from apps.clinical_notes.models import ClinicalNote
-from apps.clinics.models import Clinic, ClinicSettings, SalesRecord, StaffLeave, StaffShift, TreatmentMenu
+from apps.clinics.models import (
+    Clinic,
+    ClinicSettings,
+    PatientShareToken,
+    SalesRecord,
+    StaffLeave,
+    StaffShift,
+    TreatmentMenu,
+)
 from apps.intakes import views as intake_views
 from apps.intakes.models import Intake, InterviewRecording
 from apps.patients.models import Patient
@@ -53,6 +62,7 @@ class MajorWorkflowCopyTests(SimpleTestCase):
         "templates/staff/clinical_notes/detail.html",
         "templates/staff/patients/post_treatment_summary.html",
         "templates/staff/patients/patient_aftercare_report.html",
+        "templates/patients/shared_aftercare_report.html",
     )
 
     def _template_text(self):
@@ -4839,6 +4849,18 @@ class StaffPostTreatmentSummaryTests(TestCase):
             args=[(note or self.note).id],
         )
 
+    def _share_create_url(self, note=None):
+        return reverse(
+            "staff:patient_share_token_create",
+            args=[(note or self.note).id],
+        )
+
+    def _share_qr_url(self, share_token):
+        return reverse(
+            "staff:patient_share_token_qr",
+            args=[share_token.id],
+        )
+
     def test_own_clinic_note_post_summary_returns_200_and_displays_soap(self):
         response = self.client.get(self._summary_url())
 
@@ -4909,6 +4931,14 @@ class StaffPostTreatmentSummaryTests(TestCase):
         self.assertContains(response, "施術後説明レポート")
         self.assertContains(response, "本日は右膝の荷重動作を中心に確認しました")
         self.assertContains(response, "大腿部と膝周囲への施術")
+
+    def test_aftercare_report_is_not_public_without_staff_login(self):
+        self.client.logout()
+
+        response = self.client.get(self._report_url())
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/staff/login/", response.url)
 
     def test_aftercare_report_displays_print_pdf_and_line_guidance(self):
         response = self.client.get(self._report_url())
@@ -5048,5 +5078,202 @@ class StaffPostTreatmentSummaryTests(TestCase):
         source = inspect.getsource(
             staff_views.staff_patient_aftercare_report_view
         )
+
+        self.assertNotIn(".path", source)
+
+    def test_staff_can_issue_share_url_for_own_clinic_note(self):
+        response = self.client.post(self._share_create_url())
+
+        self.assertRedirects(response, self._report_url())
+        share_token = PatientShareToken.objects.get(clinical_note=self.note)
+        self.assertEqual(share_token.clinic, self.clinic)
+        self.assertEqual(share_token.patient, self.patient)
+        self.assertEqual(share_token.appointment, self.appointment)
+        self.assertEqual(
+            share_token.purpose,
+            PatientShareToken.Purpose.AFTERCARE_REPORT,
+        )
+        self.assertTrue(share_token.is_active)
+        self.assertGreaterEqual(len(share_token.token), 40)
+        self.assertGreater(share_token.expires_at, timezone.now())
+
+        report_response = self.client.get(self._report_url())
+        public_url = reverse(
+            "patients:shared_patient_page",
+            args=[share_token.token],
+        )
+        self.assertContains(report_response, "患者向け共有URL")
+        self.assertContains(report_response, "有効")
+        self.assertContains(report_response, public_url)
+
+    def test_reissuing_share_url_revokes_previous_token(self):
+        self.client.post(self._share_create_url())
+        first_token = PatientShareToken.objects.get(clinical_note=self.note)
+
+        self.client.post(self._share_create_url())
+
+        first_token.refresh_from_db()
+        latest_token = PatientShareToken.objects.filter(
+            clinical_note=self.note
+        ).order_by("-created_at", "-id").first()
+        self.assertFalse(first_token.is_active)
+        self.assertTrue(latest_token.is_active)
+        self.assertNotEqual(first_token.token, latest_token.token)
+
+    def test_other_clinic_note_share_url_cannot_be_issued(self):
+        response = self.client.post(self._share_create_url(self.other_note))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(
+            PatientShareToken.objects.filter(clinical_note=self.other_note).exists()
+        )
+
+    def test_user_without_clinic_cannot_issue_share_url(self):
+        self.client.force_login(self.no_clinic_user)
+
+        response = self.client.post(self._share_create_url())
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_staff_can_revoke_own_clinic_share_url(self):
+        self.client.post(self._share_create_url())
+        share_token = PatientShareToken.objects.get(clinical_note=self.note)
+        revoke_url = reverse(
+            "staff:patient_share_token_revoke",
+            args=[self.note.id, share_token.id],
+        )
+
+        response = self.client.post(revoke_url)
+
+        self.assertRedirects(response, self._report_url())
+        share_token.refresh_from_db()
+        self.assertFalse(share_token.is_active)
+
+    def test_other_clinic_share_url_cannot_be_revoked(self):
+        other_token = PatientShareToken.objects.create(
+            clinic=self.other_clinic,
+            patient=self.other_patient,
+            appointment=self.other_appointment,
+            clinical_note=self.other_note,
+            created_by=self.other_user,
+        )
+        revoke_url = reverse(
+            "staff:patient_share_token_revoke",
+            args=[self.other_note.id, other_token.id],
+        )
+
+        response = self.client.post(revoke_url)
+
+        self.assertEqual(response.status_code, 404)
+        other_token.refresh_from_db()
+        self.assertTrue(other_token.is_active)
+
+    def test_share_token_views_do_not_use_file_path(self):
+        source = (
+            inspect.getsource(staff_views.staff_patient_share_token_create_view)
+            + inspect.getsource(staff_views.staff_patient_share_token_revoke_view)
+        )
+
+        self.assertNotIn(".path", source)
+
+    def test_valid_own_clinic_share_token_returns_qr_png(self):
+        self.client.post(self._share_create_url())
+        share_token = PatientShareToken.objects.get(clinical_note=self.note)
+
+        response = self.client.get(self._share_qr_url(share_token))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "image/png")
+        self.assertTrue(response.content.startswith(b"\x89PNG\r\n\x1a\n"))
+        self.assertIn("no-store", response["Cache-Control"])
+        self.assertEqual(response["X-Content-Type-Options"], "nosniff")
+
+    def test_qr_contains_only_public_share_url_as_payload(self):
+        self.client.post(self._share_create_url())
+        share_token = PatientShareToken.objects.get(clinical_note=self.note)
+        expected_url = "http://testserver" + reverse(
+            "patients:shared_patient_page",
+            args=[share_token.token],
+        )
+
+        with patch(
+            "apps.staff.views._render_qr_png",
+            return_value=b"test-png",
+        ) as renderer:
+            response = self.client.get(self._share_qr_url(share_token))
+
+        self.assertEqual(response.status_code, 200)
+        renderer.assert_called_once_with(expected_url)
+        self.assertNotIn(f"patient_id={self.patient.id}", expected_url)
+        self.assertNotIn(f"clinical_note_id={self.note.id}", expected_url)
+        self.assertNotIn(f"clinic_id={self.clinic.id}", expected_url)
+
+    def test_other_clinic_share_token_qr_returns_404(self):
+        other_token = PatientShareToken.objects.create(
+            clinic=self.other_clinic,
+            patient=self.other_patient,
+            appointment=self.other_appointment,
+            clinical_note=self.other_note,
+            created_by=self.other_user,
+        )
+
+        response = self.client.get(self._share_qr_url(other_token))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_revoked_share_token_qr_returns_404(self):
+        self.client.post(self._share_create_url())
+        share_token = PatientShareToken.objects.get(clinical_note=self.note)
+        share_token.is_active = False
+        share_token.save(update_fields=["is_active", "updated_at"])
+
+        response = self.client.get(self._share_qr_url(share_token))
+        report_response = self.client.get(self._report_url())
+
+        self.assertEqual(response.status_code, 404)
+        self.assertNotContains(
+            report_response,
+            "このQRから今日の説明を見返せます",
+        )
+
+    def test_expired_share_token_qr_returns_404(self):
+        self.client.post(self._share_create_url())
+        share_token = PatientShareToken.objects.get(clinical_note=self.note)
+        share_token.expires_at = timezone.now() - timedelta(seconds=1)
+        share_token.save(update_fields=["expires_at", "updated_at"])
+
+        response = self.client.get(self._share_qr_url(share_token))
+        report_response = self.client.get(self._report_url())
+
+        self.assertEqual(response.status_code, 404)
+        self.assertNotContains(
+            report_response,
+            "このQRから今日の説明を見返せます",
+        )
+
+    def test_user_without_clinic_cannot_open_share_token_qr(self):
+        self.client.post(self._share_create_url())
+        share_token = PatientShareToken.objects.get(clinical_note=self.note)
+        self.client.force_login(self.no_clinic_user)
+
+        response = self.client.get(self._share_qr_url(share_token))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_qr_is_displayed_only_after_share_url_is_issued(self):
+        unissued_response = self.client.get(self._report_url())
+
+        self.assertNotContains(unissued_response, "このQRから今日の説明を見返せます")
+
+        self.client.post(self._share_create_url())
+        share_token = PatientShareToken.objects.get(clinical_note=self.note)
+        issued_response = self.client.get(self._report_url())
+
+        self.assertContains(issued_response, "このQRから今日の説明を見返せます")
+        self.assertContains(issued_response, "QRコードを印刷")
+        self.assertContains(issued_response, self._share_qr_url(share_token))
+
+    def test_qr_view_does_not_use_file_path(self):
+        source = inspect.getsource(staff_views.staff_patient_share_token_qr_view)
 
         self.assertNotIn(".path", source)

@@ -9,6 +9,10 @@
     <a class="booking-back-btn" href="{% url 'patients:booking_calendar' %}">← 日付へ戻る</a>
   </div>
 
+  {% if booking_notice %}
+    <div class="booking-notice">{{ booking_notice }}</div>
+  {% endif %}
+
   <div class="booking-staff-list">
     {% for item in staff_slots %}
       <section class="booking-staff-card">
@@ -22,9 +26,12 @@
             {% for s in item.slots %}
               <form method="post" action="{% url 'patients:booking_review' %}" class="booking-time-form">
                 {% csrf_token %}
-                <input type="hidden" name="staff_id" value="{{ item.staff.id }}">
+                <input type="hidden" name="staff_token" value="{{ item.staff_token }}">
                 <input type="hidden" name="start_at" value="{{ s.start|date:'Y-m-d\\TH:i' }}">
                 <input type="hidden" name="menu" value="初診">
+                {% if treatment_menu_id %}
+                  <input type="hidden" name="treatment_menu_id" value="{{ treatment_menu_id }}">
+                {% endif %}
                 {% if treatment_plan_id %}
                   <input type="hidden" name="treatment_plan_id" value="{{ treatment_plan_id }}">
                 {% endif %}
@@ -88,6 +95,17 @@
   .booking-staff-list{
     display:grid;
     gap:14px;
+  }
+
+  .booking-notice{
+    margin-bottom:14px;
+    padding:13px 15px;
+    border:1px solid #fde68a;
+    border-radius:15px;
+    background:#fffbeb;
+    color:#8a5b12;
+    font-size:13px;
+    line-height:1.7;
   }
 
   .booking-staff-card{

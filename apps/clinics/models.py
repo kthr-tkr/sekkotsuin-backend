@@ -1,10 +1,19 @@
-from datetime import time
+import secrets
+from datetime import time, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
+
+
+def generate_patient_share_token():
+    return secrets.token_urlsafe(32)
+
+
+def default_patient_share_expiry():
+    return timezone.now() + timedelta(days=7)
 
 class Clinic(models.Model):
     name = models.CharField(max_length=100)
@@ -553,3 +562,139 @@ class StaffLeave(models.Model):
 
         if errors:
             raise ValidationError(errors)
+
+
+class PatientShareToken(models.Model):
+    class Purpose(models.TextChoices):
+        AFTERCARE_REPORT = "aftercare_report", "施術後説明レポート"
+        POSTURE_REPORT = "posture_report", "姿勢評価レポート"
+        TREATMENT_PLAN = "treatment_plan", "施術計画"
+        BOOKING = "booking", "予約"
+        OTHER = "other", "その他"
+
+    clinic = models.ForeignKey(
+        Clinic,
+        on_delete=models.CASCADE,
+        related_name="patient_share_tokens",
+        verbose_name="院",
+    )
+    patient = models.ForeignKey(
+        "patients.Patient",
+        on_delete=models.CASCADE,
+        related_name="share_tokens",
+        verbose_name="患者",
+    )
+    appointment = models.ForeignKey(
+        "appointments.Appointment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="patient_share_tokens",
+        verbose_name="予約",
+    )
+    clinical_note = models.ForeignKey(
+        "clinical_notes.ClinicalNote",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="patient_share_tokens",
+        verbose_name="カルテ",
+    )
+    purpose = models.CharField(
+        "共有目的",
+        max_length=30,
+        choices=Purpose.choices,
+        default=Purpose.AFTERCARE_REPORT,
+    )
+    token = models.CharField(
+        "共有トークン",
+        max_length=64,
+        unique=True,
+        default=generate_patient_share_token,
+        editable=False,
+    )
+    expires_at = models.DateTimeField(
+        "有効期限",
+        default=default_patient_share_expiry,
+        db_index=True,
+    )
+    is_active = models.BooleanField("有効", default=True, db_index=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_patient_share_tokens",
+        verbose_name="発行者",
+    )
+    created_at = models.DateTimeField("作成日時", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日時", auto_now=True)
+    last_accessed_at = models.DateTimeField(
+        "最終アクセス日時",
+        null=True,
+        blank=True,
+    )
+    access_count = models.PositiveIntegerField("アクセス回数", default=0)
+
+    class Meta:
+        ordering = ("-created_at", "-id")
+        indexes = [
+            models.Index(fields=["clinic", "purpose", "is_active"]),
+            models.Index(fields=["clinic", "clinical_note", "purpose"]),
+        ]
+        verbose_name = "患者向け共有トークン"
+        verbose_name_plural = "患者向け共有トークン"
+
+    def __str__(self):
+        return f"{self.patient} / {self.get_purpose_display()} / {self.expires_at:%Y-%m-%d}"
+
+    @property
+    def is_expired(self):
+        return bool(self.expires_at and self.expires_at <= timezone.now())
+
+    @property
+    def is_available(self):
+        return bool(self.is_active and not self.is_expired)
+
+    def clean(self):
+        errors = {}
+
+        if not self.clinic_id:
+            errors["clinic"] = "院情報は必須です。"
+        if not self.patient_id:
+            errors["patient"] = "患者は必須です。"
+        elif self.clinic_id and self.patient.clinic_id != self.clinic_id:
+            errors["patient"] = "患者は同じ院に所属している必要があります。"
+
+        if self.appointment_id:
+            if self.clinic_id and self.appointment.clinic_id != self.clinic_id:
+                errors["appointment"] = "予約は同じ院に所属している必要があります。"
+            if self.patient_id and self.appointment.patient_id != self.patient_id:
+                errors["appointment"] = "予約の患者と共有対象の患者が一致していません。"
+
+        if self.clinical_note_id:
+            if self.patient_id and self.clinical_note.patient_id != self.patient_id:
+                errors["clinical_note"] = "カルテの患者と共有対象の患者が一致していません。"
+            note_clinic_id = getattr(self.clinical_note.appointment, "clinic_id", None)
+            if self.clinic_id and note_clinic_id != self.clinic_id:
+                errors["clinical_note"] = "カルテは同じ院に所属している必要があります。"
+            if self.appointment_id and self.clinical_note.appointment_id != self.appointment_id:
+                errors["clinical_note"] = "カルテと予約が一致していません。"
+
+        if self.purpose == self.Purpose.AFTERCARE_REPORT and not self.clinical_note_id:
+            errors["clinical_note"] = "施術後説明レポートの共有にはカルテが必要です。"
+
+        if self.created_by_id:
+            creator_clinic_id = getattr(self.created_by, "clinic_id", None)
+            if self.clinic_id and creator_clinic_id != self.clinic_id:
+                errors["created_by"] = "発行者は同じ院に所属している必要があります。"
+
+        if not self.expires_at:
+            errors["expires_at"] = "有効期限は必須です。"
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)

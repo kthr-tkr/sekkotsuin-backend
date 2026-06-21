@@ -149,6 +149,78 @@
     border-bottom:1px solid #dbe7f2;
   }
 
+  .aftercare-share-panel{
+    align-items:flex-start;
+  }
+
+  .aftercare-share-main{
+    min-width:0;
+    flex:1 1 auto;
+  }
+
+  .aftercare-share-status{
+    display:inline-flex;
+    align-items:center;
+    margin-left:7px;
+    padding:3px 8px;
+    border-radius:999px;
+    color:#52677d;
+    background:#e2e8f0;
+    font-size:9px;
+    font-weight:950;
+  }
+
+  .aftercare-share-status.active{color:#0f766e;background:#dff7ef}
+  .aftercare-share-status.expired{color:#9a6700;background:#fff0c7}
+  .aftercare-share-status.revoked{color:#9f3a47;background:#fde8eb}
+
+  .aftercare-share-url-row{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+
+  .aftercare-share-url{
+    width:100%;
+    min-width:0;
+    padding:9px 11px;
+    border:1px solid #cbd8e4;
+    border-radius:10px;
+    color:#294760;
+    background:#fff;
+    font:inherit;
+    font-size:10px;
+  }
+
+  .aftercare-share-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px 14px;
+    margin-top:8px;
+    color:#60758a;
+    font-size:10px;
+    font-weight:700;
+  }
+
+  .aftercare-share-controls{
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .aftercare-share-controls form{margin:0}
+
+  .aftercare-share-controls .share-action{
+    color:#174e78;
+    background:#fff;
+    border-color:#bfd1df;
+  }
+
+  .aftercare-share-controls .share-revoke{
+    color:#9f3a47;
+    background:#fff;
+    border-color:#e8b8be;
+  }
+
   .aftercare-share-title{
     color:#123a5a;
     font-size:12px;
@@ -172,6 +244,48 @@
 
   .aftercare-share-controls .aftercare-btn{
     color:#7c8da1;
+  }
+
+  .aftercare-qr-card{
+    display:flex;
+    width:210px;
+    flex:0 0 210px;
+    align-items:center;
+    flex-direction:column;
+    padding:15px;
+    border:1px solid #bfd9d3;
+    border-radius:18px;
+    text-align:center;
+    background:#fff;
+  }
+
+  .aftercare-qr-image{
+    display:block;
+    width:156px;
+    height:156px;
+    border:8px solid #fff;
+  }
+
+  .aftercare-qr-title{
+    margin-top:8px;
+    color:#123a5a;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .aftercare-qr-text{
+    margin-top:4px;
+    color:#60758a;
+    font-size:10px;
+    font-weight:700;
+    line-height:1.55;
+  }
+
+  .aftercare-qr-expiry{
+    margin-top:6px;
+    color:#0f766e;
+    font-size:9px;
+    font-weight:900;
   }
 
   .aftercare-card{
@@ -352,6 +466,20 @@
       padding:16px 20px;
     }
 
+    .aftercare-share-controls{
+      justify-content:flex-start;
+    }
+
+    .aftercare-qr-card{
+      width:100%;
+      flex-basis:auto;
+    }
+
+    .aftercare-share-url-row{
+      align-items:stretch;
+      flex-direction:column;
+    }
+
     .aftercare-card.wide{
       grid-column:auto;
     }
@@ -445,6 +573,42 @@
       margin:0 14px 12px;
       padding:13px 15px;
     }
+
+    body.print-share-qr .aftercare-hero,
+    body.print-share-qr .aftercare-content,
+    body.print-share-qr .aftercare-next,
+    body.print-share-qr .aftercare-footer{
+      display:none !important;
+    }
+
+    body.print-share-qr .aftercare-share-panel{
+      display:flex !important;
+      min-height:245mm;
+      align-items:center;
+      justify-content:center;
+      padding:20mm;
+      border:0;
+      background:#fff !important;
+    }
+
+    body.print-share-qr .aftercare-share-main,
+    body.print-share-qr .aftercare-share-controls{
+      display:none !important;
+    }
+
+    body.print-share-qr .aftercare-qr-card{
+      display:flex !important;
+      width:92mm;
+      flex:0 0 auto;
+      padding:12mm;
+      border:1px solid #bfd9d3;
+      box-shadow:none;
+    }
+
+    body.print-share-qr .aftercare-qr-image{
+      width:55mm;
+      height:55mm;
+    }
   }
 </style>
 {% endblock %}
@@ -485,18 +649,61 @@
     </header>
 
     <section class="aftercare-share-panel">
-      <div>
-        <div class="aftercare-share-title">PDF保存案内</div>
-        <div class="aftercare-share-text">
-          PDFとして保存する場合は、印刷画面で送信先を「PDFに保存」に変更してください。<br>
-          LINE共有は今後対応予定です。現在は印刷またはPDF保存をご利用ください。
+      <div class="aftercare-share-main">
+        <div class="aftercare-share-title">
+          患者向け共有URL / PDF保存案内
+          <span class="aftercare-share-status {{ share_status_key }}">{{ share_status_label }}</span>
         </div>
+        <div class="aftercare-share-text">
+          推測困難なURLを7日間だけ発行します。PDFとして保存する場合は、印刷画面で送信先を「PDFに保存」に変更してください。
+          LINE共有は今後対応予定です。現在は共有URLのコピー、印刷またはPDF保存をご利用ください。
+        </div>
+        {% if share_url %}
+          <div class="aftercare-share-url-row">
+            <input id="patient-share-url" class="aftercare-share-url" type="text" value="{{ share_url }}" readonly aria-label="患者向け共有URL">
+            <button type="button" class="aftercare-btn share-action" data-copy-share-url>URLをコピー</button>
+          </div>
+        {% endif %}
+        {% if share_token %}
+          <div class="aftercare-share-meta">
+            <span>有効期限：{{ share_token.expires_at|date:"Y年m月d日 H:i" }}</span>
+            <span>アクセス：{{ share_token.access_count }}回</span>
+            <span>最終アクセス：{{ share_token.last_accessed_at|date:"Y年m月d日 H:i"|default:"なし" }}</span>
+          </div>
+        {% endif %}
       </div>
       <div class="aftercare-share-controls">
-        <button type="button" class="aftercare-btn" disabled aria-disabled="true">
-          LINE共有 準備中
-        </button>
+        <form method="post" action="{% url 'staff:patient_share_token_create' note.id %}">
+          {% csrf_token %}
+          <button type="submit" class="aftercare-btn share-action">
+            {% if share_token %}共有URLを再発行{% else %}共有URLを発行{% endif %}
+          </button>
+        </form>
+        {% if share_token and share_token.is_active %}
+          <form method="post" action="{% url 'staff:patient_share_token_revoke' note.id share_token.id %}">
+            {% csrf_token %}
+            <button type="submit" class="aftercare-btn share-revoke">共有URLを無効化</button>
+          </form>
+        {% endif %}
+        {% if share_url %}
+          <button type="button" class="aftercare-btn share-action" onclick="printShareQr()">QRコードを印刷</button>
+        {% endif %}
+        <button type="button" class="aftercare-btn" disabled aria-disabled="true">LINE共有 準備中</button>
       </div>
+      {% if share_url %}
+        <div class="aftercare-qr-card">
+          <img
+            class="aftercare-qr-image"
+            src="{% url 'staff:patient_share_token_qr' share_token.id %}"
+            alt="施術後説明レポート共有URLのQRコード"
+            width="156"
+            height="156"
+          >
+          <div class="aftercare-qr-title">このQRから今日の説明を見返せます</div>
+          <div class="aftercare-qr-text">患者さんのスマートフォンで読み取ってください。</div>
+          <div class="aftercare-qr-expiry">有効期限：{{ share_token.expires_at|date:"Y年m月d日 H:i" }}まで</div>
+        </div>
+      {% endif %}
     </section>
 
     <div class="aftercare-content">
@@ -615,4 +822,30 @@
     </footer>
   </article>
 </div>
+<script>
+  function printShareQr() {
+    document.body.classList.add('print-share-qr');
+    window.print();
+    window.setTimeout(function () {
+      document.body.classList.remove('print-share-qr');
+    }, 0);
+  }
+
+  window.addEventListener('afterprint', function () {
+    document.body.classList.remove('print-share-qr');
+  });
+
+  document.querySelector('[data-copy-share-url]')?.addEventListener('click', async function () {
+    const input = document.getElementById('patient-share-url');
+    if (!input) return;
+    try {
+      await navigator.clipboard.writeText(input.value);
+      this.textContent = 'コピーしました';
+    } catch (error) {
+      input.select();
+      document.execCommand('copy');
+      this.textContent = 'コピーしました';
+    }
+  });
+</script>
 {% endblock %}

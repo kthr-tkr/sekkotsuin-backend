@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import Clinic, ClinicSettings, SalesRecord, StaffLeave, StaffShift, TreatmentMenu
+from .models import (
+    Clinic,
+    ClinicSettings,
+    PatientShareToken,
+    SalesRecord,
+    StaffLeave,
+    StaffShift,
+    TreatmentMenu,
+)
 
 
 @admin.register(Clinic)
@@ -101,4 +109,30 @@ class StaffLeaveAdmin(admin.ModelAdmin):
         "staff__first_name",
         "reason",
         "memo",
+    )
+
+
+@admin.register(PatientShareToken)
+class PatientShareTokenAdmin(admin.ModelAdmin):
+    list_display = (
+        "clinic",
+        "patient",
+        "purpose",
+        "expires_at",
+        "is_active",
+        "access_count",
+        "last_accessed_at",
+    )
+    list_filter = ("clinic", "purpose", "is_active", "expires_at")
+    search_fields = (
+        "clinic__name",
+        "patient__last_name",
+        "patient__first_name",
+    )
+    readonly_fields = (
+        "token",
+        "created_at",
+        "updated_at",
+        "last_accessed_at",
+        "access_count",
     )
