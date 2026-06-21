@@ -330,6 +330,94 @@
     font-weight:700;
   }
 
+  .aftercare-line-panel{
+    margin-top:16px;
+    padding:16px;
+    border:1px solid #bfe3d7;
+    border-radius:18px;
+    background:#f5fcfa;
+  }
+
+  .aftercare-line-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .aftercare-line-title{
+    color:#123a5a;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .aftercare-line-badge{
+    flex:0 0 auto;
+    padding:4px 8px;
+    border-radius:999px;
+    color:#0f766e;
+    background:#dff7ef;
+    font-size:9px;
+    font-weight:950;
+  }
+
+  .aftercare-line-help{
+    margin-top:4px;
+    color:#60758a;
+    font-size:10px;
+    font-weight:700;
+    line-height:1.65;
+  }
+
+  .aftercare-line-message{
+    width:100%;
+    min-height:245px;
+    margin-top:11px;
+    padding:13px 14px;
+    resize:vertical;
+    border:1px solid #cbd8e4;
+    border-radius:13px;
+    color:#294760;
+    background:#fff;
+    font:inherit;
+    font-size:12px;
+    font-weight:700;
+    line-height:1.75;
+  }
+
+  .aftercare-line-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+  }
+
+  .aftercare-line-actions .aftercare-btn{
+    color:#174e78;
+    background:#fff;
+    border-color:#bfd1df;
+  }
+
+  .aftercare-line-future{
+    margin-top:10px;
+    color:#64748b;
+    font-size:9px;
+    font-weight:700;
+    line-height:1.65;
+  }
+
+  .aftercare-line-empty{
+    margin-top:15px;
+    padding:13px 14px;
+    border:1px dashed #cbd8e4;
+    border-radius:14px;
+    color:#60758a;
+    background:#f8fafc;
+    font-size:11px;
+    font-weight:800;
+    line-height:1.7;
+  }
+
   .aftercare-card{
     min-width:0;
     padding:20px;
@@ -519,6 +607,15 @@
     .aftercare-share-url-row{
       align-items:stretch;
       flex-direction:column;
+    }
+
+    .aftercare-line-head{
+      flex-direction:column;
+    }
+
+    .aftercare-line-message{
+      min-height:280px;
+      font-size:13px;
     }
 
     .aftercare-card.wide{
@@ -739,9 +836,35 @@
           {% if share_url %}
             <button type="button" class="aftercare-btn share-action" onclick="printShareQr()">QRコードを印刷</button>
           {% endif %}
-          <button type="button" class="aftercare-btn" disabled aria-disabled="true">LINE送信 準備中</button>
-          <div class="aftercare-line-note">次フェーズでLINE公式アカウント連携予定</div>
         </div>
+        {% if line_share_message %}
+          <section class="aftercare-line-panel" aria-labelledby="lineShareTitle">
+            <div class="aftercare-line-head">
+              <div>
+                <div id="lineShareTitle" class="aftercare-line-title">LINEで送る文面</div>
+                <div class="aftercare-line-help">この文面をコピーして、患者さんへLINEでお送りください。</div>
+              </div>
+              <span class="aftercare-line-badge">手動送信用</span>
+            </div>
+            <textarea id="line-share-message" class="aftercare-line-message" readonly>{{ line_share_message }}</textarea>
+            <div class="aftercare-line-actions">
+              <button type="button" class="aftercare-btn" data-copy-target="line-share-message">メッセージをコピー</button>
+              <button type="button" class="aftercare-btn" data-copy-target="patient-share-url">共有URLをコピー</button>
+              <button type="button" class="aftercare-btn" disabled aria-disabled="true">LINE送信 準備中</button>
+            </div>
+            <div class="aftercare-line-future">
+              LINE公式アカウント連携は次フェーズで対応予定です。Messaging APIによる自動送信と患者のLINE userId管理は未実装です。
+            </div>
+          </section>
+        {% else %}
+          <div class="aftercare-line-empty">
+            {% if not share_token %}
+              共有URLを発行するとLINE送信用文面を作成できます。
+            {% else %}
+              現在の共有URLは利用できません。共有URLを再発行するとLINE送信用文面を作成できます。
+            {% endif %}
+          </div>
+        {% endif %}
       </div>
       {% if share_url %}
         <div class="aftercare-qr-card">
@@ -898,17 +1021,28 @@
     document.body.classList.remove('print-share-qr');
   });
 
-  document.querySelector('[data-copy-share-url]')?.addEventListener('click', async function () {
-    const input = document.getElementById('patient-share-url');
+  async function copyShareText(targetId, button) {
+    const input = document.getElementById(targetId);
     if (!input) return;
     try {
       await navigator.clipboard.writeText(input.value);
-      this.textContent = 'コピーしました';
+      button.textContent = 'コピーしました';
     } catch (error) {
+      input.focus();
       input.select();
-      document.execCommand('copy');
-      this.textContent = 'コピーしました';
+      const copied = document.execCommand('copy');
+      button.textContent = copied ? 'コピーしました' : '選択しました';
     }
+  }
+
+  document.querySelector('[data-copy-share-url]')?.addEventListener('click', function () {
+    copyShareText('patient-share-url', this);
+  });
+
+  document.querySelectorAll('[data-copy-target]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      copyShareText(this.dataset.copyTarget, this);
+    });
   });
 </script>
 {% endblock %}

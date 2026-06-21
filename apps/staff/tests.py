@@ -4990,9 +4990,11 @@ class StaffPostTreatmentSummaryTests(TestCase):
 
         self.assertContains(response, "印刷する")
         self.assertContains(response, "PDFに保存")
-        self.assertContains(response, "LINE送信 準備中")
-        self.assertContains(response, "次フェーズでLINE公式アカウント連携予定")
-        self.assertContains(response, "disabled")
+        self.assertContains(
+            response,
+            "共有URLを発行するとLINE送信用文面を作成できます",
+        )
+        self.assertNotContains(response, "LINEで送る文面")
 
     def test_other_clinic_note_aftercare_report_returns_404(self):
         response = self.client.get(self._report_url(self.other_note))
@@ -5048,8 +5050,10 @@ class StaffPostTreatmentSummaryTests(TestCase):
         }
         self.session.confirmed_summary_json = summary
         self.session.save(update_fields=["confirmed_summary_json"])
+        self.client.post(self._share_create_url())
 
         response = self.client.get(self._report_url())
+        line_message = response.context["line_share_message"]
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "内部限定メモXYZ")
@@ -5063,6 +5067,12 @@ class StaffPostTreatmentSummaryTests(TestCase):
         self.assertNotContains(response, "OpenAI")
         self.assertNotContains(response, "生JSON")
         self.assertNotContains(response, "summary_json")
+        self.assertNotIn("RAW_JSON_SECRET", line_message)
+        self.assertNotIn("gpt-private-model", line_message)
+        self.assertNotIn("MODEL_TRACE_SECRET", line_message)
+        self.assertNotIn("PRIVATE_ERROR_MESSAGE", line_message)
+        self.assertNotIn("PRIVATE_TRACEBACK", line_message)
+        self.assertNotIn("OpenAI", line_message)
 
     def test_patient_detail_shows_latest_aftercare_report_link(self):
         response = self.client.get(
@@ -5154,6 +5164,64 @@ class StaffPostTreatmentSummaryTests(TestCase):
         self.assertContains(report_response, "最終アクセス：なし")
         self.assertContains(report_response, public_url)
 
+    def test_active_share_token_displays_safe_line_message(self):
+        self.client.post(self._share_create_url())
+        share_token = PatientShareToken.objects.get(clinical_note=self.note)
+        response = self.client.get(self._report_url())
+        line_message = response.context["line_share_message"]
+        share_url = "http://testserver" + reverse(
+            "patients:shared_patient_page",
+            args=[share_token.token],
+        )
+        expires_text = timezone.localtime(share_token.expires_at).strftime(
+            "%Y年%m月%d日 %H:%M"
+        )
+
+        self.assertContains(response, "LINEで送る文面")
+        self.assertContains(response, "メッセージをコピー")
+        self.assertContains(response, "共有URLをコピー")
+        self.assertContains(response, 'id="line-share-message"')
+        self.assertContains(response, 'data-copy-target="line-share-message"')
+        self.assertContains(response, "navigator.clipboard.writeText")
+        self.assertContains(response, "document.execCommand('copy')")
+        self.assertContains(response, "LINE送信 準備中")
+        self.assertContains(response, "LINE公式アカウント連携は次フェーズで対応予定")
+        self.assertContains(response, "Messaging APIによる自動送信")
+        self.assertContains(response, "患者のLINE userId管理は未実装")
+        self.assertIn(self.clinic.name, line_message)
+        self.assertIn(
+            f"{self.patient.last_name} {self.patient.first_name} 様",
+            line_message,
+        )
+        self.assertIn(share_url, line_message)
+        self.assertIn(expires_text, line_message)
+        self.assertIn("URLの共有先にはご注意ください", line_message)
+        self.assertIn("自己判断せず当院までご相談ください", line_message)
+
+        for hidden_text in (
+            "patient_id=",
+            "clinic_id=",
+            "clinical_note_id=",
+            "staff_id=",
+            "OpenAI",
+            "AI usage",
+            "生JSON",
+            "traceback",
+            "AI診断",
+            "診断しました",
+        ):
+            self.assertNotIn(hidden_text, line_message)
+
+    def test_line_message_is_hidden_before_share_url_is_issued(self):
+        response = self.client.get(self._report_url())
+
+        self.assertEqual(response.context["line_share_message"], "")
+        self.assertNotContains(response, "LINEで送る文面")
+        self.assertContains(
+            response,
+            "共有URLを発行するとLINE送信用文面を作成できます",
+        )
+
     def test_reissuing_share_url_revokes_previous_token(self):
         self.client.post(self._share_create_url())
         first_token = PatientShareToken.objects.get(clinical_note=self.note)
@@ -5174,6 +5242,14 @@ class StaffPostTreatmentSummaryTests(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertFalse(
             PatientShareToken.objects.filter(clinical_note=self.other_note).exists()
+        )
+
+        report_response = self.client.get(self._report_url(self.other_note))
+        self.assertEqual(report_response.status_code, 404)
+        self.assertNotContains(
+            report_response,
+            "LINEで送る文面",
+            status_code=404,
         )
 
     def test_user_without_clinic_cannot_issue_share_url(self):
@@ -5220,6 +5296,7 @@ class StaffPostTreatmentSummaryTests(TestCase):
         source = (
             inspect.getsource(staff_views.staff_patient_share_token_create_view)
             + inspect.getsource(staff_views.staff_patient_share_token_revoke_view)
+            + inspect.getsource(staff_views._build_line_share_message)
         )
 
         self.assertNotIn(".path", source)
@@ -5282,6 +5359,10 @@ class StaffPostTreatmentSummaryTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertContains(report_response, "無効化済み")
+        self.assertEqual(report_response.context["line_share_message"], "")
+        self.assertNotContains(report_response, "LINEで送る文面")
+        self.assertNotContains(report_response, share_token.token)
+        self.assertContains(report_response, "共有URLを再発行するとLINE送信用文面を作成できます")
         self.assertNotContains(
             report_response,
             "今日の説明をスマホで見返せます",
@@ -5298,6 +5379,10 @@ class StaffPostTreatmentSummaryTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertContains(report_response, "期限切れ")
+        self.assertEqual(report_response.context["line_share_message"], "")
+        self.assertNotContains(report_response, "LINEで送る文面")
+        self.assertNotContains(report_response, share_token.token)
+        self.assertContains(report_response, "共有URLを再発行するとLINE送信用文面を作成できます")
         self.assertNotContains(
             report_response,
             "今日の説明をスマホで見返せます",

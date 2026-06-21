@@ -8078,6 +8078,31 @@ def _format_share_remaining(expires_at, now=None):
     return f"残り{minutes}分"
 
 
+# TODO: 次フェーズでLINE公式アカウント連携を行う。
+# Messaging API送信と患者LINE userId管理は、この手動共有基盤には含めない。
+def _build_line_share_message(clinic, note, share_url, expires_at):
+    appointment_at = note.appointment.start_at
+    if timezone.is_aware(appointment_at):
+        appointment_at = timezone.localtime(appointment_at)
+    local_expires_at = expires_at
+    if timezone.is_aware(local_expires_at):
+        local_expires_at = timezone.localtime(local_expires_at)
+
+    patient_name = f"{note.patient.last_name} {note.patient.first_name}".strip()
+    return (
+        f"{patient_name} 様\n\n"
+        f"{clinic.name}です。\n"
+        "本日の施術後説明レポートをお送りします。\n\n"
+        "以下のURLから、今日の説明内容・セルフケア・"
+        "次回確認ポイントを見返せます。\n"
+        f"{share_url}\n\n"
+        f"施術日：{appointment_at:%Y年%m月%d日}\n"
+        f"有効期限：{local_expires_at:%Y年%m月%d日 %H:%M} まで\n\n"
+        "※個人情報を含むため、URLの共有先にはご注意ください。\n"
+        "※状態に不安がある場合は、自己判断せず当院までご相談ください。"
+    )
+
+
 def _patient_share_context(request, note, clinic):
     share_token = (
         PatientShareToken.objects
@@ -8105,9 +8130,16 @@ def _patient_share_context(request, note, clinic):
 
     share_url = ""
     share_remaining_label = ""
+    line_share_message = ""
     if share_token and share_token.is_available:
         share_url = _patient_share_public_url(request, share_token)
         share_remaining_label = _format_share_remaining(share_token.expires_at)
+        line_share_message = _build_line_share_message(
+            clinic,
+            note,
+            share_url,
+            share_token.expires_at,
+        )
     elif share_token and share_token.is_expired:
         share_remaining_label = "期限切れ"
     elif share_token:
@@ -8118,6 +8150,7 @@ def _patient_share_context(request, note, clinic):
         "share_status_label": status_label,
         "share_url": share_url,
         "share_remaining_label": share_remaining_label,
+        "line_share_message": line_share_message,
     }
 
 
