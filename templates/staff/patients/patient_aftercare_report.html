@@ -139,9 +139,9 @@
   }
 
   .aftercare-share-panel{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 230px;
+    align-items:start;
     gap:18px;
     padding:16px 24px;
     color:#294760;
@@ -149,8 +149,9 @@
     border-bottom:1px solid #dbe7f2;
   }
 
-  .aftercare-share-panel{
-    align-items:flex-start;
+  .aftercare-share-workspace{
+    min-width:0;
+    padding:3px 0;
   }
 
   .aftercare-share-main{
@@ -240,6 +241,7 @@
     flex:0 0 auto;
     align-items:center;
     gap:10px;
+    margin-top:13px;
   }
 
   .aftercare-share-controls .aftercare-btn{
@@ -257,6 +259,28 @@
     border-radius:18px;
     text-align:center;
     background:#fff;
+  }
+
+  .aftercare-qr-kicker{
+    color:#0f766e;
+    font-size:9px;
+    font-weight:950;
+    letter-spacing:.1em;
+  }
+
+  .aftercare-qr-clinic{
+    margin-top:2px;
+    color:#17324d;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .aftercare-qr-person{
+    margin:7px 0 5px;
+    color:#334e68;
+    font-size:10px;
+    font-weight:800;
+    line-height:1.6;
   }
 
   .aftercare-qr-image{
@@ -286,6 +310,24 @@
     color:#0f766e;
     font-size:9px;
     font-weight:900;
+  }
+
+  .aftercare-qr-caution{
+    margin-top:8px;
+    padding-top:8px;
+    color:#9a6700;
+    border-top:1px solid #f0d79b;
+    font-size:9px;
+    font-weight:800;
+    line-height:1.55;
+  }
+
+  .aftercare-line-note{
+    width:100%;
+    margin-top:2px;
+    color:#60758a;
+    font-size:10px;
+    font-weight:700;
   }
 
   .aftercare-card{
@@ -461,8 +503,7 @@
     }
 
     .aftercare-share-panel{
-      align-items:flex-start;
-      flex-direction:column;
+      grid-template-columns:1fr;
       padding:16px 20px;
     }
 
@@ -591,8 +632,7 @@
       background:#fff !important;
     }
 
-    body.print-share-qr .aftercare-share-main,
-    body.print-share-qr .aftercare-share-controls{
+    body.print-share-qr .aftercare-share-workspace{
       display:none !important;
     }
 
@@ -608,6 +648,15 @@
     body.print-share-qr .aftercare-qr-image{
       width:55mm;
       height:55mm;
+    }
+
+    body.print-share-qr .aftercare-qr-title{
+      font-size:16px;
+    }
+
+    body.print-share-qr .aftercare-qr-text,
+    body.print-share-qr .aftercare-qr-person{
+      font-size:11px;
     }
   }
 </style>
@@ -649,49 +698,59 @@
     </header>
 
     <section class="aftercare-share-panel">
-      <div class="aftercare-share-main">
-        <div class="aftercare-share-title">
-          患者向け共有URL / PDF保存案内
-          <span class="aftercare-share-status {{ share_status_key }}">{{ share_status_label }}</span>
-        </div>
-        <div class="aftercare-share-text">
-          推測困難なURLを7日間だけ発行します。PDFとして保存する場合は、印刷画面で送信先を「PDFに保存」に変更してください。
-          LINE共有は今後対応予定です。現在は共有URLのコピー、印刷またはPDF保存をご利用ください。
-        </div>
-        {% if share_url %}
-          <div class="aftercare-share-url-row">
-            <input id="patient-share-url" class="aftercare-share-url" type="text" value="{{ share_url }}" readonly aria-label="患者向け共有URL">
-            <button type="button" class="aftercare-btn share-action" data-copy-share-url>URLをコピー</button>
+      <div class="aftercare-share-workspace">
+        <div class="aftercare-share-main">
+          <div class="aftercare-share-title">
+            患者向け共有URL / PDF保存案内
+            <span class="aftercare-share-status {{ share_status_key }}">{{ share_status_label }}</span>
           </div>
-        {% endif %}
-        {% if share_token %}
-          <div class="aftercare-share-meta">
-            <span>有効期限：{{ share_token.expires_at|date:"Y年m月d日 H:i" }}</span>
-            <span>アクセス：{{ share_token.access_count }}回</span>
-            <span>最終アクセス：{{ share_token.last_accessed_at|date:"Y年m月d日 H:i"|default:"なし" }}</span>
+          <div class="aftercare-share-text">
+            推測困難なURLを7日間だけ発行します。患者さんへ渡す前に、共有状態と有効期限をご確認ください。
+            PDFとして保存する場合は、印刷画面で送信先を「PDFに保存」に変更してください。
           </div>
-        {% endif %}
-      </div>
-      <div class="aftercare-share-controls">
-        <form method="post" action="{% url 'staff:patient_share_token_create' note.id %}">
-          {% csrf_token %}
-          <button type="submit" class="aftercare-btn share-action">
-            {% if share_token %}共有URLを再発行{% else %}共有URLを発行{% endif %}
-          </button>
-        </form>
-        {% if share_token and share_token.is_active %}
-          <form method="post" action="{% url 'staff:patient_share_token_revoke' note.id share_token.id %}">
+          {% if share_url %}
+            <div class="aftercare-share-url-row">
+              <input id="patient-share-url" class="aftercare-share-url" type="text" value="{{ share_url }}" readonly aria-label="患者向け共有URL">
+              <button type="button" class="aftercare-btn share-action" data-copy-share-url>URLをコピー</button>
+            </div>
+          {% endif %}
+          {% if share_token %}
+            <div class="aftercare-share-meta">
+              <span>有効期限：{{ share_token.expires_at|date:"Y年m月d日 H:i" }}</span>
+              {% if share_remaining_label %}<span>{{ share_remaining_label }}</span>{% endif %}
+              <span>アクセス回数：{{ share_token.access_count }}回</span>
+              <span>最終アクセス：{{ share_token.last_accessed_at|date:"Y年m月d日 H:i"|default:"なし" }}</span>
+            </div>
+          {% endif %}
+        </div>
+        <div class="aftercare-share-controls">
+          <form method="post" action="{% url 'staff:patient_share_token_create' note.id %}">
             {% csrf_token %}
-            <button type="submit" class="aftercare-btn share-revoke">共有URLを無効化</button>
+            <button type="submit" class="aftercare-btn share-action">
+              {% if share_token %}共有URLを再発行{% else %}共有URLを発行{% endif %}
+            </button>
           </form>
-        {% endif %}
-        {% if share_url %}
-          <button type="button" class="aftercare-btn share-action" onclick="printShareQr()">QRコードを印刷</button>
-        {% endif %}
-        <button type="button" class="aftercare-btn" disabled aria-disabled="true">LINE共有 準備中</button>
+          {% if share_token and share_token.is_active %}
+            <form method="post" action="{% url 'staff:patient_share_token_revoke' note.id share_token.id %}">
+              {% csrf_token %}
+              <button type="submit" class="aftercare-btn share-revoke">共有URLを無効化</button>
+            </form>
+          {% endif %}
+          {% if share_url %}
+            <button type="button" class="aftercare-btn share-action" onclick="printShareQr()">QRコードを印刷</button>
+          {% endif %}
+          <button type="button" class="aftercare-btn" disabled aria-disabled="true">LINE送信 準備中</button>
+          <div class="aftercare-line-note">次フェーズでLINE公式アカウント連携予定</div>
+        </div>
       </div>
       {% if share_url %}
         <div class="aftercare-qr-card">
+          <div class="aftercare-qr-kicker">AFTERCARE REPORT</div>
+          <div class="aftercare-qr-clinic">{{ clinic.name }}</div>
+          <div class="aftercare-qr-person">
+            {{ patient.last_name }} {{ patient.first_name }} 様<br>
+            施術日：{{ appointment.start_at|date:"Y年m月d日" }}
+          </div>
           <img
             class="aftercare-qr-image"
             src="{% url 'staff:patient_share_token_qr' share_token.id %}"
@@ -699,9 +758,13 @@
             width="156"
             height="156"
           >
-          <div class="aftercare-qr-title">このQRから今日の説明を見返せます</div>
-          <div class="aftercare-qr-text">患者さんのスマートフォンで読み取ってください。</div>
+          <div class="aftercare-qr-title">今日の説明をスマホで見返せます</div>
+          <div class="aftercare-qr-text">
+            カメラでQRコードを読み取ってください。<br>
+            ご本人またはご家族への共有にご利用ください。
+          </div>
           <div class="aftercare-qr-expiry">有効期限：{{ share_token.expires_at|date:"Y年m月d日 H:i" }}まで</div>
+          <div class="aftercare-qr-caution">個人情報を含むため、共有先にはご注意ください。</div>
         </div>
       {% endif %}
     </section>

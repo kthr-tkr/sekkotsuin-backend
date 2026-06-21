@@ -1462,7 +1462,7 @@
           {% if a.has_intake %}
             <a class="btn" href="{% url 'staff:intake_detail' a.intake.id %}">問診を確認</a>
           {% else %}
-            <a class="btn" href="{% url 'staff:intake' %}?q={% if a.patient %}{{ a.patient.phone }}{% endif %}">問診一覧へ</a>
+            <span class="btn disabled" aria-disabled="true">問診未提出</span>
           {% endif %}
 
           {% if a.patient %}

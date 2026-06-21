@@ -9,7 +9,8 @@
   <style>
     :root{color-scheme:light;--navy:#17324d;--blue:#2874a6;--green:#16806f;--line:#dbe7f2;--soft:#f5f9fd}
     *{box-sizing:border-box}
-    body{margin:0;color:var(--navy);background:#edf4f8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic UI","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;line-height:1.75}
+    html{-webkit-text-size-adjust:100%}
+    body{margin:0;color:var(--navy);background:#edf4f8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic UI","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;font-size:15px;line-height:1.8}
     .page{max-width:900px;margin:28px auto;padding:0 16px}
     .sheet{overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#fff;box-shadow:0 20px 60px rgba(15,23,42,.09)}
     .hero{padding:28px 32px;color:#fff;background:linear-gradient(135deg,#0b1b33,#174e78 58%,#14806e)}
@@ -23,23 +24,25 @@
     .meta-label{color:rgba(255,255,255,.65);font-size:10px;font-weight:800;letter-spacing:.08em}
     .meta-value{margin-top:3px;font-size:15px;font-weight:900}
     .content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:22px;background:linear-gradient(180deg,#f8fbfe,#fff 44%)}
-    .card{min-width:0;padding:19px;border:1px solid var(--line);border-radius:18px;background:#fff;break-inside:avoid}
+    .card{min-width:0;padding:21px;border:1px solid var(--line);border-radius:18px;background:#fff;break-inside:avoid}
     .card.wide{grid-column:1/-1}
     .card.summary{border-color:#b9e5dc;background:linear-gradient(135deg,#effbf8,#f4faff)}
     .card.caution{border-color:#f0d79b;background:#fffaf0}
+    .card.self-care{border-color:#b9e5dc;background:#f5fcfa}
+    .card.next-check{border-color:#c6dcef;background:#f6faff}
     .heading{display:flex;align-items:center;gap:10px;margin:0;color:#102a43;font-size:17px}
     .number{display:grid;width:32px;height:32px;flex:none;place-items:center;border-radius:10px;color:#0f766e;background:#e8faf5;font-size:10px;font-weight:900}
     .summary-text{margin-top:14px;color:#24475c;font-size:15px;font-weight:700}
     ul{display:grid;gap:9px;margin:14px 0 0;padding:0;list-style:none}
-    li{position:relative;padding:10px 11px 10px 29px;border-radius:12px;color:#334e68;background:#f7fafc;font-size:13px}
+    li{position:relative;padding:11px 12px 11px 31px;border-radius:12px;color:#334e68;background:#f7fafc;font-size:14px;line-height:1.75}
     li::before{content:"";position:absolute;top:17px;left:13px;width:6px;height:6px;border-radius:50%;background:#38a997}
     .next{margin:0 22px 22px;padding:17px 19px;border:1px solid #cbdced;border-radius:18px;background:var(--soft);break-inside:avoid}
     .next-label{color:var(--blue);font-size:10px;font-weight:900;letter-spacing:.08em}
     .next-value{margin-top:5px;font-weight:900}
     .next-note{margin-top:4px;color:#64748b;font-size:12px}
-    footer{padding:18px 23px;color:#52677d;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px}
-    .expiry{margin-top:8px;color:#718096;font-size:10px}
-    @media(max-width:680px){.page{margin:0;padding:0}.sheet{border:0;border-radius:0;box-shadow:none}.hero{padding:24px 20px}.hero-top{flex-direction:column}.content{grid-template-columns:1fr;padding:15px}.card.wide{grid-column:auto}.next{margin:0 15px 15px}}
+    footer{padding:19px 23px;color:#52677d;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:12px}
+    .expiry{margin-top:8px;color:#718096;font-size:11px}
+    @media(max-width:680px){.page{margin:0;padding:0}.sheet{border:0;border-radius:0;box-shadow:none}.hero{padding:24px 19px}.hero-top{flex-direction:column;gap:16px}h1{font-size:25px}.lead{font-size:14px;line-height:1.8}.print-button{width:100%}.meta{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}.meta-item{min-width:0}.content{grid-template-columns:1fr;gap:13px;padding:16px}.card{padding:18px}.card.wide{grid-column:auto}.heading{font-size:17px}.summary-text{font-size:15px;line-height:1.85}li{font-size:14px}.next{margin:0 16px 16px;padding:18px}}
     @page{size:A4 portrait;margin:10mm}
     @media print{body{background:#fff}.page{max-width:none;margin:0;padding:0}.sheet{border:0;border-radius:0;box-shadow:none}.print-button{display:none}.hero{padding:20px 22px;color:#102a43;background:#eaf5f5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.clinic{color:#0f766e}.lead,.meta-label{color:#52677d}.meta{border-top-color:#bdd7dc}.content{gap:9px;padding:14px}.card{padding:14px}.next{margin:0 14px 12px}}
   </style>
@@ -68,8 +71,8 @@
         <section class="card"><h2 class="heading"><span class="number">02</span>本日の施術内容</h2><ul>{% for item in patient_report.treatment_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
         <section class="card"><h2 class="heading"><span class="number">03</span>今日確認した身体の状態</h2><ul>{% for item in patient_report.body_condition_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
         <section class="card"><h2 class="heading"><span class="number">04</span>ご自宅で気をつけること</h2><ul>{% for item in patient_report.home_attention_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
-        <section class="card"><h2 class="heading"><span class="number">05</span>セルフケア</h2><ul>{% for item in patient_report.home_care_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
-        <section class="card"><h2 class="heading"><span class="number">06</span>次回確認すること</h2><ul>{% for item in patient_report.next_check_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
+        <section class="card self-care"><h2 class="heading"><span class="number">05</span>セルフケア</h2><ul>{% for item in patient_report.home_care_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
+        <section class="card next-check"><h2 class="heading"><span class="number">06</span>次回確認すること</h2><ul>{% for item in patient_report.next_check_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
         <section class="card caution"><h2 class="heading"><span class="number">07</span>注意事項</h2><ul>{% for item in patient_report.caution_items %}<li>{{ item }}</li>{% endfor %}</ul></section>
       </div>
 

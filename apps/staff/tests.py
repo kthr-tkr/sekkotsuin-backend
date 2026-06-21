@@ -63,6 +63,7 @@ class MajorWorkflowCopyTests(SimpleTestCase):
         "templates/staff/patients/post_treatment_summary.html",
         "templates/staff/patients/patient_aftercare_report.html",
         "templates/patients/shared_aftercare_report.html",
+        "templates/patients/shared_page_unavailable.html",
     )
 
     def _template_text(self):
@@ -111,7 +112,6 @@ class MajorWorkflowCopyTests(SimpleTestCase):
 
         for expected in (
             "ホーム",
-            "問診",
             "予約管理",
             "患者様一覧",
             "担当者一覧",
@@ -132,6 +132,13 @@ class MajorWorkflowCopyTests(SimpleTestCase):
         self.assertIn("overflow-y:auto", source)
         self.assertIn("min-height:0", source)
         self.assertIn("flex-shrink:0", source)
+        self.assertNotIn("{% url 'staff:intake' %}", source)
+        self.assertNotIn('<span class="label-text">問診</span>', source)
+
+        legacy_source = (
+            Path(settings.BASE_DIR) / "templates/staff/base.html"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn('<span class="dot"></span> 問診', legacy_source)
 
 
 class ProductionReadinessSmokeTests(TestCase):
@@ -384,6 +391,7 @@ class ProductionReadinessSmokeTests(TestCase):
     def _major_urls(self):
         return {
             "dashboard": reverse("staff:dashboard"),
+            "appointments": reverse("staff:appointments"),
             "ai_usage_dashboard": reverse("staff:ai_usage_dashboard"),
             "clinic_settings": reverse("staff:clinic_settings"),
             "kpi_dashboard": reverse("staff:kpi_dashboard"),
@@ -416,6 +424,10 @@ class ProductionReadinessSmokeTests(TestCase):
             "patient_aftercare_report": reverse(
                 "staff:patient_aftercare_report",
                 args=[self.note.id],
+            ),
+            "intake_detail": reverse(
+                "staff:intake_detail",
+                args=[self.intake.id],
             ),
             "interview_recording_detail": reverse(
                 "intakes:recording_detail",
@@ -489,6 +501,30 @@ class ProductionReadinessSmokeTests(TestCase):
         self.assertContains(report_response, "印刷する")
         self.assertContains(report_response, "PDF保存案内")
 
+    def test_legacy_intake_list_redirects_to_appointments_with_guidance(self):
+        response = self.client.get(reverse("staff:intake"))
+
+        self.assertRedirects(response, reverse("staff:appointments"))
+
+        followed_response = self.client.get(reverse("staff:intake"), follow=True)
+        self.assertEqual(followed_response.status_code, 200)
+        self.assertContains(
+            followed_response,
+            "問診は予約または患者詳細から作成してください。",
+        )
+
+    def test_intake_detail_keeps_initial_recording_route(self):
+        response = self.client.get(
+            reverse("staff:intake_detail", args=[self.intake.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "初診録音を開始")
+        self.assertContains(
+            response,
+            reverse("intakes:recording_new", args=[self.appointment.id]),
+        )
+
     def test_other_clinic_major_object_pages_return_404(self):
         urls = {
             "patient_detail": reverse(
@@ -510,6 +546,10 @@ class ProductionReadinessSmokeTests(TestCase):
             "patient_aftercare_report": reverse(
                 "staff:patient_aftercare_report",
                 args=[self.other_note.id],
+            ),
+            "intake_detail": reverse(
+                "staff:intake_detail",
+                args=[self.other_intake.id],
             ),
             "interview_recording_detail": reverse(
                 "intakes:recording_detail",
@@ -541,6 +581,9 @@ class ProductionReadinessSmokeTests(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, 403)
 
+        intake_list_response = self.client.get(reverse("staff:intake"))
+        self.assertEqual(intake_list_response.status_code, 403)
+
     def test_major_render_views_do_not_use_filefield_path(self):
         views = (
             staff_views.staff_dashboard_view,
@@ -549,6 +592,8 @@ class ProductionReadinessSmokeTests(TestCase):
             staff_views.staff_clinical_note_detail_view,
             staff_views.staff_post_treatment_summary_view,
             staff_views.staff_patient_aftercare_report_view,
+            staff_views.staff_intake_list_view,
+            staff_views.staff_intake_detail_view,
             intake_views.recording_detail,
             treatment_session_views.treatment_session_detail_view,
             treatment_session_views.treatment_session_confirm_view,
@@ -4945,8 +4990,8 @@ class StaffPostTreatmentSummaryTests(TestCase):
 
         self.assertContains(response, "印刷する")
         self.assertContains(response, "PDFに保存")
-        self.assertContains(response, "LINE共有 準備中")
-        self.assertContains(response, "LINE共有は今後対応予定です")
+        self.assertContains(response, "LINE送信 準備中")
+        self.assertContains(response, "次フェーズでLINE公式アカウント連携予定")
         self.assertContains(response, "disabled")
 
     def test_other_clinic_note_aftercare_report_returns_404(self):
@@ -5104,6 +5149,9 @@ class StaffPostTreatmentSummaryTests(TestCase):
         )
         self.assertContains(report_response, "患者向け共有URL")
         self.assertContains(report_response, "有効")
+        self.assertContains(report_response, "残り7日")
+        self.assertContains(report_response, "アクセス回数：0回")
+        self.assertContains(report_response, "最終アクセス：なし")
         self.assertContains(report_response, public_url)
 
     def test_reissuing_share_url_revokes_previous_token(self):
@@ -5186,6 +5234,8 @@ class StaffPostTreatmentSummaryTests(TestCase):
         self.assertEqual(response["Content-Type"], "image/png")
         self.assertTrue(response.content.startswith(b"\x89PNG\r\n\x1a\n"))
         self.assertIn("no-store", response["Cache-Control"])
+        self.assertEqual(response["Referrer-Policy"], "no-referrer")
+        self.assertIn("noindex", response["X-Robots-Tag"])
         self.assertEqual(response["X-Content-Type-Options"], "nosniff")
 
     def test_qr_contains_only_public_share_url_as_payload(self):
@@ -5231,9 +5281,10 @@ class StaffPostTreatmentSummaryTests(TestCase):
         report_response = self.client.get(self._report_url())
 
         self.assertEqual(response.status_code, 404)
+        self.assertContains(report_response, "無効化済み")
         self.assertNotContains(
             report_response,
-            "このQRから今日の説明を見返せます",
+            "今日の説明をスマホで見返せます",
         )
 
     def test_expired_share_token_qr_returns_404(self):
@@ -5246,9 +5297,10 @@ class StaffPostTreatmentSummaryTests(TestCase):
         report_response = self.client.get(self._report_url())
 
         self.assertEqual(response.status_code, 404)
+        self.assertContains(report_response, "期限切れ")
         self.assertNotContains(
             report_response,
-            "このQRから今日の説明を見返せます",
+            "今日の説明をスマホで見返せます",
         )
 
     def test_user_without_clinic_cannot_open_share_token_qr(self):
@@ -5263,13 +5315,25 @@ class StaffPostTreatmentSummaryTests(TestCase):
     def test_qr_is_displayed_only_after_share_url_is_issued(self):
         unissued_response = self.client.get(self._report_url())
 
-        self.assertNotContains(unissued_response, "このQRから今日の説明を見返せます")
+        self.assertNotContains(unissued_response, "今日の説明をスマホで見返せます")
 
         self.client.post(self._share_create_url())
         share_token = PatientShareToken.objects.get(clinical_note=self.note)
         issued_response = self.client.get(self._report_url())
 
-        self.assertContains(issued_response, "このQRから今日の説明を見返せます")
+        self.assertContains(issued_response, "今日の説明をスマホで見返せます")
+        self.assertContains(issued_response, "カメラでQRコードを読み取ってください")
+        self.assertContains(issued_response, "ご本人またはご家族への共有にご利用ください")
+        self.assertContains(issued_response, "個人情報を含むため、共有先にはご注意ください")
+        self.assertContains(issued_response, self.clinic.name)
+        self.assertContains(
+            issued_response,
+            f"{self.patient.last_name} {self.patient.first_name} 様",
+        )
+        self.assertContains(
+            issued_response,
+            timezone.localtime(self.appointment.start_at).strftime("%Y年%m月%d日"),
+        )
         self.assertContains(issued_response, "QRコードを印刷")
         self.assertContains(issued_response, self._share_qr_url(share_token))
 

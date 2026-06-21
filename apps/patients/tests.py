@@ -430,6 +430,33 @@ class SharedAftercareReportTests(TestCase):
 
         self.assertEqual(missing_response.status_code, 404)
         self.assertEqual(invalid_response.status_code, 404)
+        self.assertTemplateUsed(
+            invalid_response,
+            "patients/shared_page_unavailable.html",
+        )
+        self.assertContains(
+            invalid_response,
+            "ページを表示できません",
+            status_code=404,
+        )
+        self.assertContains(
+            invalid_response,
+            "URLの有効期限が切れているか、現在利用できません",
+            status_code=404,
+        )
+        self.assertNotContains(
+            invalid_response,
+            "このtokenは期限切れです",
+            status_code=404,
+        )
+        self.assertNotContains(
+            invalid_response,
+            "この患者のレポートは存在します",
+            status_code=404,
+        )
+        self.assertIn("no-store", invalid_response["Cache-Control"])
+        self.assertEqual(invalid_response["Referrer-Policy"], "no-referrer")
+        self.assertIn("noindex", invalid_response["X-Robots-Tag"])
 
     def test_expired_token_does_not_display_report(self):
         self.share_token.expires_at = timezone.now() - timedelta(seconds=1)
@@ -438,6 +465,11 @@ class SharedAftercareReportTests(TestCase):
         response = self.client.get(self._shared_url())
 
         self.assertEqual(response.status_code, 404)
+        self.assertContains(
+            response,
+            "ページを表示できません",
+            status_code=404,
+        )
 
     def test_revoked_token_does_not_display_report(self):
         self.share_token.is_active = False
@@ -446,6 +478,11 @@ class SharedAftercareReportTests(TestCase):
         response = self.client.get(self._shared_url())
 
         self.assertEqual(response.status_code, 404)
+        self.assertContains(
+            response,
+            "ページを表示できません",
+            status_code=404,
+        )
 
     def test_access_updates_count_and_last_accessed_at(self):
         self.client.get(self._shared_url())

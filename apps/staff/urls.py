@@ -30,7 +30,7 @@ urlpatterns = [
     path("appointments/", staff_appointments_view, name="appointments"),
     path("appointments/<int:pk>/status/", staff_appointment_status_update_view, name="appointment_status"),
 
-    # 問診
+    # 旧問診一覧は予約管理へ案内し、予約に紐づく問診詳細は維持する。
     path("intake/", staff_intake_list_view, name="intake"),
     path("intake/<int:pk>/", staff_intake_detail_view, name="intake_detail"),
     

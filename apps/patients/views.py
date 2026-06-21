@@ -1554,22 +1554,46 @@ def patient_link_account_view(request):
     })
 
 
+def _apply_shared_page_security_headers(response):
+    response["Cache-Control"] = "private, no-store, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["Referrer-Policy"] = "no-referrer"
+    response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+def _shared_page_unavailable_response(request):
+    return _apply_shared_page_security_headers(
+        render(
+            request,
+            "patients/shared_page_unavailable.html",
+            status=404,
+        )
+    )
+
+
 def shared_patient_page_view(request, token):
     now = timezone.now()
     with transaction.atomic():
-        share_token = get_object_or_404(
+        share_token = (
             PatientShareToken.objects.select_for_update(of=("self",)).select_related(
                 "clinic",
                 "patient",
                 "appointment",
                 "clinical_note",
                 "clinical_note__appointment",
-            ),
-            token=token,
-            purpose=PatientShareToken.Purpose.AFTERCARE_REPORT,
-            is_active=True,
-            expires_at__gt=now,
+            )
+            .filter(
+                token=token,
+                purpose=PatientShareToken.Purpose.AFTERCARE_REPORT,
+                is_active=True,
+                expires_at__gt=now,
+            )
+            .first()
         )
+        if share_token is None:
+            return _shared_page_unavailable_response(request)
         note = share_token.clinical_note
         if (
             note is None
@@ -1581,7 +1605,7 @@ def shared_patient_page_view(request, token):
                 and share_token.appointment_id != note.appointment_id
             )
         ):
-            raise Http404("共有ページを確認できません。")
+            return _shared_page_unavailable_response(request)
 
         share_token.access_count += 1
         share_token.last_accessed_at = now
@@ -1606,8 +1630,4 @@ def shared_patient_page_view(request, token):
             **report_context,
         },
     )
-    response["Cache-Control"] = "private, no-store, max-age=0"
-    response["Pragma"] = "no-cache"
-    response["Referrer-Policy"] = "no-referrer"
-    response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
-    return response
+    return _apply_shared_page_security_headers(response)

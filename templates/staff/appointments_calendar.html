@@ -10,6 +10,24 @@
     gap:22px;
   }
 
+  .appt-notice{
+    padding:13px 16px;
+    border:1px solid #bfdbfe;
+    border-radius:16px;
+    color:#1e4f86;
+    background:#eff6ff;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.65;
+  }
+
+  .appt-notice.warning,
+  .appt-notice.error{
+    color:#8a5a00;
+    border-color:#f5d79a;
+    background:#fff8e6;
+  }
+
   .topbar{
     display:flex;
     justify-content:space-between;
@@ -2585,6 +2603,10 @@
 
 {% block content %}
 <div class="appt-page">
+
+  {% for message in messages %}
+    <div class="appt-notice {{ message.tags }}" role="status">{{ message }}</div>
+  {% endfor %}
 
   <header class="topbar">
     <div class="page-head">

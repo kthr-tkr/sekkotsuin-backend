@@ -6064,35 +6064,11 @@ def staff_intake_list_view(request):
     if clinic is None or request.user.clinic_id != clinic.id:
         return HttpResponseForbidden("所属院の問診のみ閲覧できます。")
 
-    today = timezone.localdate()
-    q = (request.GET.get("q", "") or "").strip()
-
-    appts = (
-        Appointment.objects
-        .select_related("patient", "assigned_staff")
-        .filter(clinic=clinic, start_at__date=today)
-        .order_by("start_at")
+    messages.info(
+        request,
+        "問診は予約または患者詳細から作成してください。",
     )
-
-    if q:
-        appts = appts.filter(
-            Q(patient__last_name__icontains=q) |
-            Q(patient__first_name__icontains=q) |
-            Q(patient__phone__icontains=q) |
-            Q(menu__icontains=q)
-        )
-
-    done = appts.filter(intake__isnull=False).count()
-    not_done = appts.filter(intake__isnull=True).count()
-
-    return render(request, "staff/intake_list.html", {
-        "active": "intake",
-        "page_title": "問診",
-        "today": today,
-        "appointments": appts,
-        "stats": {"done": done, "not_done": not_done, "total": appts.count()},
-        "filter_q": q,
-    })
+    return redirect("staff:appointments")
 
 
 @staff_required
@@ -6165,7 +6141,7 @@ def staff_intake_detail_view(request, pk):
     medical_rows = [row for row in medical_rows if row["value"] != "-"]
 
     return render(request, "staff/intake_detail.html", {
-        "active": "intake",
+        "active": "appointments",
         "page_title": "問診詳細",
         "intake": intake,
         "payload": payload,
@@ -6197,8 +6173,11 @@ def staff_interview_view(request, appointment_id: int):
 
     intake = getattr(appt, "intake", None)
     if intake is None:
-        messages.warning(request, "この予約は問診が未提出です。先に問診の確認/入力をお願いします。")
-        return redirect("staff:intake")
+        messages.warning(
+            request,
+            "この予約は問診が未提出です。問診は予約または患者詳細から作成してください。",
+        )
+        return redirect("staff:appointments")
 
     visit = (
         Visit.objects
@@ -8083,6 +8062,22 @@ def _render_qr_png(value):
     return output.getvalue()
 
 
+def _format_share_remaining(expires_at, now=None):
+    if not expires_at:
+        return ""
+    remaining_seconds = int((expires_at - (now or timezone.now())).total_seconds())
+    if remaining_seconds <= 0:
+        return "期限切れ"
+    if remaining_seconds >= 86400:
+        days = (remaining_seconds + 86399) // 86400
+        return f"残り{days}日"
+    if remaining_seconds >= 3600:
+        hours = (remaining_seconds + 3599) // 3600
+        return f"残り{hours}時間"
+    minutes = max(1, (remaining_seconds + 59) // 60)
+    return f"残り{minutes}分"
+
+
 def _patient_share_context(request, note, clinic):
     share_token = (
         PatientShareToken.objects
@@ -8100,7 +8095,7 @@ def _patient_share_context(request, note, clinic):
         status_label = "未発行"
     elif not share_token.is_active:
         status_key = "revoked"
-        status_label = "無効"
+        status_label = "無効化済み"
     elif share_token.is_expired:
         status_key = "expired"
         status_label = "期限切れ"
@@ -8109,13 +8104,20 @@ def _patient_share_context(request, note, clinic):
         status_label = "有効"
 
     share_url = ""
+    share_remaining_label = ""
     if share_token and share_token.is_available:
         share_url = _patient_share_public_url(request, share_token)
+        share_remaining_label = _format_share_remaining(share_token.expires_at)
+    elif share_token and share_token.is_expired:
+        share_remaining_label = "期限切れ"
+    elif share_token:
+        share_remaining_label = "利用できません"
     return {
         "share_token": share_token,
         "share_status_key": status_key,
         "share_status_label": status_label,
         "share_url": share_url,
+        "share_remaining_label": share_remaining_label,
     }
 
 
@@ -8184,6 +8186,7 @@ def staff_patient_aftercare_report_view(request, note_id):
             "active": "patient_search",
             "page_title": "患者向け施術後説明レポート",
             "note": note,
+            "clinic": clinic,
             "patient": note.patient,
             "appointment": note.appointment,
             **report_context,
@@ -8314,6 +8317,8 @@ def staff_patient_share_token_qr_view(request, share_id):
     response["Content-Disposition"] = 'inline; filename="aftercare-report-qr.png"'
     response["Cache-Control"] = "private, no-store, max-age=0"
     response["Pragma"] = "no-cache"
+    response["Referrer-Policy"] = "no-referrer"
+    response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
     response["X-Content-Type-Options"] = "nosniff"
     return response
 
