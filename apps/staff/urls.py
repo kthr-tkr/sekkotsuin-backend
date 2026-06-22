@@ -8,15 +8,13 @@ from .views import (
     staff_intake_list_view,
     staff_intake_detail_view,
 )
-from django.contrib.auth.views import LogoutView
-
 from . import views
 
 app_name = "staff"
 
 urlpatterns = [
     path("login/", staff_login_view, name="login"),
-    path("logout/", LogoutView.as_view(), name="logout"),
+    path("logout/", views.staff_logout_view, name="logout"),
 
     path("dashboard/", staff_dashboard_view, name="dashboard"),
     path("kpi/", views.staff_kpi_dashboard_view, name="kpi_dashboard"),
@@ -146,6 +144,11 @@ urlpatterns = [
     ),
     path("shifts/", views.staff_shift_month_view, name="staff_shift_month"),
     path("shifts/new/", views.staff_shift_create_view, name="staff_shift_create"),
+    path(
+        "shifts/generate/",
+        views.staff_shift_generate_month_view,
+        name="staff_shift_generate_month",
+    ),
     path(
         "shifts/<int:shift_id>/edit/",
         views.staff_shift_update_view,

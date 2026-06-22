@@ -79,9 +79,9 @@
           <h2 class="login-title">スタッフログイン</h2>
           <p class="login-desc">職員IDとパスワードを入力してください。</p>
 
-          {% if messages %}
-            <div class="messages">
-              {% for m in messages %}
+          {% if login_messages %}
+            <div class="messages" data-login-messages>
+              {% for m in login_messages %}
                 <div class="msg">{{ m }}</div>
               {% endfor %}
             </div>

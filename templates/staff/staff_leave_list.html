@@ -1,4 +1,5 @@
 {% extends "staff/_layout.html" %}
+{% load staff_display %}
 {% block title %}CareFrow | 休暇・有給管理{% endblock %}
 
 {% block extra_head %}
@@ -23,7 +24,7 @@
     <div>
       <div class="leave-eyebrow">STAFF LEAVE</div>
       <h1 class="leave-title">休暇・有給管理</h1>
-      <p class="leave-lead">スタッフの有給、半休、欠勤、研修などを院単位で管理します。シフト管理と予約担当者制御につなげる土台です。</p>
+      <p class="leave-lead">休暇・有給の予定を管理できます。</p>
     </div>
     <div class="leave-actions">
       <a class="leave-btn soft" href="{{ shift_month_url }}">シフト管理へ</a>
@@ -45,7 +46,7 @@
         <option value="">全スタッフ</option>
         {% for staff_user in staff_options %}
           <option value="{{ staff_user.id }}" {% if filters.staff == staff_user.id|stringformat:"s" %}selected{% endif %}>
-            {{ staff_user.get_full_name|default:staff_user.username }}{% if not staff_user.is_active %}（無効）{% endif %}
+            {{ staff_user|staff_display_name }}{% if not staff_user.is_active %}（無効）{% endif %}
           </option>
         {% endfor %}
       </select>

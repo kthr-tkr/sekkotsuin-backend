@@ -1,4 +1,5 @@
 {% extends "staff/_layout.html" %}
+{% load staff_display %}
 {% block content %}
 <style>
   .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
@@ -23,7 +24,7 @@
     <div class="meta">
       予約：{{ appointment.start_at|date:"Y/m/d H:i" }} - {{ appointment.end_at|date:"H:i" }}
       / メニュー：{{ appointment.menu }}
-      / 施術者：{% if appointment.assigned_staff %}{{ appointment.assigned_staff.username }}{% else %}未割当{% endif %}
+      / 施術者：{% if appointment.assigned_staff %}{{ appointment.assigned_staff|staff_display_name }}{% else %}未割当{% endif %}
     </div>
   </div>
   <a class="btn" href="{% url 'staff:appointments' %}">← 予約管理へ</a>

@@ -12,7 +12,7 @@
   .topbar{
     display:flex;
     justify-content:space-between;
-    align-items:flex-start;
+    align-items:center;
     gap:24px;
   }
 
@@ -47,7 +47,7 @@
 
   .page-title{
     margin:0;
-    font-size:48px;
+    font-size:30px;
     line-height:1.05;
     letter-spacing:-0.05em;
     font-weight:900;
@@ -382,16 +382,6 @@
     </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-inner">
-      <div class="hero-kicker">Staff Registration</div>
-      <h2 class="hero-title">新しい担当者をワークスペースへ追加。</h2>
-      <p class="hero-sub">
-        スタッフの基本情報とログイン情報を登録し、診療オペレーションに参加できる状態を作成します。
-      </p>
-    </div>
-  </section>
-
   <section class="form-card">
     <div class="form-head">
       <h3 class="form-title">アカウント情報</h3>
@@ -421,12 +411,6 @@
         </div>
 
         <div class="field">
-          <label for="{{ form.username.id_for_label }}">ユーザー名</label>
-          {{ form.username }}
-          {{ form.username.errors }}
-        </div>
-
-        <div class="field">
           <label for="{{ form.email.id_for_label }}">メールアドレス</label>
           {{ form.email }}
           {{ form.email.errors }}
@@ -451,6 +435,8 @@
           {{ form.role.errors }}
         </div>
       </div>
+
+      <div class="help">ログイン用の内部IDはメールアドレスまたは氏名から自動生成されます。</div>
 
       <div class="actions">
         <a href="{% url 'staff:staff_list' %}" class="btn">キャンセル</a>

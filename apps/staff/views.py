@@ -2,6 +2,7 @@
 import json
 import re
 from calendar import monthrange
+from collections import Counter, defaultdict
 from datetime import date, datetime, time, timedelta
 from io import BytesIO
 
@@ -23,6 +24,7 @@ from django.db.models import (
     OuterRef,
     Subquery,
     Count,
+    Min,
     Sum,
 )
 from django.db.models.functions import TruncDate
@@ -51,6 +53,7 @@ from apps.intakes.models import Intake, InterviewRecording
 from apps.patients.models import Patient
 from apps.staff.decorators import staff_required
 from apps.staff.forms import ClinicalNoteEditForm
+from apps.staff.utils import get_staff_display_name
 from apps.treatment_plans.models import TreatmentPlan
 from apps.treatment_sessions.models import TreatmentSession
 from apps.visits.models import Visit
@@ -1238,30 +1241,46 @@ def staff_login_view(request):
     if request.user.is_authenticated:
         return redirect("staff:dashboard")
 
+    queued_messages = list(messages.get_messages(request))
+    safe_messages = (
+        [
+            item for item in queued_messages
+            if "login-safe" in str(
+                getattr(item, "extra_tags", "") or ""
+            ).split()
+        ][:2]
+        if request.method == "GET" else []
+    )
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "").strip()
 
         user = authenticate(request, username=username, password=password)
         if user is None:
-            messages.error(request, "IDまたはパスワードが正しくありません。")
-            return render(request, "staff/login.html")
+            return render(request, "staff/login.html", {
+                "login_messages": ["IDまたはパスワードが正しくありません。"],
+            })
 
         clinic = getattr(user, "clinic", None)
         if not _is_staff_user(user, clinic):
-            messages.error(request, "スタッフ用アカウントではありません。")
-            return render(request, "staff/login.html")
+            return render(request, "staff/login.html", {
+                "login_messages": ["スタッフ用アカウントではありません。"],
+            })
 
         login(request, user)
         return redirect("staff:dashboard")
 
-    return render(request, "staff/login.html")
+    return render(request, "staff/login.html", {
+        "login_messages": safe_messages,
+    })
 
 
 @require_POST
 def staff_logout_view(request):
+    list(messages.get_messages(request))
     logout(request)
-    return redirect("/")
+    messages.info(request, "ログアウトしました。", extra_tags="login-safe")
+    return redirect("staff:login")
 
 
 def build_dashboard_today_tasks(clinic, today, today_appointments):
@@ -1972,14 +1991,21 @@ def staff_list(request):
 
     staff_cards = []
     for user in users:
-        full_name = user.get_full_name().strip() or user.username
+        registered_name = " ".join(
+            part.strip()
+            for part in (user.last_name or "", user.first_name or "")
+            if part.strip()
+        )
+        display_name = get_staff_display_name(user)
+        full_name = registered_name or "氏名未登録"
         sales = month_sales.get(user.id, {"count": 0, "total": 0})
         show_in_assignment = user.is_active and user.role in staff_roles
         staff_cards.append({
             "id": user.id,
             "full_name": full_name,
-            "display_name": full_name,
-            "username": user.username,
+            "display_name": display_name,
+            "has_registered_name": bool(registered_name),
+            "fallback_identifier": "" if registered_name else display_name,
             "email": user.email,
             "is_superuser": user.is_superuser,
             "is_staff": user.is_staff,
@@ -2796,7 +2822,7 @@ def _build_staff_availability_rows(clinic, base_day, clinic_settings=None):
 
         rows.append({
             "staff_id": user.id,
-            "staff_name": user.get_full_name().strip() or user.username,
+            "staff_name": get_staff_display_name(user),
             "shift_label": shift_label,
             "work_time_label": work_time_label,
             "break_time_label": break_time_label,
@@ -2826,8 +2852,9 @@ def _build_staff_availability_rows(clinic, base_day, clinic_settings=None):
 
 def _staff_shift_initial(clinic, request):
     clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
+    shift_date = parse_date(request.GET.get("date") or "") or timezone.localdate()
     initial = {
-        "date": timezone.localdate(),
+        "date": shift_date,
         "status": StaffShift.Status.WORKING,
         "start_time": time(9, 0),
         "end_time": time(18, 0),
@@ -2842,9 +2869,18 @@ def _staff_shift_initial(clinic, request):
             "break_end": clinic_settings.break_end_time,
         })
 
-    shift_date = parse_date(request.GET.get("date") or "")
-    if shift_date:
-        initial["date"] = shift_date
+    if (
+        clinic_settings
+        and _closed_weekday_key(shift_date)
+        in set(clinic_settings.closed_weekdays or [])
+    ):
+        initial.update({
+            "status": StaffShift.Status.OFF,
+            "start_time": None,
+            "end_time": None,
+            "break_start": None,
+            "break_end": None,
+        })
 
     staff_id = request.GET.get("staff")
     if staff_id:
@@ -2944,10 +2980,7 @@ def staff_shift_month_view(request):
 
     rows = []
     for staff_user in staff_qs:
-        full_name = (
-            f"{staff_user.last_name} {staff_user.first_name}".strip()
-            or staff_user.username
-        )
+        full_name = get_staff_display_name(staff_user)
         cells = []
         for day in month_days:
             shift = shift_map.get((staff_user.id, day))
@@ -3028,6 +3061,92 @@ def staff_shift_create_view(request):
         "form": form,
         "is_edit": False,
     })
+
+
+@staff_required
+@require_POST
+def staff_shift_generate_month_view(request):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のシフトのみ作成できます。")
+
+    today = timezone.localdate()
+    try:
+        year = int(request.POST.get("year") or today.year)
+        month = int(request.POST.get("month") or today.month)
+        if not 1 <= month <= 12:
+            raise ValueError
+        month_start = date(year, month, 1)
+    except (TypeError, ValueError):
+        messages.error(request, "対象年月を確認してください。")
+        return redirect("staff:staff_shift_month")
+
+    month_end = date(year, month, monthrange(year, month)[1])
+    clinic_settings = ClinicSettings.objects.filter(clinic=clinic).first()
+    closed_weekdays = set(
+        clinic_settings.closed_weekdays or []
+        if clinic_settings else []
+    )
+    work_start = (
+        clinic_settings.business_start_time
+        if clinic_settings else time(9, 0)
+    )
+    work_end = (
+        clinic_settings.business_end_time
+        if clinic_settings else time(18, 0)
+    )
+    break_start = (
+        clinic_settings.break_start_time
+        if clinic_settings else time(13, 0)
+    )
+    break_end = (
+        clinic_settings.break_end_time
+        if clinic_settings else time(14, 0)
+    )
+    staff_users = list(
+        User.objects.filter(
+            clinic=clinic,
+            is_active=True,
+            role__in=_shift_staff_roles(),
+        ).only("id", "clinic_id")
+    )
+
+    created_count = 0
+    with transaction.atomic():
+        current_day = month_start
+        while current_day <= month_end:
+            is_closed = _closed_weekday_key(current_day) in closed_weekdays
+            defaults = {
+                "status": (
+                    StaffShift.Status.OFF
+                    if is_closed else StaffShift.Status.WORKING
+                ),
+                "start_time": None if is_closed else work_start,
+                "end_time": None if is_closed else work_end,
+                "break_start": None if is_closed else break_start,
+                "break_end": None if is_closed else break_end,
+            }
+            for staff_user in staff_users:
+                _, created = StaffShift.objects.get_or_create(
+                    clinic=clinic,
+                    staff=staff_user,
+                    date=current_day,
+                    defaults=defaults,
+                )
+                created_count += int(created)
+            current_day += timedelta(days=1)
+
+    messages.success(
+        request,
+        f"{year}年{month}月の未作成シフトを{created_count}件作成しました。",
+    )
+    return redirect(
+        reverse("staff:staff_shift_month") + f"?year={year}&month={month}"
+    )
 
 
 @staff_required
@@ -3122,7 +3241,7 @@ def staff_leave_list_view(request):
         leave.time_label = _format_leave_time(leave)
         leave.staff_name = (
             f"{leave.staff.last_name} {leave.staff.first_name}".strip()
-            or leave.staff.username
+            or get_staff_display_name(leave.staff)
         )
         leave.edit_url = reverse("staff:staff_leave_update", args=[leave.id])
         leave_items.append(leave)
@@ -3746,6 +3865,234 @@ def _build_staff_sales_kpi_context(clinic, today, seven_days_ago):
     }
 
 
+PATIENT_TREND_BODY_KEYWORDS = {
+    "腰": ("腰", "腰痛", "ぎっくり腰"),
+    "膝": ("膝", "ひざ"),
+    "肩": ("肩", "肩こり"),
+    "首": ("首", "頸"),
+    "足・足首": ("足首", "かかと", "踵", "足"),
+    "肘": ("肘", "ひじ"),
+    "手首・前腕": ("手首", "前腕", "腱鞘炎"),
+    "背中": ("背中", "背部"),
+}
+PATIENT_TREND_AGE_LABELS = (
+    "10代未満",
+    "10代",
+    "20代",
+    "30代",
+    "40代",
+    "50代",
+    "60代",
+    "70代以上",
+    "不明",
+)
+
+
+def _flatten_patient_trend_text(value):
+    if value in (None, "", [], {}):
+        return ""
+    if isinstance(value, dict):
+        return " ".join(_flatten_patient_trend_text(item) for item in value.values())
+    if isinstance(value, (list, tuple, set)):
+        return " ".join(_flatten_patient_trend_text(item) for item in value)
+    return str(value)
+
+
+def _patient_age_group(birth_date, today):
+    if not birth_date:
+        return "不明"
+    age = today.year - birth_date.year - (
+        (today.month, today.day) < (birth_date.month, birth_date.day)
+    )
+    if age < 10:
+        return "10代未満"
+    if age >= 70:
+        return "70代以上"
+    return f"{age // 10 * 10}代"
+
+
+def _classify_patient_complaints(text):
+    normalized = str(text or "").lower()
+    matches = [
+        label
+        for label, keywords in PATIENT_TREND_BODY_KEYWORDS.items()
+        if any(keyword.lower() in normalized for keyword in keywords)
+    ]
+    return matches or (["その他"] if normalized.strip() else [])
+
+
+def _month_start_offset(base_month, offset):
+    year = base_month.year
+    month = base_month.month + offset
+    while month < 1:
+        year -= 1
+        month += 12
+    while month > 12:
+        year += 1
+        month -= 12
+    return date(year, month, 1)
+
+
+def build_patient_trend_context(clinic, *, today=None):
+    today = today or timezone.localdate()
+    patients = list(
+        Patient.objects.filter(clinic=clinic).only("id", "birth_date")
+    )
+    patient_ids = [patient.id for patient in patients]
+    patient_texts = defaultdict(list)
+    intake_visit_types = {}
+
+    intakes = list(
+        Intake.objects.filter(clinic=clinic, patient_id__in=patient_ids)
+        .only("patient_id", "appointment_id", "chief_complaint", "payload")
+    )
+    for intake in intakes:
+        patient_texts[intake.patient_id].extend([
+            intake.chief_complaint or "",
+            _flatten_patient_trend_text(intake.payload),
+        ])
+        if intake.appointment_id and isinstance(intake.payload, dict):
+            intake_visit_types[intake.appointment_id] = str(
+                intake.payload.get("visit_type") or ""
+            )
+
+    for plan in TreatmentPlan.objects.filter(
+        patient__clinic=clinic,
+        patient_id__in=patient_ids,
+    ).only("patient_id", "chief_complaint"):
+        patient_texts[plan.patient_id].append(plan.chief_complaint or "")
+
+    for note in ClinicalNote.objects.filter(
+        patient__clinic=clinic,
+        appointment__clinic=clinic,
+        patient_id__in=patient_ids,
+    ).only("patient_id", "extract_json", "soap_json"):
+        patient_texts[note.patient_id].extend([
+            _flatten_patient_trend_text(note.extract_json),
+            _flatten_patient_trend_text(note.soap_json),
+        ])
+
+    age_counts = Counter()
+    complaint_counts = Counter()
+    age_complaints = defaultdict(Counter)
+    background_counts = Counter()
+    patient_age_groups = {}
+    background_keywords = {
+        "スポーツ由来": (
+            "スポーツ", "バスケット", "サッカー", "野球", "投球",
+            "テニス", "バドミントン", "ゴルフ", "ランニング", "ダンス",
+        ),
+        "仕事由来": (
+            "仕事", "デスクワーク", "立ち仕事", "重量物", "運搬", "就労",
+        ),
+        "日常生活由来": (
+            "家事", "育児", "睡眠", "歩行", "日常生活", "階段", "起床",
+        ),
+    }
+
+    for patient in patients:
+        age_group = _patient_age_group(patient.birth_date, today)
+        patient_age_groups[patient.id] = age_group
+        age_counts[age_group] += 1
+        text = " ".join(patient_texts.get(patient.id, []))
+        complaints = _classify_patient_complaints(text)
+        for complaint in set(complaints):
+            complaint_counts[complaint] += 1
+            age_complaints[age_group][complaint] += 1
+        lowered = text.lower()
+        for label, keywords in background_keywords.items():
+            if any(keyword.lower() in lowered for keyword in keywords):
+                background_counts[label] += 1
+
+    first_appointment_map = {
+        row["patient_id"]: row["first_at"]
+        for row in (
+            Appointment.objects.filter(clinic=clinic, patient_id__isnull=False)
+            .exclude(status=Appointment.Status.CANCELLED)
+            .values("patient_id")
+            .annotate(first_at=Min("start_at"))
+        )
+    }
+    first_month = _month_start_offset(today.replace(day=1), -5)
+    appointments = list(
+        Appointment.objects.filter(
+            clinic=clinic,
+            patient_id__isnull=False,
+            start_at__date__gte=first_month,
+            start_at__date__lte=today,
+        )
+        .exclude(status=Appointment.Status.CANCELLED)
+        .only("id", "patient_id", "start_at", "menu")
+    )
+
+    def visit_bucket(appointment):
+        visit_type = intake_visit_types.get(appointment.id, "")
+        first_at = first_appointment_map.get(appointment.patient_id)
+        if (
+            "初診" in str(appointment.menu or "")
+            or (first_at and appointment.start_at == first_at)
+        ):
+            return "初診"
+        if visit_type == "new_issue" or "再" in str(appointment.menu or ""):
+            return "再来"
+        return "通院"
+
+    current_month = today.replace(day=1)
+    visit_counts = Counter(
+        visit_bucket(appointment)
+        for appointment in appointments
+        if timezone.localtime(appointment.start_at).date() >= current_month
+    )
+    monthly_visit_map = defaultdict(Counter)
+    for appointment in appointments:
+        local_date = timezone.localtime(appointment.start_at).date()
+        month_key = local_date.replace(day=1)
+        monthly_visit_map[month_key][visit_bucket(appointment)] += 1
+
+    age_rows = []
+    for label in PATIENT_TREND_AGE_LABELS:
+        top_items = [
+            {"label": item_label, "count": count}
+            for item_label, count in age_complaints[label].most_common(3)
+        ]
+        age_rows.append({
+            "label": label,
+            "count": age_counts[label],
+            "top_complaints": top_items,
+        })
+
+    complaint_ranking = [
+        {"label": label, "count": count}
+        for label, count in complaint_counts.most_common(8)
+    ]
+    return {
+        "visit_types": [
+            {"label": label, "count": visit_counts[label]}
+            for label in ("初診", "通院", "再来")
+        ],
+        "complaint_ranking": complaint_ranking,
+        "age_groups": age_rows,
+        "background_trends": [
+            {"label": label, "count": background_counts[label]}
+            for label in ("スポーツ由来", "仕事由来", "日常生活由来")
+        ],
+        "monthly_visits": [
+            {
+                "month": month_key,
+                "initial": monthly_visit_map[month_key]["初診"],
+                "continuing": monthly_visit_map[month_key]["通院"],
+                "returning": monthly_visit_map[month_key]["再来"],
+            }
+            for month_key in (
+                _month_start_offset(current_month, offset)
+                for offset in range(-5, 1)
+            )
+        ],
+        "patient_count": len(patients),
+        "has_complaint_data": bool(complaint_ranking),
+    }
+
+
 def build_staff_kpi_context(clinic):
     today = timezone.localdate()
     seven_days_ago = today - timedelta(days=6)
@@ -3755,6 +4102,7 @@ def build_staff_kpi_context(clinic):
         today,
         seven_days_ago,
     )
+    patient_trends = build_patient_trend_context(clinic, today=today)
 
     today_appointments = Appointment.objects.filter(
         clinic=clinic,
@@ -4003,6 +4351,7 @@ def build_staff_kpi_context(clinic):
             ].count(),
             "unpaid_sales": sales_context["sales_summary"]["unpaid_count"],
         },
+        "patient_trends": patient_trends,
         **sales_context,
     }
 
@@ -4598,7 +4947,7 @@ def staff_treatment_menu_toggle_view(request, menu_id):
     return redirect("staff:treatment_menu_list")
 
 
-def _own_object_or_none(model, clinic, pk, **extra_filters):
+def _own_object_or_none(model, current_clinic, pk, **extra_filters):
     if not pk:
         return None
     try:
@@ -4991,7 +5340,7 @@ def _build_calendar_events(appointments):
                 "menu": a.menu or "-",
                 "menuValue": a.menu or "",
                 "assignedStaffId": a.assigned_staff_id or "",
-                "staffName": a.assigned_staff.username if a.assigned_staff else "未割当",
+                "staffName": get_staff_display_name(a.assigned_staff) if a.assigned_staff else "未割当",
                 "statusLabel": a.get_status_display(),
                 "intakeState": intake_state,
                 "intakeCompleted": summary["intake_completed"],
@@ -5115,7 +5464,7 @@ def _build_day_timeline_rows(
     staff_map = {}
 
     for user in staff_users:
-        staff_name = user.get_full_name().strip() or user.username
+        staff_name = get_staff_display_name(user)
         staff_map[str(user.id)] = {
             "staff_id": user.id,
             "staff_name": staff_name,
@@ -5160,7 +5509,7 @@ def _build_day_timeline_rows(
         if row_key not in staff_map:
             staff_map[row_key] = {
                 "staff_id": a.assigned_staff_id,
-                "staff_name": a.assigned_staff.username if a.assigned_staff else "未割当",
+                "staff_name": get_staff_display_name(a.assigned_staff) if a.assigned_staff else "未割当",
                 "appointments": [],
             }
 
@@ -5443,7 +5792,7 @@ def build_staff_appointment_timeline(clinic, target_date, clinic_settings=None):
 
             cells.append(cell)
 
-        staff_name = staff.get_full_name().strip() or staff.username
+        staff_name = get_staff_display_name(staff)
         rows.append({
             "staff_id": staff.id,
             "staff_name": staff_name,
@@ -5568,8 +5917,7 @@ def _appointment_slot_staff_queryset(clinic):
 
 
 def _appointment_staff_display_name(staff_user):
-    full_name = staff_user.get_full_name().strip()
-    return full_name or staff_user.username
+    return get_staff_display_name(staff_user)
 
 
 def build_appointment_available_slots(
@@ -6535,8 +6883,7 @@ def build_patient_timeline(patient, clinic):
         assigned_name = ""
         if appointment.assigned_staff:
             assigned_name = (
-                appointment.assigned_staff.get_full_name()
-                or appointment.assigned_staff.username
+                get_staff_display_name(appointment.assigned_staff)
             )
         description = appointment.menu or "予約"
         if assigned_name:

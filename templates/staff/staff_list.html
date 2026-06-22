@@ -4,7 +4,7 @@
 {% block extra_head %}
 <style>
   .staff-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
-  .staff-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:28px;border-radius:28px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 24px 56px rgba(20,48,91,.2)}
+  .staff-hero{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 20px;border-radius:20px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 14px 32px rgba(20,48,91,.14)}
   .staff-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.staff-title{margin:8px 0 10px;font-size:34px;letter-spacing:-.04em}.staff-lead{margin:0;color:#e2edff;line-height:1.7}
   .staff-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.staff-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.staff-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.staff-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}.staff-btn.danger{border-color:#f3c4c4;background:#fff6f6;color:#b42323}
   .staff-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.staff-stat{padding:18px;border:1px solid #e1e8f1;border-radius:20px;background:#fff;box-shadow:0 12px 30px rgba(20,42,76,.06)}.staff-stat small{display:block;color:#71839b;font-weight:800}.staff-stat strong{display:block;margin-top:7px;font-size:26px;color:#17345f}
@@ -26,7 +26,7 @@
     <div>
       <div class="staff-eyebrow">STAFF MANAGEMENT</div>
       <h1 class="staff-title">スタッフ一覧・担当者管理</h1>
-      <p class="staff-lead">院内スタッフの権限、稼働状態、担当売上を一覧で確認します。シフト管理・休暇管理の土台になる画面です。</p>
+      <p class="staff-lead">スタッフ情報と権限を管理できます。</p>
     </div>
     <div class="staff-actions">
       <a class="staff-btn soft" href="{% url 'staff:dashboard' %}">ダッシュボードへ</a>
@@ -58,7 +58,13 @@
               <div class="avatar">{{ s.full_name|slice:":1" }}</div>
               <div>
                 <h2 class="staff-name">{{ s.full_name }}</h2>
-                <div class="staff-meta">@{{ s.username }} / {{ s.email|default:"メール未設定" }}</div>
+                <div class="staff-meta">
+                  {% if s.has_registered_name %}
+                    {{ s.email|default:"連絡先メール未設定" }}
+                  {% else %}
+                    氏名を登録してください{% if s.fallback_identifier %} / {{ s.fallback_identifier }}{% endif %}
+                  {% endif %}
+                </div>
               </div>
             </div>
             <span class="status-pill {{ s.status_class }}">{{ s.status_label }}</span>

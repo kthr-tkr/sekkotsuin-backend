@@ -1,4 +1,5 @@
 {% extends "staff/_layout.html" %}
+{% load staff_display %}
 {% load static %}
 {% block title %}Medical AI | Appointment Manager{% endblock %}
 
@@ -8,24 +9,6 @@
     display:flex;
     flex-direction:column;
     gap:22px;
-  }
-
-  .appt-notice{
-    padding:13px 16px;
-    border:1px solid #bfdbfe;
-    border-radius:16px;
-    color:#1e4f86;
-    background:#eff6ff;
-    font-size:13px;
-    font-weight:800;
-    line-height:1.65;
-  }
-
-  .appt-notice.warning,
-  .appt-notice.error{
-    color:#8a5a00;
-    border-color:#f5d79a;
-    background:#fff8e6;
   }
 
   .topbar{
@@ -2604,10 +2587,6 @@
 {% block content %}
 <div class="appt-page">
 
-  {% for message in messages %}
-    <div class="appt-notice {{ message.tags }}" role="status">{{ message }}</div>
-  {% endfor %}
-
   <header class="topbar">
     <div class="page-head">
       <div class="eyebrow">Premium Appointment Manager</div>
@@ -2628,7 +2607,7 @@
   <section class="compact-hero">
     <div class="compact-hero-main">
       <div class="compact-kicker">Appointment Control</div>
-      <div class="compact-title">予約状況を確認・管理</div>
+      <div class="compact-title">予約・担当者・空き枠を確認できます。</div>
     </div>
 
     <div class="compact-metrics">
@@ -2758,7 +2737,7 @@
             <option value="">全員</option>
             {% for u in staff_users %}
               <option value="{{ u.id }}" {% if filter_staff|add:'' == u.id|add:'' %}selected{% endif %}>
-                {{ u.get_full_name|default:u.username }}{% if u.appointment_staff_note %}（{{ u.appointment_staff_note }}）{% endif %}
+                {{ u|staff_display_name }}{% if u.appointment_staff_note %}（{{ u.appointment_staff_note }}）{% endif %}
               </option>
             {% endfor %}
           </select>
@@ -3186,7 +3165,7 @@
           <option value="">担当者を選択してください</option>
           {% for staff in appointment_form_staff %}
             <option value="{{ staff.id }}">
-              {% if staff.get_full_name %}{{ staff.get_full_name }}{% else %}{{ staff.username }}{% endif %}
+              {{ staff|staff_display_name }}
             </option>
           {% endfor %}
         </select>

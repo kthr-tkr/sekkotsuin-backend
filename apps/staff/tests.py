@@ -5,8 +5,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.test import SimpleTestCase, TestCase
+from django.contrib.messages.storage.base import Message
+from django.template.loader import render_to_string
+from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -1110,6 +1113,72 @@ class StaffKpiDashboardTests(TestCase):
         self.assertContains(response, reverse("staff:sales_record_list"))
         self.assertContains(response, reverse("staff:sales_record_create"))
 
+    def test_kpi_patient_trends_are_clinic_scoped_and_grouped(self):
+        Intake.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            chief_complaint="デスクワーク後の腰痛",
+            payload={"job": "デスクワーク", "visit_type": "followup"},
+        )
+        young_patient = Patient.objects.create(
+            clinic=self.clinic,
+            card_no="KPI-A-002",
+            last_name="傾向",
+            first_name="集計",
+            last_name_kana="ケイコウ",
+            first_name_kana="シュウケイ",
+            birth_date=date(timezone.localdate().year - 25, 1, 1),
+            phone="09000000083",
+        )
+        Intake.objects.create(
+            clinic=self.clinic,
+            patient=young_patient,
+            chief_complaint="サッカー時の膝の違和感",
+            payload={"sport": "サッカー"},
+        )
+        Intake.objects.create(
+            clinic=self.other_clinic,
+            patient=self.other_patient,
+            chief_complaint="OTHER肩相談",
+            payload={"sport": "野球"},
+        )
+
+        response = self.client.get(self._url())
+        trends = response.context["patient_trends"]
+        complaints = {
+            row["label"]: row["count"]
+            for row in trends["complaint_ranking"]
+        }
+        ages = {row["label"]: row["count"] for row in trends["age_groups"]}
+
+        self.assertContains(response, "患者傾向分析")
+        self.assertContains(response, "痛み・相談内容ランキング")
+        self.assertEqual(complaints["腰"], 1)
+        self.assertEqual(complaints["膝"], 1)
+        self.assertNotIn("肩", complaints)
+        self.assertEqual(ages["20代"], 1)
+        self.assertEqual(ages["30代"], 1)
+        self.assertContains(response, "スポーツ由来")
+        self.assertNotContains(response, "OTHER肩相談")
+
+    def test_kpi_patient_trends_handle_unknown_age_and_empty_data(self):
+        self.assertEqual(
+            staff_views._patient_age_group(None, timezone.localdate()),
+            "不明",
+        )
+        empty_clinic = Clinic.objects.create(name="傾向データなし院")
+        trends = staff_views.build_patient_trend_context(empty_clinic)
+
+        self.assertEqual(trends["patient_count"], 0)
+        self.assertFalse(trends["has_complaint_data"])
+
+    def test_kpi_template_avoids_diagnostic_ranking_wording(self):
+        template = Path("templates/staff/kpi_dashboard.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("診断ランキング", template)
+        self.assertNotIn("疾患ランキング", template)
+
     def test_user_without_clinic_cannot_open_kpi(self):
         self.client.force_login(self.no_clinic_user)
 
@@ -1120,6 +1189,7 @@ class StaffKpiDashboardTests(TestCase):
     def test_kpi_builder_does_not_use_file_path(self):
         source = (
             inspect.getsource(staff_views.build_staff_kpi_context)
+            + inspect.getsource(staff_views.build_patient_trend_context)
             + inspect.getsource(staff_views.staff_kpi_dashboard_view)
         )
 
@@ -1735,7 +1805,6 @@ class StaffMemberManagementTests(TestCase):
         data = {
             "last_name": "新規",
             "first_name": "担当",
-            "username": "new-member",
             "email": "new-member@example.com",
             "password1": "StrongPass123!",
             "password2": "StrongPass123!",
@@ -1773,8 +1842,9 @@ class StaffMemberManagementTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "staff/staff_list.html")
         self.assertContains(response, "スタッフ一覧・担当者管理")
-        self.assertContains(response, "member-practitioner")
-        self.assertContains(response, "member-inactive")
+        self.assertContains(response, "担当 花子")
+        self.assertContains(response, "退職 一郎")
+        self.assertNotContains(response, "member-practitioner")
         self.assertNotContains(response, "member-other")
 
     def test_user_without_clinic_cannot_open_staff_member_list(self):
@@ -1791,10 +1861,28 @@ class StaffMemberManagementTests(TestCase):
         )
 
         self.assertRedirects(response, self._list_url())
-        created = self.User.objects.get(username="new-member")
+        created = self.User.objects.get(email="new-member@example.com")
+        self.assertEqual(created.username, "new-member@example.com")
         self.assertEqual(created.clinic, self.clinic)
         self.assertEqual(created.role, self.User.Role.PRACTITIONER)
         self.assertFalse(created.is_staff)
+
+    def test_new_staff_internal_username_is_safely_uniquified(self):
+        first = self.client.post(self._create_url(), self._valid_create_data())
+        second = self.client.post(
+            self._create_url(),
+            self._valid_create_data(last_name="別", first_name="担当"),
+        )
+
+        self.assertEqual(first.status_code, 302)
+        self.assertEqual(second.status_code, 302)
+        usernames = list(
+            self.User.objects.filter(email="new-member@example.com")
+            .order_by("id")
+            .values_list("username", flat=True)
+        )
+        self.assertEqual(len(usernames), 2)
+        self.assertEqual(len(set(usernames)), 2)
 
     def test_staff_create_template_uses_role_field(self):
         response = self.client.get(self._create_url())
@@ -1809,9 +1897,11 @@ class StaffMemberManagementTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "staff/staff_member_form.html")
         self.assertContains(response, "スタッフ編集")
-        self.assertContains(response, "member-practitioner")
+        self.assertContains(response, "担当")
+        self.assertNotContains(response, "member-practitioner")
 
     def test_staff_member_can_be_updated(self):
+        original_username = self.staff_user.username
         response = self.client.post(
             self._update_url(self.staff_user),
             self._valid_edit_data(),
@@ -1824,6 +1914,15 @@ class StaffMemberManagementTests(TestCase):
         self.assertEqual(self.staff_user.email, "updated-practitioner@example.com")
         self.assertEqual(self.staff_user.role, self.User.Role.RECEPTION)
         self.assertFalse(self.staff_user.is_staff)
+        self.assertEqual(self.staff_user.username, original_username)
+
+    def test_staff_names_are_used_in_appointment_and_sales_views(self):
+        appointment_response = self.client.get(reverse("staff:appointments"))
+        sales_response = self.client.get(reverse("staff:sales_record_create"))
+
+        self.assertContains(appointment_response, "担当 花子")
+        self.assertContains(sales_response, "担当 花子")
+        self.assertNotContains(sales_response, ">member-practitioner<")
 
     def test_other_clinic_staff_edit_returns_404(self):
         response = self.client.get(self._update_url(self.other_staff))
@@ -1864,7 +1963,7 @@ class StaffMemberManagementTests(TestCase):
 
         response = self.client.get(self._list_url())
 
-        self.assertContains(response, "member-inactive")
+        self.assertContains(response, "退職 一郎")
         self.assertContains(response, "無効")
         self.assertContains(response, "¥12,000")
 
@@ -1877,6 +1976,97 @@ class StaffMemberManagementTests(TestCase):
         )
 
         self.assertNotIn(".path", source)
+
+
+class StaffMessageUxTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.clinic = Clinic.objects.create(name="通知テスト院")
+        self.user = user_model.objects.create_user(
+            username="message-admin",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.ADMIN,
+        )
+        self.member = user_model.objects.create_user(
+            username="message-member",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PRACTITIONER,
+            last_name="通知",
+            first_name="担当",
+        )
+
+    def _remove_auth_without_flushing_messages(self):
+        session = self.client.session
+        for key in ("_auth_user_id", "_auth_user_backend", "_auth_user_hash"):
+            session.pop(key, None)
+        session.save()
+
+    def test_staff_layout_renders_success_and_warning_as_toasts(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("staff:staff_member_toggle", args=[self.member.id]),
+            follow=True,
+        )
+        self.assertContains(response, "staff-toast-container")
+        self.assertContains(response, "スタッフを無効化しました。")
+
+        request = RequestFactory().get("/staff/staff/")
+        request.user = self.user
+        html = render_to_string(
+            "staff/_layout.html",
+            {"messages": [Message(messages.WARNING, "入力内容を確認してください。")]},
+            request=request,
+        )
+        self.assertIn("staff-toast warning", html)
+        self.assertIn("data-toast-close", html)
+
+    def test_login_get_discards_management_messages(self):
+        self.client.force_login(self.user)
+        self.client.post(
+            reverse("staff:staff_member_toggle", args=[self.member.id])
+        )
+        self._remove_auth_without_flushing_messages()
+
+        response = self.client.get(reverse("staff:login"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "スタッフを無効化しました。")
+        self.assertNotContains(response, "data-login-messages")
+
+    def test_failed_login_shows_only_login_error(self):
+        self.client.force_login(self.user)
+        self.client.post(
+            reverse("staff:staff_member_toggle", args=[self.member.id])
+        )
+        self._remove_auth_without_flushing_messages()
+
+        response = self.client.post(
+            reverse("staff:login"),
+            {"username": "missing", "password": "wrong"},
+        )
+
+        self.assertContains(response, "IDまたはパスワードが正しくありません。")
+        self.assertNotContains(response, "スタッフを無効化しました。")
+        self.assertContains(response, "data-login-messages")
+
+    def test_logout_clears_management_messages(self):
+        self.client.force_login(self.user)
+        self.client.post(
+            reverse("staff:staff_member_toggle", args=[self.member.id])
+        )
+
+        response = self.client.post(reverse("staff:logout"), follow=True)
+
+        self.assertContains(response, "ログアウトしました。")
+        self.assertNotContains(response, "スタッフを無効化しました。")
+
+    def test_layout_has_fixed_toast_container_not_content_alert_stack(self):
+        source = Path("templates/staff/_layout.html").read_text(encoding="utf-8")
+        self.assertIn("staff-toast-container", source)
+        self.assertIn("position:fixed", source)
+        self.assertNotIn('<div class="messages">', source)
 
 
 class StaffShiftManagementTests(TestCase):
@@ -1955,6 +2145,9 @@ class StaffShiftManagementTests(TestCase):
 
     def _update_url(self, shift):
         return reverse("staff:staff_shift_update", args=[shift.id])
+
+    def _generate_url(self):
+        return reverse("staff:staff_shift_generate_month")
 
     def _valid_data(self, **overrides):
         data = {
@@ -2104,6 +2297,73 @@ class StaffShiftManagementTests(TestCase):
         self.assertEqual(form.initial["break_end"], time(15, 0))
         self.assertEqual(form.initial["staff"], self.staff_user)
 
+    def test_closed_weekday_uses_off_initial_values(self):
+        clinic_settings = ClinicSettings.objects.get(clinic=self.clinic)
+        clinic_settings.closed_weekdays = ["tue"]
+        clinic_settings.save(update_fields=["closed_weekdays"])
+
+        response = self.client.get(
+            self._create_url() + "?date=2026-06-16"
+        )
+        form = response.context["form"]
+
+        self.assertEqual(form.initial["status"], StaffShift.Status.OFF)
+        self.assertIsNone(form.initial["start_time"])
+        self.assertIsNone(form.initial["end_time"])
+
+    def test_generate_month_uses_clinic_settings_and_preserves_existing(self):
+        clinic_settings = ClinicSettings.objects.get(clinic=self.clinic)
+        clinic_settings.closed_weekdays = ["sun"]
+        clinic_settings.save(update_fields=["closed_weekdays"])
+        existing = StaffShift.objects.create(
+            clinic=self.clinic,
+            staff=self.staff_user,
+            date=date(2026, 6, 1),
+            status=StaffShift.Status.HALF_DAY,
+            start_time=time(10, 0),
+            end_time=time(14, 0),
+        )
+
+        response = self.client.post(
+            self._generate_url(),
+            {"year": "2026", "month": "6"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        existing.refresh_from_db()
+        self.assertEqual(existing.status, StaffShift.Status.HALF_DAY)
+        business_day = StaffShift.objects.get(
+            clinic=self.clinic,
+            staff=self.staff_user,
+            date=date(2026, 6, 2),
+        )
+        closed_day = StaffShift.objects.get(
+            clinic=self.clinic,
+            staff=self.staff_user,
+            date=date(2026, 6, 7),
+        )
+        self.assertEqual(business_day.status, StaffShift.Status.WORKING)
+        self.assertEqual(business_day.start_time, time(10, 0))
+        self.assertEqual(business_day.end_time, time(19, 0))
+        self.assertEqual(closed_day.status, StaffShift.Status.OFF)
+        self.assertIsNone(closed_day.start_time)
+        self.assertFalse(
+            StaffShift.objects.filter(
+                clinic=self.other_clinic,
+                staff=self.other_staff,
+            ).exclude(pk=self.other_shift.pk).exists()
+        )
+
+    def test_generate_month_requires_post_and_clinic(self):
+        self.assertEqual(self.client.get(self._generate_url()).status_code, 405)
+
+        self.client.force_login(self.no_clinic_user)
+        response = self.client.post(
+            self._generate_url(),
+            {"year": "2026", "month": "6"},
+        )
+        self.assertEqual(response.status_code, 403)
+
     def test_inactive_staff_with_existing_shift_is_displayed_and_editable(self):
         shift = StaffShift.objects.create(
             clinic=self.clinic,
@@ -2126,6 +2386,7 @@ class StaffShiftManagementTests(TestCase):
             inspect.getsource(staff_views.staff_shift_month_view)
             + inspect.getsource(staff_views.staff_shift_create_view)
             + inspect.getsource(staff_views.staff_shift_update_view)
+            + inspect.getsource(staff_views.staff_shift_generate_month_view)
         )
 
         self.assertNotIn(".path", source)

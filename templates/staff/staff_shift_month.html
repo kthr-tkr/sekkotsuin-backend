@@ -1,10 +1,11 @@
 {% extends "staff/_layout.html" %}
+{% load staff_display %}
 {% block title %}CareFrow | スタッフシフト管理{% endblock %}
 
 {% block extra_head %}
 <style>
   .shift-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
-  .shift-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;padding:28px;border-radius:28px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 24px 56px rgba(20,48,91,.2)}
+  .shift-hero{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 20px;border-radius:20px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 14px 32px rgba(20,48,91,.14)}
   .shift-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.shift-title{margin:8px 0 10px;font-size:32px;letter-spacing:-.04em}.shift-lead{margin:0;color:#e2edff;line-height:1.7}
   .shift-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.shift-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.shift-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.shift-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}
   .shift-toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 18px;border:1px solid #e1e8f1;border-radius:20px;background:#fff;box-shadow:0 12px 30px rgba(20,42,76,.06)}.month-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.month-label{font-size:22px;font-weight:950;color:#17345f}.filter-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.filter-form select{min-height:40px;padding:0 12px;border:1px solid #ccd7e5;border-radius:12px;background:#fbfcfe;color:#1b304d;font-weight:800}
@@ -25,7 +26,7 @@
     <div>
       <div class="shift-eyebrow">STAFF SHIFT</div>
       <h1 class="shift-title">スタッフシフト管理</h1>
-      <p class="shift-lead">院ごとの勤務予定、休み、半休、研修を日別に管理します。予約枠・担当者割当・休暇管理へつなげる土台です。</p>
+      <p class="shift-lead">スタッフの勤務予定を管理できます。</p>
     </div>
     <div class="shift-actions">
       <a class="shift-btn soft" href="{% url 'staff:staff_leave_list' %}">休暇管理へ</a>
@@ -48,7 +49,7 @@
         <option value="">全スタッフ</option>
         {% for staff_user in staff_options %}
           <option value="{{ staff_user.id }}" {% if selected_staff and selected_staff.id == staff_user.id %}selected{% endif %}>
-            {{ staff_user.get_full_name|default:staff_user.username }}{% if not staff_user.is_active %}（無効）{% endif %}
+            {{ staff_user|staff_display_name }}{% if not staff_user.is_active %}（無効）{% endif %}
           </option>
         {% endfor %}
       </select>
@@ -57,7 +58,13 @@
   </section>
 
   <div class="shift-note">
-    新規シフトは院設定の営業時間・休憩時間を初期値にします。無効スタッフは新規候補から外れますが、既存シフトに紐づく場合は履歴確認・編集ができます。
+    <div>院設定の営業時間・休診曜日をもとに、未作成日のシフトを自動作成します。既存シフトは上書きされません。</div>
+    <form method="post" action="{% url 'staff:staff_shift_generate_month' %}" style="margin-top:10px;">
+      {% csrf_token %}
+      <input type="hidden" name="year" value="{{ month_start|date:'Y' }}">
+      <input type="hidden" name="month" value="{{ month_start|date:'n' }}">
+      <button class="shift-btn primary" type="submit">表示月を院設定から自動作成</button>
+    </form>
   </div>
 
   <section class="table-card">

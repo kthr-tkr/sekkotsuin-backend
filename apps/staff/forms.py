@@ -7,6 +7,7 @@ from apps.appointments.models import Appointment
 from apps.clinical_notes.models import ClinicalNote
 from apps.clinics.models import ClinicSettings, SalesRecord, StaffLeave, StaffShift, TreatmentMenu
 from apps.patients.models import Patient
+from apps.staff.utils import build_unique_staff_username, get_staff_display_name
 
 User = get_user_model()
 
@@ -46,11 +47,6 @@ class StaffCreateForm(UserCreationForm):
         required=False,
         widget=forms.EmailInput(attrs={"placeholder": "example@clinic.com"})
     )
-    username = forms.CharField(
-        label="ユーザー名",
-        max_length=150,
-        widget=forms.TextInput(attrs={"placeholder": "yamada"})
-    )
     role = forms.ChoiceField(
         label="役割",
         choices=[
@@ -65,7 +61,6 @@ class StaffCreateForm(UserCreationForm):
         fields = (
             "last_name",
             "first_name",
-            "username",
             "email",
             "role",
             "password1",
@@ -85,6 +80,11 @@ class StaffCreateForm(UserCreationForm):
         user.last_name = self.cleaned_data["last_name"]
         user.first_name = self.cleaned_data["first_name"]
         user.email = self.cleaned_data["email"]
+        user.username = build_unique_staff_username(
+            email=user.email,
+            last_name=user.last_name,
+            first_name=user.first_name,
+        )
         user.role = self.cleaned_data["role"]
         user.clinic = self.clinic
         user.is_active = True
@@ -414,6 +414,7 @@ class SalesRecordForm(forms.ModelForm):
         self.fields["clinical_note"].empty_label = "カルテなし"
         self.fields["treatment_menu"].empty_label = "メニュー未選択"
         self.fields["staff"].empty_label = "担当者未選択"
+        self.fields["staff"].label_from_instance = get_staff_display_name
 
     def clean(self):
         cleaned_data = super().clean()
@@ -529,6 +530,7 @@ class StaffShiftForm(forms.ModelForm):
             self.fields["staff"].queryset = User.objects.none()
 
         self.fields["staff"].empty_label = "スタッフを選択"
+        self.fields["staff"].label_from_instance = get_staff_display_name
 
     def clean(self):
         cleaned_data = super().clean()
@@ -651,6 +653,7 @@ class StaffLeaveForm(forms.ModelForm):
             self.fields["staff"].queryset = User.objects.none()
 
         self.fields["staff"].empty_label = "スタッフを選択"
+        self.fields["staff"].label_from_instance = get_staff_display_name
 
     def clean(self):
         cleaned_data = super().clean()

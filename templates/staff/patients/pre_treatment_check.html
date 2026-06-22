@@ -1,4 +1,5 @@
 {% extends "staff/_layout.html" %}
+{% load staff_display %}
 {% block title %}施術前チェック | CareFrow{% endblock %}
 
 {% block extra_head %}
@@ -545,7 +546,7 @@
             {{ today_appointment.menu|default:"施術" }}
             / {{ today_appointment.get_status_display }}
             {% if today_appointment.assigned_staff %}
-              / 担当：{{ today_appointment.assigned_staff.get_full_name|default:today_appointment.assigned_staff.username }}
+              / 担当：{{ today_appointment.assigned_staff|staff_display_name }}
             {% endif %}
           </div>
         </div>

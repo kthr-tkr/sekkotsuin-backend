@@ -4,9 +4,9 @@
 {% block extra_head %}
 <style>
   .patients-page{display:flex;flex-direction:column;gap:20px;color:#14213d}
-  .patients-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+  .patients-head{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:8px 2px}
   .patients-eyebrow{font-size:12px;font-weight:900;letter-spacing:.12em;color:#3973bb}
-  .patients-title{margin:6px 0 8px;font-size:36px;letter-spacing:-.04em}
+  .patients-title{margin:4px 0 5px;font-size:28px;letter-spacing:-.04em}
   .patients-lead{margin:0;color:#708099}
   .head-actions{display:flex;gap:10px;flex-wrap:wrap}
   .head-btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 15px;border:1px solid #dce4ef;border-radius:13px;background:#fff;color:#243b61;text-decoration:none;font-weight:800}
@@ -62,7 +62,7 @@
     <div>
       <div class="patients-eyebrow">PATIENT DIRECTORY</div>
       <h1 class="patients-title">患者様一覧</h1>
-      <p class="patients-lead">患者情報と対応状況を確認し、施術前チェックや録音へすぐ進めます。</p>
+      <p class="patients-lead">患者情報を検索・確認できます。</p>
     </div>
     <div class="head-actions">
       <a class="head-btn" href="{% url 'staff:kpi_dashboard' %}">KPIを見る</a>

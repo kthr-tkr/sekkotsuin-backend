@@ -1,4 +1,5 @@
 {% extends "staff/_layout.html" %}
+{% load staff_display %}
 {% block title %}施術後サマリー | CareFrow{% endblock %}
 
 {% block extra_head %}
@@ -506,7 +507,7 @@
         <div class="post-fact-label">担当</div>
         <div class="post-fact-value">
           {% if appointment.assigned_staff %}
-            {{ appointment.assigned_staff.get_full_name|default:appointment.assigned_staff.username }}
+            {{ appointment.assigned_staff|staff_display_name }}
           {% else %}
             未登録
           {% endif %}

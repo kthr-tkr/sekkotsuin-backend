@@ -1,5 +1,6 @@
 {# templates/staff/dashboard.html #}
 {% extends "staff/_layout.html" %}
+{% load staff_display %}
 {% block title %}CareFrow | Dashboard{% endblock %}
 
 {% block extra_head %}
@@ -1563,7 +1564,7 @@
       <div class="eyebrow">Staff Workspace</div>
       <h1 class="page-title">ダッシュボード</h1>
       <div class="page-meta">
-        {{ request.user.get_full_name|default:request.user.username }} | CareFrow Staff | {{ today|date:"Y年n月j日(D)" }}
+        {{ request.user|staff_display_name }} | CareFrow Staff | {{ today|date:"Y年n月j日(D)" }}
       </div>
     </div>
 
@@ -1581,12 +1582,9 @@
   <section class="hero">
     <div class="hero-grid">
       <div>
-        <div class="hero-kicker">CareFrow Medical AI Platform</div>
-        <h2 class="hero-title">AI問診から施術計画まで、現場判断をひとつ上の体験へ。</h2>
-        <p class="hero-sub">
-          問診、SOAP、施術計画、経過記録を一気通貫で接続し、
-          日々の診療オペレーションを上質かつスマートに進められるスタッフ向けワークスペースです。
-        </p>
+        <div class="hero-kicker">TODAY</div>
+        <h2 class="hero-title">本日の対応状況</h2>
+        <p class="hero-sub">本日の対応状況を確認できます。</p>
 
         <div class="hero-tags">
           <span class="hero-tag">SOAP Intelligence</span>

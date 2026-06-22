@@ -24,7 +24,7 @@
     <div>
       <div class="member-eyebrow">STAFF MEMBER</div>
       <h1 class="member-title">スタッフ編集</h1>
-      <p class="member-lead">ログインIDは維持したまま、表示名・メール・ロール・有効状態を更新します。</p>
+      <p class="member-lead">氏名・メール・権限・有効状態を編集できます。</p>
     </div>
     <a class="member-btn soft" href="{% url 'staff:staff_list' %}">一覧へ戻る</a>
   </header>
@@ -36,10 +36,6 @@
     {% endif %}
 
     <div class="readonly-row">
-      <div class="readonly-box">
-        <div class="readonly-label">ログインID</div>
-        <div class="readonly-value">{{ staff_user.username }}</div>
-      </div>
       <div class="readonly-box">
         <div class="readonly-label">最終ログイン</div>
         <div class="readonly-value">{% if staff_user.last_login %}{{ staff_user.last_login|date:"Y/m/d H:i" }}{% else %}未ログイン{% endif %}</div>

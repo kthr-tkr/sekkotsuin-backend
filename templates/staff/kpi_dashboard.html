@@ -6,9 +6,9 @@
   .kpi-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
   .kpi-hero{
     display:flex;justify-content:space-between;align-items:flex-end;gap:20px;
-    padding:28px;border-radius:28px;color:#fff;
+    padding:18px 20px;border-radius:20px;color:#fff;
     background:linear-gradient(135deg,#102044 0%,#18366f 58%,#3276d3 100%);
-    box-shadow:0 24px 54px rgba(25,55,105,.18)
+    box-shadow:0 14px 32px rgba(25,55,105,.14)
   }
   .kpi-eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;color:#bcd4ff}
   .kpi-title{margin:8px 0;font-size:34px;line-height:1.15}
@@ -70,10 +70,16 @@
   .state-badge.unpaid{background:#fff6d8;color:#8a6100}
   .attention-action{display:inline-flex;justify-content:center;padding:9px 12px;border-radius:11px;background:#173f78;color:#fff;text-decoration:none;font-size:12px;font-weight:800}
   .kpi-empty{padding:28px;border:1px dashed #cfd8e6;border-radius:18px;text-align:center;color:#718096;background:#fafcff}
+  .trend-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .trend-panel{padding:18px;border:1px solid #e5edf5;border-radius:18px;background:#fbfdff}
+  .trend-panel.wide{grid-column:1/-1}.trend-panel h3{margin:0 0 12px;color:#17345f;font-size:16px}
+  .trend-list{display:flex;flex-direction:column;gap:9px}.trend-row{display:grid;grid-template-columns:minmax(100px,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid #edf2f7}.trend-row:last-child{border-bottom:0}.trend-label{font-weight:850;color:#304762}.trend-count{font-weight:950;color:#174f8e}
+  .age-trend-table{width:100%;border-collapse:collapse}.age-trend-table th,.age-trend-table td{padding:10px 8px;border-bottom:1px solid #edf2f7;text-align:left;font-size:13px}.age-trend-table th{color:#687991;font-size:11px}.trend-tags{display:flex;gap:6px;flex-wrap:wrap}.trend-tag{padding:4px 8px;border-radius:999px;background:#eaf3ff;color:#245b99;font-size:11px;font-weight:850}
+  .monthly-row{display:grid;grid-template-columns:90px repeat(3,minmax(60px,1fr));gap:8px;padding:9px 0;border-bottom:1px solid #edf2f7;font-size:12px}.monthly-row strong{color:#17345f}.trend-note{margin-top:12px;color:#708099;font-size:12px;line-height:1.6}
   @media(max-width:980px){
     .today-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
     .recent-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .sales-kpi-grid{grid-template-columns:1fr 1fr}.sales-board{grid-template-columns:1fr}
+    .sales-kpi-grid{grid-template-columns:1fr 1fr}.sales-board,.trend-grid{grid-template-columns:1fr}.trend-panel.wide{grid-column:auto}
     .attention-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
     .attention-item{grid-template-columns:1fr auto}
   }
@@ -92,7 +98,7 @@
     <div>
       <div class="kpi-eyebrow">CLINIC PERFORMANCE</div>
       <h1 class="kpi-title">院内KPI</h1>
-      <p class="kpi-lead">今日の患者対応と、止まっている録音・カルテ案を30秒で確認できます。</p>
+      <p class="kpi-lead">院の実績と運用状況を確認できます。</p>
     </div>
     <div class="kpi-hero-actions">
       <div class="kpi-date">{{ today|date:"Y年n月j日" }}</div>
@@ -243,6 +249,81 @@
         {% endif %}
       </div>
     </div>
+  </section>
+
+  <section class="kpi-section" id="patient-trends">
+    <div class="kpi-section-head">
+      <div>
+        <h2 class="kpi-section-title">患者傾向分析</h2>
+        <div class="kpi-section-sub">来院区分や相談内容の傾向を、個人を特定しない集計で確認できます。</div>
+      </div>
+    </div>
+
+    <div class="trend-grid">
+      <div class="trend-panel">
+        <h3>来院区分</h3>
+        <div class="trend-list">
+          {% for row in patient_trends.visit_types %}
+            <div class="trend-row"><span class="trend-label">{{ row.label }}</span><span class="trend-count">{{ row.count }}件</span></div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="trend-panel">
+        <h3>痛み・相談内容ランキング</h3>
+        {% if patient_trends.complaint_ranking %}
+          <div class="trend-list">
+            {% for row in patient_trends.complaint_ranking %}
+              <div class="trend-row"><span class="trend-label">{{ row.label }}</span><span class="trend-count">{{ row.count }}人</span></div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="kpi-empty">相談内容の集計データはまだありません。</div>
+        {% endif %}
+      </div>
+
+      <div class="trend-panel wide">
+        <h3>年代別の相談傾向</h3>
+        <div style="overflow-x:auto;">
+          <table class="age-trend-table">
+            <thead><tr><th>年代</th><th>患者数</th><th>相談内容の上位傾向</th></tr></thead>
+            <tbody>
+              {% for row in patient_trends.age_groups %}
+                <tr>
+                  <td><strong>{{ row.label }}</strong></td>
+                  <td>{{ row.count }}人</td>
+                  <td>
+                    {% if row.top_complaints %}
+                      <div class="trend-tags">{% for item in row.top_complaints %}<span class="trend-tag">{{ item.label }} {{ item.count }}</span>{% endfor %}</div>
+                    {% else %}
+                      <span class="kpi-section-sub">データなし</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="trend-panel">
+        <h3>背景別の相談傾向</h3>
+        <div class="trend-list">
+          {% for row in patient_trends.background_trends %}
+            <div class="trend-row"><span class="trend-label">{{ row.label }}</span><span class="trend-count">{{ row.count }}人</span></div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="trend-panel">
+        <h3>月別の来院区分</h3>
+        <div class="monthly-row"><strong>月</strong><strong>初診</strong><strong>通院</strong><strong>再来</strong></div>
+        {% for row in patient_trends.monthly_visits %}
+          <div class="monthly-row"><span>{{ row.month|date:"Y/m" }}</span><span>{{ row.initial }}</span><span>{{ row.continuing }}</span><span>{{ row.returning }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="trend-note">データが少ない場合は、今後の問診・カルテ入力に応じて傾向が見えてきます。施術者の評価と合わせてご活用ください。</div>
   </section>
 
   <section class="kpi-section" id="attention">

@@ -424,6 +424,113 @@
       margin:0 auto;
     }
 
+    /* Compact top areas keep operational content above the fold. */
+    .content > div > .hero,
+    .content .staff-hero,
+    .content .shift-hero,
+    .content .shift-form-hero,
+    .content .leave-hero,
+    .content .leave-form-hero,
+    .content .member-hero,
+    .content .kpi-hero,
+    .content .sales-hero,
+    .content .sales-form-hero,
+    .content .usage-hero,
+    .content .settings-hero,
+    .content .menu-hero,
+    .content .menu-form-hero,
+    .content .patient-hero,
+    .content .aftercare-hero,
+    .content .compact-hero{
+      min-height:0 !important;
+      padding:18px 20px !important;
+      border-radius:20px !important;
+      box-shadow:0 14px 32px rgba(20,48,91,.13) !important;
+    }
+
+    .content .hero-title,
+    .content .staff-title,
+    .content .shift-title,
+    .content .leave-title,
+    .content .member-title,
+    .content .kpi-title,
+    .content .sales-title,
+    .content .usage-title,
+    .content .settings-title,
+    .content .menu-title,
+    .content .patient-title,
+    .content .aftercare-title{
+      margin-top:4px !important;
+      margin-bottom:5px !important;
+      font-size:26px !important;
+      line-height:1.2 !important;
+    }
+
+    .content .hero-tags{display:none !important}
+
+    .staff-toast-container{
+      position:fixed;
+      top:16px;
+      right:18px;
+      z-index:9999;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      width:min(390px, calc(100vw - 28px));
+      pointer-events:none;
+    }
+
+    .staff-toast{
+      display:grid;
+      grid-template-columns:8px minmax(0,1fr) 28px;
+      align-items:start;
+      gap:10px;
+      padding:12px 12px 12px 10px;
+      border:1px solid #dce6f2;
+      border-radius:15px;
+      background:rgba(255,255,255,.97);
+      color:#243b58;
+      box-shadow:0 16px 38px rgba(15,23,42,.16);
+      pointer-events:auto;
+      transition:opacity .2s ease, transform .2s ease;
+    }
+
+    .staff-toast::before{
+      content:"";
+      width:8px;
+      height:8px;
+      margin-top:6px;
+      border-radius:999px;
+      background:#3b82f6;
+    }
+
+    .staff-toast.success::before{background:#16a34a}
+    .staff-toast.warning::before{background:#d89a13}
+    .staff-toast.error::before{background:#dc2626}
+    .staff-toast.warning{border-color:#f1dfad;background:#fffdf5}
+    .staff-toast.error{border-color:#f1caca;background:#fff8f8}
+    .staff-toast.is-hiding{opacity:0;transform:translateY(-8px)}
+    .staff-toast__message{font-size:13px;font-weight:800;line-height:1.55}
+    .staff-toast__close{width:28px;height:28px;border:0;border-radius:9px;background:transparent;color:#718096;cursor:pointer;font-size:18px;line-height:1}
+    .staff-toast__close:hover{background:#eef3f8;color:#25364d}
+
+    @media(max-width:640px){
+      .staff-toast-container{top:68px;right:10px;width:calc(100vw - 20px)}
+      .content > div > .hero,
+      .content .staff-hero,
+      .content .shift-hero,
+      .content .leave-hero,
+      .content .member-hero,
+      .content .kpi-hero,
+      .content .sales-hero,
+      .content .usage-hero,
+      .content .settings-hero,
+      .content .menu-hero,
+      .content .patient-hero,
+      .content .aftercare-hero,
+      .content .compact-hero{padding:15px !important}
+    }
+
     /* mobile */
     @media (max-width: 980px){
       .sidebar{
@@ -708,6 +815,16 @@
 </head>
 
 <body>
+  {% if messages %}
+    <div class="staff-toast-container" data-toast-container aria-live="polite" aria-label="通知">
+      {% for message in messages %}
+        <div class="staff-toast {{ message.tags }}" data-staff-toast data-message-text="{{ message|escape }}" role="status">
+          <div class="staff-toast__message">{{ message }}</div>
+          <button class="staff-toast__close" type="button" data-toast-close aria-label="通知を閉じる">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
   <div class="mobile-topbar">
     <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="メニューを開く">
       ☰
@@ -823,6 +940,27 @@
   {% block scripts %}{% endblock %}
 
   <script>
+    (function(){
+      const seen = new Set();
+      document.querySelectorAll("[data-staff-toast]").forEach((toast) => {
+        const text = toast.dataset.messageText || toast.textContent.trim();
+        if (seen.has(text)) {
+          toast.remove();
+          return;
+        }
+        seen.add(text);
+
+        const close = () => {
+          toast.classList.add("is-hiding");
+          window.setTimeout(() => toast.remove(), 220);
+        };
+        toast.querySelector("[data-toast-close]")?.addEventListener("click", close);
+        const isError = toast.classList.contains("error");
+        const isWarning = toast.classList.contains("warning");
+        window.setTimeout(close, isError ? 12000 : (isWarning ? 9000 : 4500));
+      });
+    })();
+
     (function(){
       const sidebar = document.getElementById("sidebar");
       const btn = document.getElementById("sidebarToggle");

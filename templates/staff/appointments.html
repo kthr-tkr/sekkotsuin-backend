@@ -1,4 +1,5 @@
 {% extends "staff/_layout.html" %}
+{% load staff_display %}
 {% block title %}Medical AI | Appointments{% endblock %}
 
 {% block extra_head %}
@@ -1343,7 +1344,7 @@
             <option value="">全員</option>
             {% for u in staff_users %}
               <option value="{{ u.id }}" {% if filter_staff|add:'' == u.id|add:'' %}selected{% endif %}>
-                {{ u.username }}
+                {{ u|staff_display_name }}
               </option>
             {% endfor %}
           </select>
@@ -1389,7 +1390,7 @@
 
             <div class="meta2">メニュー：{{ a.menu }}</div>
             <div class="one-line">要点：{{ a.intake_one_line }}</div>
-            <div class="meta2">施術者：{% if a.assigned_staff %}{{ a.assigned_staff.username }}{% else %}未割当{% endif %}</div>
+            <div class="meta2">施術者：{% if a.assigned_staff %}{{ a.assigned_staff|staff_display_name }}{% else %}未割当{% endif %}</div>
 
             <div class="chief">
               主訴：{{ a.chief_label|default:"-" }}

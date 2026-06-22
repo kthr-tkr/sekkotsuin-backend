@@ -400,6 +400,8 @@ a{
   display:grid;
   gap:8px;
   margin-bottom:16px;
+  max-height:120px;
+  overflow:auto;
 }
 
 .msg{
