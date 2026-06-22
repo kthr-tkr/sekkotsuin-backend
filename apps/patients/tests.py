@@ -1,8 +1,13 @@
 import inspect
 from datetime import date, datetime, time, timedelta
 
+from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.contrib.auth.models import Group
+from django.contrib.messages.storage.base import Message
+from django.contrib.messages.storage.cookie import CookieStorage
+from django.http import HttpResponse
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -323,6 +328,105 @@ class PatientFacingSafetyTests(TestCase):
         self.assertNotIn(".path", source)
 
 
+class PatientMessageSafetyTests(TestCase):
+    LOGIN_ERROR = "メールアドレスまたは診察券番号、もしくはパスワードが正しくありません。"
+
+    def setUp(self):
+        user_model = get_user_model()
+        self.clinic = Clinic.objects.create(name="患者通知テスト院")
+        self.user = user_model.objects.create_user(
+            username="patient-message-user",
+            email="patient-message@example.com",
+            password="test-password",
+            clinic=self.clinic,
+            role=user_model.Role.PATIENT,
+        )
+        patient_group, _ = Group.objects.get_or_create(name="patient")
+        self.user.groups.add(patient_group)
+        self.patient = Patient.objects.create(
+            user=self.user,
+            clinic=self.clinic,
+            card_no="MSG-P-001",
+            last_name="通知",
+            first_name="患者",
+            birth_date=date(1990, 1, 1),
+            phone="09000007001",
+        )
+
+    def _set_message_cookie(self, text, level=messages.ERROR):
+        request = RequestFactory().get("/")
+        request.COOKIES = {}
+        storage = CookieStorage(request)
+        response = HttpResponse()
+        storage._store([Message(level, text)], response)
+        for key, morsel in response.cookies.items():
+            self.client.cookies[key] = morsel.value
+
+    def test_failed_login_displays_error_only_on_login_page(self):
+        response = self.client.post(
+            reverse("patients:login"),
+            {"login_id": self.user.email, "password": "wrong"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.LOGIN_ERROR)
+        self.assertContains(response, "data-patient-login-messages")
+
+    def test_successful_login_discards_previous_login_error(self):
+        self._set_message_cookie(self.LOGIN_ERROR)
+
+        response = self.client.post(
+            reverse("patients:login"),
+            {"login_id": self.user.email, "password": "test-password"},
+            follow=True,
+        )
+
+        self.assertRedirects(response, reverse("patients:dashboard"))
+        self.assertNotContains(response, self.LOGIN_ERROR)
+
+    def test_dashboard_hides_login_and_staff_operation_messages(self):
+        self.client.force_login(self.user)
+        for hidden_message in (
+            self.LOGIN_ERROR,
+            "スタッフを登録しました。",
+            "施術メニューを登録しました。",
+            "院設定を保存しました。",
+        ):
+            self._set_message_cookie(hidden_message)
+            response = self.client.get(reverse("patients:dashboard"))
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, hidden_message)
+
+        self.assertNotContains(response, self.user.username)
+        self.assertContains(response, "通知 患者 様")
+
+    def test_patient_operation_message_is_compact_and_visible(self):
+        self.client.force_login(self.user)
+        self._set_message_cookie("登録情報を更新しました。", messages.SUCCESS)
+
+        response = self.client.get(reverse("patients:dashboard"))
+
+        self.assertContains(response, "登録情報を更新しました。")
+        self.assertContains(response, "patient-toast-container")
+
+    def test_logout_discards_old_messages_and_shows_only_logout_notice(self):
+        self.client.force_login(self.user)
+        self._set_message_cookie("スタッフを登録しました。")
+
+        response = self.client.get(reverse("patients:logout"), follow=True)
+
+        self.assertContains(response, "ログアウトしました。")
+        self.assertNotContains(response, "スタッフを登録しました。")
+
+    def test_patient_message_views_do_not_use_file_path(self):
+        source = (
+            inspect.getsource(patient_views.patient_login_view)
+            + inspect.getsource(patient_views.patient_dashboard_view)
+            + inspect.getsource(patient_views.shared_patient_page_view)
+        )
+        self.assertNotIn(".path", source)
+
+
 class SharedAftercareReportTests(TestCase):
     def setUp(self):
         user_model = get_user_model()
@@ -410,6 +514,15 @@ class SharedAftercareReportTests(TestCase):
             args=[token or self.share_token.token],
         )
 
+    def _set_message_cookie(self, text):
+        request = RequestFactory().get("/")
+        request.COOKIES = {}
+        storage = CookieStorage(request)
+        response = HttpResponse()
+        storage._store([Message(messages.ERROR, text)], response)
+        for key, morsel in response.cookies.items():
+            self.client.cookies[key] = morsel.value
+
     def test_valid_token_displays_shared_aftercare_report_without_login(self):
         response = self.client.get(self._shared_url())
 
@@ -421,6 +534,25 @@ class SharedAftercareReportTests(TestCase):
         self.assertEqual(response["Referrer-Policy"], "no-referrer")
         self.assertIn("no-store", response["Cache-Control"])
         self.assertIn("noindex", response["X-Robots-Tag"])
+
+    def test_shared_pages_never_render_django_operation_messages(self):
+        internal_message = "スタッフを登録しました。TOKEN_INTERNAL_MESSAGE"
+        self._set_message_cookie(internal_message)
+
+        valid_response = self.client.get(self._shared_url())
+        self._set_message_cookie(internal_message)
+        invalid_response = self.client.get(
+            reverse("patients:shared_patient_page", args=["invalid-token"])
+        )
+
+        self.assertNotContains(valid_response, internal_message)
+        self.assertNotContains(invalid_response, internal_message, status_code=404)
+        self.assertIn("no-store", valid_response["Cache-Control"])
+        self.assertIn("noindex", valid_response["X-Robots-Tag"])
+        self.assertEqual(valid_response["Referrer-Policy"], "no-referrer")
+        self.assertIn("no-store", invalid_response["Cache-Control"])
+        self.assertIn("noindex", invalid_response["X-Robots-Tag"])
+        self.assertEqual(invalid_response["Referrer-Policy"], "no-referrer")
 
     def test_missing_or_invalid_token_does_not_display_report(self):
         missing_response = self.client.get("/patients/share/")

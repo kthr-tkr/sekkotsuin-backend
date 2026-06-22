@@ -1,3 +1,4 @@
+{% load patient_messages %}
 <!doctype html>
 <html lang="ja">
 <head>
@@ -265,6 +266,11 @@
       color:#fff;
       border-color:transparent;
     }
+    .patient-toast-container{position:fixed;top:16px;right:16px;z-index:1100;display:flex;flex-direction:column;gap:8px;width:min(380px,calc(100vw - 24px));pointer-events:none}
+    .patient-toast{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:8px;align-items:start;padding:11px 12px;border:1px solid #d7e4f2;border-radius:14px;background:rgba(255,255,255,.98);color:#25415f;box-shadow:0 14px 34px rgba(15,23,42,.14);font-size:13px;font-weight:700;line-height:1.55;pointer-events:auto}
+    .patient-toast.success{border-color:#b7e5ca;background:#f3fcf7;color:#17603b}.patient-toast.warning{border-color:#f0d99f;background:#fffaf0;color:#815700}.patient-toast.error{border-color:#f3caca;background:#fff7f7;color:#9f2525}
+    .patient-toast-close{width:28px;height:28px;border:0;border-radius:9px;background:transparent;color:inherit;cursor:pointer;font-size:18px;line-height:1}
+    .patient-toast.is-hiding{opacity:0;transform:translateY(-6px);transition:.2s ease}
 
     @media (max-width: 768px){
       .p-wrap{
@@ -313,7 +319,7 @@
 
       {% if user.is_authenticated %}
         <div class="p-desktop-nav">
-          <div class="p-user">{{ user.username }}</div>
+          <div class="p-user">{% if user.patient_profile %}{{ user.patient_profile.last_name }} {{ user.patient_profile.first_name }} 様{% else %}患者様{% endif %}</div>
             <a href="{% url 'patients:dashboard' %}" class="p-btn p-btn-ghost">ホーム</a>
             <a href="{% url 'patients:my_appointments' %}" class="p-btn p-btn-ghost">予約</a>
             <a href="{% url 'patients:profile' %}" class="p-btn p-btn-ghost">登録情報</a>
@@ -329,7 +335,7 @@
     {% if user.is_authenticated %}
       <div class="p-mobile-menu" id="p-mobile-menu">
         <div class="p-mobile-menu-inner">
-          <div class="p-mobile-user">{{ user.username }}</div>
+          <div class="p-mobile-user">{% if user.patient_profile %}{{ user.patient_profile.last_name }} {{ user.patient_profile.first_name }} 様{% else %}患者様{% endif %}</div>
             <a href="{% url 'patients:dashboard' %}" class="p-mobile-link">ホーム</a>
             <a href="{% url 'patients:my_appointments' %}" class="p-mobile-link">予約</a>
             <a href="{% url 'patients:profile' %}" class="p-mobile-link">登録情報</a>
@@ -358,14 +364,35 @@
 
   <main class="p-wrap">
     {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
-      {% endfor %}
+      <div class="patient-toast-container" data-patient-toast-container aria-live="polite">
+        {% for message in messages %}
+          {% if not message|is_patient_login_message %}
+            <div class="patient-toast {{ message.tags }}" data-patient-toast role="status">
+              <span>{{ message }}</span>
+              <button class="patient-toast-close" type="button" aria-label="通知を閉じる">×</button>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
     {% endif %}
     {% block content %}{% endblock %}
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  (function () {
+    document.querySelectorAll("[data-patient-toast]").forEach(function (toast) {
+      const close = function () {
+        toast.classList.add("is-hiding");
+        window.setTimeout(function () { toast.remove(); }, 220);
+      };
+      toast.querySelector(".patient-toast-close")?.addEventListener("click", close);
+      const delay = toast.classList.contains("error") ? 10000 : 5000;
+      window.setTimeout(close, delay);
+    });
+  })();
+  </script>
 
   <script>
   (function () {

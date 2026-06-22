@@ -55,6 +55,7 @@ from .forms import PatientInquiryForm
 User = get_user_model()
 logger = logging.getLogger(__name__)
 BOOKING_STAFF_TOKEN_SALT = "carefrow.patient-booking.staff.v1"
+PATIENT_LOGIN_MESSAGE_TAG = "patient-login"
 
 # ClinicSettings がない既存院向けの安全な予約デフォルト。
 OPEN_TIME = time(9, 0)
@@ -319,6 +320,16 @@ def _count_free_slots_for_staff(clinic, staff, day: date, duration_minutes=None)
 
 @require_http_methods(["GET", "POST"])
 def patient_login_view(request):
+    queued_messages = list(messages.get_messages(request))
+    patient_login_messages = (
+        [
+            item for item in queued_messages
+            if PATIENT_LOGIN_MESSAGE_TAG in str(
+                getattr(item, "extra_tags", "") or ""
+            ).split()
+        ][:2]
+        if request.method == "GET" else []
+    )
     if request.user.is_authenticated:
         if request.user.is_staff or request.user.is_superuser:
             messages.info(
@@ -358,20 +369,27 @@ def patient_login_view(request):
                 user = patient.user
 
         if user is None:
-            messages.error(request, "メールアドレスまたは診察券番号、もしくはパスワードが正しくありません。")
-            return render(request, "patients/login.html")
+            return render(request, "patients/login.html", {
+                "patient_login_messages": [
+                    "メールアドレスまたは診察券番号、もしくはパスワードが正しくありません。"
+                ],
+            })
 
         # 実際の認証は内部 username で行う
         auth_user = authenticate(request, username=user.username, password=password)
 
         if auth_user is None:
-            messages.error(request, "メールアドレスまたは診察券番号、もしくはパスワードが正しくありません。")
-            return render(request, "patients/login.html")
+            return render(request, "patients/login.html", {
+                "patient_login_messages": [
+                    "メールアドレスまたは診察券番号、もしくはパスワードが正しくありません。"
+                ],
+            })
 
         # 念のため patient グループ確認
         if not auth_user.groups.filter(name="patient").exists():
-            messages.error(request, "患者用アカウントではありません。")
-            return render(request, "patients/login.html")
+            return render(request, "patients/login.html", {
+                "patient_login_messages": ["患者用アカウントではありません。"],
+            })
 
         login(request, auth_user)
 
@@ -385,7 +403,9 @@ def patient_login_view(request):
 
         return redirect("patients:dashboard")
 
-    return render(request, "patients/login.html")
+    return render(request, "patients/login.html", {
+        "patient_login_messages": patient_login_messages,
+    })
 
 @login_required(login_url="/patients/login/")
 def patient_dashboard_view(request):
@@ -454,8 +474,14 @@ def patient_profile_view(request):
     })
 
 def patient_logout_view(request):
+    list(messages.get_messages(request))
     logout(request)
-    return redirect("/")
+    messages.info(
+        request,
+        "ログアウトしました。",
+        extra_tags=PATIENT_LOGIN_MESSAGE_TAG,
+    )
+    return redirect("patients:login")
 
 def patient_register_view(request):
     pending_clinic_id = request.session.get("pending_booking_clinic_id")
@@ -1574,6 +1600,8 @@ def _shared_page_unavailable_response(request):
 
 
 def shared_patient_page_view(request, token):
+    # Public token pages never render session-based operation messages.
+    list(messages.get_messages(request))
     now = timezone.now()
     with transaction.atomic():
         share_token = (

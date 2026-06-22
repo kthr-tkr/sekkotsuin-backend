@@ -1,3 +1,4 @@
+{% load patient_messages %}
 <!doctype html>
 <html lang="ja">
 <head>
@@ -150,9 +151,13 @@
        Flash messages
     ========================= */
     .p-flash-list{
-      display: grid;
+      position:fixed;
+      top:16px;
+      right:16px;
+      z-index:1100;
+      display:grid;
       gap: 12px;
-      margin-bottom: 20px;
+      width:min(380px,calc(100vw - 24px));
     }
 
     .p-flash{
@@ -649,7 +654,7 @@
 
       <div class="p-nav-right">
         {% if user.is_authenticated %}
-          <div class="p-user">{{ user.username }}</div>
+          <div class="p-user">{% if user.patient_profile %}{{ user.patient_profile.last_name }} {{ user.patient_profile.first_name }} 様{% else %}患者様{% endif %}</div>
         {% endif %}
         {% block nav_right %}{% endblock %}
       </div>
@@ -660,7 +665,9 @@
     {% if messages %}
       <div class="p-flash-list">
         {% for message in messages %}
-          <div class="p-flash {{ message.tags }}">{{ message }}</div>
+          {% if not message|is_patient_login_message %}
+            <div class="p-flash {{ message.tags }}">{{ message }}</div>
+          {% endif %}
         {% endfor %}
       </div>
     {% endif %}

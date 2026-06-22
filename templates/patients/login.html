@@ -59,6 +59,8 @@
       background:var(--line);
       margin:18px 0 18px;
     }
+    .login-messages{display:grid;gap:8px;margin:0 0 16px}
+    .login-message{padding:10px 12px;border:1px solid #fecaca;border-radius:12px;background:#fef2f2;color:#991b1b;font-size:13px;font-weight:700;line-height:1.55}
 
     .field{
       margin-bottom:16px;
@@ -173,6 +175,14 @@
       <p class="subtitle">ご予約には診察券番号の確認が必要です</p>
 
       <div class="divider"></div>
+
+      {% if patient_login_messages %}
+        <div class="login-messages" data-patient-login-messages role="alert">
+          {% for message in patient_login_messages|slice:":2" %}
+            <div class="login-message">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
 
       <form method="post" action="{% url 'patients:login' %}">
         {% csrf_token %}
