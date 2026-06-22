@@ -424,53 +424,87 @@
       margin:0 auto;
     }
 
-    /* Compact top areas keep operational content above the fold. */
-    .content > div > .hero,
-    .content .staff-hero,
-    .content .shift-hero,
-    .content .shift-form-hero,
-    .content .leave-hero,
-    .content .leave-form-hero,
-    .content .member-hero,
-    .content .kpi-hero,
-    .content .sales-hero,
-    .content .sales-form-hero,
-    .content .usage-hero,
-    .content .settings-hero,
-    .content .menu-hero,
-    .content .menu-form-hero,
-    .content .patient-hero,
-    .content .aftercare-hero,
-    .content .compact-hero{
-      min-height:0 !important;
-      padding:18px 20px !important;
-      border-radius:20px !important;
-      box-shadow:0 14px 32px rgba(20,48,91,.13) !important;
+    /* Shared page heading for staff operational screens. */
+    .staff-page-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      min-height:0;
+      margin:0;
+      padding:15px 18px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(255,255,255,.96);
+      color:#152640;
+      box-shadow:0 10px 26px rgba(20,48,91,.06);
     }
 
-    .content .hero-title,
-    .content .staff-title,
-    .content .shift-title,
-    .content .leave-title,
-    .content .member-title,
-    .content .kpi-title,
-    .content .sales-title,
-    .content .usage-title,
-    .content .settings-title,
-    .content .menu-title,
-    .content .patient-title,
-    .content .aftercare-title{
-      margin-top:4px !important;
-      margin-bottom:5px !important;
-      font-size:26px !important;
-      line-height:1.2 !important;
+    .staff-page-header__main{min-width:0}
+    .staff-page-header__eyebrow{
+      margin-bottom:4px;
+      color:var(--clinic-primary-color,#1d4ed8);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.14em;
+      line-height:1.3;
+      text-transform:uppercase;
     }
 
-    .content .hero-tags{display:none !important}
+    .staff-page-header__title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .staff-page-header__title{
+      margin:0;
+      color:#142a4a;
+      font-size:clamp(24px,2.4vw,30px);
+      font-weight:950;
+      letter-spacing:-.035em;
+      line-height:1.18;
+    }
+
+    .staff-page-header__description{
+      margin:5px 0 0;
+      max-width:760px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .staff-page-header__meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:5px;color:#8190a4;font-size:11px;font-weight:800}
+    .staff-page-header__badge{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border:1px solid #cfe0f5;border-radius:999px;background:#edf5ff;color:#245e9e;font-size:10px;font-weight:900}
+    .staff-page-header__actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;flex-shrink:0}
+    .staff-page-header__button{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:38px;
+      padding:0 13px;
+      border:1px solid #d8e1ec;
+      border-radius:11px;
+      background:#fff;
+      color:#29486f;
+      font:inherit;
+      font-size:12px;
+      font-weight:900;
+      line-height:1;
+      text-decoration:none;
+      cursor:pointer;
+    }
+
+    .staff-page-header__button:hover{border-color:#a9c4e4;background:#f7faff;color:#174f91}
+    .staff-page-header__button--primary{border-color:var(--clinic-primary-color,#1d4ed8);background:var(--clinic-primary-color,#1d4ed8);color:#fff}
+    .staff-page-header__button--primary:hover{filter:brightness(.95);color:#fff}
+
+    .staff-summary-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .staff-summary-strip__item{padding:12px 14px;border:1px solid #e2e9f2;border-radius:15px;background:#fff;box-shadow:0 8px 22px rgba(20,48,91,.04)}
+    .staff-summary-strip__label{display:block;color:#78889d;font-size:10px;font-weight:900;letter-spacing:.06em}
+    .staff-summary-strip__value{display:block;margin-top:4px;color:#17375f;font-size:22px;font-weight:950;line-height:1.15}
+    .staff-summary-strip__note{display:block;margin-top:3px;color:#8290a2;font-size:10px;font-weight:700;line-height:1.4}
+    .staff-page-subactions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:-8px}
+    .staff-page-subactions .staff-page-header__button{min-height:34px}
 
     .staff-toast-container{
       position:fixed;
-      top:16px;
+      top:108px;
       right:18px;
       z-index:9999;
       display:flex;
@@ -514,21 +548,24 @@
     .staff-toast__close{width:28px;height:28px;border:0;border-radius:9px;background:transparent;color:#718096;cursor:pointer;font-size:18px;line-height:1}
     .staff-toast__close:hover{background:#eef3f8;color:#25364d}
 
+    @media(max-width:760px){
+      .staff-page-header{align-items:flex-start;flex-direction:column;padding:14px 15px}
+      .staff-page-header__actions{width:100%;justify-content:flex-start}
+      .staff-page-header__button{flex:1 1 auto}
+      .staff-summary-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .staff-toast-container{top:auto;bottom:14px}
+    }
+
     @media(max-width:640px){
-      .staff-toast-container{top:68px;right:10px;width:calc(100vw - 20px)}
-      .content > div > .hero,
-      .content .staff-hero,
-      .content .shift-hero,
-      .content .leave-hero,
-      .content .member-hero,
-      .content .kpi-hero,
-      .content .sales-hero,
-      .content .usage-hero,
-      .content .settings-hero,
-      .content .menu-hero,
-      .content .patient-hero,
-      .content .aftercare-hero,
-      .content .compact-hero{padding:15px !important}
+      .staff-toast-container{right:10px;bottom:10px;width:calc(100vw - 20px)}
+      .staff-page-header__title{font-size:23px}
+      .staff-page-header__description{font-size:12px}
+    }
+
+    @media print{
+      .staff-page-header,
+      .staff-page-subactions,
+      .staff-toast-container{display:none !important}
     }
 
     /* mobile */

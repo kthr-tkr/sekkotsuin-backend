@@ -1,0 +1,42 @@
+<header class="staff-page-header" data-staff-page-header>
+  <div class="staff-page-header__main">
+    {% if header_eyebrow %}
+      <div class="staff-page-header__eyebrow">{{ header_eyebrow }}</div>
+    {% endif %}
+    <div class="staff-page-header__title-row">
+      <h1 class="staff-page-header__title">{{ header_title }}</h1>
+      {% if header_badge %}
+        <span class="staff-page-header__badge">{{ header_badge }}</span>
+      {% endif %}
+    </div>
+    {% if header_description %}
+      <p class="staff-page-header__description">{{ header_description }}</p>
+    {% endif %}
+    {% if header_meta or header_date %}
+      <div class="staff-page-header__meta">
+        {% if header_meta %}<span>{{ header_meta }}</span>{% endif %}
+        {% if header_date %}<span>{{ header_date|date:"Y年n月j日" }}</span>{% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if header_back_url or header_secondary_url or header_tertiary_url or header_primary_url or header_primary_button_id %}
+    <div class="staff-page-header__actions">
+      {% if header_back_url %}
+        <a class="staff-page-header__button" href="{{ header_back_url }}">{{ header_back_label|default:"戻る" }}</a>
+      {% endif %}
+      {% if header_tertiary_url %}
+        <a class="staff-page-header__button" href="{{ header_tertiary_url }}">{{ header_tertiary_label }}</a>
+      {% endif %}
+      {% if header_secondary_url %}
+        <a class="staff-page-header__button" href="{{ header_secondary_url }}">{{ header_secondary_label }}</a>
+      {% endif %}
+      {% if header_primary_url %}
+        <a class="staff-page-header__button staff-page-header__button--primary" href="{{ header_primary_url }}">{{ header_primary_label }}</a>
+      {% endif %}
+      {% if header_primary_button_id %}
+        <button class="staff-page-header__button staff-page-header__button--primary" type="button" id="{{ header_primary_button_id }}">{{ header_primary_label }}</button>
+      {% endif %}
+    </div>
+  {% endif %}
+</header>

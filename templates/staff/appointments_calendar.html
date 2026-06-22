@@ -1817,108 +1817,6 @@
     }
   }
 
-  .compact-hero{
-    position:relative;
-    overflow:hidden;
-    border-radius:28px;
-    padding:18px 22px;
-    color:#fff;
-    background:
-      radial-gradient(circle at 92% 18%, rgba(96,165,250,.24), transparent 26%),
-      linear-gradient(135deg, #060c19 0%, #111b36 45%, #315fe8 100%);
-    box-shadow:
-      0 22px 60px rgba(15,23,42,.15),
-      inset 0 1px 0 rgba(255,255,255,.08);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:18px;
-  }
-
-  .compact-hero::after{
-    content:"";
-    position:absolute;
-    inset:1px;
-    border-radius:27px;
-    border:1px solid rgba(255,255,255,.08);
-    pointer-events:none;
-  }
-
-  .compact-hero-main{
-    position:relative;
-    z-index:1;
-    min-width:0;
-  }
-
-  .compact-kicker{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:6px;
-    font-size:10px;
-    font-weight:900;
-    letter-spacing:.18em;
-    color:rgba(255,255,255,.58);
-    text-transform:uppercase;
-  }
-
-  .compact-kicker::before{
-    content:"";
-    width:20px;
-    height:1px;
-    background:rgba(255,255,255,.35);
-  }
-
-  .compact-title{
-    font-size:22px;
-    font-weight:900;
-    letter-spacing:-0.03em;
-    line-height:1.3;
-  }
-
-  .compact-metrics{
-    position:relative;
-    z-index:1;
-    display:grid;
-    grid-template-columns:repeat(4, minmax(86px, 1fr));
-    gap:10px;
-    min-width:430px;
-  }
-
-  .compact-metric{
-    border-radius:18px;
-    padding:12px 14px;
-    background:rgba(255,255,255,.10);
-    border:1px solid rgba(255,255,255,.12);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
-    -webkit-backdrop-filter:blur(12px);
-    backdrop-filter:blur(12px);
-  }
-
-  .compact-metric span{
-    display:block;
-    color:rgba(255,255,255,.62);
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:.08em;
-    margin-bottom:5px;
-  }
-
-  .compact-metric strong{
-    display:block;
-    color:#fff;
-    font-size:24px;
-    line-height:1;
-    font-weight:900;
-    letter-spacing:-0.03em;
-  }
-
-  @media (max-width: 980px){
-    .compact-hero{
-      display:none;
-    }
-  }
-
   @media (max-width: 980px){
     .day-timeline-title{
       font-size:20px !important;
@@ -2587,56 +2485,15 @@
 {% block content %}
 <div class="appt-page">
 
-  <header class="topbar">
-    <div class="page-head">
-      <div class="eyebrow">Premium Appointment Manager</div>
-      <h1 class="page-title">予約管理</h1>
-      <div class="page-meta">予約状況と問診内容を確認できます</div>
-      <div class="range-note">表示期間：{{ range_label }}</div>
-    </div>
+  {% url 'staff:dashboard' as dashboard_url %}
+  {% url 'staff:patient_search' as patient_search_url %}
+  {% include "staff/includes/page_header.html" with header_eyebrow="APPOINTMENT MANAGER" header_title="予約管理" header_description="予約・担当者・空き枠を確認できます。" header_badge=range_label header_tertiary_url=dashboard_url header_tertiary_label="ダッシュボードへ" header_secondary_url=patient_search_url header_secondary_label="患者検索へ" header_primary_button_id="appointmentAddBtn" header_primary_label="予約を追加" only %}
 
-    <div class="page-tools">
-      <button type="button" class="tool-btn" id="appointmentAddBtn">
-        予約を追加
-      </button>
-      <a href="{% url 'staff:dashboard' %}" class="tool-btn">ダッシュボードへ</a>
-      <a href="{% url 'staff:patient_search' %}" class="tool-btn">患者検索へ</a>
-    </div>
-  </header>
-
-  <section class="compact-hero">
-    <div class="compact-hero-main">
-      <div class="compact-kicker">Appointment Control</div>
-      <div class="compact-title">予約・担当者・空き枠を確認できます。</div>
-    </div>
-
-    <div class="compact-metrics">
-      <div class="compact-metric">
-        <span>表示</span>
-        <strong>
-          {% if period == 'day' %}DAY
-          {% elif period == 'week' %}WEEK
-          {% elif period == 'month' %}MONTH
-          {% elif period == 'year' %}YEAR
-          {% else %}VIEW{% endif %}
-        </strong>
-      </div>
-
-      <div class="compact-metric">
-        <span>予約</span>
-        <strong>{{ stats.total }}</strong>
-      </div>
-
-      <div class="compact-metric">
-        <span>問診待ち</span>
-        <strong>{{ stats.not_done }}</strong>
-      </div>
-
-      <div class="compact-metric">
-        <span>来院</span>
-        <strong>{{ stats.arrived }}</strong>
-      </div>
-    </div>
+  <section class="staff-summary-strip" aria-label="予約状況サマリー">
+    <div class="staff-summary-strip__item"><span class="staff-summary-strip__label">表示</span><strong class="staff-summary-strip__value">{% if period == 'day' %}DAY{% elif period == 'week' %}WEEK{% elif period == 'month' %}MONTH{% elif period == 'year' %}YEAR{% else %}VIEW{% endif %}</strong></div>
+    <div class="staff-summary-strip__item"><span class="staff-summary-strip__label">予約</span><strong class="staff-summary-strip__value">{{ stats.total }}</strong></div>
+    <div class="staff-summary-strip__item"><span class="staff-summary-strip__label">問診待ち</span><strong class="staff-summary-strip__value">{{ stats.not_done }}</strong></div>
+    <div class="staff-summary-strip__item"><span class="staff-summary-strip__label">来院</span><strong class="staff-summary-strip__value">{{ stats.arrived }}</strong></div>
   </section>
 
   <details class="mobile-kpi-accordion">

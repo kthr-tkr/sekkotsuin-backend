@@ -4,9 +4,7 @@
 {% block extra_head %}
 <style>
   .shift-form-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
-  .shift-form-hero{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 20px;border-radius:20px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 14px 32px rgba(20,48,91,.14)}
-  .shift-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.shift-title{margin:8px 0 10px;font-size:32px;letter-spacing:-.04em}.shift-lead{margin:0;color:#e2edff;line-height:1.7}
-  .shift-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.shift-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.shift-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}
+  .shift-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.shift-btn.primary{border-color:#194c86;background:#194c86;color:#fff}
   .shift-form-card{padding:24px;border:1px solid #e1e8f1;border-radius:24px;background:#fff;box-shadow:0 13px 32px rgba(20,42,76,.06)}
   .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.field.full{grid-column:1/-1}.field label{display:block;margin-bottom:7px;font-size:12px;font-weight:900;color:#425873}
   .field input,.field textarea,.field select{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #ccd7e5;border-radius:12px;background:#fbfcfe;color:#1b304d;font:inherit;outline:none}.field textarea{resize:vertical;line-height:1.65}
@@ -14,20 +12,14 @@
   .field-error{margin-top:6px;color:#b42323;font-size:12px;font-weight:700}.form-errors{padding:14px 16px;margin-bottom:16px;border:1px solid #f1caca;border-radius:14px;background:#fff6f6;color:#a52a2a;font-size:13px}
   .form-note{margin-top:18px;padding:14px 16px;border-radius:15px;background:#f1f7ff;border:1px solid #d9e8fa;color:#335a88;font-size:13px;line-height:1.7}
   .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
-  @media(max-width:800px){.shift-form-hero{flex-direction:column;align-items:flex-start}.field-grid{grid-template-columns:1fr}.shift-form-card{padding:18px}.form-actions{flex-direction:column}.shift-btn{width:100%}}
+  @media(max-width:800px){.field-grid{grid-template-columns:1fr}.shift-form-card{padding:18px}.form-actions{flex-direction:column}.shift-btn{width:100%}}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="shift-form-page">
-  <header class="shift-form-hero">
-    <div>
-      <div class="shift-eyebrow">SHIFT FORM</div>
-      <h1 class="shift-title">{{ page_title }}</h1>
-      <p class="shift-lead">勤務時間・休憩・勤務状態を設定できます。</p>
-    </div>
-    <a class="shift-btn soft" href="{% url 'staff:staff_shift_month' %}">月表示へ戻る</a>
-  </header>
+  {% url 'staff:staff_shift_month' as shift_month_url %}
+  {% include "staff/includes/page_header.html" with header_eyebrow="SHIFT FORM" header_title=page_title header_description="勤務時間・休憩・勤務状態を設定できます。" header_back_url=shift_month_url header_back_label="月表示へ戻る" only %}
 
   <form method="post" class="shift-form-card" novalidate>
     {% csrf_token %}

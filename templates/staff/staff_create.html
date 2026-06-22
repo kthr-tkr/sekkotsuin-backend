@@ -369,18 +369,8 @@
 
 {% block content %}
 <div class="create-page">
-
-  <header class="topbar">
-    <div class="page-head">
-      <div class="eyebrow">Premium Staff Management</div>
-      <h1 class="page-title">スタッフ追加</h1>
-      <div class="page-meta">新しいスタッフアカウントを登録します</div>
-    </div>
-
-    <div class="page-tools">
-      <a href="{% url 'staff:staff_list' %}" class="tool-btn">担当者一覧へ戻る</a>
-    </div>
-  </header>
+  {% url 'staff:staff_list' as staff_list_url %}
+  {% include "staff/includes/page_header.html" with header_eyebrow="STAFF MANAGEMENT" header_title="スタッフ追加" header_description="新しいスタッフアカウントを登録します。" header_back_url=staff_list_url header_back_label="担当者一覧へ戻る" only %}
 
   <section class="form-card">
     <div class="form-head">

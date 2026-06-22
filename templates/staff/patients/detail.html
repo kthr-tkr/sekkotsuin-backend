@@ -1920,31 +1920,15 @@
 {% block content %}
 <div class="pd-page">
 
-  <header class="pd-header">
-    <div>
-      <div class="pd-eyebrow">Patient Management</div>
-      <h1 class="pd-title">患者詳細</h1>
-      <div class="pd-meta">患者概要・予約・カルテ・施術計画をタブで管理します</div>
-    </div>
+  {% url 'staff:patient_search' as patient_search_url %}
+  {% url 'staff:patient_aftercare_report' latest_note.id as latest_report_url %}
+  {% url 'patients:staff_booking_calendar' patient.id as booking_url %}
+  {% include "staff/includes/page_header.html" with header_eyebrow="PATIENT MANAGEMENT" header_title="患者詳細" header_description="患者情報と対応履歴を確認できます。" header_back_url=patient_search_url header_back_label="患者検索へ戻る" header_secondary_url=latest_report_url header_secondary_label="最新の患者向け説明レポートを開く" header_primary_url=booking_url header_primary_label="予約を作成" only %}
 
-    <div class="pd-tools">
-      <a href="{% url 'staff:patient_search' %}" class="pd-btn">← 患者検索へ戻る</a>
-      {% if latest_note %}
-        <a href="{% url 'staff:patient_aftercare_report' latest_note.id %}" class="pd-btn">
-          最新の患者向け説明レポートを開く
-        </a>
-      {% endif %}
-      <a href="{% url 'staff:sales_record_create' %}?patient={{ patient.id }}" class="pd-btn">
-        売上登録
-      </a>
-      <a href="{% url 'staff:sales_record_list' %}?q={{ patient.card_no|default:patient.last_name }}" class="pd-btn">
-        売上履歴
-      </a>
-      <a href="{% url 'patients:staff_booking_calendar' patient.id %}" class="pd-btn primary">
-        ＋ 予約を作成
-      </a>
-    </div>
-  </header>
+  <div class="staff-page-subactions" aria-label="患者関連の補助操作">
+    <a href="{% url 'staff:sales_record_create' %}?patient={{ patient.id }}" class="staff-page-header__button">売上登録</a>
+    <a href="{% url 'staff:sales_record_list' %}?q={{ patient.card_no|default:patient.last_name }}" class="staff-page-header__button">売上履歴</a>
+  </div>
 
   <section class="patient-hero">
     <div class="patient-hero-grid">

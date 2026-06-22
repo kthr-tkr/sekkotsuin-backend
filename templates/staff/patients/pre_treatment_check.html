@@ -452,30 +452,11 @@
 
 {% block content %}
 <div class="brief-page">
-  <header class="brief-hero">
-    <div class="brief-hero-row">
-      <div>
-        <div class="brief-eyebrow">Pre-treatment briefing</div>
-        <h1 class="brief-title">施術前チェック</h1>
-        <div class="brief-patient">
-          {{ patient.last_name }} {{ patient.first_name }} 様
-          / 患者ID：{{ patient.card_no|default:patient.id }}
-        </div>
-      </div>
-      <div class="brief-nav-actions">
-        <a class="brief-back" href="{% url 'staff:patient_detail' patient.id %}?tab=overview">
-          患者詳細へ戻る
-        </a>
-        <a class="brief-back" href="{% url 'staff:dashboard' %}">
-          ダッシュボードへ戻る
-        </a>
-      </div>
-    </div>
-    <div class="brief-hero-note">
-      身体特徴、前回内容、本日の確認点を30秒で確認するための画面です。
-      表示内容は診断ではなく、施術者の評価と合わせて判断してください。
-    </div>
-  </header>
+  {% url 'staff:patient_detail' patient.id as patient_detail_url %}
+  {% url 'staff:dashboard' as dashboard_url %}
+  {% with patient_name=patient.last_name|add:" "|add:patient.first_name %}
+    {% include "staff/includes/page_header.html" with header_eyebrow="PRE-TREATMENT CHECK" header_title="施術前チェック" header_description="身体特徴・前回内容・本日の確認点を確認できます。" header_badge=patient_name header_back_url=patient_detail_url header_back_label="患者詳細へ戻る" header_secondary_url=dashboard_url header_secondary_label="ダッシュボードへ戻る" only %}
+  {% endwith %}
 
   <div class="brief-grid">
     <section class="brief-card">

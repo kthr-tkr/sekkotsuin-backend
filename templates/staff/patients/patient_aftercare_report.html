@@ -9,6 +9,9 @@
   }
 
   .aftercare-page{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
     max-width:920px;
     margin:0 auto;
     color:#18314f;
@@ -761,6 +764,10 @@
 
 {% block content %}
 <div class="aftercare-page">
+  {% url 'staff:clinical_note_detail' note.id as note_detail_url %}
+  {% url 'staff:post_treatment_summary' note.id as post_summary_url %}
+  {% url 'staff:patient_detail' patient.id as patient_detail_url %}
+  {% include "staff/includes/page_header.html" with header_eyebrow="PATIENT REPORT" header_title="患者向け説明レポート" header_description="患者向け説明内容を確認できます。" header_back_url=note_detail_url header_back_label="カルテ詳細へ戻る" header_tertiary_url=post_summary_url header_tertiary_label="施術後サマリーへ戻る" header_secondary_url=patient_detail_url header_secondary_label="患者詳細へ戻る" header_primary_button_id="aftercarePrintButton" header_primary_label="印刷する" only %}
   <article class="aftercare-sheet">
     <header class="aftercare-hero">
       <div class="aftercare-hero-row">
@@ -768,12 +775,6 @@
           <div class="aftercare-brand">CareFrow Aftercare Report</div>
           <h1 class="aftercare-title">施術後説明レポート</h1>
           <div class="aftercare-subtitle">患者向け説明内容を確認できます。</div>
-        </div>
-        <div class="aftercare-actions">
-          <button type="button" class="aftercare-btn primary" onclick="window.print()">印刷する</button>
-          <a class="aftercare-btn" href="{% url 'staff:clinical_note_detail' note.id %}">カルテ詳細へ戻る</a>
-          <a class="aftercare-btn" href="{% url 'staff:post_treatment_summary' note.id %}">施術後サマリーへ戻る</a>
-          <a class="aftercare-btn" href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">患者詳細へ戻る</a>
         </div>
       </div>
       <div class="aftercare-meta">
@@ -1017,6 +1018,10 @@
 
   window.addEventListener('afterprint', function () {
     document.body.classList.remove('print-share-qr');
+  });
+
+  document.getElementById('aftercarePrintButton')?.addEventListener('click', function () {
+    window.print();
   });
 
   async function copyShareText(targetId, button) {

@@ -4,9 +4,7 @@
 {% block extra_head %}
 <style>
   .staff-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
-  .staff-hero{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 20px;border-radius:20px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 14px 32px rgba(20,48,91,.14)}
-  .staff-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.staff-title{margin:8px 0 10px;font-size:34px;letter-spacing:-.04em}.staff-lead{margin:0;color:#e2edff;line-height:1.7}
-  .staff-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.staff-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.staff-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.staff-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}.staff-btn.danger{border-color:#f3c4c4;background:#fff6f6;color:#b42323}
+  .staff-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.staff-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.staff-btn.danger{border-color:#f3c4c4;background:#fff6f6;color:#b42323}
   .staff-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.staff-stat{padding:18px;border:1px solid #e1e8f1;border-radius:20px;background:#fff;box-shadow:0 12px 30px rgba(20,42,76,.06)}.staff-stat small{display:block;color:#71839b;font-weight:800}.staff-stat strong{display:block;margin-top:7px;font-size:26px;color:#17345f}
   .coming-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.coming-card{padding:16px 18px;border:1px dashed #cfd9e8;border-radius:18px;background:#fbfdff;color:#5d7089;font-weight:800}
   .staff-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.staff-card{padding:20px;border:1px solid #e1e8f1;border-radius:24px;background:#fff;box-shadow:0 13px 32px rgba(20,42,76,.06)}
@@ -15,26 +13,16 @@
   .staff-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}.info-box{padding:13px;border-radius:15px;border:1px solid #edf2f7;background:#fbfdff}.info-label{font-size:11px;font-weight:900;color:#728299}.info-value{margin-top:5px;font-size:17px;font-weight:950;color:#17345f}.info-value.small{font-size:13px;line-height:1.5;word-break:break-word}
   .tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.card-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:16px}.card-actions form{margin:0}
   .empty-state{padding:42px;text-align:center;color:#667890;border:1px dashed #cfd8e6;border-radius:22px;background:#fff}.empty-state strong{display:block;margin-bottom:8px;color:#17345f;font-size:18px}
-  @media(max-width:980px){.staff-hero{flex-direction:column;align-items:flex-start}.staff-summary,.staff-grid{grid-template-columns:1fr}.coming-grid{grid-template-columns:1fr}}
-  @media(max-width:620px){.staff-info{grid-template-columns:1fr}.staff-card-head{flex-direction:column}.staff-actions,.card-actions{justify-content:stretch}.staff-btn{width:100%}}
+  @media(max-width:980px){.staff-summary,.staff-grid{grid-template-columns:1fr}.coming-grid{grid-template-columns:1fr}}
+  @media(max-width:620px){.staff-info{grid-template-columns:1fr}.staff-card-head{flex-direction:column}.card-actions{justify-content:stretch}.staff-btn{width:100%}}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="staff-page">
-  <header class="staff-hero">
-    <div>
-      <div class="staff-eyebrow">STAFF MANAGEMENT</div>
-      <h1 class="staff-title">スタッフ一覧・担当者管理</h1>
-      <p class="staff-lead">スタッフ情報と権限を管理できます。</p>
-    </div>
-    <div class="staff-actions">
-      <a class="staff-btn soft" href="{% url 'staff:dashboard' %}">ダッシュボードへ</a>
-      <a class="staff-btn soft" href="{{ shift_month_url }}">シフト管理</a>
-      <a class="staff-btn soft" href="{{ leave_list_url }}">有給/休暇管理</a>
-      <a class="staff-btn primary" href="{% url 'staff:staff_create' %}">スタッフ追加</a>
-    </div>
-  </header>
+  {% url 'staff:dashboard' as dashboard_url %}
+  {% url 'staff:staff_create' as staff_create_url %}
+  {% include "staff/includes/page_header.html" with header_eyebrow="STAFF MANAGEMENT" header_title="スタッフ一覧・担当者管理" header_description="スタッフ情報と権限を管理できます。" header_back_url=dashboard_url header_back_label="ダッシュボードへ" header_tertiary_url=leave_list_url header_tertiary_label="有給/休暇管理" header_secondary_url=shift_month_url header_secondary_label="シフト管理" header_primary_url=staff_create_url header_primary_label="スタッフ追加" only %}
 
   <section class="staff-summary">
     <div class="staff-stat"><small>有効スタッフ</small><strong>{{ active_staff_count }}</strong></div>

@@ -5,32 +5,20 @@
 {% block extra_head %}
 <style>
   .leave-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
-  .leave-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;padding:28px;border-radius:28px;color:#fff;background:linear-gradient(135deg,#0d1d3c 0%,#19467e 62%,var(--clinic-primary-color,#1d4ed8) 100%);box-shadow:0 24px 56px rgba(20,48,91,.2)}
-  .leave-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}.leave-title{margin:8px 0 10px;font-size:32px;letter-spacing:-.04em}.leave-lead{margin:0;color:#e2edff;line-height:1.7}
-  .leave-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.leave-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.leave-btn.primary{border-color:#194c86;background:#194c86;color:#fff}.leave-btn.soft{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26);color:#fff}
+  .leave-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}.leave-btn.primary{border-color:#194c86;background:#194c86;color:#fff}
   .leave-toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 18px;border:1px solid #e1e8f1;border-radius:20px;background:#fff;box-shadow:0 12px 30px rgba(20,42,76,.06)}.month-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.month-label{font-size:22px;font-weight:950;color:#17345f}.filter-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.filter-form select{min-height:40px;padding:0 12px;border:1px solid #ccd7e5;border-radius:12px;background:#fbfcfe;color:#1b304d;font-weight:800}
   .leave-note{padding:14px 16px;border:1px solid #d9e8fa;border-radius:16px;background:#f1f7ff;color:#335a88;font-size:13px;line-height:1.7}
   .leave-card{border:1px solid #e1e8f1;border-radius:24px;background:#fff;box-shadow:0 13px 32px rgba(20,42,76,.06);overflow:hidden}.leave-table{width:100%;border-collapse:collapse}.leave-table th,.leave-table td{padding:15px 18px;border-bottom:1px solid #eef3f8;text-align:left;vertical-align:top}.leave-table th{font-size:11px;letter-spacing:.08em;color:#6b7d94;background:#f8fbff}.leave-table td{font-size:13px;color:#263d5d}.staff-name{font-weight:950;color:#17345f}.leave-sub{margin-top:4px;color:#75849a;line-height:1.55}
   .leave-pill{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:950}.leave-pill.paid-leave{background:#e8f8ee;color:#177245}.leave-pill.morning-off,.leave-pill.afternoon-off{background:#fff7df;color:#9a6500}.leave-pill.absence{background:#fff0f0;color:#b42323}.leave-pill.training{background:#eef2ff;color:#3f4aa7}.leave-pill.other{background:#edf7f8;color:#267180}
   .status-pill{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:950}.status-pill.approved{background:#e7f5ff;color:#155b9c}.status-pill.requested{background:#fff7df;color:#9a6500}.status-pill.rejected{background:#fff0f0;color:#b42323}.status-pill.canceled{background:#f1f4f8;color:#67768a}
   .empty-state{padding:42px;text-align:center;color:#667890}.empty-state strong{display:block;margin-bottom:8px;color:#17345f;font-size:18px}
-  @media(max-width:860px){.leave-hero,.leave-toolbar{flex-direction:column;align-items:flex-start}.leave-actions,.filter-form{width:100%}.leave-btn,.filter-form select{width:100%}.leave-table,.leave-table thead,.leave-table tbody,.leave-table tr,.leave-table th,.leave-table td{display:block}.leave-table thead{display:none}.leave-table tr{border-bottom:1px solid #eef3f8}.leave-table td{border:0;padding:10px 18px}}
+  @media(max-width:860px){.leave-toolbar{flex-direction:column;align-items:flex-start}.filter-form{width:100%}.leave-btn,.filter-form select{width:100%}.leave-table,.leave-table thead,.leave-table tbody,.leave-table tr,.leave-table th,.leave-table td{display:block}.leave-table thead{display:none}.leave-table tr{border-bottom:1px solid #eef3f8}.leave-table td{border:0;padding:10px 18px}}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="leave-page">
-  <header class="leave-hero">
-    <div>
-      <div class="leave-eyebrow">STAFF LEAVE</div>
-      <h1 class="leave-title">休暇・有給管理</h1>
-      <p class="leave-lead">休暇・有給の予定を管理できます。</p>
-    </div>
-    <div class="leave-actions">
-      <a class="leave-btn soft" href="{{ shift_month_url }}">シフト管理へ</a>
-      <a class="leave-btn primary" href="{{ create_url }}">休暇を登録</a>
-    </div>
-  </header>
+  {% include "staff/includes/page_header.html" with header_eyebrow="STAFF LEAVE" header_title="休暇・有給管理" header_description="休暇・有給の予定を管理できます。" header_secondary_url=shift_month_url header_secondary_label="シフト管理へ" header_primary_url=create_url header_primary_label="休暇を登録" only %}
 
   <section class="leave-toolbar">
     <div class="month-nav">

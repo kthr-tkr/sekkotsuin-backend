@@ -459,33 +459,16 @@
 
 {% block content %}
 <div class="post-page">
-  <header class="post-hero">
-    <div class="post-hero-row">
-      <div>
-        <div class="post-eyebrow">Post-treatment summary</div>
-        <h1 class="post-title">施術後サマリー</h1>
-        <div class="post-patient">
-          {{ patient.last_name }} {{ patient.first_name }} 様
-          / 施術日：{{ appointment.start_at|date:"Y年m月d日 H:i" }}
-        </div>
-      </div>
-      <div class="post-actions">
-        <a class="post-btn light" href="{% url 'staff:patient_aftercare_report' note.id %}">
-          患者向け説明レポートを開く
-        </a>
-        <a class="post-btn light" href="{% url 'staff:sales_record_create' %}?clinical_note={{ note.id }}">
-          売上登録
-        </a>
-        <button type="button" class="post-btn light" onclick="window.print()">印刷する</button>
-        <a class="post-btn" href="{% url 'staff:clinical_note_detail' note.id %}">カルテ詳細へ戻る</a>
-        <a class="post-btn" href="{% url 'staff:patient_detail' patient.id %}?tab=clinical_notes">患者詳細へ戻る</a>
-      </div>
-    </div>
-    <div class="post-hero-note">
-      本日の施術内容と次回までのポイントを、患者さんへ説明しやすい形でまとめています。
-      本画面は診断を行うものではなく、施術者の評価と合わせて判断します。
-    </div>
-  </header>
+  {% url 'staff:clinical_note_detail' note.id as note_detail_url %}
+  {% url 'staff:patient_detail' patient.id as patient_detail_url %}
+  {% url 'staff:patient_aftercare_report' note.id as aftercare_url %}
+  {% with patient_name=patient.last_name|add:" "|add:patient.first_name %}
+    {% include "staff/includes/page_header.html" with header_eyebrow="POST-TREATMENT SUMMARY" header_title="施術後サマリー" header_description="本日の施術内容と次回確認ポイントを確認できます。" header_badge=patient_name header_date=appointment.start_at header_back_url=note_detail_url header_back_label="カルテ詳細へ戻る" header_tertiary_url=patient_detail_url header_tertiary_label="患者詳細へ戻る" header_secondary_url=aftercare_url header_secondary_label="患者向け説明レポートを開く" only %}
+  {% endwith %}
+  <div class="staff-page-subactions">
+    <a class="staff-page-header__button" href="{% url 'staff:sales_record_create' %}?clinical_note={{ note.id }}">売上登録</a>
+    <button type="button" class="staff-page-header__button" onclick="window.print()">印刷する</button>
+  </div>
 
   <section class="post-card">
     <div class="post-card-head">

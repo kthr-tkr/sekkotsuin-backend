@@ -464,6 +464,54 @@ class ProductionReadinessSmokeTests(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, 200)
 
+    def test_major_staff_management_pages_use_shared_page_header(self):
+        urls = self._major_urls()
+        shared_header_pages = (
+            "dashboard",
+            "appointments",
+            "ai_usage_dashboard",
+            "clinic_settings",
+            "kpi_dashboard",
+            "treatment_menu_list",
+            "patient_list",
+            "patient_detail",
+            "sales_record_list",
+            "staff_list",
+            "staff_leave_list",
+            "staff_shift_month",
+            "pre_treatment_check",
+            "post_treatment_summary",
+            "patient_aftercare_report",
+        )
+
+        for label in shared_header_pages:
+            with self.subTest(page=label):
+                response = self.client.get(urls[label])
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "data-staff-page-header")
+                self.assertContains(response, "staff-page-header__title")
+
+    def test_shared_page_header_template_and_layout_define_common_structure(self):
+        include_source = Path(
+            "templates/staff/includes/page_header.html"
+        ).read_text(encoding="utf-8")
+        layout_source = Path("templates/staff/_layout.html").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in (
+            "staff-page-header__main",
+            "staff-page-header__eyebrow",
+            "staff-page-header__title",
+            "staff-page-header__description",
+            "staff-page-header__actions",
+        ):
+            self.assertIn(expected, include_source)
+            self.assertIn(expected, layout_source)
+
+        self.assertIn("staff-toast-container", layout_source)
+        self.assertIn("position:fixed", layout_source)
+
     def test_major_navigation_copy_is_rendered(self):
         patient_response = self.client.get(
             reverse("staff:patient_detail", args=[self.patient.id])

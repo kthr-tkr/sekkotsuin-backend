@@ -4,21 +4,12 @@
 {% block extra_head %}
 <style>
   .usage-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
-  .usage-hero{
-    display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);
-    gap:24px;padding:28px;border-radius:28px;color:#fff;
-    background:linear-gradient(135deg,#0c1c3b 0%,#173e78 58%,#3281ca 100%);
-    box-shadow:0 24px 55px rgba(21,52,99,.2)
-  }
-  .usage-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#b9d6ff}
-  .usage-title{margin:8px 0 10px;font-size:34px;line-height:1.15;letter-spacing:-.03em}
-  .usage-lead{margin:0;max-width:720px;color:#e2edff;line-height:1.75}
-  .usage-warning{padding:18px;border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18)}
+  .usage-warning{padding:15px 18px;border-radius:17px;background:#f7faff;border:1px solid #dce8f6}
   .usage-warning-label{display:inline-flex;padding:6px 10px;border-radius:999px;background:#dff3e8;color:#246548;font-size:12px;font-weight:900}
   .usage-warning.warning .usage-warning-label{background:#fff0c9;color:#925900}
   .usage-warning.danger .usage-warning-label,.usage-warning.overage .usage-warning-label{background:#ffe1e1;color:#a52626}
   .usage-warning.disabled .usage-warning-label,.usage-warning.unconfigured .usage-warning-label{background:#edf0f4;color:#586678}
-  .usage-warning-message{margin-top:12px;font-size:13px;line-height:1.65;color:#f2f6ff}
+  .usage-warning-message{margin-top:8px;font-size:13px;line-height:1.65;color:#526984}
   .usage-section{padding:24px;border:1px solid #e1e9f3;border-radius:24px;background:#fff;box-shadow:0 14px 34px rgba(20,42,76,.06)}
   .section-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
   .section-title{margin:0;font-size:21px;color:#142d54}.section-sub{margin-top:5px;font-size:13px;color:#74839a}
@@ -69,7 +60,6 @@
     .content-grid{grid-template-columns:1fr}.plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media(max-width:680px){
-    .usage-hero{grid-template-columns:1fr;padding:22px}.usage-title{font-size:28px}
     .usage-section{padding:18px}.usage-grid,.plan-grid,.category-grid{grid-template-columns:1fr}
     .meter-foot{flex-direction:column}.daily-row{grid-template-columns:58px 1fr 76px}
   }
@@ -78,17 +68,12 @@
 
 {% block content %}
 <div class="usage-page">
-  <header class="usage-hero">
-    <div>
-      <div class="usage-eyebrow">AI USAGE & COST CONTROL</div>
-      <h1 class="usage-title">AI利用量・コスト管理</h1>
-      <p class="usage-lead">AI利用量と概算コストを確認できます。</p>
-    </div>
-    <div class="usage-warning {{ usage_warning.level }}">
-      <span class="usage-warning-label">{{ usage_warning.label }}</span>
-      <div class="usage-warning-message">{{ usage_warning.message }}</div>
-    </div>
-  </header>
+  {% include "staff/includes/page_header.html" with header_eyebrow="AI USAGE & COST CONTROL" header_title="AI利用量・コスト管理" header_description="AI利用量と概算コストを確認できます。" header_date=month_start only %}
+
+  <div class="usage-warning {{ usage_warning.level }}">
+    <span class="usage-warning-label">{{ usage_warning.label }}</span>
+    <div class="usage-warning-message">{{ usage_warning.message }}</div>
+  </div>
 
   <section class="usage-section">
     <div class="section-head">

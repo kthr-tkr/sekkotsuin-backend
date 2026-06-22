@@ -153,175 +153,6 @@
     vertical-align:middle;
   }
 
-  .hero{
-    position:relative;
-    overflow:hidden;
-    border-radius:34px;
-    padding:34px;
-    color:#fff;
-    background:
-      radial-gradient(circle at 88% 16%, rgba(96,165,250,.26), transparent 26%),
-      radial-gradient(circle at 10% 90%, rgba(124,58,237,.18), transparent 24%),
-      linear-gradient(135deg, #060c19 0%, #111b36 38%, #1a2f73 68%, #4f86ff 100%);
-    box-shadow:
-      0 28px 80px rgba(15,23,42,.18),
-      inset 0 1px 0 rgba(255,255,255,.08);
-  }
-
-  .hero::before{
-    content:"";
-    position:absolute;
-    top:-120px;
-    right:-80px;
-    width:340px;
-    height:340px;
-    border-radius:50%;
-    background:radial-gradient(circle, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 68%);
-    pointer-events:none;
-  }
-
-  .hero::after{
-    content:"";
-    position:absolute;
-    inset:1px;
-    border-radius:33px;
-    border:1px solid rgba(255,255,255,.08);
-    pointer-events:none;
-  }
-
-  .hero-grid{
-    position:relative;
-    z-index:1;
-    display:grid;
-    grid-template-columns:1.45fr .9fr;
-    gap:24px;
-    align-items:stretch;
-  }
-
-  .hero-kicker{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:16px;
-    font-size:11px;
-    font-weight:800;
-    letter-spacing:.18em;
-    color:rgba(255,255,255,.62);
-    text-transform:uppercase;
-  }
-
-  .hero-kicker::before{
-    content:"";
-    width:22px;
-    height:1px;
-    background:rgba(255,255,255,.35);
-  }
-
-  .hero-title{
-    margin:0 0 12px;
-    font-size:34px;
-    line-height:1.22;
-    letter-spacing:-0.04em;
-    font-weight:900;
-    max-width:780px;
-  }
-
-  .hero-sub{
-    margin:0;
-    max-width:760px;
-    font-size:14px;
-    line-height:1.85;
-    color:rgba(255,255,255,.78);
-  }
-
-  .hero-tags{
-    margin-top:22px;
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-  }
-
-  .hero-tag{
-    display:inline-flex;
-    align-items:center;
-    padding:8px 13px;
-    border-radius:999px;
-    background:rgba(255,255,255,.08);
-    border:1px solid rgba(255,255,255,.12);
-    color:#fff;
-    font-size:12px;
-    font-weight:800;
-    -webkit-backdrop-filter:blur(10px);
-    backdrop-filter:blur(10px);
-  }
-
-  .hero-side{
-    display:flex;
-    align-items:stretch;
-  }
-
-  .next-card{
-    position:relative;
-    width:100%;
-    border-radius:26px;
-    padding:22px 22px 20px;
-    background:linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.08) 100%);
-    border:1px solid rgba(255,255,255,.12);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
-    -webkit-backdrop-filter:blur(12px);
-    backdrop-filter:blur(12px);
-    overflow:hidden;
-  }
-
-  .next-card::before{
-    content:"";
-    position:absolute;
-    right:-30px;
-    top:-30px;
-    width:160px;
-    height:160px;
-    border-radius:50%;
-    background:radial-gradient(circle, rgba(255,255,255,.12) 0%, rgba(255,255,255,0) 68%);
-  }
-
-  .next-label{
-    position:relative;
-    z-index:1;
-    color:rgba(255,255,255,.62);
-    font-size:12px;
-    letter-spacing:.14em;
-    font-weight:800;
-    margin-bottom:16px;
-    text-transform:uppercase;
-  }
-
-  .next-time{
-    position:relative;
-    z-index:1;
-    font-size:54px;
-    line-height:1;
-    letter-spacing:-0.04em;
-    font-weight:300;
-    margin-bottom:12px;
-  }
-
-  .next-name{
-    position:relative;
-    z-index:1;
-    font-size:24px;
-    font-weight:900;
-    line-height:1.3;
-    margin-bottom:8px;
-  }
-
-  .next-sub{
-    position:relative;
-    z-index:1;
-    font-size:14px;
-    color:rgba(255,255,255,.76);
-    line-height:1.7;
-  }
-
   .stats-grid{
     display:grid;
     grid-template-columns:repeat(6, 1fr);
@@ -1559,63 +1390,35 @@
 {% block content %}
 <div class="dashboard">
 
-  <header class="topbar">
-    <div class="page-head">
-      <div class="eyebrow">Staff Workspace</div>
-      <h1 class="page-title">ダッシュボード</h1>
-      <div class="page-meta">
-        {{ request.user|staff_display_name }} | CareFrow Staff | {{ today|date:"Y年n月j日(D)" }}
-      </div>
+  {% with dashboard_staff=request.user|staff_display_name %}
+    {% include "staff/includes/page_header.html" with header_eyebrow="STAFF WORKSPACE" header_title="ダッシュボード" header_description="本日の対応状況を確認できます。" header_meta=dashboard_staff header_date=today only %}
+  {% endwith %}
+
+  <section class="staff-summary-strip" aria-label="本日の状況">
+    <div class="staff-summary-strip__item">
+      <span class="staff-summary-strip__label">現在時刻 / JST</span>
+      <strong class="staff-summary-strip__value" id="clock">--:--</strong>
+      <span class="staff-summary-strip__note">CareFrow Staff</span>
     </div>
-
-    <div class="lux-clock">
-      <div class="clock" id="clock">--:--</div>
-      <div class="clock-sub">JST / CLINIC TIME</div>
-      <div class="clock-stats">
-        <div><span class="clock-dot"></span>AI稼働中</div>
-        <div>施術待ち：{{ waiting_count|default:0 }}件</div>
-        <div>完了：{{ done_count|default:0 }}件</div>
-      </div>
+    <div class="staff-summary-strip__item">
+      <span class="staff-summary-strip__label">施術待ち</span>
+      <strong class="staff-summary-strip__value">{{ waiting_count|default:0 }}件</strong>
+      <span class="staff-summary-strip__note">本日の待機状況</span>
     </div>
-  </header>
-
-  <section class="hero">
-    <div class="hero-grid">
-      <div>
-        <div class="hero-kicker">TODAY</div>
-        <h2 class="hero-title">本日の対応状況</h2>
-        <p class="hero-sub">本日の対応状況を確認できます。</p>
-
-        <div class="hero-tags">
-          <span class="hero-tag">SOAP Intelligence</span>
-          <span class="hero-tag">Treatment Planning</span>
-          <span class="hero-tag">Progress Visibility</span>
-        </div>
-      </div>
-
-      <div class="hero-side">
-        <div class="next-card">
-          <div class="next-label">Next Patient</div>
-
-          {% if next_appt %}
-            <div class="next-time">{{ next_appt.start_at|date:"H:i" }}</div>
-            <div class="next-name">
-              {% if next_appt.patient %}
-                {{ next_appt.patient.last_name }} {{ next_appt.patient.first_name }}
-              {% else %}
-                （患者未確定）
-              {% endif %}
-            </div>
-            <div class="next-sub">
-              {{ next_appt.menu }}{% if next_appt.notes %} / {{ next_appt.notes }}{% endif %}
-            </div>
-          {% else %}
-            <div class="next-time">--:--</div>
-            <div class="next-name">次の予約はありません</div>
-            <div class="next-sub">本日の予定は落ち着いています。</div>
-          {% endif %}
-        </div>
-      </div>
+    <div class="staff-summary-strip__item">
+      <span class="staff-summary-strip__label">完了</span>
+      <strong class="staff-summary-strip__value">{{ done_count|default:0 }}件</strong>
+      <span class="staff-summary-strip__note">本日の対応済み</span>
+    </div>
+    <div class="staff-summary-strip__item">
+      <span class="staff-summary-strip__label">次の患者様</span>
+      {% if next_appt %}
+        <strong class="staff-summary-strip__value">{{ next_appt.start_at|date:"H:i" }}</strong>
+        <span class="staff-summary-strip__note">{% if next_appt.patient %}{{ next_appt.patient.last_name }} {{ next_appt.patient.first_name }}{% else %}患者未確定{% endif %}</span>
+      {% else %}
+        <strong class="staff-summary-strip__value">--:--</strong>
+        <span class="staff-summary-strip__note">次の予約はありません</span>
+      {% endif %}
     </div>
   </section>
 

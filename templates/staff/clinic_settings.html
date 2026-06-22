@@ -4,17 +4,6 @@
 {% block extra_head %}
 <style>
   .clinic-settings-page{display:flex;flex-direction:column;gap:22px;color:#14213d}
-  .settings-hero{
-    display:flex;justify-content:space-between;align-items:flex-end;gap:20px;
-    padding:28px;border-radius:28px;color:#fff;
-    background:linear-gradient(135deg,#0d1d3c 0%,#19467e 60%,var(--clinic-primary-color,#1d4ed8) 100%);
-    box-shadow:0 24px 56px rgba(20,48,91,.2)
-  }
-  .settings-eyebrow{font-size:11px;font-weight:900;letter-spacing:.15em;color:#bfd8ff}
-  .settings-title{margin:8px 0 10px;font-size:34px;letter-spacing:-.04em}
-  .settings-lead{margin:0;color:#e2edff;line-height:1.7}
-  .settings-status{padding:13px 16px;border:1px solid rgba(255,255,255,.2);border-radius:16px;background:rgba(255,255,255,.1);font-size:12px;font-weight:800}
-  .settings-hero-actions{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
   .settings-form{display:flex;flex-direction:column;gap:18px}
   .settings-card{padding:24px;border:1px solid #e1e8f1;border-radius:23px;background:#fff;box-shadow:0 13px 32px rgba(20,42,76,.06)}
   .card-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
@@ -47,7 +36,6 @@
   .settings-btn.soft{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff}
   .settings-note{font-size:12px;color:#77869a;align-self:center;margin-right:auto}
   @media(max-width:800px){
-    .settings-hero{align-items:flex-start;flex-direction:column;padding:22px}.settings-hero-actions{align-items:flex-start}.settings-title{font-size:28px}
     .field-grid,.field-grid.three{grid-template-columns:1fr}.settings-card{padding:18px}
     .theme-preview{grid-template-columns:1fr}.settings-actions{position:static;flex-wrap:wrap}.settings-note{width:100%}
   }
@@ -56,17 +44,8 @@
 
 {% block content %}
 <div class="clinic-settings-page">
-  <header class="settings-hero">
-    <div>
-      <div class="settings-eyebrow">CLINIC CONFIGURATION</div>
-      <h1 class="settings-title">院設定</h1>
-      <p class="settings-lead">営業時間やテーマを設定できます。</p>
-    </div>
-    <div class="settings-hero-actions">
-      <div class="settings-status">{{ clinic.name }}</div>
-      <a class="settings-btn soft" href="{% url 'staff:treatment_menu_list' %}">施術メニュー設定</a>
-    </div>
-  </header>
+  {% url 'staff:treatment_menu_list' as treatment_menu_url %}
+  {% include "staff/includes/page_header.html" with header_eyebrow="CLINIC CONFIGURATION" header_title="院設定" header_description="営業時間やテーマを設定できます。" header_badge=clinic.name header_primary_url=treatment_menu_url header_primary_label="施術メニュー設定" only %}
 
   <form method="post" class="settings-form" novalidate>
     {% csrf_token %}

@@ -58,17 +58,9 @@
 
 {% block content %}
 <div class="patients-page">
-  <header class="patients-head">
-    <div>
-      <div class="patients-eyebrow">PATIENT DIRECTORY</div>
-      <h1 class="patients-title">患者様一覧</h1>
-      <p class="patients-lead">患者情報を検索・確認できます。</p>
-    </div>
-    <div class="head-actions">
-      <a class="head-btn" href="{% url 'staff:kpi_dashboard' %}">KPIを見る</a>
-      <a class="head-btn primary" href="{% url 'patients:staff_patient_create' %}">新規患者登録</a>
-    </div>
-  </header>
+  {% url 'staff:kpi_dashboard' as kpi_url %}
+  {% url 'patients:staff_patient_create' as patient_create_url %}
+  {% include "staff/includes/page_header.html" with header_eyebrow="PATIENT DIRECTORY" header_title="患者様一覧" header_description="患者情報を検索・確認できます。" header_secondary_url=kpi_url header_secondary_label="KPIを見る" header_primary_url=patient_create_url header_primary_label="新規患者登録" only %}
 
   <section class="filter-panel">
     <form method="get">
