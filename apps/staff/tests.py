@@ -1718,9 +1718,55 @@ class StaffClinicSettingsTests(TestCase):
 
         response = self.client.get(self._url())
 
-        self.assertContains(response, "--clinic-primary-color:#123456")
+        self.assertContains(response, "--clinic-theme-color:#123456")
+        self.assertContains(
+            response,
+            "--clinic-primary-color:var(--clinic-theme-color)",
+        )
         self.assertContains(response, "--clinic-secondary-color:#234567")
         self.assertContains(response, "--clinic-accent-color:#345678")
+        self.assertContains(response, "--clinic-sidebar-start:")
+        self.assertContains(response, "--clinic-hero-start:")
+
+    def test_staff_layout_uses_default_theme_for_missing_settings(self):
+        response = self.client.get(reverse("staff:dashboard"))
+
+        self.assertContains(response, "--clinic-theme-color:#2563EB")
+
+    def test_staff_layout_uses_default_theme_for_invalid_stored_color(self):
+        clinic_settings = ClinicSettings.objects.create(clinic=self.clinic)
+        ClinicSettings.objects.filter(pk=clinic_settings.pk).update(
+            primary_color="invalid"
+        )
+
+        response = self.client.get(reverse("staff:dashboard"))
+
+        self.assertContains(response, "--clinic-theme-color:#2563EB")
+        self.assertNotContains(response, "--clinic-theme-color:invalid")
+
+    def test_settings_explains_where_theme_color_is_applied(self):
+        response = self.client.get(self._url())
+
+        self.assertContains(response, "管理画面のテーマカラー")
+        self.assertContains(
+            response,
+            "管理画面のヒーロー、サイドバー、主要ボタンの色味に反映されます。",
+        )
+        self.assertContains(response, "CareFrow Blue")
+        self.assertContains(response, 'type="color"')
+
+    def test_shared_header_and_sidebar_use_theme_variables(self):
+        layout_source = Path("templates/staff/_layout.html").read_text(
+            encoding="utf-8"
+        )
+        header_source = Path(
+            "templates/staff/includes/page_header.html"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("staff-page-header--themed", header_source)
+        self.assertIn("var(--clinic-hero-start)", layout_source)
+        self.assertIn("var(--clinic-sidebar-start)", layout_source)
+        self.assertIn("var(--clinic-sidebar-active-bg)", layout_source)
 
     def test_clinic_settings_view_does_not_use_file_path(self):
         source = inspect.getsource(

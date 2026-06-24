@@ -224,6 +224,12 @@ class ClinicSettingsForm(forms.ModelForm):
     def __init__(self, *args, clinic=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.clinic = clinic or getattr(self.instance, "clinic", None)
+        self.fields["primary_color"].label = "管理画面のテーマカラー"
+        self.fields["primary_color"].help_text = (
+            "ヒーロー、サイドバー、主要ボタンの色味に反映されます。"
+        )
+        self.fields["secondary_color"].label = "サイドバー補助カラー"
+        self.fields["accent_color"].label = "アクセントカラー"
         if self.clinic is not None:
             self.fields["clinic_name"].initial = self.clinic.name
         self.fields["closed_weekdays"].initial = (

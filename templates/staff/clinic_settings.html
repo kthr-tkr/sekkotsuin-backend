@@ -27,7 +27,9 @@
   .weekday-list input{width:auto;margin:0}
   .time-summary{margin-top:16px;padding:14px 16px;border-radius:15px;background:#f1f7ff;border:1px solid #d9e8fa;color:#335a88;font-size:13px;line-height:1.7}
   .color-field{display:grid;grid-template-columns:42px 1fr;gap:9px;align-items:center}
-  .color-preview{width:42px;height:42px;border-radius:12px;border:1px solid rgba(15,23,42,.12);box-shadow:inset 0 0 0 3px rgba(255,255,255,.45)}
+  .color-picker{width:42px;height:42px;padding:3px;border:1px solid rgba(15,23,42,.12);border-radius:12px;background:#fff;cursor:pointer}
+  .color-help{margin-top:7px;color:#738198;font-size:11px;line-height:1.55}
+  .theme-presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.theme-preset{display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #dbe4ef;border-radius:999px;background:#fff;color:#425873;font:inherit;font-size:11px;font-weight:850;cursor:pointer}.theme-preset:hover{border-color:#9ebce1;background:#f7faff}.theme-preset-dot{width:13px;height:13px;border-radius:999px;background:var(--preset-color);box-shadow:inset 0 0 0 1px rgba(15,23,42,.12)}
   .theme-preview{display:grid;grid-template-columns:1.3fr .8fr .8fr;gap:10px;margin-top:18px}
   .theme-swatch{min-height:72px;padding:14px;border-radius:15px;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:flex-end}
   .settings-actions{position:sticky;bottom:14px;display:flex;justify-content:flex-end;gap:10px;padding:14px;border:1px solid rgba(220,228,238,.9);border-radius:18px;background:rgba(255,255,255,.92);box-shadow:0 16px 36px rgba(20,42,76,.12);backdrop-filter:blur(12px)}
@@ -141,7 +143,7 @@
         <span class="card-number">03</span>
         <div>
           <h2 class="card-title">テーマカラー</h2>
-          <div class="card-sub">#RRGGBB形式で設定し、スタッフ画面のCSS変数として利用できます</div>
+          <div class="card-sub">管理画面のヒーロー、サイドバー、主要ボタンの色味に反映されます。</div>
         </div>
       </div>
       <div class="field-grid three">
@@ -150,9 +152,10 @@
             <div class="field">
               <label for="{{ field.id_for_label }}">{{ field.label }}</label>
               <div class="color-field">
-                <span class="color-preview" data-color-preview="{{ field.name }}"></span>
+                <input class="color-picker" type="color" data-color-picker="{{ field.name }}" aria-label="{{ field.label }}を選択">
                 {{ field }}
               </div>
+              {% if field.help_text %}<div class="color-help">{{ field.help_text }}</div>{% endif %}
               {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
             </div>
           {% endif %}
@@ -162,6 +165,13 @@
         <div class="theme-swatch" data-theme-preview="primary">メインカラー</div>
         <div class="theme-swatch" data-theme-preview="secondary">サブカラー</div>
         <div class="theme-swatch" data-theme-preview="accent">アクセント</div>
+      </div>
+      <div class="theme-presets" aria-label="テーマカラープリセット">
+        <button class="theme-preset" type="button" data-theme-preset="#2563EB"><span class="theme-preset-dot" style="--preset-color:#2563EB"></span>CareFrow Blue</button>
+        <button class="theme-preset" type="button" data-theme-preset="#1E3A8A"><span class="theme-preset-dot" style="--preset-color:#1E3A8A"></span>Medical Navy</button>
+        <button class="theme-preset" type="button" data-theme-preset="#0891B2"><span class="theme-preset-dot" style="--preset-color:#0891B2"></span>Aqua Blue</button>
+        <button class="theme-preset" type="button" data-theme-preset="#059669"><span class="theme-preset-dot" style="--preset-color:#059669"></span>Emerald</button>
+        <button class="theme-preset" type="button" data-theme-preset="#7C3AED"><span class="theme-preset-dot" style="--preset-color:#7C3AED"></span>Purple</button>
       </div>
     </section>
 
@@ -190,16 +200,34 @@
     function updateColor(input) {
       const value = input.value.trim();
       const key = colorMap[input.name];
-      const preview = document.querySelector(`[data-color-preview="${input.name}"]`);
+      const picker = document.querySelector(`[data-color-picker="${input.name}"]`);
       const themePreview = document.querySelector(`[data-theme-preview="${key}"]`);
       const color = validColor(value) ? value : "#D8E0EA";
-      if (preview) preview.style.background = color;
+      if (picker) picker.value = color;
       if (themePreview) themePreview.style.background = color;
     }
 
     document.querySelectorAll("[data-color-input]").forEach((input) => {
       updateColor(input);
       input.addEventListener("input", () => updateColor(input));
+    });
+
+    document.querySelectorAll("[data-color-picker]").forEach((picker) => {
+      picker.addEventListener("input", () => {
+        const input = document.querySelector(`[name="${picker.dataset.colorPicker}"]`);
+        if (!input) return;
+        input.value = picker.value.toUpperCase();
+        updateColor(input);
+      });
+    });
+
+    document.querySelectorAll("[data-theme-preset]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const input = document.querySelector('[name="primary_color"]');
+        if (!input) return;
+        input.value = button.dataset.themePreset;
+        updateColor(input);
+      });
     });
   })();
 </script>

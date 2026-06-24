@@ -1,5 +1,5 @@
 {# templates/staff/_layout.html #}
-{% load static %}
+{% load static staff_display %}
 <!doctype html>
 <html lang="ja">
 <head>
@@ -23,9 +23,18 @@
       --blue:#3b82f6;
       --blue-2:#5b8cff;
       --violet:#7c3aed;
-      --clinic-primary-color:{{ request.user.clinic.settings.primary_color|default:"#1D4ED8" }};
-      --clinic-secondary-color:{{ request.user.clinic.settings.secondary_color|default:"#0F172A" }};
-      --clinic-accent-color:{{ request.user.clinic.settings.accent_color|default:"#16A34A" }};
+      --clinic-theme-color:{{ request.user.clinic.settings.primary_color|safe_theme_color:"#2563EB" }};
+      --clinic-primary-color:var(--clinic-theme-color);
+      --clinic-secondary-color:{{ request.user.clinic.settings.secondary_color|safe_theme_color:"#0F172A" }};
+      --clinic-accent-color:{{ request.user.clinic.settings.accent_color|safe_theme_color:"#16A34A" }};
+      --clinic-theme-strong:color-mix(in srgb,var(--clinic-theme-color) 48%,#17365f 52%);
+      --clinic-theme-soft:color-mix(in srgb,var(--clinic-theme-color) 10%,transparent);
+      --clinic-theme-faint:color-mix(in srgb,var(--clinic-theme-color) 5%,#ffffff 95%);
+      --clinic-sidebar-start:color-mix(in srgb,var(--clinic-theme-color) 7%,#ffffff 93%);
+      --clinic-sidebar-end:color-mix(in srgb,var(--clinic-secondary-color) 4%,#ffffff 96%);
+      --clinic-sidebar-active-bg:color-mix(in srgb,var(--clinic-theme-color) 13%,#ffffff 87%);
+      --clinic-hero-start:color-mix(in srgb,var(--clinic-theme-color) 12%,#ffffff 88%);
+      --clinic-hero-end:color-mix(in srgb,var(--clinic-secondary-color) 5%,#ffffff 95%);
 
       --shadow-xs:0 6px 18px rgba(15,23,42,.05);
       --shadow-sm:0 16px 36px rgba(15,23,42,.06);
@@ -50,8 +59,8 @@
 
     body{
       background:
-        radial-gradient(circle at 15% 15%, rgba(124,58,237,.04), transparent 20%),
-        radial-gradient(circle at 85% 10%, rgba(59,130,246,.04), transparent 18%),
+        radial-gradient(circle at 15% 15%, var(--clinic-theme-soft), transparent 20%),
+        radial-gradient(circle at 85% 10%, color-mix(in srgb,var(--clinic-accent-color) 5%,transparent), transparent 18%),
         linear-gradient(180deg, #f6f8fc 0%, #f3f5f9 100%);
     }
 
@@ -85,7 +94,7 @@
       height:100%;
       border-radius:32px;
       padding:16px 14px 14px;
-      background:linear-gradient(180deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.72) 100%);
+      background:linear-gradient(180deg,var(--clinic-sidebar-start) 0%,var(--clinic-sidebar-end) 100%);
       border:1px solid rgba(255,255,255,.78);
       box-shadow:
         0 20px 50px rgba(15,23,42,.07),
@@ -105,7 +114,7 @@
       width:220px;
       height:220px;
       border-radius:50%;
-      background:radial-gradient(circle, rgba(59,130,246,.10) 0%, rgba(59,130,246,0) 68%);
+      background:radial-gradient(circle,var(--clinic-theme-soft) 0%,transparent 68%);
       pointer-events:none;
     }
 
@@ -117,7 +126,7 @@
       width:200px;
       height:200px;
       border-radius:50%;
-      background:radial-gradient(circle, rgba(124,58,237,.08) 0%, rgba(124,58,237,0) 68%);
+      background:radial-gradient(circle,color-mix(in srgb,var(--clinic-secondary-color) 7%,transparent) 0%,transparent 68%);
       pointer-events:none;
     }
 
@@ -168,7 +177,7 @@
       border-radius:16px;
       background:
         radial-gradient(circle at 75% 25%, rgba(255,255,255,.20), transparent 34%),
-        linear-gradient(145deg, #0a1020 0%, #223a91 58%, #4f86ff 100%);
+        linear-gradient(145deg,var(--clinic-secondary-color) 0%,var(--clinic-theme-strong) 58%,var(--clinic-theme-color) 100%);
       color:#fff;
       display:flex;
       align-items:center;
@@ -271,15 +280,15 @@
     }
 
     .nav a:hover{
-      background:rgba(255,255,255,.62);
-      color:#111827;
+      background:color-mix(in srgb,var(--clinic-theme-color) 7%,#ffffff 93%);
+      color:var(--clinic-theme-strong);
       box-shadow:var(--shadow-xs);
     }
 
     .nav a.active{
-      color:#2343b9;
-      background:linear-gradient(135deg, rgba(91,140,255,.15) 0%, rgba(124,58,237,.10) 100%);
-      border:1px solid rgba(91,140,255,.10);
+      color:var(--clinic-theme-strong);
+      background:linear-gradient(135deg,var(--clinic-sidebar-active-bg) 0%,color-mix(in srgb,var(--clinic-accent-color) 7%,#ffffff 93%) 100%);
+      border:1px solid color-mix(in srgb,var(--clinic-theme-color) 16%,transparent);
       box-shadow:
         0 14px 28px rgba(59,130,246,.08),
         inset 0 1px 0 rgba(255,255,255,.55);
@@ -293,7 +302,7 @@
       bottom:10px;
       width:4px;
       border-radius:999px;
-      background:linear-gradient(180deg, #4f86ff 0%, #7c3aed 100%);
+      background:linear-gradient(180deg,var(--clinic-theme-color) 0%,var(--clinic-theme-strong) 100%);
     }
 
     .nav-icon{
@@ -312,14 +321,14 @@
     }
 
     .nav a:hover .nav-icon{
-      background:rgba(59,130,246,.10);
-      color:#3b82f6;
+      background:var(--clinic-theme-soft);
+      color:var(--clinic-theme-strong);
     }
 
     .nav a.active .nav-icon{
-      background:linear-gradient(135deg, rgba(91,140,255,.18) 0%, rgba(124,58,237,.12) 100%);
-      color:#3658c9;
-      border:1px solid rgba(91,140,255,.12);
+      background:linear-gradient(135deg,color-mix(in srgb,var(--clinic-theme-color) 17%,#ffffff 83%) 0%,color-mix(in srgb,var(--clinic-accent-color) 10%,#ffffff 90%) 100%);
+      color:var(--clinic-theme-strong);
+      border:1px solid color-mix(in srgb,var(--clinic-theme-color) 14%,transparent);
     }
 
     .label-text{
@@ -359,7 +368,8 @@
     .logout:hover{
       transform:translateY(-1px);
       background:rgba(255,255,255,.88);
-      color:#111827;
+      color:var(--clinic-theme-strong);
+      border-color:color-mix(in srgb,var(--clinic-theme-color) 18%,transparent);
     }
 
     .bottom-icon{
@@ -433,9 +443,11 @@
       min-height:0;
       margin:0;
       padding:15px 18px;
-      border:1px solid var(--line);
+      border:1px solid color-mix(in srgb,var(--clinic-theme-color) 16%,#e8edf5 84%);
       border-radius:18px;
-      background:rgba(255,255,255,.96);
+      background:
+        radial-gradient(circle at 4% 0%,color-mix(in srgb,var(--clinic-theme-color) 13%,transparent),transparent 36%),
+        linear-gradient(135deg,var(--clinic-hero-start) 0%,var(--clinic-hero-end) 100%);
       color:#152640;
       box-shadow:0 10px 26px rgba(20,48,91,.06);
     }
@@ -443,7 +455,7 @@
     .staff-page-header__main{min-width:0}
     .staff-page-header__eyebrow{
       margin-bottom:4px;
-      color:var(--clinic-primary-color,#1d4ed8);
+      color:var(--clinic-theme-strong,#1d4ed8);
       font-size:10px;
       font-weight:900;
       letter-spacing:.14em;
@@ -470,7 +482,7 @@
     }
 
     .staff-page-header__meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:5px;color:#8190a4;font-size:11px;font-weight:800}
-    .staff-page-header__badge{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border:1px solid #cfe0f5;border-radius:999px;background:#edf5ff;color:#245e9e;font-size:10px;font-weight:900}
+    .staff-page-header__badge{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border:1px solid color-mix(in srgb,var(--clinic-theme-color) 20%,#dbe6f2 80%);border-radius:999px;background:var(--clinic-theme-faint);color:var(--clinic-theme-strong);font-size:10px;font-weight:900}
     .staff-page-header__actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;flex-shrink:0}
     .staff-page-header__button{
       display:inline-flex;
@@ -490,12 +502,12 @@
       cursor:pointer;
     }
 
-    .staff-page-header__button:hover{border-color:#a9c4e4;background:#f7faff;color:#174f91}
-    .staff-page-header__button--primary{border-color:var(--clinic-primary-color,#1d4ed8);background:var(--clinic-primary-color,#1d4ed8);color:#fff}
+    .staff-page-header__button:hover{border-color:color-mix(in srgb,var(--clinic-theme-color) 28%,#d8e1ec 72%);background:var(--clinic-theme-faint);color:var(--clinic-theme-strong)}
+    .staff-page-header__button--primary{border-color:var(--clinic-theme-strong,#1d4ed8);background:linear-gradient(135deg,var(--clinic-theme-strong,#1d4ed8),color-mix(in srgb,var(--clinic-theme-color) 70%,var(--clinic-theme-strong) 30%));color:#fff}
     .staff-page-header__button--primary:hover{filter:brightness(.95);color:#fff}
 
     .staff-summary-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-    .staff-summary-strip__item{padding:12px 14px;border:1px solid #e2e9f2;border-radius:15px;background:#fff;box-shadow:0 8px 22px rgba(20,48,91,.04)}
+    .staff-summary-strip__item{padding:12px 14px;border:1px solid color-mix(in srgb,var(--clinic-theme-color) 10%,#e2e9f2 90%);border-radius:15px;background:linear-gradient(145deg,#ffffff 0%,var(--clinic-theme-faint) 100%);box-shadow:0 8px 22px rgba(20,48,91,.04)}
     .staff-summary-strip__label{display:block;color:#78889d;font-size:10px;font-weight:900;letter-spacing:.06em}
     .staff-summary-strip__value{display:block;margin-top:4px;color:#17375f;font-size:22px;font-weight:950;line-height:1.15}
     .staff-summary-strip__note{display:block;margin-top:3px;color:#8290a2;font-size:10px;font-weight:700;line-height:1.4}
