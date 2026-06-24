@@ -1428,7 +1428,7 @@
         <div class="today-work-kicker">Today Tasks</div>
         <h2 class="today-work-title">今日やること</h2>
         <div class="today-work-sub">
-          確認待ちのカルテ案と要確認の録音を優先し、本日の患者対応へ進めます。
+          本日確認が必要なAIカルテ案・録音データを表示しています。
         </div>
       </div>
       <a class="section-link" href="{% url 'staff:appointments' %}">予約管理へ →</a>
@@ -1444,11 +1444,11 @@
         <div class="today-count-value">{{ today_note_count|default:0 }}<span>件</span></div>
       </div>
       <div class="today-count urgent">
-        <div class="today-count-label">カルテ案確認待ち</div>
+        <div class="today-count-label">AIカルテ案</div>
         <div class="today-count-value">{{ confirmation_waiting_count|default:0 }}<span>件</span></div>
       </div>
       <div class="today-count urgent">
-        <div class="today-count-label">録音処理中・要確認</div>
+        <div class="today-count-label">録音確認</div>
         <div class="today-count-value">{{ recording_attention_count|default:0 }}<span>件</span></div>
       </div>
     </div>
@@ -1457,8 +1457,8 @@
       <section class="today-queue priority">
         <div class="today-queue-head">
           <div>
-            <h3 class="today-queue-title">カルテ案確認待ち</h3>
-            <div class="today-queue-note">施術者の確認後にカルテへ登録します</div>
+            <h3 class="today-queue-title">AIカルテ案の確認が必要</h3>
+            <div class="today-queue-note">録音や問診から作成されたカルテ案です。内容を確認・修正して保存してください。</div>
           </div>
           <span class="today-queue-count">{{ confirmation_waiting_count|default:0 }}</span>
         </div>
@@ -1471,11 +1471,11 @@
                 <span class="today-state attention">{{ item.status }}</span>
               </div>
               <div class="today-item-actions">
-                <a class="today-action primary" href="{{ item.url }}">カルテ案を確認・修正</a>
+                <a class="today-action primary" href="{{ item.url }}">AIカルテ案を確認</a>
               </div>
             </div>
           {% empty %}
-            <div class="today-empty">確認待ちのカルテ案はありません。</div>
+            <div class="today-empty">確認が必要なカルテ案はありません。</div>
           {% endfor %}
         </div>
       </section>
@@ -1483,8 +1483,8 @@
       <section class="today-queue priority">
         <div class="today-queue-head">
           <div>
-            <h3 class="today-queue-title">録音処理中・要確認</h3>
-            <div class="today-queue-note">文字起こし・カルテ案作成・エラーを確認</div>
+            <h3 class="today-queue-title">録音データの確認が必要</h3>
+            <div class="today-queue-note">文字起こしやAI要約で確認が必要な録音です。エラー内容を確認してください。</div>
           </div>
           <span class="today-queue-count">{{ recording_attention_count|default:0 }}</span>
         </div>
@@ -1497,11 +1497,11 @@
                 <span class="today-state {{ item.tone }}">{{ item.status }}</span>
               </div>
               <div class="today-item-actions">
-                <a class="today-action primary" href="{{ item.url }}">詳細を確認</a>
+                <a class="today-action primary" href="{{ item.url }}">{{ item.action_label }}</a>
               </div>
             </div>
           {% empty %}
-            <div class="today-empty">処理中・要確認の録音はありません。</div>
+            <div class="today-empty">確認が必要な録音データはありません。</div>
           {% endfor %}
         </div>
       </section>

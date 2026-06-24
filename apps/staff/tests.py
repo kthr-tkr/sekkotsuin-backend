@@ -853,7 +853,8 @@ class StaffTodayDashboardTests(TestCase):
             reverse("intakes:recording_detail", args=[recording.id]),
             attention_urls,
         )
-        self.assertContains(response, "カルテ案作成待ち")
+        self.assertContains(response, "要確認")
+        self.assertContains(response, "要約結果を確認")
 
     def test_today_clinical_note_displays_aftercare_report_link(self):
         appointment = self._appointment(
@@ -887,9 +888,19 @@ class StaffTodayDashboardTests(TestCase):
         response = self.client.get(self._dashboard_url())
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "確認待ちのカルテ案はありません")
-        self.assertContains(response, "処理中・要確認の録音はありません")
+        self.assertContains(response, "確認が必要なカルテ案はありません")
+        self.assertContains(response, "確認が必要な録音データはありません")
         self.assertContains(response, "本日の予約はありません")
+
+    def test_dashboard_uses_action_oriented_today_task_copy(self):
+        response = self.client.get(self._dashboard_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "AIカルテ案の確認が必要")
+        self.assertContains(response, "録音データの確認が必要")
+        self.assertContains(response, "AIカルテ案")
+        self.assertContains(response, "録音確認")
+        self.assertNotContains(response, "録音処理中・要確認")
 
     def test_dashboard_today_tasks_do_not_use_file_path(self):
         source = inspect.getsource(staff_views.build_dashboard_today_tasks)

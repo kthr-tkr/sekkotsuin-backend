@@ -1433,7 +1433,7 @@ def build_dashboard_today_tasks(clinic, today, today_appointments):
             "patient": recording.patient,
             "type": "初診録音",
             "created_at": recording.created_at,
-            "status": "カルテ案確認待ち",
+            "status": "確認待ち",
             "url": reverse(
                 "intakes:recording_confirm",
                 args=[recording.id],
@@ -1445,7 +1445,7 @@ def build_dashboard_today_tasks(clinic, today, today_appointments):
         "patient": session.patient,
         "type": "通院施術録音",
         "created_at": session.created_at,
-        "status": "カルテ案確認待ち",
+        "status": "確認待ち",
         "url": reverse(
             "treatment_sessions:session_confirm",
             args=[session.id],
@@ -1525,12 +1525,27 @@ def build_dashboard_today_tasks(clinic, today, today_appointments):
             "transcription_waiting",
             "summary_waiting",
         }:
+            action_label = (
+                "録音エラーを確認"
+                if state["key"] == "error"
+                else "要約結果を確認"
+                if state["key"] == "summary_waiting"
+                else "録音状況を確認"
+            )
+            status_label = (
+                "エラーあり"
+                if state["key"] == "error"
+                else "処理中"
+                if state["key"] in {"transcribing", "summarizing"}
+                else "要確認"
+            )
             recording_attention_items.append({
                 "patient": recording.patient,
                 "type": "初診録音",
                 "created_at": recording.created_at,
-                "status": state["label"],
+                "status": status_label,
                 "tone": state["tone"],
+                "action_label": action_label,
                 "url": reverse(
                     "intakes:recording_detail",
                     args=[recording.id],
@@ -1548,12 +1563,27 @@ def build_dashboard_today_tasks(clinic, today, today_appointments):
             "transcription_waiting",
             "summary_waiting",
         }:
+            action_label = (
+                "録音エラーを確認"
+                if state["key"] == "error"
+                else "要約結果を確認"
+                if state["key"] == "summary_waiting"
+                else "録音状況を確認"
+            )
+            status_label = (
+                "エラーあり"
+                if state["key"] == "error"
+                else "処理中"
+                if state["key"] in {"transcribing", "summarizing"}
+                else "要確認"
+            )
             recording_attention_items.append({
                 "patient": session.patient,
                 "type": "通院施術録音",
                 "created_at": session.created_at,
-                "status": state["label"],
+                "status": status_label,
                 "tone": state["tone"],
+                "action_label": action_label,
                 "url": reverse(
                     "treatment_sessions:detail",
                     args=[session.id],
@@ -6053,6 +6083,57 @@ def build_appointment_available_slots(
             )
         )
 
+    staff_ids = [staff_user.id for staff_user in staff_users]
+    available_shift_statuses = {
+        StaffShift.Status.WORKING,
+        StaffShift.Status.HALF_DAY,
+        StaffShift.Status.TRAINING,
+    }
+    shifts_by_staff = {
+        shift.staff_id: shift
+        for shift in StaffShift.objects.filter(
+            clinic=clinic,
+            staff_id__in=staff_ids,
+            date=target_date,
+        )
+    }
+    leaves_by_staff = {staff_id: [] for staff_id in staff_ids}
+    for leave in StaffLeave.objects.filter(
+        clinic=clinic,
+        staff_id__in=staff_ids,
+        status=StaffLeave.Status.APPROVED,
+        start_date__lte=target_date,
+        end_date__gte=target_date,
+    ):
+        leaves_by_staff.setdefault(leave.staff_id, []).append(leave)
+
+    day_start = _combine_appointment_local_datetime(target_date, time.min)
+    day_end = day_start + timedelta(days=1)
+    appointments_by_staff = {staff_id: [] for staff_id in staff_ids}
+    appointment_qs = (
+        Appointment.objects
+        .filter(
+            clinic=clinic,
+            assigned_staff_id__in=staff_ids,
+            start_at__lt=day_end,
+            end_at__gt=day_start,
+        )
+        .exclude(
+            status__in=[
+                Appointment.Status.CANCELLED,
+                Appointment.Status.NO_SHOW,
+            ]
+        )
+        .order_by("start_at")
+    )
+    if parsed_exclude_id:
+        appointment_qs = appointment_qs.exclude(pk=parsed_exclude_id)
+    for appointment in appointment_qs:
+        appointments_by_staff.setdefault(
+            appointment.assigned_staff_id,
+            [],
+        ).append(appointment)
+
     slots = []
     current_at = _combine_appointment_local_datetime(target_date, business_start)
     close_at = _combine_appointment_local_datetime(target_date, business_end)
@@ -6061,15 +6142,50 @@ def build_appointment_available_slots(
 
     while current_at and close_at and current_at + duration_delta <= close_at:
         end_at = current_at + duration_delta
-        for staff_user in staff_users:
-            availability = check_appointment_availability(
-                clinic=clinic,
-                start_at=current_at,
-                end_at=end_at,
-                assigned_staff=staff_user,
-                exclude_appointment_id=parsed_exclude_id,
+        local_start_time = timezone.localtime(current_at).time()
+        local_end_time = timezone.localtime(end_at).time()
+        if (
+            clinic_settings
+            and clinic_settings.break_start_time
+            and clinic_settings.break_end_time
+            and _time_ranges_overlap(
+                local_start_time,
+                local_end_time,
+                clinic_settings.break_start_time,
+                clinic_settings.break_end_time,
             )
-            if availability["is_valid"] and not availability["warnings"]:
+        ):
+            current_at = current_at + step
+            continue
+
+        for staff_user in staff_users:
+            shift = shifts_by_staff.get(staff_user.id)
+            if not shift or shift.status not in available_shift_statuses:
+                continue
+            if shift.start_time and shift.end_time and (
+                local_start_time < shift.start_time
+                or local_end_time > shift.end_time
+            ):
+                continue
+            if any(
+                _staff_leave_overlaps_appointment(
+                    leave,
+                    local_start_time,
+                    local_end_time,
+                    clinic_settings,
+                )
+                for leave in leaves_by_staff.get(staff_user.id, [])
+            ):
+                continue
+            if any(
+                appointment.start_at < end_at
+                and appointment.end_at > current_at
+                for appointment in appointments_by_staff.get(staff_user.id, [])
+                if appointment.end_at
+            ):
+                continue
+
+            if shift:
                 start_label = timezone.localtime(current_at).strftime("%H:%M")
                 end_label = timezone.localtime(end_at).strftime("%H:%M")
                 staff_name = _appointment_staff_display_name(staff_user)
@@ -6080,9 +6196,9 @@ def build_appointment_available_slots(
                     "staff_name": staff_name,
                     "label": f"{start_label}〜{end_label} {staff_name}",
                 })
-                if len(slots) >= limit:
+                if limit is not None and len(slots) >= limit:
                     break
-        if len(slots) >= limit:
+        if limit is not None and len(slots) >= limit:
             break
         current_at = current_at + step
 

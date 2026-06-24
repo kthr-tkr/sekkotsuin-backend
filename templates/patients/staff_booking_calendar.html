@@ -91,12 +91,12 @@
               {% if stat and not stat.disabled %}
                 <a class="day-cell day-active" href="{% url 'patients:staff_booking_day' patient.pk cell.ds %}{% if treatment_plan_id %}?treatment_plan_id={{ treatment_plan_id }}{% endif %}">
                   <div class="day-num">{{ cell.day }}</div>
-                  <div class="day-meta">空き {{ stat.free }} 枠</div>
+                  <div class="day-meta">空き {{ stat.free }}枠</div>
                 </a>
               {% else %}
                 <div class="day-cell day-disabled">
                   <div class="day-num">{{ cell.day }}</div>
-                  <div class="day-meta">予約不可</div>
+                  <div class="day-meta">{% if stat.status == "closed" %}休診{% elif stat.status == "past" %}受付終了{% else %}空きなし{% endif %}</div>
                 </div>
               {% endif %}
             {% endwith %}

@@ -43,12 +43,12 @@
               {% if stat and not stat.disabled %}
                 <a class="p-cell p-cell-active" href="{% url 'patients:booking_day' cell.ds %}?{% if treatment_plan_id %}treatment_plan_id={{ treatment_plan_id }}&{% endif %}{% if treatment_menu_id %}treatment_menu_id={{ treatment_menu_id }}{% endif %}">
                   <div class="p-day">{{ cell.day }}</div>
-                  <div class="p-meta">予約可 {{ stat.free }}</div>
+                  <div class="p-meta">空き {{ stat.free }}枠</div>
                 </a>
               {% else %}
                 <div class="p-cell p-cell-disabled">
                   <div class="p-day">{{ cell.day }}</div>
-                  <div class="p-meta">×</div>
+                  <div class="p-meta">{% if stat.status == "closed" %}休診{% elif stat.status == "past" %}受付終了{% else %}空きなし{% endif %}</div>
                 </div>
               {% endif %}
             {% endwith %}

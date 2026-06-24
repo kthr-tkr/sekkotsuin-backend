@@ -254,7 +254,7 @@ def _build_patient_available_slots(
     staff=None,
     treatment_menu=None,
     duration_minutes=None,
-    limit=500,
+    limit=None,
 ):
     # スタッフ予約画面と同じ判定を使い、表示と保存のルール差を防ぐ。
     from apps.staff.views import build_appointment_available_slots
@@ -314,7 +314,7 @@ def _count_free_slots_for_staff(clinic, staff, day: date, duration_minutes=None)
         day,
         staff=staff,
         duration_minutes=duration_minutes,
-        limit=500,
+        limit=None,
     )
     return len(result.get("slots") or []) if result.get("ok") else 0
 
@@ -699,7 +699,11 @@ def booking_calendar_view(request):
             day = date(first_day.year, first_day.month, d)
 
             if day < today:
-                day_stats[day.isoformat()] = {"free": 0, "disabled": True}
+                day_stats[day.isoformat()] = {
+                    "free": 0,
+                    "disabled": True,
+                    "status": "past",
+                }
                 continue
 
             slot_result = _build_patient_available_slots(
@@ -707,13 +711,19 @@ def booking_calendar_view(request):
                 day,
                 treatment_menu=treatment_menu,
                 duration_minutes=duration_minutes,
-                limit=1,
+                limit=None,
             )
-            free_total = 1 if slot_result.get("slots") else 0
+            free_total = len(slot_result.get("slots") or [])
+            is_closed = any(
+                "休診" in error for error in slot_result.get("errors") or []
+            )
 
             day_stats[day.isoformat()] = {
                 "free": free_total,
                 "disabled": free_total == 0,
+                "status": "closed" if is_closed else (
+                    "available" if free_total else "full"
+                ),
             }
 
     cal_weeks = []
@@ -785,7 +795,7 @@ def booking_day_view(request, ymd: str):
         day,
         treatment_menu=treatment_menu,
         duration_minutes=duration_minutes,
-        limit=500,
+        limit=None,
     )
     slots_by_staff = {staff.id: [] for staff in staffs}
     for slot in slot_result.get("slots") or []:
@@ -1179,20 +1189,30 @@ def staff_booking_calendar_view(request, patient_id):
             day = date(first_day.year, first_day.month, d)
 
             if day < today:
-                day_stats[day.isoformat()] = {"free": 0, "disabled": True}
+                day_stats[day.isoformat()] = {
+                    "free": 0,
+                    "disabled": True,
+                    "status": "past",
+                }
                 continue
 
             slot_result = _build_patient_available_slots(
                 clinic,
                 day,
                 duration_minutes=duration_minutes,
-                limit=1,
+                limit=None,
             )
-            free_total = 1 if slot_result.get("slots") else 0
+            free_total = len(slot_result.get("slots") or [])
+            is_closed = any(
+                "休診" in error for error in slot_result.get("errors") or []
+            )
 
             day_stats[day.isoformat()] = {
                 "free": free_total,
-                "disabled": free_total == 0
+                "disabled": free_total == 0,
+                "status": "closed" if is_closed else (
+                    "available" if free_total else "full"
+                ),
             }
 
     cal_weeks = []
@@ -1249,7 +1269,7 @@ def staff_booking_day_view(request, patient_id, ymd):
         clinic,
         day,
         duration_minutes=duration_minutes,
-        limit=500,
+        limit=None,
     )
     slots_by_staff = {staff.id: [] for staff in staffs}
     for slot in slot_result.get("slots") or []:

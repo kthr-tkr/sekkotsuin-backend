@@ -160,6 +160,23 @@ class PatientFacingSafetyTests(TestCase):
             params,
         )
 
+    def _booking_calendar_response(self, **params):
+        query = {
+            "ym": self.target_date.strftime("%Y-%m"),
+            "treatment_menu_id": self.menu.id,
+        }
+        query.update(params)
+        return self.client.get(reverse("patients:booking_calendar"), query)
+
+    def _target_calendar_stat(self, response):
+        target = self.target_date.isoformat()
+        return next(
+            cell["stat"]
+            for week in response.context["cal_weeks"]
+            for cell in week
+            if cell["ds"] == target
+        )
+
     def _slot_starts(self, response, staff):
         item = next(
             row for row in response.context["staff_slots"] if row["staff"].id == staff.id
@@ -218,6 +235,79 @@ class PatientFacingSafetyTests(TestCase):
         self.assertNotIn("17:30", starts)
         self.assertEqual(self._slot_starts(response, self.off_staff), set())
         self.assertEqual(self._slot_starts(response, self.leave_staff), set())
+
+    def test_monthly_slot_count_matches_detail_total_for_multiple_staff(self):
+        second_staff = self.User.objects.create_user(
+            username="patient-booking-second",
+            password="test-password",
+            clinic=self.clinic,
+            role=self.User.Role.PRACTITIONER,
+            last_name="第二",
+            first_name="担当",
+        )
+        StaffShift.objects.create(
+            clinic=self.clinic,
+            staff=second_staff,
+            date=self.target_date,
+            status=StaffShift.Status.WORKING,
+            start_time=time(9, 0),
+            end_time=time(18, 0),
+        )
+        existing_start = timezone.make_aware(
+            datetime.combine(self.target_date, time(10, 0))
+        )
+        Appointment.objects.create(
+            clinic=self.clinic,
+            patient=self.patient,
+            assigned_staff=self.staff,
+            start_at=existing_start,
+            end_at=existing_start + timedelta(minutes=60),
+            menu="既存予約",
+            status=Appointment.Status.BOOKED,
+        )
+
+        day_response = self._booking_day_response(
+            treatment_menu_id=self.menu.id
+        )
+        detail_total = sum(
+            len(item["slots"])
+            for item in day_response.context["staff_slots"]
+        )
+        calendar_response = self._booking_calendar_response()
+        calendar_stat = self._target_calendar_stat(calendar_response)
+
+        self.assertGreater(detail_total, 1)
+        self.assertEqual(calendar_stat["free"], detail_total)
+        self.assertContains(calendar_response, f"空き {detail_total}枠")
+        slot_staff_ids = {
+            slot["staff_id"]
+            for slot in patient_views._build_patient_available_slots(
+                self.clinic,
+                self.target_date,
+                treatment_menu=self.menu,
+                duration_minutes=self.menu.duration_minutes,
+            )["slots"]
+        }
+        self.assertNotIn(self.off_staff.id, slot_staff_ids)
+        self.assertNotIn(self.leave_staff.id, slot_staff_ids)
+        self.assertNotIn(self.other_staff.id, slot_staff_ids)
+        self.assertNotContains(calendar_response, "他院 担当")
+
+    def test_monthly_calendar_marks_closed_weekday_without_slots(self):
+        clinic_settings = ClinicSettings.objects.get(clinic=self.clinic)
+        weekday_key = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"][
+            self.target_date.weekday()
+        ]
+        clinic_settings.closed_weekdays = [weekday_key]
+        clinic_settings.save(update_fields=["closed_weekdays"])
+
+        response = self._booking_calendar_response()
+        stat = self._target_calendar_stat(response)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(stat["free"], 0)
+        self.assertEqual(stat["status"], "closed")
+        self.assertContains(response, "休診")
 
     def test_patient_booking_rejects_other_clinic_menu_and_staff(self):
         menu_response = self._booking_day_response(treatment_menu_id=self.other_menu.id)
