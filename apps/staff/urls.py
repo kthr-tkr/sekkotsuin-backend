@@ -142,6 +142,11 @@ urlpatterns = [
         views.staff_member_toggle_view,
         name="staff_member_toggle",
     ),
+    path(
+        "settings/members/<int:staff_id>/delete/",
+        views.staff_member_delete_view,
+        name="staff_member_delete",
+    ),
     path("shifts/", views.staff_shift_month_view, name="staff_shift_month"),
     path("shifts/new/", views.staff_shift_create_view, name="staff_shift_create"),
     path(

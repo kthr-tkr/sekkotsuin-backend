@@ -1496,6 +1496,46 @@ class StaffAiUsageDashboardTests(TestCase):
         self.assertContains(response, "55分")
         self.assertContains(response, "実際の請求額とは異なる場合があります")
 
+    def test_ai_usage_displays_standard_plan_policy(self):
+        self.plan.plan_name = "standard"
+        self.plan.save(update_fields=["plan_name", "updated_at"])
+
+        response = self.client.get(self._url())
+
+        self.assertContains(response, "スタンダード")
+        self.assertContains(response, "月3000分まで利用できます")
+        self.assertContains(response, "1日5名程度のAI録音に対応")
+        self.assertContains(response, "3000分")
+        self.assertContains(response, "1000分 / 5000円")
+        self.assertContains(response, "30000円")
+        self.assertEqual(response.context["monthly_usage"]["included_minutes"], 3000)
+
+    def test_ai_usage_displays_pro_plan_policy(self):
+        self.plan.plan_name = "pro"
+        self.plan.save(update_fields=["plan_name", "updated_at"])
+
+        response = self.client.get(self._url())
+
+        self.assertContains(response, "プロ")
+        self.assertContains(response, "月7000分まで利用できます")
+        self.assertContains(response, "複数スタッフ・高頻度運用")
+        self.assertContains(response, "優先サポート")
+        self.assertContains(response, "7000分")
+        self.assertContains(response, "50000円")
+        self.assertEqual(response.context["monthly_usage"]["included_minutes"], 7000)
+
+    def test_ai_usage_displays_campaign_plan_policy(self):
+        self.plan.plan_name = "campaign_standard"
+        self.plan.save(update_fields=["plan_name", "updated_at"])
+
+        response = self.client.get(self._url())
+
+        self.assertContains(response, "先行導入キャンペーン")
+        self.assertContains(response, "3か月間19,800円")
+        self.assertContains(response, "4か月目以降29,800円")
+        self.assertContains(response, "常設ライトプランではありません")
+        self.assertTrue(response.context["plan"]["campaign_applied"])
+
     def test_ai_usage_without_plan_does_not_fail(self):
         self.plan.delete()
 
@@ -1906,6 +1946,9 @@ class StaffMemberManagementTests(TestCase):
     def _toggle_url(self, user):
         return reverse("staff:staff_member_toggle", args=[user.id])
 
+    def _delete_url(self, user):
+        return reverse("staff:staff_member_delete", args=[user.id])
+
     def _valid_create_data(self, **overrides):
         data = {
             "last_name": "新規",
@@ -2047,6 +2090,81 @@ class StaffMemberManagementTests(TestCase):
         self.staff_user.refresh_from_db()
         self.assertTrue(self.staff_user.is_active)
 
+    def test_staff_member_can_be_marked_deleted_without_physical_delete(self):
+        response = self.client.post(self._delete_url(self.staff_user))
+
+        self.assertRedirects(response, self._list_url())
+        self.staff_user.refresh_from_db()
+        self.assertFalse(self.staff_user.is_active)
+        self.assertTrue(self.User.objects.filter(pk=self.staff_user.pk).exists())
+
+        list_response = self.client.get(self._list_url())
+        self.assertContains(list_response, "担当 花子")
+        self.assertContains(list_response, "削除済み")
+
+    def test_deleted_staff_is_excluded_from_new_assignment_candidates(self):
+        target_day = timezone.localdate() + timedelta(days=3)
+        ClinicSettings.objects.create(
+            clinic=self.clinic,
+            business_start_time=time(9, 0),
+            business_end_time=time(18, 0),
+        )
+        StaffShift.objects.create(
+            clinic=self.clinic,
+            staff=self.staff_user,
+            date=target_day,
+            status=StaffShift.Status.WORKING,
+            start_time=time(9, 0),
+            end_time=time(18, 0),
+        )
+        self.client.post(self._delete_url(self.staff_user))
+
+        slot_result = staff_views.build_appointment_available_slots(
+            clinic=self.clinic,
+            target_date=target_day,
+            duration_minutes=30,
+            limit=None,
+        )
+        slot_staff_ids = {slot["staff_id"] for slot in slot_result["slots"]}
+        self.assertNotIn(self.staff_user.id, slot_staff_ids)
+
+        sales_response = self.client.get(reverse("staff:sales_record_create"))
+        sales_staff_ids = set(
+            sales_response.context["form"].fields["staff"].queryset
+            .values_list("id", flat=True)
+        )
+        self.assertNotIn(self.staff_user.id, sales_staff_ids)
+
+        shift_response = self.client.get(reverse("staff:staff_shift_create"))
+        shift_staff_ids = set(
+            shift_response.context["form"].fields["staff"].queryset
+            .values_list("id", flat=True)
+        )
+        self.assertNotIn(self.staff_user.id, shift_staff_ids)
+
+    def test_deleted_staff_name_remains_on_existing_sales_history(self):
+        self._sales_record(staff=self.staff_user, amount=8800)
+        self.client.post(self._delete_url(self.staff_user))
+
+        response = self.client.get(reverse("staff:sales_record_list"))
+
+        self.assertContains(response, "担当 花子")
+        self.assertContains(response, "¥8,800")
+
+    def test_self_staff_member_delete_is_rejected(self):
+        response = self.client.post(self._delete_url(self.user))
+
+        self.assertRedirects(response, self._list_url())
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+
+    def test_other_clinic_staff_member_delete_returns_404(self):
+        response = self.client.post(self._delete_url(self.other_staff))
+
+        self.assertEqual(response.status_code, 404)
+        self.other_staff.refresh_from_db()
+        self.assertTrue(self.other_staff.is_active)
+
     def test_month_sales_total_uses_only_own_clinic_sales(self):
         self._sales_record(staff=self.staff_user, amount=50000)
         self._sales_record(
@@ -2078,6 +2196,7 @@ class StaffMemberManagementTests(TestCase):
             + inspect.getsource(staff_views.staff_create)
             + inspect.getsource(staff_views.staff_member_update_view)
             + inspect.getsource(staff_views.staff_member_toggle_view)
+            + inspect.getsource(staff_views.staff_member_delete_view)
         )
 
         self.assertNotIn(".path", source)

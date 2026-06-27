@@ -201,19 +201,29 @@
       </div>
     </div>
     {% if plan %}
+      <div class="cost-notice">
+        <strong>{{ plan.name }}</strong>：
+        {{ plan.description }}
+        {% if plan.campaign_applied %}
+          <br>先行導入キャンペーン適用中です。LINE共有や患者説明の運用フィードバックにご協力ください。
+        {% endif %}
+      </div>
       <div class="plan-grid">
         <div class="plan-item"><div class="plan-label">現在のプラン</div><div class="plan-value">{{ plan.name }}</div></div>
         <div class="plan-item"><div class="plan-label">月額基本料金</div><div class="plan-value">{{ plan.monthly_base_fee }}円</div></div>
+        <div class="plan-item"><div class="plan-label">初期費用</div><div class="plan-value">{% if plan.initial_fee is not None %}{{ plan.initial_fee }}円{% else %}個別設定{% endif %}</div></div>
         <div class="plan-item"><div class="plan-label">月間込み分数</div><div class="plan-value">{{ plan.included_minutes }}分</div></div>
         <div class="plan-item"><div class="plan-label">現在の使用分数</div><div class="plan-value">{{ plan.used_minutes }}分</div></div>
         <div class="plan-item"><div class="plan-label">残り分数</div><div class="plan-value">{{ plan.remaining_minutes }}分</div></div>
         <div class="plan-item"><div class="plan-label">超過単位・料金</div><div class="plan-value">{{ plan.overage_unit_minutes }}分 / {{ plan.overage_unit_price }}円</div></div>
+        <div class="plan-item"><div class="plan-label">超過見込み</div><div class="plan-value">{{ plan.overage_fee }}円</div></div>
         <div class="plan-item"><div class="plan-label">hard limit</div><div class="plan-value">{{ plan.hard_limit_minutes }}分</div></div>
         <div class="plan-item">
           <div class="plan-label">AI機能</div>
           <div class="plan-value"><span class="plan-state {% if not plan.is_ai_enabled %}off{% endif %}">{% if plan.is_ai_enabled %}有効{% else %}無効{% endif %}</span></div>
         </div>
       </div>
+      <div class="cost-notice">{{ plan.notes }}</div>
     {% else %}
       <div class="empty-plan">この院のAI料金プランはまだ設定されていません。利用ログと概算コストは引き続き確認できます。</div>
     {% endif %}

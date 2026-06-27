@@ -55,7 +55,7 @@
                 </div>
               </div>
             </div>
-            <span class="status-pill {{ s.status_class }}">{{ s.status_label }}</span>
+            <span class="status-pill {{ s.status_class }}">{{ s.deletion_status_label }}</span>
           </div>
 
           <div class="tag-row">
@@ -104,6 +104,12 @@
                 <button class="staff-btn" type="submit">再有効化</button>
               {% endif %}
             </form>
+            {% if s.is_active %}
+              <form method="post" action="{{ s.delete_url }}" onsubmit="return confirm('このスタッフを削除済みにします。過去の予約・売上・カルテ履歴には名前が残ります。');">
+                {% csrf_token %}
+                <button class="staff-btn danger" type="submit">削除</button>
+              </form>
+            {% endif %}
           </div>
         </article>
       {% endfor %}

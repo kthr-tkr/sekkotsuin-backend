@@ -2050,9 +2050,11 @@ def staff_list(request):
             "show_in_reservations": show_in_assignment,
             "show_in_sales": show_in_assignment,
             "status_label": "有効" if user.is_active else "無効",
+            "deletion_status_label": "利用中" if user.is_active else "削除済み（無効）",
             "status_class": "running" if user.is_active else "stopped",
             "edit_url": reverse("staff:staff_member_update", args=[user.id]),
             "toggle_url": reverse("staff:staff_member_toggle", args=[user.id]),
+            "delete_url": reverse("staff:staff_member_delete", args=[user.id]),
             "shift_url": (
                 reverse("staff:staff_shift_month")
                 + f"?staff={user.id}"
@@ -2183,6 +2185,43 @@ def staff_member_toggle_view(request, staff_id):
         messages.success(request, "スタッフを再有効化しました。")
     else:
         messages.success(request, "スタッフを無効化しました。")
+    return redirect("staff:staff_list")
+
+
+@staff_required
+@require_POST
+def staff_member_delete_view(request, staff_id):
+    clinic = get_current_clinic(request)
+    if (
+        clinic is None
+        or not getattr(request.user, "clinic_id", None)
+        or request.user.clinic_id != clinic.id
+    ):
+        return HttpResponseForbidden("所属院のスタッフのみ削除できます。")
+
+    staff_user = get_object_or_404(
+        User,
+        pk=staff_id,
+        clinic=clinic,
+        role__in=[
+            User.Role.ADMIN,
+            User.Role.RECEPTION,
+            User.Role.PRACTITIONER,
+        ],
+    )
+    if staff_user.id == request.user.id:
+        messages.error(request, "自分自身を削除済みにすることはできません。")
+        return redirect("staff:staff_list")
+
+    if staff_user.is_active:
+        staff_user.is_active = False
+        staff_user.save(update_fields=["is_active"])
+        messages.success(
+            request,
+            "スタッフを削除済みにしました。過去の予約・売上・カルテ履歴には名前が残ります。",
+        )
+    else:
+        messages.info(request, "このスタッフはすでに削除済みです。")
     return redirect("staff:staff_list")
 
 
@@ -4426,27 +4465,151 @@ def _ai_usage_category(log):
     return "other"
 
 
-def _ai_usage_warning_context(plan, used_minutes):
+CARE_FROW_AI_PLAN_PRESETS = {
+    "standard": {
+        "name": "スタンダード",
+        "monthly_base_fee": 29800,
+        "initial_fee": 30000,
+        "included_minutes": 3000,
+        "overage_unit_minutes": 1000,
+        "overage_unit_price": 5000,
+        "description": "月3000分まで利用できます。1日5名程度のAI録音に対応します。",
+        "notes": "超過時は1000分ごとに5,000円です。",
+        "campaign_applied": False,
+    },
+    "pro": {
+        "name": "プロ",
+        "monthly_base_fee": 49800,
+        "initial_fee": 50000,
+        "included_minutes": 7000,
+        "overage_unit_minutes": 1000,
+        "overage_unit_price": 5000,
+        "description": "月7000分まで利用できます。複数スタッフ・高頻度運用に対応します。",
+        "notes": "姿勢分析・レポート強化・優先サポート込み。超過時は1000分ごとに5,000円です。",
+        "campaign_applied": False,
+    },
+    "campaign_standard": {
+        "name": "先行導入キャンペーン",
+        "monthly_base_fee": 19800,
+        "initial_fee": 30000,
+        "included_minutes": 3000,
+        "overage_unit_minutes": 1000,
+        "overage_unit_price": 5000,
+        "description": "先行導入キャンペーン適用中：3か月間19,800円、4か月目以降29,800円です。",
+        "notes": "フィードバック協力を前提とした期間限定価格です。常設ライトプランではありません。",
+        "campaign_applied": True,
+    },
+}
+
+
+def _normalize_care_frow_plan_key(plan_name):
+    value = str(plan_name or "").strip().lower()
+    if not value:
+        return ""
+    if value in CARE_FROW_AI_PLAN_PRESETS:
+        return value
+    if "campaign" in value or "先行" in value or "キャンペーン" in value:
+        return "campaign_standard"
+    if "pro" in value or "プロ" in value:
+        return "pro"
+    if "standard" in value or "スタンダード" in value:
+        return "standard"
+    return ""
+
+
+def _calc_overage_fee_for_plan(used_minutes, included_minutes, unit_minutes, unit_price):
+    if used_minutes <= included_minutes or unit_minutes <= 0:
+        return 0
+    over_minutes = used_minutes - included_minutes
+    units = (over_minutes + unit_minutes - 1) // unit_minutes
+    return units * unit_price
+
+
+def _build_ai_plan_display_context(plan, used_minutes):
     if plan is None:
+        return None
+
+    preset_key = _normalize_care_frow_plan_key(plan.plan_name)
+    preset = CARE_FROW_AI_PLAN_PRESETS.get(preset_key)
+    if preset:
+        included_minutes = preset["included_minutes"]
+        overage_unit_minutes = preset["overage_unit_minutes"]
+        overage_unit_price = preset["overage_unit_price"]
+        monthly_base_fee = preset["monthly_base_fee"]
+        initial_fee = preset["initial_fee"]
+        name = preset["name"]
+        description = preset["description"]
+        notes = preset["notes"]
+        campaign_applied = preset["campaign_applied"]
+        hard_limit_minutes = max(plan.hard_limit_minutes or 0, included_minutes)
+    else:
+        included_minutes = plan.included_minutes
+        overage_unit_minutes = plan.overage_unit_minutes
+        overage_unit_price = plan.overage_unit_price
+        monthly_base_fee = plan.monthly_base_fee
+        initial_fee = None
+        name = plan.plan_name or "名称未設定"
+        description = plan.notes or "院別に設定されたAI利用プランです。"
+        notes = "登録済みの院別プラン設定にもとづいて表示しています。"
+        campaign_applied = False
+        hard_limit_minutes = plan.hard_limit_minutes
+
+    usage_percent = (
+        int((used_minutes / included_minutes) * 100)
+        if included_minutes > 0 else 0
+    )
+    remaining_minutes = max(included_minutes - used_minutes, 0)
+    overage_fee = _calc_overage_fee_for_plan(
+        used_minutes,
+        included_minutes,
+        overage_unit_minutes,
+        overage_unit_price,
+    )
+
+    return {
+        "name": name,
+        "raw_name": plan.plan_name,
+        "preset_key": preset_key,
+        "monthly_base_fee": monthly_base_fee,
+        "initial_fee": initial_fee,
+        "included_minutes": included_minutes,
+        "used_minutes": used_minutes,
+        "remaining_minutes": remaining_minutes,
+        "usage_percent": usage_percent,
+        "usage_percent_bar": min(usage_percent, 100),
+        "overage_unit_minutes": overage_unit_minutes,
+        "overage_unit_price": overage_unit_price,
+        "overage_fee": overage_fee,
+        "hard_limit_minutes": hard_limit_minutes,
+        "is_ai_enabled": plan.is_ai_enabled,
+        "allow_overage": plan.allow_overage,
+        "description": description,
+        "notes": notes,
+        "campaign_applied": campaign_applied,
+    }
+
+
+def _ai_usage_warning_context(plan_context, used_minutes):
+    if plan_context is None:
         return {
             "level": "unconfigured",
             "label": "プラン未設定",
             "message": "AI料金プランが未設定です。利用ログは引き続き確認できます。",
         }
-    if not plan.is_ai_enabled:
+    if not plan_context["is_ai_enabled"]:
         return {
             "level": "disabled",
             "label": "AI機能停止中",
             "message": "この院のAI機能は現在無効です。",
         }
-    if used_minutes >= plan.hard_limit_minutes:
+    if used_minutes >= plan_context["hard_limit_minutes"]:
         return {
             "level": "danger",
             "label": "利用制限対象",
             "message": "hard limitに達しています。上限設定をご確認ください。",
         }
 
-    usage_percent = plan.usage_percent(used_minutes)
+    usage_percent = plan_context["usage_percent"]
     if usage_percent >= 100:
         return {
             "level": "overage",
@@ -4556,16 +4719,15 @@ def build_ai_usage_dashboard_context(clinic):
     )
 
     plan = ClinicAiPlan.objects.filter(clinic=clinic).first()
-    if plan:
-        included_minutes = plan.included_minutes
-        usage_percent = plan.usage_percent(monthly["recording_minutes"])
-        remaining_minutes = max(
-            included_minutes - monthly["recording_minutes"],
-            0,
-        )
-        overage_fee = plan.calc_overage_fee(
-            monthly["recording_minutes"]
-        )
+    plan_context = _build_ai_plan_display_context(
+        plan,
+        monthly["recording_minutes"],
+    )
+    if plan_context:
+        included_minutes = plan_context["included_minutes"]
+        usage_percent = plan_context["usage_percent"]
+        remaining_minutes = plan_context["remaining_minutes"]
+        overage_fee = plan_context["overage_fee"]
     else:
         included_minutes = 0
         usage_percent = 0
@@ -4580,7 +4742,7 @@ def build_ai_usage_dashboard_context(clinic):
         "overage_fee": overage_fee,
     })
     warning = _ai_usage_warning_context(
-        plan,
+        plan_context,
         monthly["recording_minutes"],
     )
 
@@ -4756,22 +4918,6 @@ def build_ai_usage_dashboard_context(clinic):
             "related_url": related_url,
             "related_label": related_label,
         })
-
-    plan_context = None
-    if plan:
-        plan_context = {
-            "name": plan.plan_name or "名称未設定",
-            "monthly_base_fee": plan.monthly_base_fee,
-            "included_minutes": plan.included_minutes,
-            "used_minutes": monthly["recording_minutes"],
-            "remaining_minutes": remaining_minutes,
-            "overage_unit_minutes": plan.overage_unit_minutes,
-            "overage_unit_price": plan.overage_unit_price,
-            "overage_fee": overage_fee,
-            "hard_limit_minutes": plan.hard_limit_minutes,
-            "is_ai_enabled": plan.is_ai_enabled,
-            "allow_overage": plan.allow_overage,
-        }
 
     return {
         "today": today,

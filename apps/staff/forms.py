@@ -402,14 +402,24 @@ class SalesRecordForm(forms.ModelForm):
             self.fields["treatment_menu"].queryset = TreatmentMenu.objects.filter(
                 clinic=self.clinic,
             ).order_by("-is_active", "display_order", "name", "id")
-            self.fields["staff"].queryset = User.objects.filter(
+            staff_roles = [
+                User.Role.ADMIN,
+                User.Role.RECEPTION,
+                User.Role.PRACTITIONER,
+            ]
+            staff_filter = Q(
                 clinic=self.clinic,
-                role__in=[
-                    User.Role.ADMIN,
-                    User.Role.RECEPTION,
-                    User.Role.PRACTITIONER,
-                ],
-            ).order_by("last_name", "first_name", "username")
+                is_active=True,
+                role__in=staff_roles,
+            )
+            if self.instance and self.instance.pk and self.instance.staff_id:
+                staff_filter |= Q(pk=self.instance.staff_id, clinic=self.clinic)
+            self.fields["staff"].queryset = (
+                User.objects
+                .filter(staff_filter)
+                .order_by("-is_active", "last_name", "first_name", "username")
+                .distinct()
+            )
 
         self.fields["appointment"].required = False
         self.fields["clinical_note"].required = False
