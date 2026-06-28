@@ -1,0 +1,57 @@
+{% extends "owner_admin/base.html" %}
+{% block title %}Owner | ダッシュボード{% endblock %}
+{% block content %}
+<header class="owner-header">
+  <div>
+    <div class="eyebrow">OWNER DASHBOARD</div>
+    <h1>全院管理ダッシュボード</h1>
+    <p>院数・AI利用量・プラン状況を集計で確認できます。</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'owner_admin:clinic_list' %}">院一覧</a>
+    <a class="btn primary" href="{% url 'owner_admin:clinic_create' %}">院を追加</a>
+  </div>
+</header>
+
+<section class="grid cols-4">
+  <div class="card"><div class="metric-label">登録院数</div><div class="metric-value">{{ clinic_count }}</div></div>
+  <div class="card"><div class="metric-label">稼働中</div><div class="metric-value">{{ active_clinic_count }}</div></div>
+  <div class="card"><div class="metric-label">停止中</div><div class="metric-value">{{ stopped_clinic_count }}</div><div class="muted">停止制御は次フェーズ</div></div>
+  <div class="card"><div class="metric-label">今月AI録音分数</div><div class="metric-value">{{ total_ai_minutes }}分</div></div>
+</section>
+
+<section class="grid cols-2">
+  <div class="card">
+    <h2>今月の概算AIコスト</h2>
+    <div class="metric-value">{{ total_ai_cost_display }}</div>
+    <p class="muted">全院のAI利用ログにもとづく概算です。患者向け画面には表示されません。</p>
+  </div>
+  <div class="card">
+    <h2>プラン別院数</h2>
+    {% for item in plan_counts %}
+      <p><span class="pill">{{ item.label }}</span> {{ item.count }}院</p>
+    {% empty %}
+      <p class="muted">プラン設定はまだありません。</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="grid cols-2">
+  <div class="card">
+    <h2>直近追加した院</h2>
+    {% for clinic in recent_clinics %}
+      <p><a href="{% url 'owner_admin:clinic_detail' clinic.id %}">{{ clinic.name }}</a> <span class="muted">{{ clinic.created_at|date:"Y/m/d H:i" }}</span></p>
+    {% empty %}
+      <p class="muted">院はまだ登録されていません。</p>
+    {% endfor %}
+  </div>
+  <div class="card">
+    <h2>AI使用量が多い院</h2>
+    {% for row in heavy_usage_clinics %}
+      <p><a href="{% url 'owner_admin:clinic_detail' row.clinic.id %}">{{ row.clinic.name }}</a>：{{ row.minutes }}分 / {{ row.cost_display }}</p>
+    {% empty %}
+      <p class="muted">AI利用ログはまだありません。</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

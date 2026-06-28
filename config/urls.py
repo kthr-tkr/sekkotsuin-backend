@@ -28,6 +28,9 @@ urlpatterns = [
     # スタッフ（病院側）
     path("staff/", include(("apps.staff.urls", "staff"), namespace="staff")),
 
+    # CareFrow運営者専用
+    path("owner/", include(("apps.owner_admin.urls", "owner_admin"), namespace="owner_admin")),
+
     # 既存
     path("visits/", include(("apps.visits.urls", "visits"), namespace="visits")),
     path("patients/", include(("apps.patients.urls", "patients"), namespace="patients")),

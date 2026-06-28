@@ -1,0 +1,103 @@
+{% extends "owner_admin/base.html" %}
+{% block title %}Owner | {{ clinic.name }}{% endblock %}
+{% block content %}
+<header class="owner-header">
+  <div>
+    <div class="eyebrow">CLINIC DETAIL</div>
+    <h1>{{ clinic.name }}</h1>
+    <p>院設定・契約プラン・利用状況を確認できます。患者個人情報やカルテ本文は表示しません。</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'owner_admin:clinic_list' %}">院一覧へ</a>
+    <a class="btn" href="{% url 'owner_admin:clinic_edit' clinic.id %}">院情報編集</a>
+    <a class="btn" href="{% url 'owner_admin:clinic_settings' clinic.id %}">院設定</a>
+    <a class="btn primary" href="{% url 'owner_admin:clinic_staff_create' clinic.id %}">スタッフ追加</a>
+  </div>
+</header>
+
+{% if credentials %}
+  <section class="notice">
+    初期管理者を作成しました。ログインID：<strong>{{ credentials.username }}</strong> /
+    初期パスワード：<strong>{{ credentials.password }}</strong><br>
+    このパスワード表示は今回限りです。
+  </section>
+{% endif %}
+
+<section class="grid cols-4">
+  <div class="card"><div class="metric-label">患者数</div><div class="metric-value">{{ patient_count }}</div></div>
+  <div class="card"><div class="metric-label">予約数</div><div class="metric-value">{{ appointment_count }}</div></div>
+  <div class="card"><div class="metric-label">売上件数</div><div class="metric-value">{{ sales_count }}</div></div>
+  <div class="card"><div class="metric-label">施術メニュー</div><div class="metric-value">{{ menu_count }}</div></div>
+</section>
+
+<section class="grid cols-2">
+  <div class="card">
+    <h2>院基本情報</h2>
+    <p>院ID：{{ clinic.id }}</p>
+    <p>電話：{{ settings.phone|default:"未設定" }}</p>
+    <p>住所：{{ settings.address|default:"未設定" }}</p>
+    <p>ステータス：<span class="pill green">稼働中</span></p>
+    <p class="muted">停止/再開の本格制御は次フェーズで実装予定です。</p>
+  </div>
+  <div class="card">
+    <h2>院設定</h2>
+    {% if settings %}
+      <p>営業時間：{{ settings.business_start_time|time:"H:i" }}〜{{ settings.business_end_time|time:"H:i" }}</p>
+      <p>休憩：{% if settings.break_start_time and settings.break_end_time %}{{ settings.break_start_time|time:"H:i" }}〜{{ settings.break_end_time|time:"H:i" }}{% else %}未設定{% endif %}</p>
+      <p>受付単位：{{ settings.appointment_interval_minutes }}分</p>
+      <p>テーマカラー：{{ settings.primary_color }}</p>
+    {% else %}
+      <p class="muted">院設定は未作成です。</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="grid cols-2">
+  <div class="card">
+    <h2>契約プラン</h2>
+    {% if plan %}
+      <p><span class="pill">{{ plan.label }}</span></p>
+      <p>月額：{{ plan.monthly_base_fee_display }} / 初期費用：{{ plan.initial_fee_display }}</p>
+      <p>AI録音：{{ plan.included_minutes }}分込み / 今月 {{ plan.used_minutes }}分</p>
+      <p>残り：{{ plan.remaining_minutes }}分 / 使用率：{{ plan.usage_percent }}%</p>
+      <p>超過：{{ plan.overage_unit_minutes }}分ごと {{ plan.overage_unit_price_display }}</p>
+      <p class="muted">{{ plan.description }}</p>
+    {% else %}
+      <p class="muted">契約プランは未設定です。</p>
+    {% endif %}
+    <a class="btn" href="{% url 'owner_admin:clinic_plan' clinic.id %}">プラン設定</a>
+  </div>
+  <div class="card">
+    <h2>AI利用量</h2>
+    <p>今月のAI録音分数：{{ used_minutes }}分</p>
+    <p>今月の概算AIコスト：{{ ai_cost_display }}</p>
+    <div class="muted">直近利用状況</div>
+    {% for row in recent_ai_usage %}
+      <p>{{ row.day|date:"Y/m/d" }}：{{ row.minutes|default:0 }}分 / {{ row.cost|default:0 }}円</p>
+    {% empty %}
+      <p class="muted">AI利用ログはまだありません。</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2>スタッフ一覧</h2>
+  <div class="table-wrap">
+    <table class="owner-table">
+      <thead><tr><th>氏名</th><th>メール</th><th>権限</th><th>状態</th></tr></thead>
+      <tbody>
+        {% for row in staff_rows %}
+          <tr>
+            <td>{{ row.display_name }}</td>
+            <td>{{ row.user.email|default:"未設定" }}</td>
+            <td>{{ row.role }}</td>
+            <td>{% if row.user.is_active %}<span class="pill green">有効</span>{% else %}<span class="pill warn">無効</span>{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4">スタッフはまだ登録されていません。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

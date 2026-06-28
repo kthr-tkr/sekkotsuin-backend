@@ -1,0 +1,49 @@
+{% extends "owner_admin/base.html" %}
+{% block title %}Owner | 院一覧{% endblock %}
+{% block content %}
+<header class="owner-header">
+  <div>
+    <div class="eyebrow">CLINICS</div>
+    <h1>院一覧</h1>
+    <p>契約プラン・スタッフ数・患者数・AI利用量を院単位で確認できます。</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'owner_admin:dashboard' %}">ダッシュボード</a>
+    <a class="btn primary" href="{% url 'owner_admin:clinic_create' %}">院を追加</a>
+  </div>
+</header>
+
+<section class="card">
+  <div class="table-wrap">
+    <table class="owner-table">
+      <thead>
+        <tr>
+          <th>院名</th><th>契約プラン</th><th>ステータス</th><th>スタッフ数</th>
+          <th>患者数</th><th>今月AI録音</th><th>今月予約</th><th>作成日</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in clinic_rows %}
+          <tr>
+            <td><strong>{{ row.clinic.name }}</strong><br><span class="muted">ID: {{ row.clinic.id }}</span></td>
+            <td>{{ row.plan_label }}</td>
+            <td><span class="pill green">{{ row.status_label }}</span></td>
+            <td>{{ row.staff_count }}</td>
+            <td>{{ row.patient_count }}</td>
+            <td>{{ row.ai_minutes }}分</td>
+            <td>{{ row.appointment_count }}</td>
+            <td>{{ row.clinic.created_at|date:"Y/m/d" }}</td>
+            <td>
+              <a class="btn" href="{% url 'owner_admin:clinic_detail' row.clinic.id %}">詳細</a>
+              <a class="btn" href="{% url 'owner_admin:clinic_edit' row.clinic.id %}">編集</a>
+              <a class="btn" href="{% url 'owner_admin:clinic_plan' row.clinic.id %}">プラン</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="9">院はまだ登録されていません。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

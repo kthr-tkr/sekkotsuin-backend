@@ -1,0 +1,35 @@
+{% extends "owner_admin/base.html" %}
+{% block title %}Owner | スタッフ追加{% endblock %}
+{% block content %}
+<header class="owner-header">
+  <div>
+    <div class="eyebrow">STAFF CREATE</div>
+    <h1>{{ clinic.name }} のスタッフ追加</h1>
+    <p>URLで指定された院に固定してスタッフを作成します。他院へ紐づくことはありません。</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'owner_admin:clinic_detail' clinic.id %}">院詳細へ</a>
+  </div>
+</header>
+
+<section class="card form-card">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="notice">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="field-grid">
+      {% for field in form %}
+        <div class="field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="muted">{{ field.help_text }}</div>{% endif %}
+          {{ field.errors }}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="form-actions">
+      <a class="btn" href="{% url 'owner_admin:clinic_detail' clinic.id %}">キャンセル</a>
+      <button class="btn primary" type="submit">スタッフを追加</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "owner_admin/base.html" %}
+{% block title %}Owner | プラン設定{% endblock %}
+{% block content %}
+<header class="owner-header">
+  <div>
+    <div class="eyebrow">AI PLAN</div>
+    <h1>{{ clinic.name }} の契約プラン</h1>
+    <p>AI録音込み分数・月額・超過料金をCareFrowプランに合わせて設定します。</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'owner_admin:clinic_detail' clinic.id %}">院詳細へ</a>
+  </div>
+</header>
+
+<section class="grid cols-3">
+  {% for key, plan in plan_definitions.items %}
+    <div class="card">
+      <h2>{{ plan.display_name }}</h2>
+      <p>{{ plan.description }}</p>
+      <p>月額：¥{{ plan.monthly_base_fee }} / 初期費用：¥{{ plan.initial_fee }}</p>
+      <p>AI録音：{{ plan.included_minutes }}分込み</p>
+      <p>超過：{{ plan.overage_unit_minutes }}分ごと ¥{{ plan.overage_unit_price }}</p>
+    </div>
+  {% endfor %}
+</section>
+
+<section class="card form-card">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="notice">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="field-grid">
+      {% for field in form %}
+        <div class="field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="muted">{{ field.help_text }}</div>{% endif %}
+          {{ field.errors }}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="form-actions">
+      <a class="btn" href="{% url 'owner_admin:clinic_detail' clinic.id %}">キャンセル</a>
+      <button class="btn primary" type="submit">プランを保存</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

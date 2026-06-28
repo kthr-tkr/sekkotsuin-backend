@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "apps.treatment_sessions.apps.TreatmentSessionsConfig",
     "apps.ai_usage.apps.AiUsageConfig",
     "apps.posture_assessments.apps.PostureAssessmentsConfig",
+    "apps.owner_admin.apps.OwnerAdminConfig",
 ]
 
 

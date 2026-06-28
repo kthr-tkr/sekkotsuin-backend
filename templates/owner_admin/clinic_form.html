@@ -1,0 +1,38 @@
+{% extends "owner_admin/base.html" %}
+{% block title %}Owner | {% if mode == "create" %}院新規登録{% else %}院情報編集{% endif %}{% endblock %}
+{% block content %}
+<header class="owner-header">
+  <div>
+    <div class="eyebrow">CLINIC FORM</div>
+    <h1>{% if mode == "create" %}院新規登録{% else %}院情報編集{% endif %}</h1>
+    <p>{% if mode == "create" %}院・院設定・AIプラン・初期管理者・初期メニューをまとめて作成します。{% else %}院名や連絡先、テーマカラーを編集します。{% endif %}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% if clinic %}{% url 'owner_admin:clinic_detail' clinic.id %}{% else %}{% url 'owner_admin:clinic_list' %}{% endif %}">戻る</a>
+  </div>
+</header>
+
+<section class="card form-card">
+  {% if mode == "create" %}
+    <div class="notice">メールアドレスは初期管理者アカウントに保存されます。院メール専用フィールドは現行モデルにないため、必要になった時点でモデル追加を検討します。</div>
+  {% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="notice">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="field-grid">
+      {% for field in form %}
+        <div class="field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="muted">{{ field.help_text }}</div>{% endif %}
+          {{ field.errors }}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="form-actions">
+      <a class="btn" href="{% if clinic %}{% url 'owner_admin:clinic_detail' clinic.id %}{% else %}{% url 'owner_admin:clinic_list' %}{% endif %}">キャンセル</a>
+      <button class="btn primary" type="submit">{% if mode == "create" %}院を作成{% else %}保存{% endif %}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
