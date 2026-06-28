@@ -1,10 +1,12 @@
 import secrets
+import re
 from datetime import time, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
+from django.utils.text import slugify
 from django.utils import timezone
 
 
@@ -15,12 +17,60 @@ def generate_patient_share_token():
 def default_patient_share_expiry():
     return timezone.now() + timedelta(days=7)
 
+
+booking_slug_validator = RegexValidator(
+    regex=r"^[A-Za-z0-9_-]+$",
+    message="予約URL用slugは英数字、ハイフン、アンダースコアのみ使用できます。",
+)
+
+
+def normalize_booking_slug_base(value):
+    base = slugify(value or "", allow_unicode=False).lower()
+    base = re.sub(r"[^a-z0-9_-]+", "-", base).strip("-_")
+    return (base or "clinic")[:70].strip("-_") or "clinic"
+
+
+def build_unique_booking_slug(name, *, exclude_pk=None):
+    base = normalize_booking_slug_base(name)
+    candidate = base[:80]
+    counter = 2
+    queryset = Clinic.objects.all()
+    if exclude_pk:
+        queryset = queryset.exclude(pk=exclude_pk)
+    while queryset.filter(booking_slug=candidate).exists():
+        suffix = f"-{counter}"
+        candidate = f"{base[:80 - len(suffix)]}{suffix}"
+        counter += 1
+    return candidate
+
+
 class Clinic(models.Model):
     name = models.CharField(max_length=100)
+    booking_slug = models.SlugField(
+        "予約URL用slug",
+        max_length=80,
+        unique=True,
+        blank=True,
+        validators=[booking_slug_validator],
+        help_text="患者向け院別予約URL /b/<slug>/ に使用します。",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        generated_slug = False
+        if not self.booking_slug:
+            self.booking_slug = build_unique_booking_slug(
+                self.name,
+                exclude_pk=self.pk,
+            )
+            generated_slug = True
+        self.booking_slug = normalize_booking_slug_base(self.booking_slug)
+        if generated_slug and kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {"booking_slug"}
+        super().save(*args, **kwargs)
 
 
 color_validator = RegexValidator(

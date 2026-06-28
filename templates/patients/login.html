@@ -61,6 +61,17 @@
     }
     .login-messages{display:grid;gap:8px;margin:0 0 16px}
     .login-message{padding:10px 12px;border:1px solid #fecaca;border-radius:12px;background:#fef2f2;color:#991b1b;font-size:13px;font-weight:700;line-height:1.55}
+    .booking-clinic-note{
+      margin:0 0 16px;
+      padding:12px 14px;
+      border:1px solid #bfdbfe;
+      border-radius:14px;
+      background:#eff6ff;
+      color:#1e3a8a;
+      font-size:13px;
+      line-height:1.6;
+    }
+    .booking-clinic-note strong{font-size:14px;}
 
     .field{
       margin-bottom:16px;
@@ -181,6 +192,12 @@
           {% for message in patient_login_messages|slice:":2" %}
             <div class="login-message">{{ message }}</div>
           {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if booking_clinic %}
+        <div class="booking-clinic-note">
+          この予約は <strong>{{ booking_clinic.name }}</strong> への予約です。ログインまたは新規登録後、そのまま予約日時を選択できます。
         </div>
       {% endif %}
 

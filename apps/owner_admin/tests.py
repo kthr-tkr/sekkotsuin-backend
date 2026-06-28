@@ -90,6 +90,7 @@ class OwnerClinicManagementTests(TestCase):
     def _valid_create_data(self, **overrides):
         data = {
             "clinic_name": "CareFrow中央院",
+            "booking_slug": "carefrow-chuo",
             "phone": "03-0000-0000",
             "address": "東京都中央区1-2-3",
             "primary_color": "#2563EB",
@@ -139,6 +140,7 @@ class OwnerClinicManagementTests(TestCase):
         self.assertEqual(plan.overage_unit_price, 5000)
         self.assertEqual(admin_user.clinic, clinic)
         self.assertEqual(admin_user.role, self.User.Role.ADMIN)
+        self.assertEqual(clinic.booking_slug, "carefrow-chuo")
         self.assertEqual(menus.count(), 4)
         self.assertTrue(menus.filter(name="初診").exists())
 
@@ -254,6 +256,11 @@ class OwnerClinicManagementTests(TestCase):
         self.assertContains(response, "患者数")
         self.assertContains(response, "45分")
         self.assertContains(response, "¥120")
+        self.assertContains(response, "HP用URL")
+        self.assertContains(response, f"/b/{clinic.booking_slug}/?source=hp")
+        self.assertContains(response, "LINE用URL")
+        self.assertContains(response, "Google用URL")
+        self.assertContains(response, "QR用URL")
         self.assertNotContains(response, "traceback")
 
     def test_plan_setting_updates_existing_ai_plan(self):

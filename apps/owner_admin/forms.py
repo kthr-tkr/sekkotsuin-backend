@@ -33,6 +33,12 @@ INITIAL_TREATMENT_MENUS = [
 
 class OwnerClinicBaseForm(forms.Form):
     clinic_name = forms.CharField(label="院名", max_length=100)
+    booking_slug = forms.SlugField(
+        label="予約URL用slug",
+        max_length=80,
+        required=False,
+        help_text="院別予約URL /b/<slug>/ に使用します。空欄の場合は院名から自動生成します。",
+    )
     phone = forms.CharField(label="電話番号", max_length=30, required=False)
     address = forms.CharField(label="住所", max_length=255, required=False)
     contact_email = forms.EmailField(
@@ -57,6 +63,18 @@ class OwnerClinicBaseForm(forms.Form):
         value = (self.cleaned_data.get("primary_color") or "").strip()
         validator = ClinicSettings._meta.get_field("primary_color").validators[0]
         validator(value)
+        return value
+
+    def clean_booking_slug(self):
+        value = (self.cleaned_data.get("booking_slug") or "").strip().lower()
+        if not value:
+            return value
+        queryset = Clinic.objects.filter(booking_slug=value)
+        clinic = getattr(self, "clinic", None)
+        if clinic and clinic.pk:
+            queryset = queryset.exclude(pk=clinic.pk)
+        if queryset.exists():
+            raise forms.ValidationError("この予約URL用slugはすでに使われています。")
         return value
 
 
@@ -157,7 +175,10 @@ class OwnerClinicCreateForm(OwnerClinicBaseForm):
         password = self.cleaned_data.get("admin_password") or get_random_string(14)
         generated_password = "" if self.cleaned_data.get("admin_password") else password
 
-        clinic = Clinic.objects.create(name=self.cleaned_data["clinic_name"])
+        clinic = Clinic.objects.create(
+            name=self.cleaned_data["clinic_name"],
+            booking_slug=self.cleaned_data.get("booking_slug") or "",
+        )
         ClinicSettings.objects.create(
             clinic=clinic,
             display_name=self.cleaned_data["clinic_name"],
@@ -213,6 +234,7 @@ class OwnerClinicEditForm(OwnerClinicBaseForm):
         initial = kwargs.pop("initial", {})
         initial.update({
             "clinic_name": clinic.name,
+            "booking_slug": clinic.booking_slug,
             "phone": getattr(settings, "phone", ""),
             "address": getattr(settings, "address", ""),
             "primary_color": getattr(settings, "primary_color", "#2563EB"),
@@ -222,7 +244,8 @@ class OwnerClinicEditForm(OwnerClinicBaseForm):
 
     def save(self):
         self.clinic.name = self.cleaned_data["clinic_name"]
-        self.clinic.save(update_fields=["name"])
+        self.clinic.booking_slug = self.cleaned_data.get("booking_slug") or ""
+        self.clinic.save(update_fields=["name", "booking_slug"])
         settings, _ = ClinicSettings.objects.get_or_create(clinic=self.clinic)
         settings.phone = self.cleaned_data.get("phone") or ""
         settings.address = self.cleaned_data.get("address") or ""

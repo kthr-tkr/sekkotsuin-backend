@@ -12,6 +12,20 @@ class Appointment(models.Model):
         CANCELLED = "cancelled", "キャンセル"
         NO_SHOW = "no_show", "無断キャンセル"
 
+    class BookingSource(models.TextChoices):
+        HP = "hp", "HP"
+        LINE = "line", "LINE"
+        GOOGLE = "google", "Google"
+        INSTAGRAM = "instagram", "Instagram"
+        QR = "qr", "院内QR"
+        FLYER = "flyer", "チラシ"
+        REFERRAL = "referral", "紹介"
+        SMS = "sms", "SMS"
+        EMAIL = "email", "メール"
+        STAFF = "staff", "スタッフ登録"
+        UNKNOWN = "unknown", "不明"
+        OTHER = "other", "その他"
+
     BLOCKING_STATUSES = [Status.PENDING, Status.BOOKED, Status.ARRIVED]
 
     clinic = models.ForeignKey(
@@ -65,6 +79,14 @@ class Appointment(models.Model):
     )
 
     notes = models.TextField(blank=True)
+
+    booking_source = models.CharField(
+        "予約流入元",
+        max_length=20,
+        choices=BookingSource.choices,
+        default=BookingSource.UNKNOWN,
+        db_index=True,
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

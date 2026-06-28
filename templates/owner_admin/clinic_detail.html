@@ -52,6 +52,31 @@
   </div>
 </section>
 
+<section class="card">
+  <h2>院別予約URL</h2>
+  <p class="muted">HP、LINE、Google、QRなどから、院選択を挟まずこの院の予約画面へ案内できます。</p>
+  {% if clinic.booking_slug %}
+    <p>予約URL用slug：<strong>{{ clinic.booking_slug }}</strong></p>
+    <div class="table-wrap">
+      <table class="owner-table">
+        <thead><tr><th>用途</th><th>URL</th><th>説明</th><th>操作</th></tr></thead>
+        <tbody>
+          {% for row in booking_link_rows %}
+            <tr>
+              <td>{{ row.label }}用URL</td>
+              <td><code>{{ row.url }}</code></td>
+              <td class="muted">{{ row.description }}</td>
+              <td><button class="btn" type="button" data-copy-url="{{ row.url }}">コピー</button></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">予約URL用slugが未設定です。院情報編集から設定してください。</p>
+  {% endif %}
+</section>
+
 <section class="grid cols-2">
   <div class="card">
     <h2>契約プラン</h2>
@@ -100,4 +125,17 @@
     </table>
   </div>
 </section>
+<script>
+  document.querySelectorAll("[data-copy-url]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const url = button.dataset.copyUrl || "";
+      try {
+        await navigator.clipboard.writeText(url);
+        button.textContent = "コピー済み";
+      } catch (error) {
+        window.prompt("予約URLをコピーしてください", url);
+      }
+    });
+  });
+</script>
 {% endblock %}

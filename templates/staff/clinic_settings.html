@@ -32,6 +32,7 @@
   .theme-presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.theme-preset{display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #dbe4ef;border-radius:999px;background:#fff;color:#425873;font:inherit;font-size:11px;font-weight:850;cursor:pointer}.theme-preset:hover{border-color:#9ebce1;background:#f7faff}.theme-preset-dot{width:13px;height:13px;border-radius:999px;background:var(--preset-color);box-shadow:inset 0 0 0 1px rgba(15,23,42,.12)}
   .theme-preview{display:grid;grid-template-columns:1.3fr .8fr .8fr;gap:10px;margin-top:18px}
   .theme-swatch{min-height:72px;padding:14px;border-radius:15px;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:flex-end}
+  .booking-url-list{display:grid;gap:10px}.booking-url-row{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid #e2ebf5;border-radius:15px;background:#fbfdff}.booking-url-label{font-size:12px;font-weight:950;color:#254767}.booking-url-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#335a80;font-size:12px}.booking-url-copy{min-height:34px;padding:0 12px;border:1px solid #cbd9e8;border-radius:10px;background:#fff;color:#245b86;font-size:12px;font-weight:900;cursor:pointer}
   .settings-actions{position:sticky;bottom:14px;display:flex;justify-content:flex-end;gap:10px;padding:14px;border:1px solid rgba(220,228,238,.9);border-radius:18px;background:rgba(255,255,255,.92);box-shadow:0 16px 36px rgba(20,42,76,.12);backdrop-filter:blur(12px)}
   .settings-btn{display:inline-flex;align-items:center;justify-content:center;min-height:43px;padding:0 18px;border:1px solid #d5deea;border-radius:12px;background:#fff;color:#2d4b70;font-weight:900;text-decoration:none;cursor:pointer}
   .settings-btn.primary{border-color:#194c86;background:#194c86;color:#fff}
@@ -39,6 +40,7 @@
   .settings-note{font-size:12px;color:#77869a;align-self:center;margin-right:auto}
   @media(max-width:800px){
     .field-grid,.field-grid.three{grid-template-columns:1fr}.settings-card{padding:18px}
+    .booking-url-row{grid-template-columns:1fr}
     .theme-preview{grid-template-columns:1fr}.settings-actions{position:static;flex-wrap:wrap}.settings-note{width:100%}
   }
 </style>
@@ -175,6 +177,33 @@
       </div>
     </section>
 
+    <section class="settings-card">
+      <div class="card-head">
+        <span class="card-number">04</span>
+        <div>
+          <h2 class="card-title">院別予約URL</h2>
+          <div class="card-sub">HP、LINE、Google、QRから院選択なしでこの院の予約画面へ案内できます</div>
+        </div>
+      </div>
+      {% if clinic.booking_slug %}
+        <div class="time-summary">
+          slug：<strong>{{ clinic.booking_slug }}</strong>。
+          slug変更は既存リンク切れを防ぐためCareFrow運営者画面で管理します。
+        </div>
+        <div class="booking-url-list">
+          {% for row in booking_link_rows %}
+            <div class="booking-url-row">
+              <div class="booking-url-label">{{ row.label }}用予約URL</div>
+              <div class="booking-url-value">{{ row.url }}</div>
+              <button class="booking-url-copy" type="button" data-copy-booking-url="{{ row.url }}">コピー</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="time-summary">予約URL用slugが未設定です。CareFrow運営者へ設定をご依頼ください。</div>
+      {% endif %}
+    </section>
+
     <div class="settings-actions">
       <span class="settings-note">保存後、予約管理画面とスタッフ共通テーマへ反映されます。</span>
       <a class="settings-btn" href="{% url 'staff:dashboard' %}">キャンセル</a>
@@ -227,6 +256,18 @@
         if (!input) return;
         input.value = button.dataset.themePreset;
         updateColor(input);
+      });
+    });
+
+    document.querySelectorAll("[data-copy-booking-url]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const url = button.dataset.copyBookingUrl || "";
+        try {
+          await navigator.clipboard.writeText(url);
+          button.textContent = "コピー済み";
+        } catch (error) {
+          window.prompt("予約URLをコピーしてください", url);
+        }
       });
     });
   })();

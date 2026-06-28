@@ -1183,6 +1183,25 @@ class StaffKpiDashboardTests(TestCase):
         self.assertContains(response, reverse("staff:sales_record_list"))
         self.assertContains(response, reverse("staff:sales_record_create"))
 
+    def test_kpi_displays_booking_source_trends_for_own_clinic_only(self):
+        Appointment.objects.filter(pk=self.appointment.pk).update(
+            booking_source=Appointment.BookingSource.LINE,
+        )
+        Appointment.objects.filter(pk=self.other_appointment.pk).update(
+            booking_source=Appointment.BookingSource.GOOGLE,
+        )
+
+        response = self.client.get(self._url())
+        month_rows = {
+            row["source"]: row["count"]
+            for row in response.context["booking_source_trends"]["month_rows"]
+        }
+
+        self.assertContains(response, "予約流入元")
+        self.assertContains(response, "LINE")
+        self.assertEqual(month_rows[Appointment.BookingSource.LINE], 1)
+        self.assertEqual(month_rows[Appointment.BookingSource.GOOGLE], 0)
+
     def test_kpi_patient_trends_are_clinic_scoped_and_grouped(self):
         Intake.objects.create(
             clinic=self.clinic,
@@ -1816,6 +1835,17 @@ class StaffClinicSettingsTests(TestCase):
         )
         self.assertContains(response, "CareFrow Blue")
         self.assertContains(response, 'type="color"')
+
+    def test_clinic_settings_displays_public_booking_urls(self):
+        response = self.client.get(self._url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "院別予約URL")
+        self.assertContains(response, "HP用予約URL")
+        self.assertContains(response, "LINE用予約URL")
+        self.assertContains(response, "Google用予約URL")
+        self.assertContains(response, "QR用予約URL")
+        self.assertContains(response, f"/b/{self.clinic.booking_slug}/?source=hp")
 
     def test_shared_header_and_sidebar_use_theme_variables(self):
         layout_source = Path("templates/staff/_layout.html").read_text(
@@ -3910,6 +3940,7 @@ class AppointmentStaffAvailabilityTests(TestCase):
         self.assertEqual(appt.patient, self.patient)
         self.assertEqual(appt.assigned_staff, self.working_staff)
         self.assertEqual(appt.menu, "再診")
+        self.assertEqual(appt.booking_source, Appointment.BookingSource.STAFF)
 
     def test_appointment_create_api_rejects_other_clinic_patient(self):
         other_patient = Patient.objects.create(

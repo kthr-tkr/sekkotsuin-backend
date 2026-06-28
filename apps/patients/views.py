@@ -20,6 +20,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
 from apps.appointments.models import Appointment
+from apps.clinics.booking_links import normalize_booking_source
 from apps.clinics.models import (
     Clinic,
     ClinicSettings,
@@ -89,6 +90,48 @@ def _clear_booking_draft_session(request):
 
 def _get_booking_draft_session(request):
     return request.session.get("booking_draft") or {}
+
+
+def _selected_booking_clinic_id(request):
+    try:
+        return int(request.session.get("booking_clinic_id") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _booking_clinic_mismatch_response(request):
+    return render(
+        request,
+        "appointments/book_error.html",
+        {
+            "message": (
+                "この予約ページは、現在ログイン中の患者アカウントとは別の院の予約ページです。"
+                "該当院の患者アカウントでログインし直してください。"
+            )
+        },
+        status=403,
+    )
+
+
+def _resolve_patient_booking_clinic(request, patient):
+    selected_clinic_id = _selected_booking_clinic_id(request)
+    if selected_clinic_id and selected_clinic_id != patient.clinic_id:
+        return None
+    return patient.clinic
+
+
+def _booking_login_clinic(request):
+    clinic_id = (
+        request.session.get("pending_booking_clinic_id")
+        or request.session.get("booking_clinic_id")
+    )
+    try:
+        clinic_id = int(clinic_id or 0)
+    except (TypeError, ValueError):
+        return None
+    if not clinic_id:
+        return None
+    return Clinic.objects.filter(pk=clinic_id).first()
 
 def _build_intake_display(intake):
     if not intake:
@@ -320,6 +363,7 @@ def _count_free_slots_for_staff(clinic, staff, day: date, duration_minutes=None)
 
 @require_http_methods(["GET", "POST"])
 def patient_login_view(request):
+    booking_clinic = _booking_login_clinic(request)
     queued_messages = list(messages.get_messages(request))
     patient_login_messages = (
         [
@@ -370,6 +414,7 @@ def patient_login_view(request):
 
         if user is None:
             return render(request, "patients/login.html", {
+                "booking_clinic": booking_clinic,
                 "patient_login_messages": [
                     "メールアドレスまたは診察券番号、もしくはパスワードが正しくありません。"
                 ],
@@ -380,6 +425,7 @@ def patient_login_view(request):
 
         if auth_user is None:
             return render(request, "patients/login.html", {
+                "booking_clinic": booking_clinic,
                 "patient_login_messages": [
                     "メールアドレスまたは診察券番号、もしくはパスワードが正しくありません。"
                 ],
@@ -388,6 +434,7 @@ def patient_login_view(request):
         # 念のため patient グループ確認
         if not auth_user.groups.filter(name="patient").exists():
             return render(request, "patients/login.html", {
+                "booking_clinic": booking_clinic,
                 "patient_login_messages": ["患者用アカウントではありません。"],
             })
 
@@ -404,6 +451,7 @@ def patient_login_view(request):
         return redirect("patients:dashboard")
 
     return render(request, "patients/login.html", {
+        "booking_clinic": booking_clinic,
         "patient_login_messages": patient_login_messages,
     })
 
@@ -627,6 +675,34 @@ def generate_patient_username() -> str:
 # ========= Booking =========
 
 # 追加import（すでに monthrange はあるけど、monthcalendarを使う）
+def clinic_booking_entry_view(request, booking_slug):
+    clinic = get_object_or_404(Clinic, booking_slug=booking_slug)
+    source = normalize_booking_source(
+        request.GET.get("source"),
+        default=Appointment.BookingSource.UNKNOWN,
+    )
+
+    request.session["booking_clinic_id"] = clinic.id
+    request.session["pending_booking_clinic_id"] = clinic.id
+    request.session["booking_source"] = source
+
+    patient = _patient_from_user(request) if request.user.is_authenticated else None
+    if patient:
+        if patient.clinic_id != clinic.id:
+            return _booking_clinic_mismatch_response(request)
+        return redirect("patients:booking_calendar")
+
+    if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        messages.info(
+            request,
+            "患者予約フローを利用するには、患者アカウントでログインしてください。",
+        )
+
+    return redirect(
+        f"{reverse('patients:login')}?next={reverse('patients:booking_calendar')}"
+    )
+
+
 @login_required(login_url="/patients/login/")
 def booking_calendar_view(request):
     patient_or_resp = require_patient_or_redirect(request)
@@ -634,7 +710,9 @@ def booking_calendar_view(request):
         return patient_or_resp
     patient = patient_or_resp
 
-    clinic = patient.clinic
+    clinic = _resolve_patient_booking_clinic(request, patient)
+    if clinic is None:
+        return _booking_clinic_mismatch_response(request)
 
     # --- 施術計画からの導線 ---
     suggest_date = request.GET.get("suggest_date")
@@ -744,6 +822,10 @@ def booking_calendar_view(request):
     return render(request, "patients/booking_calendar.html", {
         "clinic": clinic,
         "patient": patient,
+        "booking_source": normalize_booking_source(
+            request.session.get("booking_source"),
+            default=Appointment.BookingSource.UNKNOWN,
+        ),
         "first_day": first_day,
         "prev_ym": prev_month.strftime("%Y-%m"),
         "next_ym": next_month.strftime("%Y-%m"),
@@ -761,7 +843,9 @@ def booking_day_view(request, ymd: str):
     if isinstance(patient_or_resp, HttpResponseBase):
         return patient_or_resp
     patient = patient_or_resp
-    clinic = patient.clinic
+    clinic = _resolve_patient_booking_clinic(request, patient)
+    if clinic is None:
+        return _booking_clinic_mismatch_response(request)
 
     treatment_plan_id = request.GET.get("treatment_plan_id")
     treatment_menu_id = request.GET.get("treatment_menu_id")
@@ -836,7 +920,9 @@ def booking_review_view(request):
     if isinstance(patient_or_resp, HttpResponseBase):
         return patient_or_resp
     patient = patient_or_resp
-    clinic = patient.clinic
+    clinic = _resolve_patient_booking_clinic(request, patient)
+    if clinic is None:
+        return _booking_clinic_mismatch_response(request)
 
     staff_token = request.POST.get("staff_token")
     start_iso = request.POST.get("start_at")
@@ -904,6 +990,10 @@ def booking_review_view(request):
         "duration_minutes": duration_minutes,
         "clinic_id": clinic.id,
         "patient_id": patient.id,
+        "booking_source": normalize_booking_source(
+            request.session.get("booking_source"),
+            default=Appointment.BookingSource.UNKNOWN,
+        ),
     }
 
     return render(request, "patients/booking_review.html", {
@@ -924,7 +1014,9 @@ def booking_confirm_view(request):
         return patient_or_resp
     patient = patient_or_resp
 
-    clinic = patient.clinic
+    clinic = _resolve_patient_booking_clinic(request, patient)
+    if clinic is None:
+        return _booking_clinic_mismatch_response(request)
     draft = _get_booking_draft_session(request)
 
     if not draft:
@@ -936,6 +1028,10 @@ def booking_confirm_view(request):
     menu = draft.get("menu") or request.session.get("rebook_menu") or "初診"
     treatment_plan_id = draft.get("treatment_plan_id")
     treatment_menu_id = draft.get("treatment_menu_id")
+    booking_source = normalize_booking_source(
+        draft.get("booking_source") or request.session.get("booking_source"),
+        default=Appointment.BookingSource.UNKNOWN,
+    )
 
     if not staff_id or not start_iso:
         _clear_booking_draft_session(request)
@@ -1019,12 +1115,15 @@ def booking_confirm_view(request):
             status=Appointment.Status.PENDING,
             created_by=request.user,
             treatment_plan=treatment_plan,
+            booking_source=booking_source,
         )
 
     _clear_booking_draft_session(request)
     request.session.pop("rebook_menu", None)
     request.session.pop("rebook_staff_id", None)
     request.session.pop("rebook_from_id", None)
+    request.session.pop("booking_source", None)
+    request.session.pop("booking_clinic_id", None)
 
     messages.success(request, "予約枠を受け付けました。続けてWeb問診をご入力ください。")
     return redirect("intakes:intake_start", appointment_id=appt.id)
@@ -1405,6 +1504,7 @@ def staff_booking_confirm_view(request, patient_id):
             status=Appointment.Status.PENDING,
             created_by=request.user,
             treatment_plan=treatment_plan,
+            booking_source=Appointment.BookingSource.STAFF,
         )
 
     messages.success(request, "予約を作成しました。")

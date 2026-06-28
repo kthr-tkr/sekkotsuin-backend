@@ -6,7 +6,7 @@
   <div class="p-head">
     <div>
       <h1 class="p-title">予約日を選択</h1>
-      <div class="p-sub">{{ clinic.name }} / {{ patient.last_name }} {{ patient.first_name }} 様</div>
+      <div class="p-sub">{{ clinic.name }}の予約 / {{ patient.last_name }} {{ patient.first_name }} 様</div>
     </div>
     <a class="p-btn p-btn-ghost" href="{% url 'patients:logout' %}">ログアウト</a>
   </div>
@@ -18,6 +18,8 @@
   </div>
 
   <div class="p-booking-guide">
+    この予約は<strong>{{ clinic.name }}</strong>への予約です。ご希望の日付と時間を選択してください。
+    <br>
     営業時間・休診日・担当者の勤務予定・休暇・既存予約を確認した、現在予約可能な日時だけを表示しています。
     {% if treatment_menu %}<strong>{{ treatment_menu.name }}（{{ treatment_menu.duration_minutes }}分）</strong>{% endif %}
   </div>

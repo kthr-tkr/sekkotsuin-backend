@@ -4,7 +4,7 @@
   <div class="booking-day-head">
     <div>
       <h1 class="booking-day-title">{{ day|date:"n月j日" }} の空き枠</h1>
-      <div class="booking-day-sub">施術者と時間を選択してください</div>
+      <div class="booking-day-sub">{{ clinic.name }}の予約です。施術者と時間を選択してください</div>
     </div>
     <a class="booking-back-btn" href="{% url 'patients:booking_calendar' %}">← 日付へ戻る</a>
   </div>

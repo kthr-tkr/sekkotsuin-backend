@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from apps.ai_usage.models import AiUsageLog, ClinicAiPlan
 from apps.appointments.models import Appointment
+from apps.clinics.booking_links import clinic_booking_link_rows
 from apps.clinics.models import Clinic, ClinicSettings, SalesRecord, TreatmentMenu
 from apps.owner_admin.forms import (
     OwnerClinicCreateForm,
@@ -338,6 +339,7 @@ def owner_clinic_detail(request, clinic_id):
         "menu_count": TreatmentMenu.objects.filter(clinic=clinic).count(),
         "recent_ai_usage": recent_ai_usage,
         "credentials": credentials,
+        "booking_link_rows": clinic_booking_link_rows(request, clinic),
     })
 
 

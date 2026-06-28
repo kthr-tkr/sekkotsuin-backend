@@ -39,6 +39,7 @@ from apps.ai_jobs.usecases import run_ai_draft
 from apps.appointments.models import Appointment
 from apps.charts.models import ChartNote
 from apps.clinical_notes.models import ClinicalNote, ClinicalNoteHistory
+from apps.clinics.booking_links import BOOKING_SOURCE_LABELS, clinic_booking_link_rows
 from apps.clinics.models import (
     Clinic,
     ClinicSettings,
@@ -4162,6 +4163,39 @@ def build_patient_trend_context(clinic, *, today=None):
     }
 
 
+def _build_booking_source_kpi_context(clinic, today):
+    month_start, next_month = get_month_range(today)
+    last_30_days = today - timedelta(days=29)
+
+    def build_rows(queryset):
+        source_counts = {
+            (row["booking_source"] or Appointment.BookingSource.UNKNOWN): row["count"]
+            for row in queryset.values("booking_source").annotate(count=Count("id"))
+        }
+        rows = []
+        for source, label in Appointment.BookingSource.choices:
+            rows.append({
+                "source": source,
+                "label": BOOKING_SOURCE_LABELS.get(source, label),
+                "count": source_counts.get(source, 0),
+            })
+        return rows
+
+    base = Appointment.objects.filter(clinic=clinic).exclude(
+        status=Appointment.Status.CANCELLED,
+    )
+    return {
+        "month_rows": build_rows(
+            base.filter(start_at__date__gte=month_start, start_at__date__lt=next_month)
+        ),
+        "last_30_days_rows": build_rows(
+            base.filter(start_at__date__gte=last_30_days, start_at__date__lte=today)
+        ),
+        "month_start": month_start,
+        "last_30_days_start": last_30_days,
+    }
+
+
 def build_staff_kpi_context(clinic):
     today = timezone.localdate()
     seven_days_ago = today - timedelta(days=6)
@@ -4172,6 +4206,7 @@ def build_staff_kpi_context(clinic):
         seven_days_ago,
     )
     patient_trends = build_patient_trend_context(clinic, today=today)
+    booking_source_trends = _build_booking_source_kpi_context(clinic, today)
 
     today_appointments = Appointment.objects.filter(
         clinic=clinic,
@@ -4421,6 +4456,7 @@ def build_staff_kpi_context(clinic):
             "unpaid_sales": sales_context["sales_summary"]["unpaid_count"],
         },
         "patient_trends": patient_trends,
+        "booking_source_trends": booking_source_trends,
         **sales_context,
     }
 
@@ -4996,6 +5032,7 @@ def staff_clinic_settings_view(request):
         "clinic": clinic,
         "clinic_settings": clinic_settings,
         "form": form,
+        "booking_link_rows": clinic_booking_link_rows(request, clinic),
     })
 
 
@@ -6513,6 +6550,7 @@ def staff_appointment_create_api(request):
         assigned_staff=parsed["assigned_staff"],
         created_by=request.user,
         notes=parsed["notes"],
+        booking_source=Appointment.BookingSource.STAFF,
     )
     try:
         with transaction.atomic():

@@ -196,11 +196,98 @@ class PatientFacingSafetyTests(TestCase):
             "duration_minutes": 60,
             "clinic_id": self.clinic.id,
             "patient_id": self.patient.id,
+            "booking_source": Appointment.BookingSource.UNKNOWN,
         }
         values.update(overrides)
         session = self.client.session
         session["booking_draft"] = values
         session.save()
+
+    def _public_booking_entry_url(self, source=None, clinic=None):
+        clinic = clinic or self.clinic
+        url = reverse("clinic_booking_entry", args=[clinic.booking_slug])
+        if source is not None:
+            url = f"{url}?source={source}"
+        return url
+
+    def _reserve_from_public_source(self, source, *, start_time=time(10, 0), extra_post=None):
+        self.client.get(self._public_booking_entry_url(source=source))
+        post_data = {
+            "staff_token": patient_views._booking_staff_token(self.clinic, self.staff),
+            "start_at": f"{self.target_date.isoformat()}T{start_time.strftime('%H:%M')}",
+            "menu": "初診",
+            "treatment_menu_id": self.menu.id,
+        }
+        if extra_post:
+            post_data.update(extra_post)
+        review_response = self.client.post(reverse("patients:booking_review"), post_data)
+        self.assertEqual(review_response.status_code, 200)
+        confirm_response = self.client.post(reverse("patients:booking_confirm"))
+        self.assertEqual(confirm_response.status_code, 302)
+        return Appointment.objects.latest("id")
+
+    def test_clinic_booking_slug_entry_sets_clinic_without_selection(self):
+        response = self.client.get(self._public_booking_entry_url(source="line"), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "患者予約院の予約")
+        self.assertContains(response, "この予約は")
+        self.assertNotContains(response, "院を選択してください")
+        session = self.client.session
+        self.assertEqual(session["booking_clinic_id"], self.clinic.id)
+        self.assertEqual(session["booking_source"], Appointment.BookingSource.LINE)
+
+    def test_clinic_booking_slug_entry_shows_target_clinic_on_login_page(self):
+        self.client.logout()
+
+        response = self.client.get(self._public_booking_entry_url(source="hp"), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "この予約は")
+        self.assertContains(response, "患者予約院")
+        self.assertNotContains(response, "booking_slug")
+        self.assertNotContains(response, "clinic_id")
+
+    def test_invalid_clinic_booking_slug_returns_404(self):
+        response = self.client.get(reverse("clinic_booking_entry", args=["missing-clinic"]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_clinic_slug_booking_uses_only_target_clinic_menus_and_staff(self):
+        self.client.get(self._public_booking_entry_url(source="hp"))
+
+        day_response = self._booking_day_response(treatment_menu_id=self.menu.id)
+        menu_response = self._booking_day_response(treatment_menu_id=self.other_menu.id)
+
+        self.assertEqual(day_response.status_code, 200)
+        self.assertContains(day_response, "担当 予約")
+        self.assertNotContains(day_response, "他院 担当")
+        self.assertEqual(menu_response.status_code, 404)
+
+    def test_clinic_slug_booking_source_is_saved(self):
+        appointment = self._reserve_from_public_source("hp")
+
+        self.assertEqual(appointment.clinic, self.clinic)
+        self.assertEqual(appointment.booking_source, Appointment.BookingSource.HP)
+
+    def test_line_booking_source_is_saved(self):
+        appointment = self._reserve_from_public_source("line")
+
+        self.assertEqual(appointment.booking_source, Appointment.BookingSource.LINE)
+
+    def test_invalid_booking_source_becomes_unknown(self):
+        appointment = self._reserve_from_public_source("evil")
+
+        self.assertEqual(appointment.booking_source, Appointment.BookingSource.UNKNOWN)
+
+    def test_posted_other_clinic_id_cannot_change_booking_clinic(self):
+        appointment = self._reserve_from_public_source(
+            "qr",
+            extra_post={"clinic_id": self.other_clinic.id},
+        )
+
+        self.assertEqual(appointment.clinic, self.clinic)
+        self.assertNotEqual(appointment.clinic, self.other_clinic)
 
     def test_patient_booking_page_uses_only_own_clinic_staff(self):
         response = self._booking_day_response(treatment_menu_id=self.menu.id)
@@ -411,6 +498,7 @@ class PatientFacingSafetyTests(TestCase):
             + inspect.getsource(patient_views.booking_review_view)
             + inspect.getsource(patient_views.booking_confirm_view)
             + inspect.getsource(patient_views.booking_complete_view)
+            + inspect.getsource(patient_views.clinic_booking_entry_view)
             + inspect.getsource(patient_views.staff_booking_calendar_view)
             + inspect.getsource(patient_views.staff_booking_day_view)
             + inspect.getsource(patient_views.staff_booking_confirm_view)
