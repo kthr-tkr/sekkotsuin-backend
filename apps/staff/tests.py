@@ -123,7 +123,6 @@ class MajorWorkflowCopyTests(SimpleTestCase):
             "KPI",
             "売上管理",
             "AI利用量",
-            "操作マニュアル",
             "院設定",
             "料金設定",
             "選択画面に戻る",
@@ -131,6 +130,8 @@ class MajorWorkflowCopyTests(SimpleTestCase):
         ):
             self.assertIn(expected, source)
 
+        self.assertNotIn('<span class="label-text">操作マニュアル</span>', source)
+        self.assertNotIn("{% url 'staff:manual' %}", source)
         self.assertIn("flex-direction:column", source)
         self.assertIn("overflow-y:auto", source)
         self.assertIn("min-height:0", source)
@@ -142,6 +143,7 @@ class MajorWorkflowCopyTests(SimpleTestCase):
             Path(settings.BASE_DIR) / "templates/staff/base.html"
         ).read_text(encoding="utf-8")
         self.assertNotIn('<span class="dot"></span> 問診', legacy_source)
+        self.assertNotIn('<span class="dot"></span> 操作マニュアル', legacy_source)
 
 
 class ProductionReadinessSmokeTests(TestCase):
@@ -563,6 +565,15 @@ class ProductionReadinessSmokeTests(TestCase):
             followed_response,
             "問診は予約または患者詳細から作成してください。",
         )
+
+    def test_unimplemented_manual_menu_is_hidden_and_redirects_to_dashboard(self):
+        dashboard_response = self.client.get(reverse("staff:dashboard"))
+        self.assertEqual(dashboard_response.status_code, 200)
+        self.assertNotContains(dashboard_response, "操作マニュアル")
+        self.assertNotContains(dashboard_response, reverse("staff:manual"))
+
+        response = self.client.get(reverse("staff:manual"))
+        self.assertRedirects(response, reverse("staff:dashboard"))
 
     def test_intake_detail_keeps_initial_recording_route(self):
         response = self.client.get(

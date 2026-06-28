@@ -4950,10 +4950,9 @@ def staff_ai_usage_dashboard_view(request):
 
 @staff_required
 def staff_manual_view(request):
-    return render(request, "staff/manual.html", {
-        "active": "manual",
-        "page_title": "操作マニュアル",
-    })
+    # TODO: 操作マニュアルはCanva/PDF/動画整備後に /staff/help/ として再実装する。
+    messages.info(request, "操作マニュアルは準備中です。ダッシュボードへ戻りました。")
+    return redirect("staff:dashboard")
 
 
 @staff_required

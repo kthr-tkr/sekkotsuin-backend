@@ -944,10 +944,7 @@
             <span class="label-text">AI利用量</span>
           </a>
 
-          <a href="{% url 'staff:manual' %}" class="{% if active == 'manual' %}active{% endif %}">
-            <span class="nav-icon">❔</span>
-            <span class="label-text">操作マニュアル</span>
-          </a>
+          {# TODO: 操作マニュアルはCanva/PDF/動画整備後に /staff/help/ として再実装する。 #}
 
           <a href="{% url 'staff:clinic_settings' %}" class="{% if active == 'settings' %}active{% endif %}">
             <span class="nav-icon">📚</span>
