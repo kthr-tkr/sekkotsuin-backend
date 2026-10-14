@@ -20,7 +20,7 @@ jobs:
           POSTGRES_DB: sekkotsuin_test
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U app" --health-interval 3s --health-retries 20
+          --health-cmd "pg_isready -U app -d sekkotsuin_test" --health-interval 3s --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6

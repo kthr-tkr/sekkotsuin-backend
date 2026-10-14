@@ -1,6 +1,6 @@
 """OpenAPI スキーマを出力する（フロントの型生成用）。
 
-    uv run python -m app.export_openapi > ../frontend/openapi.json
+uv run python -m app.export_openapi > ../frontend/openapi.json
 """
 
 import json
