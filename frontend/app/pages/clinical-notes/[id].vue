@@ -139,6 +139,19 @@ async function onApplied() {
   snackbar.value = { text: 'AI の下書きをカルテに反映しました', color: 'success' }
 }
 
+// 会計
+const salesDialog = ref(false)
+const salesDraft = ref<Schemas['SalesCreate'] | null>(null)
+const { data: noteSales, refresh: refreshSales } = await useAsyncData(`clinical-note-${id}-sales`, async () => {
+  const { data } = await api.GET('/api/sales', { params: { query: { clinical_note_id: id } } })
+  return data?.items ?? []
+})
+async function openSales() {
+  const { data } = await api.GET('/api/sales/draft', { params: { query: { clinical_note_id: id } } })
+  salesDraft.value = data ?? null
+  salesDialog.value = true
+}
+
 async function createPlan() {
   if (dirty.value && !(await save())) return
   const { data, error } = await api.POST('/api/treatment-plans', {
@@ -167,6 +180,9 @@ const psItems = Array.from({ length: 11 }, (_, i) => ({ value: i, title: String(
       </v-btn>
       <v-btn variant="text" prepend-icon="mdi-printer" class="d-print-none" @click="print">
         印刷
+      </v-btn>
+      <v-btn variant="text" prepend-icon="mdi-cash-register" class="d-print-none" @click="openSales">
+        会計{{ noteSales?.length ? `（${noteSales.length}）` : '' }}
       </v-btn>
       <v-btn variant="text" prepend-icon="mdi-flag-checkered" class="d-print-none" @click="createPlan">
         施術計画を作成
@@ -302,6 +318,14 @@ const psItems = Array.from({ length: 11 }, (_, i) => ({ value: i, title: String(
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <SalesDialog
+      v-model="salesDialog"
+      :record="null"
+      :draft="salesDraft"
+      :patient="note.patient"
+      @saved="refreshSales(); snackbar = { text: '会計を登録しました', color: 'success' }"
+    />
 
     <v-snackbar :model-value="!!snackbar" :color="snackbar?.color" @update:model-value="snackbar = null">
       {{ snackbar?.text }}

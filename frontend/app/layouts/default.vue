@@ -14,7 +14,14 @@ const items = computed(() => [
   { title: 'カルテ', icon: 'mdi-file-document-edit-outline', to: '/clinical-notes' },
   { title: '施術計画', icon: 'mdi-flag-checkered', to: '/treatment-plans' },
   { title: '問診', icon: 'mdi-clipboard-text-outline', to: '/intakes' },
-  ...(isAdmin.value ? [{ title: '院の設定', icon: 'mdi-cog-outline', to: '/settings' }] : []),
+  { title: '売上', icon: 'mdi-cash-register', to: '/sales' },
+  { title: 'シフト・休暇', icon: 'mdi-calendar-account-outline', to: '/schedule' },
+  ...(isAdmin.value
+    ? [
+        { title: 'KPI', icon: 'mdi-chart-box-outline', to: '/kpi' },
+        { title: '院の設定', icon: 'mdi-cog-outline', to: '/settings' },
+      ]
+    : []),
 ])
 </script>
 

@@ -556,6 +556,165 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sales */
+        get: operations["sales-list_sales"];
+        put?: never;
+        /** Create Sales */
+        post: operations["sales-create_sales"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sales/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sales Draft
+         * @description カルテから会計の初期値を作る（予約のメニュー名・料金、担当者、施術日）。
+         */
+        get: operations["sales-sales_draft"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sales/{record_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Sales */
+        put: operations["sales-update_sales"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shifts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Shifts */
+        get: operations["schedule-list_shifts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shifts/{staff_id}/{day}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Upsert Shift */
+        put: operations["schedule-upsert_shift"];
+        post?: never;
+        /** Delete Shift */
+        delete: operations["schedule-delete_shift"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leaves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Leaves */
+        get: operations["schedule-list_leaves"];
+        put?: never;
+        /** Request Leave */
+        post: operations["schedule-request_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leaves/{leave_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide Leave */
+        post: operations["schedule-decide_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leaves/{leave_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Leave */
+        post: operations["schedule-cancel_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/kpi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Kpi */
+        get: operations["kpi-kpi"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinical-notes/{note_id}/recordings": {
         parameters: {
             query?: never;
@@ -1262,6 +1421,136 @@ export interface components {
             created_at: string;
             patient: components["schemas"]["PatientBrief"];
         };
+        /** Kpi */
+        Kpi: {
+            /** Month */
+            month: string;
+            /** Sales Total */
+            sales_total: number;
+            /** Sales Total Prev Month */
+            sales_total_prev_month: number;
+            /** Paid Count */
+            paid_count: number;
+            /** Average Spend */
+            average_spend: number;
+            /** Unpaid Count */
+            unpaid_count: number;
+            /** Unpaid Amount */
+            unpaid_amount: number;
+            /** Appointments */
+            appointments: number;
+            /** Visits */
+            visits: number;
+            /** Cancellations */
+            cancellations: number;
+            /** Cancel Rate */
+            cancel_rate: number;
+            /** New Patients */
+            new_patients: number;
+            /** Daily */
+            daily: components["schemas"]["KpiDaily"][];
+            /** Booking Sources */
+            booking_sources: components["schemas"]["KpiSource"][];
+            /** By Staff */
+            by_staff: components["schemas"]["KpiStaff"][];
+        };
+        /** KpiDaily */
+        KpiDaily: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Sales */
+            sales: number;
+            /** Visits */
+            visits: number;
+        };
+        /** KpiSource */
+        KpiSource: {
+            source: components["schemas"]["BookingSource"];
+            /** Count */
+            count: number;
+        };
+        /** KpiStaff */
+        KpiStaff: {
+            /** Staff Id */
+            staff_id: number;
+            /** Name */
+            name: string;
+            /** Sales */
+            sales: number;
+            /** Visits */
+            visits: number;
+            /** Notes */
+            notes: number;
+        };
+        /** LeaveCreate */
+        LeaveCreate: {
+            /** Staff Id */
+            staff_id?: number | null;
+            leave_type: components["schemas"]["LeaveType"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /** LeaveDecision */
+        LeaveDecision: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "approved" | "rejected";
+        };
+        /** LeaveOut */
+        LeaveOut: {
+            /** Id */
+            id: number;
+            /** Staff Id */
+            staff_id: number;
+            leave_type: components["schemas"]["LeaveType"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            status: components["schemas"]["LeaveStatus"];
+            /** Reason */
+            reason: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            staff: components["schemas"]["StaffBrief"];
+        };
+        /**
+         * LeaveStatus
+         * @enum {string}
+         */
+        LeaveStatus: "requested" | "approved" | "rejected" | "canceled";
+        /**
+         * LeaveType
+         * @enum {string}
+         */
+        LeaveType: "paid_leave" | "morning_off" | "afternoon_off" | "absence" | "training" | "other";
         /** Page[ClinicalNoteOut] */
         Page_ClinicalNoteOut_: {
             /** Items */
@@ -1411,6 +1700,11 @@ export interface components {
              */
             notes: string;
         };
+        /**
+         * PaymentMethod
+         * @enum {string}
+         */
+        PaymentMethod: "cash" | "card" | "qr" | "bank_transfer" | "other";
         /** PostureCreate */
         PostureCreate: {
             /** Patient Id */
@@ -1619,6 +1913,175 @@ export interface components {
          * @enum {string}
          */
         Role: "admin" | "reception" | "practitioner";
+        /** SalesCreate */
+        SalesCreate: {
+            /** Patient Id */
+            patient_id: number;
+            /** Appointment Id */
+            appointment_id?: number | null;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Treatment Menu Id */
+            treatment_menu_id?: number | null;
+            /** Staff Id */
+            staff_id?: number | null;
+            /**
+             * Treatment Date
+             * Format: date
+             */
+            treatment_date: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Amount */
+            amount: number;
+            /** @default cash */
+            payment_method: components["schemas"]["PaymentMethod"];
+            /** @default paid */
+            status: components["schemas"]["SalesStatus"];
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+        };
+        /** SalesOut */
+        SalesOut: {
+            /** Patient Id */
+            patient_id: number;
+            /** Appointment Id */
+            appointment_id?: number | null;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Treatment Menu Id */
+            treatment_menu_id?: number | null;
+            /** Staff Id */
+            staff_id?: number | null;
+            /**
+             * Treatment Date
+             * Format: date
+             */
+            treatment_date: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Amount */
+            amount: number;
+            /** @default cash */
+            payment_method: components["schemas"]["PaymentMethod"];
+            /** @default paid */
+            status: components["schemas"]["SalesStatus"];
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+            /** Id */
+            id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            patient: components["schemas"]["PatientBrief"];
+            staff?: components["schemas"]["StaffBrief"] | null;
+        };
+        /** SalesPage */
+        SalesPage: {
+            /** Items */
+            items: components["schemas"]["SalesOut"][];
+            /** Total */
+            total: number;
+            /** Paid Amount */
+            paid_amount: number;
+            /** Unpaid Amount */
+            unpaid_amount: number;
+        };
+        /**
+         * SalesStatus
+         * @enum {string}
+         */
+        SalesStatus: "unpaid" | "paid" | "canceled";
+        /** SalesUpdate */
+        SalesUpdate: {
+            /** Patient Id */
+            patient_id: number;
+            /** Appointment Id */
+            appointment_id?: number | null;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Treatment Menu Id */
+            treatment_menu_id?: number | null;
+            /** Staff Id */
+            staff_id?: number | null;
+            /**
+             * Treatment Date
+             * Format: date
+             */
+            treatment_date: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Amount */
+            amount: number;
+            /** @default cash */
+            payment_method: components["schemas"]["PaymentMethod"];
+            /** @default paid */
+            status: components["schemas"]["SalesStatus"];
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+        };
+        /** ShiftOut */
+        ShiftOut: {
+            /** @default working */
+            status: components["schemas"]["ShiftStatus"];
+            /** Start Time */
+            start_time?: string | null;
+            /** End Time */
+            end_time?: string | null;
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+            /** Id */
+            id: number;
+            /** Staff Id */
+            staff_id: number;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+        };
+        /**
+         * ShiftStatus
+         * @enum {string}
+         */
+        ShiftStatus: "working" | "off" | "half_day" | "training" | "other";
+        /** ShiftUpsert */
+        ShiftUpsert: {
+            /** @default working */
+            status: components["schemas"]["ShiftStatus"];
+            /** Start Time */
+            start_time?: string | null;
+            /** End Time */
+            end_time?: string | null;
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+        };
         /** StaffBrief */
         StaffBrief: {
             /** Id */
@@ -3500,6 +3963,404 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "sales-list_sales": {
+        parameters: {
+            query?: {
+                start?: string | null;
+                /** @description この日を含む */
+                end?: string | null;
+                status?: components["schemas"]["SalesStatus"] | null;
+                patient_id?: number | null;
+                clinical_note_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "sales-create_sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "sales-sales_draft": {
+        parameters: {
+            query: {
+                clinical_note_id: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesCreate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "sales-update_sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-list_shifts": {
+        parameters: {
+            query: {
+                /** @description YYYY-MM */
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShiftOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-upsert_shift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staff_id: number;
+                day: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShiftUpsert"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShiftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-delete_shift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staff_id: number;
+                day: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-list_leaves": {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["LeaveStatus"] | null;
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-request_leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeaveCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-decide_leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leave_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeaveDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-cancel_leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leave_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "kpi-kpi": {
+        parameters: {
+            query?: {
+                /** @description YYYY-MM */
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Kpi"];
                 };
             };
             /** @description Validation Error */

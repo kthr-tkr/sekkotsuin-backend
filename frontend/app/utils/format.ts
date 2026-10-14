@@ -192,3 +192,75 @@ export const POSTURE_REGIONS = [
   { key: 'ankle_foot', label: '足関節・足部' },
   { key: 'balance', label: '全体バランス' },
 ] as const
+
+export const PAYMENT_LABELS: Record<string, string> = {
+  cash: '現金',
+  card: 'カード',
+  qr: 'QR決済',
+  bank_transfer: '銀行振込',
+  other: 'その他',
+}
+
+export const SALES_STATUS_LABELS: Record<string, string> = {
+  paid: '支払い済み',
+  unpaid: '未会計',
+  canceled: '取消',
+}
+
+export const SALES_STATUS_COLORS: Record<string, string> = {
+  paid: 'success',
+  unpaid: 'warning',
+  canceled: 'grey',
+}
+
+export const SHIFT_LABELS: Record<string, string> = {
+  working: '勤務',
+  half_day: '半休',
+  training: '研修',
+  other: 'その他',
+  off: '休み',
+}
+
+export const LEAVE_TYPE_LABELS: Record<string, string> = {
+  paid_leave: '有給',
+  morning_off: '午前休',
+  afternoon_off: '午後休',
+  absence: '欠勤',
+  training: '研修',
+  other: 'その他',
+}
+
+export const LEAVE_STATUS_LABELS: Record<string, string> = {
+  requested: '申請中',
+  approved: '承認済み',
+  rejected: '却下',
+  canceled: '取消',
+}
+
+export const LEAVE_STATUS_COLORS: Record<string, string> = {
+  requested: 'warning',
+  approved: 'success',
+  rejected: 'error',
+  canceled: 'grey',
+}
+
+export const yen = (n: number) => `${n.toLocaleString()}円`
+
+/** 今月（JST）を YYYY-MM で返す */
+export const currentMonth = () =>
+  new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date()).slice(0, 7)
+
+export function shiftMonth(month: string, delta: number): string {
+  const [y, m] = month.split('-').map(Number) as [number, number]
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1))
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+export function daysInMonth(month: string): string[] {
+  const [y, m] = month.split('-').map(Number) as [number, number]
+  const n = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return Array.from({ length: n }, (_, i) => `${month}-${String(i + 1).padStart(2, '0')}`)
+}
+
+export const weekdayJa = (isoDate: string) =>
+  '日月火水木金土'[new Date(`${isoDate}T12:00:00Z`).getUTCDay()]!

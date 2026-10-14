@@ -2586,6 +2586,749 @@
         }
       }
     },
+    "/api/sales": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "List Sales",
+        "operationId": "sales-list_sales",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "この日を含む",
+              "title": "End"
+            },
+            "description": "この日を含む"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SalesStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "clinical_note_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Clinical Note Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Create Sales",
+        "operationId": "sales-create_sales",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SalesCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sales/draft": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Sales Draft",
+        "description": "カルテから会計の初期値を作る（予約のメニュー名・料金、担当者、施術日）。",
+        "operationId": "sales-sales_draft",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clinical_note_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinical Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesCreate"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sales/{record_id}": {
+      "put": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Update Sales",
+        "operationId": "sales-update_sales",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SalesUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shifts": {
+      "get": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "List Shifts",
+        "operationId": "schedule-list_shifts",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$",
+              "description": "YYYY-MM",
+              "title": "Month"
+            },
+            "description": "YYYY-MM"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftOut"
+                  },
+                  "title": "Response Schedule-List Shifts"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shifts/{staff_id}/{day}": {
+      "put": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Upsert Shift",
+        "operationId": "schedule-upsert_shift",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "staff_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Staff Id"
+            }
+          },
+          {
+            "name": "day",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Day"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftUpsert"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Delete Shift",
+        "operationId": "schedule-delete_shift",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "staff_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Staff Id"
+            }
+          },
+          {
+            "name": "day",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Day"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/leaves": {
+      "get": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "List Leaves",
+        "operationId": "schedule-list_leaves",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LeaveStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveOut"
+                  },
+                  "title": "Response Schedule-List Leaves"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Request Leave",
+        "operationId": "schedule-request_leave",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaveCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/leaves/{leave_id}/decide": {
+      "post": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Decide Leave",
+        "operationId": "schedule-decide_leave",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "leave_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Leave Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaveDecision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/leaves/{leave_id}/cancel": {
+      "post": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Cancel Leave",
+        "operationId": "schedule-cancel_leave",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "leave_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Leave Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kpi": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "Kpi",
+        "operationId": "kpi-kpi",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM",
+              "title": "Month"
+            },
+            "description": "YYYY-MM"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Kpi"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinical-notes/{note_id}/recordings": {
       "post": {
         "tags": [
@@ -4348,6 +5091,305 @@
         ],
         "title": "IntakeOut"
       },
+      "Kpi": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "sales_total": {
+            "type": "integer",
+            "title": "Sales Total"
+          },
+          "sales_total_prev_month": {
+            "type": "integer",
+            "title": "Sales Total Prev Month"
+          },
+          "paid_count": {
+            "type": "integer",
+            "title": "Paid Count"
+          },
+          "average_spend": {
+            "type": "integer",
+            "title": "Average Spend"
+          },
+          "unpaid_count": {
+            "type": "integer",
+            "title": "Unpaid Count"
+          },
+          "unpaid_amount": {
+            "type": "integer",
+            "title": "Unpaid Amount"
+          },
+          "appointments": {
+            "type": "integer",
+            "title": "Appointments"
+          },
+          "visits": {
+            "type": "integer",
+            "title": "Visits"
+          },
+          "cancellations": {
+            "type": "integer",
+            "title": "Cancellations"
+          },
+          "cancel_rate": {
+            "type": "number",
+            "title": "Cancel Rate"
+          },
+          "new_patients": {
+            "type": "integer",
+            "title": "New Patients"
+          },
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/KpiDaily"
+            },
+            "type": "array",
+            "title": "Daily"
+          },
+          "booking_sources": {
+            "items": {
+              "$ref": "#/components/schemas/KpiSource"
+            },
+            "type": "array",
+            "title": "Booking Sources"
+          },
+          "by_staff": {
+            "items": {
+              "$ref": "#/components/schemas/KpiStaff"
+            },
+            "type": "array",
+            "title": "By Staff"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "sales_total",
+          "sales_total_prev_month",
+          "paid_count",
+          "average_spend",
+          "unpaid_count",
+          "unpaid_amount",
+          "appointments",
+          "visits",
+          "cancellations",
+          "cancel_rate",
+          "new_patients",
+          "daily",
+          "booking_sources",
+          "by_staff"
+        ],
+        "title": "Kpi"
+      },
+      "KpiDaily": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "sales": {
+            "type": "integer",
+            "title": "Sales"
+          },
+          "visits": {
+            "type": "integer",
+            "title": "Visits"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "sales",
+          "visits"
+        ],
+        "title": "KpiDaily"
+      },
+      "KpiSource": {
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/BookingSource"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "count"
+        ],
+        "title": "KpiSource"
+      },
+      "KpiStaff": {
+        "properties": {
+          "staff_id": {
+            "type": "integer",
+            "title": "Staff Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "sales": {
+            "type": "integer",
+            "title": "Sales"
+          },
+          "visits": {
+            "type": "integer",
+            "title": "Visits"
+          },
+          "notes": {
+            "type": "integer",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "staff_id",
+          "name",
+          "sales",
+          "visits",
+          "notes"
+        ],
+        "title": "KpiStaff"
+      },
+      "LeaveCreate": {
+        "properties": {
+          "staff_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Id"
+          },
+          "leave_type": {
+            "$ref": "#/components/schemas/LeaveType"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "leave_type",
+          "start_date",
+          "end_date"
+        ],
+        "title": "LeaveCreate"
+      },
+      "LeaveDecision": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "LeaveDecision"
+      },
+      "LeaveOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "staff_id": {
+            "type": "integer",
+            "title": "Staff Id"
+          },
+          "leave_type": {
+            "$ref": "#/components/schemas/LeaveType"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LeaveStatus"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "staff": {
+            "$ref": "#/components/schemas/StaffBrief"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "staff_id",
+          "leave_type",
+          "start_date",
+          "end_date",
+          "status",
+          "reason",
+          "created_at",
+          "staff"
+        ],
+        "title": "LeaveOut"
+      },
+      "LeaveStatus": {
+        "type": "string",
+        "enum": [
+          "requested",
+          "approved",
+          "rejected",
+          "canceled"
+        ],
+        "title": "LeaveStatus"
+      },
+      "LeaveType": {
+        "type": "string",
+        "enum": [
+          "paid_leave",
+          "morning_off",
+          "afternoon_off",
+          "absence",
+          "training",
+          "other"
+        ],
+        "title": "LeaveType"
+      },
       "Page_ClinicalNoteOut_": {
         "properties": {
           "items": {
@@ -4731,6 +5773,17 @@
           "phone"
         ],
         "title": "PatientUpdate"
+      },
+      "PaymentMethod": {
+        "type": "string",
+        "enum": [
+          "cash",
+          "card",
+          "qr",
+          "bank_transfer",
+          "other"
+        ],
+        "title": "PaymentMethod"
       },
       "PostureCreate": {
         "properties": {
@@ -5171,6 +6224,447 @@
           "practitioner"
         ],
         "title": "Role"
+      },
+      "SalesCreate": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "treatment_menu_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Menu Id"
+          },
+          "staff_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Id"
+          },
+          "treatment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Treatment Date"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Description",
+            "default": ""
+          },
+          "amount": {
+            "type": "integer",
+            "maximum": 10000000.0,
+            "minimum": 0.0,
+            "title": "Amount"
+          },
+          "payment_method": {
+            "$ref": "#/components/schemas/PaymentMethod",
+            "default": "cash"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SalesStatus",
+            "default": "paid"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "treatment_date",
+          "amount"
+        ],
+        "title": "SalesCreate"
+      },
+      "SalesOut": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "treatment_menu_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Menu Id"
+          },
+          "staff_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Id"
+          },
+          "treatment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Treatment Date"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Description",
+            "default": ""
+          },
+          "amount": {
+            "type": "integer",
+            "maximum": 10000000.0,
+            "minimum": 0.0,
+            "title": "Amount"
+          },
+          "payment_method": {
+            "$ref": "#/components/schemas/PaymentMethod",
+            "default": "cash"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SalesStatus",
+            "default": "paid"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo",
+            "default": ""
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PatientBrief"
+          },
+          "staff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "treatment_date",
+          "amount",
+          "id",
+          "created_at",
+          "patient"
+        ],
+        "title": "SalesOut"
+      },
+      "SalesPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SalesOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "paid_amount": {
+            "type": "integer",
+            "title": "Paid Amount"
+          },
+          "unpaid_amount": {
+            "type": "integer",
+            "title": "Unpaid Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "paid_amount",
+          "unpaid_amount"
+        ],
+        "title": "SalesPage"
+      },
+      "SalesStatus": {
+        "type": "string",
+        "enum": [
+          "unpaid",
+          "paid",
+          "canceled"
+        ],
+        "title": "SalesStatus"
+      },
+      "SalesUpdate": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "treatment_menu_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Menu Id"
+          },
+          "staff_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Id"
+          },
+          "treatment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Treatment Date"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Description",
+            "default": ""
+          },
+          "amount": {
+            "type": "integer",
+            "maximum": 10000000.0,
+            "minimum": 0.0,
+            "title": "Amount"
+          },
+          "payment_method": {
+            "$ref": "#/components/schemas/PaymentMethod",
+            "default": "cash"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SalesStatus",
+            "default": "paid"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "treatment_date",
+          "amount"
+        ],
+        "title": "SalesUpdate"
+      },
+      "ShiftOut": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ShiftStatus",
+            "default": "working"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          },
+          "memo": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Memo",
+            "default": ""
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "staff_id": {
+            "type": "integer",
+            "title": "Staff Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "staff_id",
+          "date"
+        ],
+        "title": "ShiftOut"
+      },
+      "ShiftStatus": {
+        "type": "string",
+        "enum": [
+          "working",
+          "off",
+          "half_day",
+          "training",
+          "other"
+        ],
+        "title": "ShiftStatus"
+      },
+      "ShiftUpsert": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ShiftStatus",
+            "default": "working"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          },
+          "memo": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Memo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "ShiftUpsert"
       },
       "StaffBrief": {
         "properties": {
