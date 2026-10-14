@@ -289,6 +289,82 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinical-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notes */
+        get: operations["clinical-notes-list_notes"];
+        put?: never;
+        /**
+         * Create Note
+         * @description カルテを作成する。予約に紐づくカルテが既にあればそれを返す。
+         */
+        post: operations["clinical-notes-create_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinical-notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Note */
+        get: operations["clinical-notes-get_note"];
+        /** Update Note */
+        put: operations["clinical-notes-update_note"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinical-notes/{note_id}/finalize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Finalize Note
+         * @description カルテを確定する。予約があれば「完了」にする。
+         */
+        post: operations["clinical-notes-finalize_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinical-notes/{note_id}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Revisions */
+        get: operations["clinical-notes-list_revisions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/intakes/{token}": {
         parameters: {
             query?: never;
@@ -572,6 +648,159 @@ export interface components {
              */
             primary_color: string;
         };
+        /**
+         * ClinicalNoteCreate
+         * @description 予約から作る場合は appointment_id だけで良い（患者・日時・担当・問診を引き継ぐ）。
+         */
+        ClinicalNoteCreate: {
+            /** Appointment Id */
+            appointment_id?: number | null;
+            /** Patient Id */
+            patient_id?: number | null;
+            /** Visited At */
+            visited_at?: string | null;
+        };
+        /** ClinicalNoteOut */
+        ClinicalNoteOut: {
+            /**
+             * Visited At
+             * Format: date-time
+             */
+            visited_at: string;
+            /** Practitioner Id */
+            practitioner_id?: number | null;
+            /**
+             * Subjective
+             * @default
+             */
+            subjective: string;
+            /**
+             * Objective
+             * @default
+             */
+            objective: string;
+            /**
+             * Assessment
+             * @default
+             */
+            assessment: string;
+            /**
+             * Plan
+             * @default
+             */
+            plan: string;
+            /**
+             * Treatment Content
+             * @default
+             */
+            treatment_content: string;
+            /**
+             * Precautions
+             * @default
+             */
+            precautions: string;
+            /**
+             * Next Visit Suggestion
+             * @default
+             */
+            next_visit_suggestion: string;
+            /** Pain Scale Before */
+            pain_scale_before?: number | null;
+            /** Pain Scale After */
+            pain_scale_after?: number | null;
+            /** Id */
+            id: number;
+            /** Patient Id */
+            patient_id: number;
+            /** Appointment Id */
+            appointment_id: number | null;
+            /** Intake Id */
+            intake_id: number | null;
+            status: components["schemas"]["ClinicalNoteStatus"];
+            /** Finalized At */
+            finalized_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            patient: components["schemas"]["PatientBrief"];
+            practitioner?: components["schemas"]["StaffBrief"] | null;
+        };
+        /** ClinicalNoteRevisionOut */
+        ClinicalNoteRevisionOut: {
+            /** Id */
+            id: number;
+            /** Snapshot */
+            snapshot: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            edited_by?: components["schemas"]["StaffBrief"] | null;
+        };
+        /**
+         * ClinicalNoteStatus
+         * @enum {string}
+         */
+        ClinicalNoteStatus: "draft" | "finalized";
+        /** ClinicalNoteUpdate */
+        ClinicalNoteUpdate: {
+            /**
+             * Visited At
+             * Format: date-time
+             */
+            visited_at: string;
+            /** Practitioner Id */
+            practitioner_id?: number | null;
+            /**
+             * Subjective
+             * @default
+             */
+            subjective: string;
+            /**
+             * Objective
+             * @default
+             */
+            objective: string;
+            /**
+             * Assessment
+             * @default
+             */
+            assessment: string;
+            /**
+             * Plan
+             * @default
+             */
+            plan: string;
+            /**
+             * Treatment Content
+             * @default
+             */
+            treatment_content: string;
+            /**
+             * Precautions
+             * @default
+             */
+            precautions: string;
+            /**
+             * Next Visit Suggestion
+             * @default
+             */
+            next_visit_suggestion: string;
+            /** Pain Scale Before */
+            pain_scale_before?: number | null;
+            /** Pain Scale After */
+            pain_scale_after?: number | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -667,6 +896,13 @@ export interface components {
              */
             created_at: string;
             patient: components["schemas"]["PatientBrief"];
+        };
+        /** Page[ClinicalNoteOut] */
+        Page_ClinicalNoteOut_: {
+            /** Items */
+            items: components["schemas"]["ClinicalNoteOut"][];
+            /** Total */
+            total: number;
         };
         /** Page[IntakeOut] */
         Page_IntakeOut_: {
@@ -1777,6 +2013,203 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IntakeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-list_notes": {
+        parameters: {
+            query?: {
+                patient_id?: number | null;
+                status?: components["schemas"]["ClinicalNoteStatus"] | null;
+                start?: string | null;
+                end?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ClinicalNoteOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-create_note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicalNoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-get_note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-update_note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicalNoteUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-finalize_note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-list_revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteRevisionOut"][];
                 };
             };
             /** @description Validation Error */

@@ -30,6 +30,17 @@ const { data: intakes, refresh: refreshIntakes } = await useAsyncData(
   },
 )
 
+const { data: notes } = await useAsyncData(`patient-${id}-notes`, async () => {
+  const { data } = await api.GET('/api/clinical-notes', {
+    params: { query: { patient_id: id, limit: 20 } },
+  })
+  return data ?? { items: [], total: 0 }
+})
+async function createNote() {
+  const { data } = await api.POST('/api/clinical-notes', { body: { patient_id: id } })
+  if (data) await navigateTo(`/clinical-notes/${data.id}`)
+}
+
 const editDialog = ref(false)
 const editError = ref<string | null>(null)
 async function update(body: Schemas['PatientUpdate']) {
@@ -126,6 +137,30 @@ async function issueIntake() {
               </tr>
             </tbody>
           </v-table>
+        </v-card>
+
+        <v-card title="カルテ" class="mb-4">
+          <template #append>
+            <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="createNote">
+              予約なしで作成
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item v-if="!notes?.items.length" subtitle="カルテはありません（予約のダイアログから作成できます）" />
+            <v-list-item
+              v-for="n in notes?.items"
+              :key="n.id"
+              :to="`/clinical-notes/${n.id}`"
+              :title="`${formatDateTime(n.visited_at)}  ${n.practitioner?.full_name ?? ''}`"
+              :subtitle="`PS ${n.pain_scale_before ?? '-'} → ${n.pain_scale_after ?? '-'} ／ ${n.subjective || n.assessment || '（記載なし）'}`"
+            >
+              <template #append>
+                <v-chip size="small" :color="NOTE_STATUS_COLORS[n.status]" variant="flat">
+                  {{ NOTE_STATUS_LABELS[n.status] }}
+                </v-chip>
+              </template>
+            </v-list-item>
+          </v-list>
         </v-card>
 
         <v-card title="問診">

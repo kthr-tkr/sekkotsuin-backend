@@ -115,3 +115,20 @@ export function isoToJstInput(iso: string): string {
 
 export const patientName = (p: { last_name: string; first_name: string } | null | undefined) =>
   p ? `${p.last_name} ${p.first_name}` : '（患者未設定）'
+
+export const NOTE_STATUS_LABELS: Record<string, string> = {
+  draft: '下書き',
+  finalized: '確定',
+}
+
+export const NOTE_STATUS_COLORS: Record<string, string> = {
+  draft: 'warning',
+  finalized: 'success',
+}
+
+export const SOAP_FIELDS = [
+  { key: 'subjective', label: 'S（主観）', hint: '患者の訴え・症状の経過' },
+  { key: 'objective', label: 'O（客観）', hint: '視診・触診・検査所見' },
+  { key: 'assessment', label: 'A（評価）', hint: '見立て・考えられる原因' },
+  { key: 'plan', label: 'P（計画）', hint: '今後の施術方針・通院頻度' },
+] as const

@@ -1330,6 +1330,379 @@
         }
       }
     },
+    "/api/clinical-notes": {
+      "get": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "List Notes",
+        "operationId": "clinical-notes-list_notes",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ClinicalNoteStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ClinicalNoteOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "Create Note",
+        "description": "カルテを作成する。予約に紐づくカルテが既にあればそれを返す。",
+        "operationId": "clinical-notes-create_note",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicalNoteCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-notes/{note_id}": {
+      "get": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "Get Note",
+        "operationId": "clinical-notes-get_note",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "Update Note",
+        "operationId": "clinical-notes-update_note",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicalNoteUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-notes/{note_id}/finalize": {
+      "post": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "Finalize Note",
+        "description": "カルテを確定する。予約があれば「完了」にする。",
+        "operationId": "clinical-notes-finalize_note",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-notes/{note_id}/revisions": {
+      "get": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "List Revisions",
+        "operationId": "clinical-notes-list_revisions",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalNoteRevisionOut"
+                  },
+                  "title": "Response Clinical-Notes-List Revisions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/public/intakes/{token}": {
       "get": {
         "tags": [
@@ -2047,6 +2420,341 @@
         "type": "object",
         "title": "ClinicSettingsUpdate"
       },
+      "ClinicalNoteCreate": {
+        "properties": {
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "patient_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Id"
+          },
+          "visited_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visited At"
+          }
+        },
+        "type": "object",
+        "title": "ClinicalNoteCreate",
+        "description": "予約から作る場合は appointment_id だけで良い（患者・日時・担当・問診を引き継ぐ）。"
+      },
+      "ClinicalNoteOut": {
+        "properties": {
+          "visited_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Visited At"
+          },
+          "practitioner_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Practitioner Id"
+          },
+          "subjective": {
+            "type": "string",
+            "title": "Subjective",
+            "default": ""
+          },
+          "objective": {
+            "type": "string",
+            "title": "Objective",
+            "default": ""
+          },
+          "assessment": {
+            "type": "string",
+            "title": "Assessment",
+            "default": ""
+          },
+          "plan": {
+            "type": "string",
+            "title": "Plan",
+            "default": ""
+          },
+          "treatment_content": {
+            "type": "string",
+            "title": "Treatment Content",
+            "default": ""
+          },
+          "precautions": {
+            "type": "string",
+            "title": "Precautions",
+            "default": ""
+          },
+          "next_visit_suggestion": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Next Visit Suggestion",
+            "default": ""
+          },
+          "pain_scale_before": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pain Scale Before"
+          },
+          "pain_scale_after": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pain Scale After"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "intake_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intake Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ClinicalNoteStatus"
+          },
+          "finalized_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalized At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PatientBrief"
+          },
+          "practitioner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "visited_at",
+          "id",
+          "patient_id",
+          "appointment_id",
+          "intake_id",
+          "status",
+          "finalized_at",
+          "created_at",
+          "updated_at",
+          "patient"
+        ],
+        "title": "ClinicalNoteOut"
+      },
+      "ClinicalNoteRevisionOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Snapshot"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "edited_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "snapshot",
+          "created_at"
+        ],
+        "title": "ClinicalNoteRevisionOut"
+      },
+      "ClinicalNoteStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "finalized"
+        ],
+        "title": "ClinicalNoteStatus"
+      },
+      "ClinicalNoteUpdate": {
+        "properties": {
+          "visited_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Visited At"
+          },
+          "practitioner_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Practitioner Id"
+          },
+          "subjective": {
+            "type": "string",
+            "title": "Subjective",
+            "default": ""
+          },
+          "objective": {
+            "type": "string",
+            "title": "Objective",
+            "default": ""
+          },
+          "assessment": {
+            "type": "string",
+            "title": "Assessment",
+            "default": ""
+          },
+          "plan": {
+            "type": "string",
+            "title": "Plan",
+            "default": ""
+          },
+          "treatment_content": {
+            "type": "string",
+            "title": "Treatment Content",
+            "default": ""
+          },
+          "precautions": {
+            "type": "string",
+            "title": "Precautions",
+            "default": ""
+          },
+          "next_visit_suggestion": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Next Visit Suggestion",
+            "default": ""
+          },
+          "pain_scale_before": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pain Scale Before"
+          },
+          "pain_scale_after": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pain Scale After"
+          }
+        },
+        "type": "object",
+        "required": [
+          "visited_at"
+        ],
+        "title": "ClinicalNoteUpdate"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2255,6 +2963,27 @@
           "patient"
         ],
         "title": "IntakeOut"
+      },
+      "Page_ClinicalNoteOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ClinicalNoteOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[ClinicalNoteOut]"
       },
       "Page_IntakeOut_": {
         "properties": {
