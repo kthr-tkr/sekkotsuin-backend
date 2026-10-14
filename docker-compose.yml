@@ -20,11 +20,31 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://app:app@db:5432/sekkotsuin
       CORS_ORIGINS: http://localhost:3000
+      MEDIA_DIR: /data/media
+      AI_PROVIDER: ${AI_PROVIDER:-fake}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     ports:
       - "8000:8000"
+    volumes:
+      - media:/data/media
     depends_on:
       db:
         condition: service_healthy
 
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://app:app@db:5432/sekkotsuin
+      MEDIA_DIR: /data/media
+      AI_PROVIDER: ${AI_PROVIDER:-fake}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - media:/data/media
+    depends_on:
+      api:
+        condition: service_started
+
 volumes:
   pgdata:
+  media:

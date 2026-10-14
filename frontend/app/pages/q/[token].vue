@@ -74,9 +74,9 @@ async function submit(e: Promise<{ valid: boolean }>) {
 
     <template v-else>
       <div class="mb-4">
-        <div class="text-body-2 text-medium-emphasis">{{ intake.clinic_name }}</div>
-        <h1 class="text-h5 font-weight-bold">Web問診票</h1>
-        <div class="text-body-2">{{ intake.patient_display_name }}、ご来院前に以下にご回答ください。</div>
+        <div class="text-body-medium text-medium-emphasis">{{ intake.clinic_name }}</div>
+        <h1 class="text-headline-small font-weight-bold">Web問診票</h1>
+        <div class="text-body-medium">{{ intake.patient_display_name }}、ご来院前に以下にご回答ください。</div>
       </div>
 
       <v-form @submit.prevent="submit">
@@ -87,13 +87,13 @@ async function submit(e: Promise<{ valid: boolean }>) {
               label="一番気になる症状（例: 腰が痛い）"
               :rules="[required]"
             />
-            <div class="text-subtitle-2 mb-1">痛む・気になる部位（複数選択可）</div>
+            <div class="text-title-small mb-1">痛む・気になる部位（複数選択可）</div>
             <v-chip-group v-model="form.pain_areas" multiple column selected-class="text-primary">
               <v-chip v-for="a in PAIN_AREAS" :key="a.value" :value="a.value" filter variant="outlined">
                 {{ a.title }}
               </v-chip>
             </v-chip-group>
-            <div class="text-subtitle-2 mt-4">痛みの強さ（0: 痛みなし 〜 10: 最も強い痛み）</div>
+            <div class="text-title-small mt-4">痛みの強さ（0: 痛みなし 〜 10: 最も強い痛み）</div>
             <v-slider v-model="painScale" :min="0" :max="10" :step="1" thumb-label="always" class="mt-6" />
             <v-select v-model="form.onset" :items="ONSETS" label="いつから" />
             <v-radio-group v-model="form.symptom_type" inline label="症状の出かた">

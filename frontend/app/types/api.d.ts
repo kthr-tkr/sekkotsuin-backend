@@ -289,6 +289,524 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinical-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notes */
+        get: operations["clinical-notes-list_notes"];
+        put?: never;
+        /**
+         * Create Note
+         * @description カルテを作成する。予約に紐づくカルテが既にあればそれを返す。
+         */
+        post: operations["clinical-notes-create_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinical-notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Note */
+        get: operations["clinical-notes-get_note"];
+        /** Update Note */
+        put: operations["clinical-notes-update_note"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinical-notes/{note_id}/finalize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Finalize Note
+         * @description カルテを確定する。予約があれば「完了」にする。
+         */
+        post: operations["clinical-notes-finalize_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinical-notes/{note_id}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Revisions */
+        get: operations["clinical-notes-list_revisions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/treatment-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Plans */
+        get: operations["treatment-plans-list_plans"];
+        put?: never;
+        /** Create Plan */
+        post: operations["treatment-plans-create_plan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/treatment-plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Plan */
+        get: operations["treatment-plans-get_plan"];
+        /** Update Plan */
+        put: operations["treatment-plans-update_plan"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/treatment-plans/{plan_id}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Plan Progress
+         * @description 計画期間中のカルテ（施術経過）を古い順に返す。
+         */
+        get: operations["treatment-plans-plan_progress"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/treatment-plans/{plan_id}/consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Consents */
+        get: operations["treatment-plans-list_consents"];
+        put?: never;
+        /**
+         * Create Consent
+         * @description 患者の同意サインを保存する（院内の端末でスタッフ立ち会いのもと署名する想定）。
+         */
+        post: operations["treatment-plans-create_consent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Assessments */
+        get: operations["posture-list_assessments"];
+        put?: never;
+        /** Create Assessment */
+        post: operations["posture-create_assessment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments/{assessment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Assessment */
+        get: operations["posture-get_assessment"];
+        /** Update Assessment */
+        put: operations["posture-update_assessment"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments/{assessment_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Assessment */
+        post: operations["posture-confirm_assessment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments/{assessment_id}/images/{view}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Upload Image
+         * @description 指定した方向の写真をアップロードする（既にあれば差し替える）。
+         */
+        put: operations["posture-upload_image"];
+        post?: never;
+        /** Delete Image */
+        delete: operations["posture-delete_image"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments/{assessment_id}/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze
+         * @description 写真の AI 分析を登録する。結果は ai_findings に入り、スタッフが確認して反映する。
+         */
+        post: operations["posture-analyze"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments/{assessment_id}/apply-ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Ai
+         * @description AI の所見で findings を置き換える（空欄の部位は今の所見を残す）。
+         */
+        post: operations["posture-apply_ai"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sales */
+        get: operations["sales-list_sales"];
+        put?: never;
+        /** Create Sales */
+        post: operations["sales-create_sales"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sales/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sales Draft
+         * @description カルテから会計の初期値を作る（予約のメニュー名・料金、担当者、施術日）。
+         */
+        get: operations["sales-sales_draft"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sales/{record_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Sales */
+        put: operations["sales-update_sales"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shifts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Shifts */
+        get: operations["schedule-list_shifts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shifts/{staff_id}/{day}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Upsert Shift */
+        put: operations["schedule-upsert_shift"];
+        post?: never;
+        /** Delete Shift */
+        delete: operations["schedule-delete_shift"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leaves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Leaves */
+        get: operations["schedule-list_leaves"];
+        put?: never;
+        /** Request Leave */
+        post: operations["schedule-request_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leaves/{leave_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide Leave */
+        post: operations["schedule-decide_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leaves/{leave_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Leave */
+        post: operations["schedule-cancel_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/kpi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Kpi */
+        get: operations["kpi-kpi"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinical-notes/{note_id}/recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Recordings */
+        get: operations["ai-list_recordings"];
+        put?: never;
+        /**
+         * Upload Recording
+         * @description 録音をアップロードし、文字起こしと SOAP 要約のジョブを登録する。
+         */
+        post: operations["ai-upload_recording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{recording_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Recording */
+        get: operations["ai-get_recording"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{recording_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Recording */
+        post: operations["ai-retry_recording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{recording_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Recording
+         * @description AI の SOAP 下書きをカルテに反映する（記入済みの欄には追記する）。修正履歴を残す。
+         */
+        post: operations["ai-apply_recording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ai Usage */
+        get: operations["ai-ai_usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/intakes/{token}": {
         parameters: {
             query?: never;
@@ -311,6 +829,30 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AiUsageSummary */
+        AiUsageSummary: {
+            /** Month */
+            month: string;
+            /** Ai Available */
+            ai_available: boolean;
+            /** Ai Enabled */
+            ai_enabled: boolean;
+            /** Minutes Used */
+            minutes_used: number;
+            /** Minutes Limit */
+            minutes_limit: number;
+            /** Cost Yen */
+            cost_yen: number;
+            /** By Type */
+            by_type: components["schemas"]["UsageByType"][];
+            /** By Day */
+            by_day: components["schemas"]["UsageByDay"][];
+        };
+        /**
+         * AiUsageType
+         * @enum {string}
+         */
+        AiUsageType: "transcription" | "summary" | "posture";
         /** AppointmentCreate */
         AppointmentCreate: {
             /** Patient Id */
@@ -410,6 +952,13 @@ export interface components {
             /** Available */
             available: boolean;
         };
+        /** Body_ai-upload_recording */
+        "Body_ai-upload_recording": {
+            /** File */
+            file: string;
+            /** Duration Sec */
+            duration_sec: number;
+        };
         /** Body_auth-login */
         "Body_auth-login": {
             /** Grant Type */
@@ -433,6 +982,11 @@ export interface components {
              * Format: password
              */
             client_secret?: string | null;
+        };
+        /** Body_posture-upload_image */
+        "Body_posture-upload_image": {
+            /** File */
+            file: string;
         };
         /**
          * BookingSource
@@ -508,6 +1062,16 @@ export interface components {
              * @default #1D4ED8
              */
             primary_color: string;
+            /**
+             * Ai Enabled
+             * @default true
+             */
+            ai_enabled: boolean;
+            /**
+             * Ai Monthly Minutes Limit
+             * @default 1000
+             */
+            ai_monthly_minutes_limit: number;
             /** Clinic Id */
             clinic_id: number;
         };
@@ -571,6 +1135,195 @@ export interface components {
              * @default #1D4ED8
              */
             primary_color: string;
+            /**
+             * Ai Enabled
+             * @default true
+             */
+            ai_enabled: boolean;
+            /**
+             * Ai Monthly Minutes Limit
+             * @default 1000
+             */
+            ai_monthly_minutes_limit: number;
+        };
+        /**
+         * ClinicalNoteCreate
+         * @description 予約から作る場合は appointment_id だけで良い（患者・日時・担当・問診を引き継ぐ）。
+         */
+        ClinicalNoteCreate: {
+            /** Appointment Id */
+            appointment_id?: number | null;
+            /** Patient Id */
+            patient_id?: number | null;
+            /** Visited At */
+            visited_at?: string | null;
+        };
+        /** ClinicalNoteOut */
+        ClinicalNoteOut: {
+            /**
+             * Visited At
+             * Format: date-time
+             */
+            visited_at: string;
+            /** Practitioner Id */
+            practitioner_id?: number | null;
+            /**
+             * Subjective
+             * @default
+             */
+            subjective: string;
+            /**
+             * Objective
+             * @default
+             */
+            objective: string;
+            /**
+             * Assessment
+             * @default
+             */
+            assessment: string;
+            /**
+             * Plan
+             * @default
+             */
+            plan: string;
+            /**
+             * Treatment Content
+             * @default
+             */
+            treatment_content: string;
+            /**
+             * Precautions
+             * @default
+             */
+            precautions: string;
+            /**
+             * Next Visit Suggestion
+             * @default
+             */
+            next_visit_suggestion: string;
+            /** Pain Scale Before */
+            pain_scale_before?: number | null;
+            /** Pain Scale After */
+            pain_scale_after?: number | null;
+            /** Id */
+            id: number;
+            /** Patient Id */
+            patient_id: number;
+            /** Appointment Id */
+            appointment_id: number | null;
+            /** Intake Id */
+            intake_id: number | null;
+            status: components["schemas"]["ClinicalNoteStatus"];
+            /** Finalized At */
+            finalized_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            patient: components["schemas"]["PatientBrief"];
+            practitioner?: components["schemas"]["StaffBrief"] | null;
+        };
+        /** ClinicalNoteRevisionOut */
+        ClinicalNoteRevisionOut: {
+            /** Id */
+            id: number;
+            /** Snapshot */
+            snapshot: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            edited_by?: components["schemas"]["StaffBrief"] | null;
+        };
+        /**
+         * ClinicalNoteStatus
+         * @enum {string}
+         */
+        ClinicalNoteStatus: "draft" | "finalized";
+        /** ClinicalNoteUpdate */
+        ClinicalNoteUpdate: {
+            /**
+             * Visited At
+             * Format: date-time
+             */
+            visited_at: string;
+            /** Practitioner Id */
+            practitioner_id?: number | null;
+            /**
+             * Subjective
+             * @default
+             */
+            subjective: string;
+            /**
+             * Objective
+             * @default
+             */
+            objective: string;
+            /**
+             * Assessment
+             * @default
+             */
+            assessment: string;
+            /**
+             * Plan
+             * @default
+             */
+            plan: string;
+            /**
+             * Treatment Content
+             * @default
+             */
+            treatment_content: string;
+            /**
+             * Precautions
+             * @default
+             */
+            precautions: string;
+            /**
+             * Next Visit Suggestion
+             * @default
+             */
+            next_visit_suggestion: string;
+            /** Pain Scale Before */
+            pain_scale_before?: number | null;
+            /** Pain Scale After */
+            pain_scale_after?: number | null;
+        };
+        /** ConsentCreate */
+        ConsentCreate: {
+            /** Signed Name */
+            signed_name: string;
+            /** Signature Data Url */
+            signature_data_url: string;
+        };
+        /** ConsentOut */
+        ConsentOut: {
+            /** Id */
+            id: number;
+            /** Signed Name */
+            signed_name: string;
+            /**
+             * Signed At
+             * Format: date-time
+             */
+            signed_at: string;
+            /** Signature Url */
+            signature_url?: string | null;
+            /** Plan Snapshot */
+            plan_snapshot: {
+                [key: string]: unknown;
+            };
+            witnessed_by?: components["schemas"]["StaffBrief"] | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -668,6 +1421,143 @@ export interface components {
             created_at: string;
             patient: components["schemas"]["PatientBrief"];
         };
+        /** Kpi */
+        Kpi: {
+            /** Month */
+            month: string;
+            /** Sales Total */
+            sales_total: number;
+            /** Sales Total Prev Month */
+            sales_total_prev_month: number;
+            /** Paid Count */
+            paid_count: number;
+            /** Average Spend */
+            average_spend: number;
+            /** Unpaid Count */
+            unpaid_count: number;
+            /** Unpaid Amount */
+            unpaid_amount: number;
+            /** Appointments */
+            appointments: number;
+            /** Visits */
+            visits: number;
+            /** Cancellations */
+            cancellations: number;
+            /** Cancel Rate */
+            cancel_rate: number;
+            /** New Patients */
+            new_patients: number;
+            /** Daily */
+            daily: components["schemas"]["KpiDaily"][];
+            /** Booking Sources */
+            booking_sources: components["schemas"]["KpiSource"][];
+            /** By Staff */
+            by_staff: components["schemas"]["KpiStaff"][];
+        };
+        /** KpiDaily */
+        KpiDaily: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Sales */
+            sales: number;
+            /** Visits */
+            visits: number;
+        };
+        /** KpiSource */
+        KpiSource: {
+            source: components["schemas"]["BookingSource"];
+            /** Count */
+            count: number;
+        };
+        /** KpiStaff */
+        KpiStaff: {
+            /** Staff Id */
+            staff_id: number;
+            /** Name */
+            name: string;
+            /** Sales */
+            sales: number;
+            /** Visits */
+            visits: number;
+            /** Notes */
+            notes: number;
+        };
+        /** LeaveCreate */
+        LeaveCreate: {
+            /** Staff Id */
+            staff_id?: number | null;
+            leave_type: components["schemas"]["LeaveType"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /** LeaveDecision */
+        LeaveDecision: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "approved" | "rejected";
+        };
+        /** LeaveOut */
+        LeaveOut: {
+            /** Id */
+            id: number;
+            /** Staff Id */
+            staff_id: number;
+            leave_type: components["schemas"]["LeaveType"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            status: components["schemas"]["LeaveStatus"];
+            /** Reason */
+            reason: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            staff: components["schemas"]["StaffBrief"];
+        };
+        /**
+         * LeaveStatus
+         * @enum {string}
+         */
+        LeaveStatus: "requested" | "approved" | "rejected" | "canceled";
+        /**
+         * LeaveType
+         * @enum {string}
+         */
+        LeaveType: "paid_leave" | "morning_off" | "afternoon_off" | "absence" | "training" | "other";
+        /** Page[ClinicalNoteOut] */
+        Page_ClinicalNoteOut_: {
+            /** Items */
+            items: components["schemas"]["ClinicalNoteOut"][];
+            /** Total */
+            total: number;
+        };
         /** Page[IntakeOut] */
         Page_IntakeOut_: {
             /** Items */
@@ -679,6 +1569,20 @@ export interface components {
         Page_PatientOut_: {
             /** Items */
             items: components["schemas"]["PatientOut"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[PostureOut] */
+        Page_PostureOut_: {
+            /** Items */
+            items: components["schemas"]["PostureOut"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[TreatmentPlanOut] */
+        Page_TreatmentPlanOut_: {
+            /** Items */
+            items: components["schemas"]["TreatmentPlanOut"][];
             /** Total */
             total: number;
         };
@@ -797,6 +1701,162 @@ export interface components {
             notes: string;
         };
         /**
+         * PaymentMethod
+         * @enum {string}
+         */
+        PaymentMethod: "cash" | "card" | "qr" | "bank_transfer" | "other";
+        /** PostureCreate */
+        PostureCreate: {
+            /** Patient Id */
+            patient_id: number;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Assessed At */
+            assessed_at?: string | null;
+        };
+        /** PostureFindings */
+        PostureFindings: {
+            /**
+             * Overall Summary
+             * @default
+             */
+            overall_summary: string;
+            /** Important Points */
+            important_points?: string[];
+            regions?: components["schemas"]["PostureRegions"];
+        };
+        /** PostureImageOut */
+        PostureImageOut: {
+            view: components["schemas"]["PostureView"];
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Url */
+            url?: string | null;
+        };
+        /** PostureOut */
+        PostureOut: {
+            /** Id */
+            id: number;
+            /** Patient Id */
+            patient_id: number;
+            /** Clinical Note Id */
+            clinical_note_id: number | null;
+            /**
+             * Assessed At
+             * Format: date-time
+             */
+            assessed_at: string;
+            /** Title */
+            title: string;
+            /** Memo */
+            memo: string;
+            status: components["schemas"]["PostureStatus"];
+            findings: components["schemas"]["PostureFindings"];
+            /**
+             * Ai Status
+             * @default
+             */
+            ai_status: string;
+            ai_findings?: components["schemas"]["PostureFindings"] | null;
+            /**
+             * Ai Error Message
+             * @default
+             */
+            ai_error_message: string;
+            /** Ai Analyzed At */
+            ai_analyzed_at?: string | null;
+            /** Confirmed At */
+            confirmed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            patient: components["schemas"]["PatientBrief"];
+            /**
+             * Images
+             * @default []
+             */
+            images: components["schemas"]["PostureImageOut"][];
+        };
+        /**
+         * PostureRegions
+         * @description 部位ごとの所見（旧版 AI 出力の posture_findings と同じ区分）。
+         */
+        PostureRegions: {
+            /**
+             * Head Neck
+             * @default
+             */
+            head_neck: string;
+            /**
+             * Shoulder
+             * @default
+             */
+            shoulder: string;
+            /**
+             * Spine
+             * @default
+             */
+            spine: string;
+            /**
+             * Pelvis
+             * @default
+             */
+            pelvis: string;
+            /**
+             * Hip
+             * @default
+             */
+            hip: string;
+            /**
+             * Knee
+             * @default
+             */
+            knee: string;
+            /**
+             * Ankle Foot
+             * @default
+             */
+            ankle_foot: string;
+            /**
+             * Balance
+             * @default
+             */
+            balance: string;
+        };
+        /**
+         * PostureStatus
+         * @enum {string}
+         */
+        PostureStatus: "draft" | "confirmed";
+        /** PostureUpdate */
+        PostureUpdate: {
+            /**
+             * Title
+             * @default 姿勢評価
+             */
+            title: string;
+            /**
+             * Assessed At
+             * Format: date-time
+             */
+            assessed_at: string;
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+            findings?: components["schemas"]["PostureFindings"];
+        };
+        /**
+         * PostureView
+         * @enum {string}
+         */
+        PostureView: "front" | "side_right" | "side_left" | "back";
+        /**
          * PublicIntakeOut
          * @description 患者向け: 個人情報は最小限のみ返す。
          */
@@ -814,11 +1874,214 @@ export interface components {
             expires_at: string;
             answers?: components["schemas"]["IntakeAnswers"] | null;
         };
+        /** RecordingOut */
+        RecordingOut: {
+            /** Id */
+            id: number;
+            /** Clinical Note Id */
+            clinical_note_id: number;
+            /** Mime Type */
+            mime_type: string;
+            /** Duration Sec */
+            duration_sec: number;
+            status: components["schemas"]["RecordingStatus"];
+            /** Error Message */
+            error_message: string;
+            /** Transcript */
+            transcript: string;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+            /** Applied At */
+            applied_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Audio Url */
+            audio_url?: string | null;
+        };
+        /**
+         * RecordingStatus
+         * @enum {string}
+         */
+        RecordingStatus: "queued" | "transcribing" | "summarizing" | "done" | "failed";
         /**
          * Role
          * @enum {string}
          */
         Role: "admin" | "reception" | "practitioner";
+        /** SalesCreate */
+        SalesCreate: {
+            /** Patient Id */
+            patient_id: number;
+            /** Appointment Id */
+            appointment_id?: number | null;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Treatment Menu Id */
+            treatment_menu_id?: number | null;
+            /** Staff Id */
+            staff_id?: number | null;
+            /**
+             * Treatment Date
+             * Format: date
+             */
+            treatment_date: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Amount */
+            amount: number;
+            /** @default cash */
+            payment_method: components["schemas"]["PaymentMethod"];
+            /** @default paid */
+            status: components["schemas"]["SalesStatus"];
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+        };
+        /** SalesOut */
+        SalesOut: {
+            /** Patient Id */
+            patient_id: number;
+            /** Appointment Id */
+            appointment_id?: number | null;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Treatment Menu Id */
+            treatment_menu_id?: number | null;
+            /** Staff Id */
+            staff_id?: number | null;
+            /**
+             * Treatment Date
+             * Format: date
+             */
+            treatment_date: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Amount */
+            amount: number;
+            /** @default cash */
+            payment_method: components["schemas"]["PaymentMethod"];
+            /** @default paid */
+            status: components["schemas"]["SalesStatus"];
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+            /** Id */
+            id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            patient: components["schemas"]["PatientBrief"];
+            staff?: components["schemas"]["StaffBrief"] | null;
+        };
+        /** SalesPage */
+        SalesPage: {
+            /** Items */
+            items: components["schemas"]["SalesOut"][];
+            /** Total */
+            total: number;
+            /** Paid Amount */
+            paid_amount: number;
+            /** Unpaid Amount */
+            unpaid_amount: number;
+        };
+        /**
+         * SalesStatus
+         * @enum {string}
+         */
+        SalesStatus: "unpaid" | "paid" | "canceled";
+        /** SalesUpdate */
+        SalesUpdate: {
+            /** Patient Id */
+            patient_id: number;
+            /** Appointment Id */
+            appointment_id?: number | null;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Treatment Menu Id */
+            treatment_menu_id?: number | null;
+            /** Staff Id */
+            staff_id?: number | null;
+            /**
+             * Treatment Date
+             * Format: date
+             */
+            treatment_date: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Amount */
+            amount: number;
+            /** @default cash */
+            payment_method: components["schemas"]["PaymentMethod"];
+            /** @default paid */
+            status: components["schemas"]["SalesStatus"];
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+        };
+        /** ShiftOut */
+        ShiftOut: {
+            /** @default working */
+            status: components["schemas"]["ShiftStatus"];
+            /** Start Time */
+            start_time?: string | null;
+            /** End Time */
+            end_time?: string | null;
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+            /** Id */
+            id: number;
+            /** Staff Id */
+            staff_id: number;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+        };
+        /**
+         * ShiftStatus
+         * @enum {string}
+         */
+        ShiftStatus: "working" | "off" | "half_day" | "training" | "other";
+        /** ShiftUpsert */
+        ShiftUpsert: {
+            /** @default working */
+            status: components["schemas"]["ShiftStatus"];
+            /** Start Time */
+            start_time?: string | null;
+            /** End Time */
+            end_time?: string | null;
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+        };
         /** StaffBrief */
         StaffBrief: {
             /** Id */
@@ -946,6 +2209,204 @@ export interface components {
              */
             display_order: number;
         };
+        /** TreatmentPlanCreate */
+        TreatmentPlanCreate: {
+            /** Patient Id */
+            patient_id: number;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Start Date */
+            start_date?: string | null;
+        };
+        /** TreatmentPlanOut */
+        TreatmentPlanOut: {
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+            /**
+             * Chief Complaint
+             * @default
+             */
+            chief_complaint: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Next Visit Date */
+            next_visit_date?: string | null;
+            visit_guide_type?: components["schemas"]["VisitGuideType"] | null;
+            /** Visit Guide Count */
+            visit_guide_count?: number | null;
+            /**
+             * Visit Guide Note
+             * @default
+             */
+            visit_guide_note: string;
+            /**
+             * Bath Instruction
+             * @default
+             */
+            bath_instruction: string;
+            /**
+             * Walking Instruction
+             * @default
+             */
+            walking_instruction: string;
+            /**
+             * Exercise Instruction
+             * @default
+             */
+            exercise_instruction: string;
+            /**
+             * Work Instruction
+             * @default
+             */
+            work_instruction: string;
+            /**
+             * Lifestyle Instruction
+             * @default
+             */
+            lifestyle_instruction: string;
+            /**
+             * Caution Notes
+             * @default
+             */
+            caution_notes: string;
+            /** Expected Recovery Weeks Min */
+            expected_recovery_weeks_min?: number | null;
+            /** Expected Recovery Weeks Max */
+            expected_recovery_weeks_max?: number | null;
+            /**
+             * Rebound Reaction Note
+             * @default
+             */
+            rebound_reaction_note: string;
+            /** Id */
+            id: number;
+            /** Patient Id */
+            patient_id: number;
+            /** Clinical Note Id */
+            clinical_note_id: number | null;
+            status: components["schemas"]["TreatmentPlanStatus"];
+            /** End Date */
+            end_date: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            patient: components["schemas"]["PatientBrief"];
+            latest_consent?: components["schemas"]["ConsentOut"] | null;
+            /**
+             * Consent Outdated
+             * @default false
+             */
+            consent_outdated: boolean;
+        };
+        /**
+         * TreatmentPlanStatus
+         * @enum {string}
+         */
+        TreatmentPlanStatus: "active" | "completed" | "paused";
+        /** TreatmentPlanUpdate */
+        TreatmentPlanUpdate: {
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+            /**
+             * Chief Complaint
+             * @default
+             */
+            chief_complaint: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Next Visit Date */
+            next_visit_date?: string | null;
+            visit_guide_type?: components["schemas"]["VisitGuideType"] | null;
+            /** Visit Guide Count */
+            visit_guide_count?: number | null;
+            /**
+             * Visit Guide Note
+             * @default
+             */
+            visit_guide_note: string;
+            /**
+             * Bath Instruction
+             * @default
+             */
+            bath_instruction: string;
+            /**
+             * Walking Instruction
+             * @default
+             */
+            walking_instruction: string;
+            /**
+             * Exercise Instruction
+             * @default
+             */
+            exercise_instruction: string;
+            /**
+             * Work Instruction
+             * @default
+             */
+            work_instruction: string;
+            /**
+             * Lifestyle Instruction
+             * @default
+             */
+            lifestyle_instruction: string;
+            /**
+             * Caution Notes
+             * @default
+             */
+            caution_notes: string;
+            /** Expected Recovery Weeks Min */
+            expected_recovery_weeks_min?: number | null;
+            /** Expected Recovery Weeks Max */
+            expected_recovery_weeks_max?: number | null;
+            /**
+             * Rebound Reaction Note
+             * @default
+             */
+            rebound_reaction_note: string;
+            /** @default active */
+            status: components["schemas"]["TreatmentPlanStatus"];
+        };
+        /** UsageByDay */
+        UsageByDay: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Audio Sec */
+            audio_sec: number;
+            /** Cost Yen */
+            cost_yen: number;
+        };
+        /** UsageByType */
+        UsageByType: {
+            usage_type: components["schemas"]["AiUsageType"];
+            /** Count */
+            count: number;
+            /** Audio Sec */
+            audio_sec: number;
+            /** Cost Yen */
+            cost_yen: number;
+        };
         /** UserOut */
         UserOut: {
             /** Id */
@@ -973,6 +2434,11 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * VisitGuideType
+         * @enum {string}
+         */
+        VisitGuideType: "daily" | "weekly" | "monthly" | "custom";
     };
     responses: never;
     parameters: never;
@@ -1777,6 +3243,1315 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IntakeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-list_notes": {
+        parameters: {
+            query?: {
+                patient_id?: number | null;
+                status?: components["schemas"]["ClinicalNoteStatus"] | null;
+                start?: string | null;
+                end?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ClinicalNoteOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-create_note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicalNoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-get_note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-update_note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicalNoteUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-finalize_note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "clinical-notes-list_revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteRevisionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-list_plans": {
+        parameters: {
+            query?: {
+                patient_id?: number | null;
+                status?: components["schemas"]["TreatmentPlanStatus"] | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_TreatmentPlanOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-create_plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TreatmentPlanCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentPlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-get_plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentPlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-update_plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TreatmentPlanUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentPlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-plan_progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-list_consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-create_consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-list_assessments": {
+        parameters: {
+            query?: {
+                patient_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PostureOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-create_assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostureCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-get_assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-update_assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostureUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-confirm_assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-upload_image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+                view: components["schemas"]["PostureView"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_posture-upload_image"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-delete_image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+                view: components["schemas"]["PostureView"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-apply_ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "sales-list_sales": {
+        parameters: {
+            query?: {
+                start?: string | null;
+                /** @description この日を含む */
+                end?: string | null;
+                status?: components["schemas"]["SalesStatus"] | null;
+                patient_id?: number | null;
+                clinical_note_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "sales-create_sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "sales-sales_draft": {
+        parameters: {
+            query: {
+                clinical_note_id: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesCreate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "sales-update_sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-list_shifts": {
+        parameters: {
+            query: {
+                /** @description YYYY-MM */
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShiftOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-upsert_shift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staff_id: number;
+                day: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShiftUpsert"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShiftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-delete_shift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staff_id: number;
+                day: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-list_leaves": {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["LeaveStatus"] | null;
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-request_leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeaveCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-decide_leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leave_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeaveDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "schedule-cancel_leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leave_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "kpi-kpi": {
+        parameters: {
+            query?: {
+                /** @description YYYY-MM */
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Kpi"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-list_recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-upload_recording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_ai-upload_recording"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-get_recording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-retry_recording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-apply_recording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-ai_usage": {
+        parameters: {
+            query?: {
+                /** @description YYYY-MM */
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiUsageSummary"];
                 };
             };
             /** @description Validation Error */

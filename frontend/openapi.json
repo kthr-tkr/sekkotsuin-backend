@@ -1330,6 +1330,2311 @@
         }
       }
     },
+    "/api/clinical-notes": {
+      "get": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "List Notes",
+        "operationId": "clinical-notes-list_notes",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ClinicalNoteStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ClinicalNoteOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "Create Note",
+        "description": "カルテを作成する。予約に紐づくカルテが既にあればそれを返す。",
+        "operationId": "clinical-notes-create_note",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicalNoteCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-notes/{note_id}": {
+      "get": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "Get Note",
+        "operationId": "clinical-notes-get_note",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "Update Note",
+        "operationId": "clinical-notes-update_note",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicalNoteUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-notes/{note_id}/finalize": {
+      "post": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "Finalize Note",
+        "description": "カルテを確定する。予約があれば「完了」にする。",
+        "operationId": "clinical-notes-finalize_note",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-notes/{note_id}/revisions": {
+      "get": {
+        "tags": [
+          "clinical-notes"
+        ],
+        "summary": "List Revisions",
+        "operationId": "clinical-notes-list_revisions",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalNoteRevisionOut"
+                  },
+                  "title": "Response Clinical-Notes-List Revisions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/treatment-plans": {
+      "get": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "List Plans",
+        "operationId": "treatment-plans-list_plans",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TreatmentPlanStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_TreatmentPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Create Plan",
+        "operationId": "treatment-plans-create_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TreatmentPlanCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreatmentPlanOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/treatment-plans/{plan_id}": {
+      "get": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Get Plan",
+        "operationId": "treatment-plans-get_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreatmentPlanOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Update Plan",
+        "operationId": "treatment-plans-update_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TreatmentPlanUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreatmentPlanOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/treatment-plans/{plan_id}/progress": {
+      "get": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Plan Progress",
+        "description": "計画期間中のカルテ（施術経過）を古い順に返す。",
+        "operationId": "treatment-plans-plan_progress",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalNoteOut"
+                  },
+                  "title": "Response Treatment-Plans-Plan Progress"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/treatment-plans/{plan_id}/consents": {
+      "get": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "List Consents",
+        "operationId": "treatment-plans-list_consents",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentOut"
+                  },
+                  "title": "Response Treatment-Plans-List Consents"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Create Consent",
+        "description": "患者の同意サインを保存する（院内の端末でスタッフ立ち会いのもと署名する想定）。",
+        "operationId": "treatment-plans-create_consent",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments": {
+      "get": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "List Assessments",
+        "operationId": "posture-list_assessments",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_PostureOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Create Assessment",
+        "operationId": "posture-create_assessment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostureCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments/{assessment_id}": {
+      "get": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Get Assessment",
+        "operationId": "posture-get_assessment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Update Assessment",
+        "operationId": "posture-update_assessment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostureUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments/{assessment_id}/confirm": {
+      "post": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Confirm Assessment",
+        "operationId": "posture-confirm_assessment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments/{assessment_id}/images/{view}": {
+      "put": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Upload Image",
+        "description": "指定した方向の写真をアップロードする（既にあれば差し替える）。",
+        "operationId": "posture-upload_image",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          },
+          {
+            "name": "view",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PostureView"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_posture-upload_image"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Delete Image",
+        "operationId": "posture-delete_image",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          },
+          {
+            "name": "view",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PostureView"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments/{assessment_id}/analyze": {
+      "post": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Analyze",
+        "description": "写真の AI 分析を登録する。結果は ai_findings に入り、スタッフが確認して反映する。",
+        "operationId": "posture-analyze",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments/{assessment_id}/apply-ai": {
+      "post": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Apply Ai",
+        "description": "AI の所見で findings を置き換える（空欄の部位は今の所見を残す）。",
+        "operationId": "posture-apply_ai",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sales": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "List Sales",
+        "operationId": "sales-list_sales",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "この日を含む",
+              "title": "End"
+            },
+            "description": "この日を含む"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SalesStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "clinical_note_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Clinical Note Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Create Sales",
+        "operationId": "sales-create_sales",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SalesCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sales/draft": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Sales Draft",
+        "description": "カルテから会計の初期値を作る（予約のメニュー名・料金、担当者、施術日）。",
+        "operationId": "sales-sales_draft",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clinical_note_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinical Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesCreate"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sales/{record_id}": {
+      "put": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "Update Sales",
+        "operationId": "sales-update_sales",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SalesUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shifts": {
+      "get": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "List Shifts",
+        "operationId": "schedule-list_shifts",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$",
+              "description": "YYYY-MM",
+              "title": "Month"
+            },
+            "description": "YYYY-MM"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftOut"
+                  },
+                  "title": "Response Schedule-List Shifts"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shifts/{staff_id}/{day}": {
+      "put": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Upsert Shift",
+        "operationId": "schedule-upsert_shift",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "staff_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Staff Id"
+            }
+          },
+          {
+            "name": "day",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Day"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftUpsert"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Delete Shift",
+        "operationId": "schedule-delete_shift",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "staff_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Staff Id"
+            }
+          },
+          {
+            "name": "day",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Day"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/leaves": {
+      "get": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "List Leaves",
+        "operationId": "schedule-list_leaves",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LeaveStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveOut"
+                  },
+                  "title": "Response Schedule-List Leaves"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Request Leave",
+        "operationId": "schedule-request_leave",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaveCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/leaves/{leave_id}/decide": {
+      "post": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Decide Leave",
+        "operationId": "schedule-decide_leave",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "leave_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Leave Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaveDecision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/leaves/{leave_id}/cancel": {
+      "post": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Cancel Leave",
+        "operationId": "schedule-cancel_leave",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "leave_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Leave Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/kpi": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "Kpi",
+        "operationId": "kpi-kpi",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM",
+              "title": "Month"
+            },
+            "description": "YYYY-MM"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Kpi"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-notes/{note_id}/recordings": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Upload Recording",
+        "description": "録音をアップロードし、文字起こしと SOAP 要約のジョブを登録する。",
+        "operationId": "ai-upload_recording",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_ai-upload_recording"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "List Recordings",
+        "operationId": "ai-list_recordings",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecordingOut"
+                  },
+                  "title": "Response Ai-List Recordings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{recording_id}": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Get Recording",
+        "operationId": "ai-get_recording",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recording Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{recording_id}/retry": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Retry Recording",
+        "operationId": "ai-retry_recording",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recording Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{recording_id}/apply": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Apply Recording",
+        "description": "AI の SOAP 下書きをカルテに反映する（記入済みの欄には追記する）。修正履歴を残す。",
+        "operationId": "ai-apply_recording",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recording Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/usage": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Ai Usage",
+        "operationId": "ai-ai_usage",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM",
+              "title": "Month"
+            },
+            "description": "YYYY-MM"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiUsageSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/public/intakes/{token}": {
       "get": {
         "tags": [
@@ -1425,6 +3730,69 @@
   },
   "components": {
     "schemas": {
+      "AiUsageSummary": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available"
+          },
+          "ai_enabled": {
+            "type": "boolean",
+            "title": "Ai Enabled"
+          },
+          "minutes_used": {
+            "type": "number",
+            "title": "Minutes Used"
+          },
+          "minutes_limit": {
+            "type": "integer",
+            "title": "Minutes Limit"
+          },
+          "cost_yen": {
+            "type": "number",
+            "title": "Cost Yen"
+          },
+          "by_type": {
+            "items": {
+              "$ref": "#/components/schemas/UsageByType"
+            },
+            "type": "array",
+            "title": "By Type"
+          },
+          "by_day": {
+            "items": {
+              "$ref": "#/components/schemas/UsageByDay"
+            },
+            "type": "array",
+            "title": "By Day"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "ai_available",
+          "ai_enabled",
+          "minutes_used",
+          "minutes_limit",
+          "cost_yen",
+          "by_type",
+          "by_day"
+        ],
+        "title": "AiUsageSummary"
+      },
+      "AiUsageType": {
+        "type": "string",
+        "enum": [
+          "transcription",
+          "summary",
+          "posture"
+        ],
+        "title": "AiUsageType"
+      },
       "AppointmentCreate": {
         "properties": {
           "patient_id": {
@@ -1734,6 +4102,27 @@
         ],
         "title": "AvailabilitySlot"
       },
+      "Body_ai-upload_recording": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "duration_sec": {
+            "type": "integer",
+            "maximum": 10800.0,
+            "minimum": 1.0,
+            "title": "Duration Sec"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "duration_sec"
+        ],
+        "title": "Body_ai-upload_recording"
+      },
       "Body_auth-login": {
         "properties": {
           "grant_type": {
@@ -1792,6 +4181,20 @@
           "password"
         ],
         "title": "Body_auth-login"
+      },
+      "Body_posture-upload_image": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_posture-upload_image"
       },
       "BookingSource": {
         "type": "string",
@@ -1933,6 +4336,18 @@
             "title": "Primary Color",
             "default": "#1D4ED8"
           },
+          "ai_enabled": {
+            "type": "boolean",
+            "title": "Ai Enabled",
+            "default": true
+          },
+          "ai_monthly_minutes_limit": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Ai Monthly Minutes Limit",
+            "default": 1000
+          },
           "clinic_id": {
             "type": "integer",
             "title": "Clinic Id"
@@ -2042,10 +4457,430 @@
             "pattern": "^#[0-9A-Fa-f]{6}$",
             "title": "Primary Color",
             "default": "#1D4ED8"
+          },
+          "ai_enabled": {
+            "type": "boolean",
+            "title": "Ai Enabled",
+            "default": true
+          },
+          "ai_monthly_minutes_limit": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Ai Monthly Minutes Limit",
+            "default": 1000
           }
         },
         "type": "object",
         "title": "ClinicSettingsUpdate"
+      },
+      "ClinicalNoteCreate": {
+        "properties": {
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "patient_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Id"
+          },
+          "visited_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visited At"
+          }
+        },
+        "type": "object",
+        "title": "ClinicalNoteCreate",
+        "description": "予約から作る場合は appointment_id だけで良い（患者・日時・担当・問診を引き継ぐ）。"
+      },
+      "ClinicalNoteOut": {
+        "properties": {
+          "visited_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Visited At"
+          },
+          "practitioner_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Practitioner Id"
+          },
+          "subjective": {
+            "type": "string",
+            "title": "Subjective",
+            "default": ""
+          },
+          "objective": {
+            "type": "string",
+            "title": "Objective",
+            "default": ""
+          },
+          "assessment": {
+            "type": "string",
+            "title": "Assessment",
+            "default": ""
+          },
+          "plan": {
+            "type": "string",
+            "title": "Plan",
+            "default": ""
+          },
+          "treatment_content": {
+            "type": "string",
+            "title": "Treatment Content",
+            "default": ""
+          },
+          "precautions": {
+            "type": "string",
+            "title": "Precautions",
+            "default": ""
+          },
+          "next_visit_suggestion": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Next Visit Suggestion",
+            "default": ""
+          },
+          "pain_scale_before": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pain Scale Before"
+          },
+          "pain_scale_after": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pain Scale After"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "intake_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intake Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ClinicalNoteStatus"
+          },
+          "finalized_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalized At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PatientBrief"
+          },
+          "practitioner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "visited_at",
+          "id",
+          "patient_id",
+          "appointment_id",
+          "intake_id",
+          "status",
+          "finalized_at",
+          "created_at",
+          "updated_at",
+          "patient"
+        ],
+        "title": "ClinicalNoteOut"
+      },
+      "ClinicalNoteRevisionOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Snapshot"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "edited_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "snapshot",
+          "created_at"
+        ],
+        "title": "ClinicalNoteRevisionOut"
+      },
+      "ClinicalNoteStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "finalized"
+        ],
+        "title": "ClinicalNoteStatus"
+      },
+      "ClinicalNoteUpdate": {
+        "properties": {
+          "visited_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Visited At"
+          },
+          "practitioner_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Practitioner Id"
+          },
+          "subjective": {
+            "type": "string",
+            "title": "Subjective",
+            "default": ""
+          },
+          "objective": {
+            "type": "string",
+            "title": "Objective",
+            "default": ""
+          },
+          "assessment": {
+            "type": "string",
+            "title": "Assessment",
+            "default": ""
+          },
+          "plan": {
+            "type": "string",
+            "title": "Plan",
+            "default": ""
+          },
+          "treatment_content": {
+            "type": "string",
+            "title": "Treatment Content",
+            "default": ""
+          },
+          "precautions": {
+            "type": "string",
+            "title": "Precautions",
+            "default": ""
+          },
+          "next_visit_suggestion": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Next Visit Suggestion",
+            "default": ""
+          },
+          "pain_scale_before": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pain Scale Before"
+          },
+          "pain_scale_after": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pain Scale After"
+          }
+        },
+        "type": "object",
+        "required": [
+          "visited_at"
+        ],
+        "title": "ClinicalNoteUpdate"
+      },
+      "ConsentCreate": {
+        "properties": {
+          "signed_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Signed Name"
+          },
+          "signature_data_url": {
+            "type": "string",
+            "maxLength": 2000000,
+            "pattern": "^data:image/png;base64,",
+            "title": "Signature Data Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "signed_name",
+          "signature_data_url"
+        ],
+        "title": "ConsentCreate"
+      },
+      "ConsentOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "signed_name": {
+            "type": "string",
+            "title": "Signed Name"
+          },
+          "signed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Signed At"
+          },
+          "signature_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature Url"
+          },
+          "plan_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Plan Snapshot"
+          },
+          "witnessed_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "signed_name",
+          "signed_at",
+          "plan_snapshot"
+        ],
+        "title": "ConsentOut"
       },
       "HTTPValidationError": {
         "properties": {
@@ -2256,6 +5091,326 @@
         ],
         "title": "IntakeOut"
       },
+      "Kpi": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "sales_total": {
+            "type": "integer",
+            "title": "Sales Total"
+          },
+          "sales_total_prev_month": {
+            "type": "integer",
+            "title": "Sales Total Prev Month"
+          },
+          "paid_count": {
+            "type": "integer",
+            "title": "Paid Count"
+          },
+          "average_spend": {
+            "type": "integer",
+            "title": "Average Spend"
+          },
+          "unpaid_count": {
+            "type": "integer",
+            "title": "Unpaid Count"
+          },
+          "unpaid_amount": {
+            "type": "integer",
+            "title": "Unpaid Amount"
+          },
+          "appointments": {
+            "type": "integer",
+            "title": "Appointments"
+          },
+          "visits": {
+            "type": "integer",
+            "title": "Visits"
+          },
+          "cancellations": {
+            "type": "integer",
+            "title": "Cancellations"
+          },
+          "cancel_rate": {
+            "type": "number",
+            "title": "Cancel Rate"
+          },
+          "new_patients": {
+            "type": "integer",
+            "title": "New Patients"
+          },
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/KpiDaily"
+            },
+            "type": "array",
+            "title": "Daily"
+          },
+          "booking_sources": {
+            "items": {
+              "$ref": "#/components/schemas/KpiSource"
+            },
+            "type": "array",
+            "title": "Booking Sources"
+          },
+          "by_staff": {
+            "items": {
+              "$ref": "#/components/schemas/KpiStaff"
+            },
+            "type": "array",
+            "title": "By Staff"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "sales_total",
+          "sales_total_prev_month",
+          "paid_count",
+          "average_spend",
+          "unpaid_count",
+          "unpaid_amount",
+          "appointments",
+          "visits",
+          "cancellations",
+          "cancel_rate",
+          "new_patients",
+          "daily",
+          "booking_sources",
+          "by_staff"
+        ],
+        "title": "Kpi"
+      },
+      "KpiDaily": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "sales": {
+            "type": "integer",
+            "title": "Sales"
+          },
+          "visits": {
+            "type": "integer",
+            "title": "Visits"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "sales",
+          "visits"
+        ],
+        "title": "KpiDaily"
+      },
+      "KpiSource": {
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/BookingSource"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "count"
+        ],
+        "title": "KpiSource"
+      },
+      "KpiStaff": {
+        "properties": {
+          "staff_id": {
+            "type": "integer",
+            "title": "Staff Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "sales": {
+            "type": "integer",
+            "title": "Sales"
+          },
+          "visits": {
+            "type": "integer",
+            "title": "Visits"
+          },
+          "notes": {
+            "type": "integer",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "staff_id",
+          "name",
+          "sales",
+          "visits",
+          "notes"
+        ],
+        "title": "KpiStaff"
+      },
+      "LeaveCreate": {
+        "properties": {
+          "staff_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Id"
+          },
+          "leave_type": {
+            "$ref": "#/components/schemas/LeaveType"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "leave_type",
+          "start_date",
+          "end_date"
+        ],
+        "title": "LeaveCreate"
+      },
+      "LeaveDecision": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "LeaveDecision"
+      },
+      "LeaveOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "staff_id": {
+            "type": "integer",
+            "title": "Staff Id"
+          },
+          "leave_type": {
+            "$ref": "#/components/schemas/LeaveType"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LeaveStatus"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "staff": {
+            "$ref": "#/components/schemas/StaffBrief"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "staff_id",
+          "leave_type",
+          "start_date",
+          "end_date",
+          "status",
+          "reason",
+          "created_at",
+          "staff"
+        ],
+        "title": "LeaveOut"
+      },
+      "LeaveStatus": {
+        "type": "string",
+        "enum": [
+          "requested",
+          "approved",
+          "rejected",
+          "canceled"
+        ],
+        "title": "LeaveStatus"
+      },
+      "LeaveType": {
+        "type": "string",
+        "enum": [
+          "paid_leave",
+          "morning_off",
+          "afternoon_off",
+          "absence",
+          "training",
+          "other"
+        ],
+        "title": "LeaveType"
+      },
+      "Page_ClinicalNoteOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ClinicalNoteOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[ClinicalNoteOut]"
+      },
       "Page_IntakeOut_": {
         "properties": {
           "items": {
@@ -2297,6 +5452,48 @@
           "total"
         ],
         "title": "Page[PatientOut]"
+      },
+      "Page_PostureOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PostureOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[PostureOut]"
+      },
+      "Page_TreatmentPlanOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TreatmentPlanOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[TreatmentPlanOut]"
       },
       "PatientBrief": {
         "properties": {
@@ -2577,6 +5774,319 @@
         ],
         "title": "PatientUpdate"
       },
+      "PaymentMethod": {
+        "type": "string",
+        "enum": [
+          "cash",
+          "card",
+          "qr",
+          "bank_transfer",
+          "other"
+        ],
+        "title": "PaymentMethod"
+      },
+      "PostureCreate": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "assessed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id"
+        ],
+        "title": "PostureCreate"
+      },
+      "PostureFindings": {
+        "properties": {
+          "overall_summary": {
+            "type": "string",
+            "title": "Overall Summary",
+            "default": ""
+          },
+          "important_points": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Important Points"
+          },
+          "regions": {
+            "$ref": "#/components/schemas/PostureRegions"
+          }
+        },
+        "type": "object",
+        "title": "PostureFindings"
+      },
+      "PostureImageOut": {
+        "properties": {
+          "view": {
+            "$ref": "#/components/schemas/PostureView"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "view",
+          "width",
+          "height"
+        ],
+        "title": "PostureImageOut"
+      },
+      "PostureOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "assessed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Assessed At"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PostureStatus"
+          },
+          "findings": {
+            "$ref": "#/components/schemas/PostureFindings"
+          },
+          "ai_status": {
+            "type": "string",
+            "title": "Ai Status",
+            "default": ""
+          },
+          "ai_findings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostureFindings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ai_error_message": {
+            "type": "string",
+            "title": "Ai Error Message",
+            "default": ""
+          },
+          "ai_analyzed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Analyzed At"
+          },
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PatientBrief"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/PostureImageOut"
+            },
+            "type": "array",
+            "title": "Images",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "patient_id",
+          "clinical_note_id",
+          "assessed_at",
+          "title",
+          "memo",
+          "status",
+          "findings",
+          "confirmed_at",
+          "created_at",
+          "patient"
+        ],
+        "title": "PostureOut"
+      },
+      "PostureRegions": {
+        "properties": {
+          "head_neck": {
+            "type": "string",
+            "title": "Head Neck",
+            "default": ""
+          },
+          "shoulder": {
+            "type": "string",
+            "title": "Shoulder",
+            "default": ""
+          },
+          "spine": {
+            "type": "string",
+            "title": "Spine",
+            "default": ""
+          },
+          "pelvis": {
+            "type": "string",
+            "title": "Pelvis",
+            "default": ""
+          },
+          "hip": {
+            "type": "string",
+            "title": "Hip",
+            "default": ""
+          },
+          "knee": {
+            "type": "string",
+            "title": "Knee",
+            "default": ""
+          },
+          "ankle_foot": {
+            "type": "string",
+            "title": "Ankle Foot",
+            "default": ""
+          },
+          "balance": {
+            "type": "string",
+            "title": "Balance",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "PostureRegions",
+        "description": "部位ごとの所見（旧版 AI 出力の posture_findings と同じ区分）。"
+      },
+      "PostureStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "confirmed"
+        ],
+        "title": "PostureStatus"
+      },
+      "PostureUpdate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "default": "姿勢評価"
+          },
+          "assessed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Assessed At"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo",
+            "default": ""
+          },
+          "findings": {
+            "$ref": "#/components/schemas/PostureFindings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assessed_at"
+        ],
+        "title": "PostureUpdate"
+      },
+      "PostureView": {
+        "type": "string",
+        "enum": [
+          "front",
+          "side_right",
+          "side_left",
+          "back"
+        ],
+        "title": "PostureView"
+      },
       "PublicIntakeOut": {
         "properties": {
           "clinic_name": {
@@ -2617,6 +6127,95 @@
         "title": "PublicIntakeOut",
         "description": "患者向け: 個人情報は最小限のみ返す。"
       },
+      "RecordingOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "clinical_note_id": {
+            "type": "integer",
+            "title": "Clinical Note Id"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "duration_sec": {
+            "type": "integer",
+            "title": "Duration Sec"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RecordingStatus"
+          },
+          "error_message": {
+            "type": "string",
+            "title": "Error Message"
+          },
+          "transcript": {
+            "type": "string",
+            "title": "Transcript"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary"
+          },
+          "applied_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "audio_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "clinical_note_id",
+          "mime_type",
+          "duration_sec",
+          "status",
+          "error_message",
+          "transcript",
+          "summary",
+          "applied_at",
+          "created_at"
+        ],
+        "title": "RecordingOut"
+      },
+      "RecordingStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "transcribing",
+          "summarizing",
+          "done",
+          "failed"
+        ],
+        "title": "RecordingStatus"
+      },
       "Role": {
         "type": "string",
         "enum": [
@@ -2625,6 +6224,447 @@
           "practitioner"
         ],
         "title": "Role"
+      },
+      "SalesCreate": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "treatment_menu_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Menu Id"
+          },
+          "staff_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Id"
+          },
+          "treatment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Treatment Date"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Description",
+            "default": ""
+          },
+          "amount": {
+            "type": "integer",
+            "maximum": 10000000.0,
+            "minimum": 0.0,
+            "title": "Amount"
+          },
+          "payment_method": {
+            "$ref": "#/components/schemas/PaymentMethod",
+            "default": "cash"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SalesStatus",
+            "default": "paid"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "treatment_date",
+          "amount"
+        ],
+        "title": "SalesCreate"
+      },
+      "SalesOut": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "treatment_menu_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Menu Id"
+          },
+          "staff_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Id"
+          },
+          "treatment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Treatment Date"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Description",
+            "default": ""
+          },
+          "amount": {
+            "type": "integer",
+            "maximum": 10000000.0,
+            "minimum": 0.0,
+            "title": "Amount"
+          },
+          "payment_method": {
+            "$ref": "#/components/schemas/PaymentMethod",
+            "default": "cash"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SalesStatus",
+            "default": "paid"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo",
+            "default": ""
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PatientBrief"
+          },
+          "staff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "treatment_date",
+          "amount",
+          "id",
+          "created_at",
+          "patient"
+        ],
+        "title": "SalesOut"
+      },
+      "SalesPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SalesOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "paid_amount": {
+            "type": "integer",
+            "title": "Paid Amount"
+          },
+          "unpaid_amount": {
+            "type": "integer",
+            "title": "Unpaid Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "paid_amount",
+          "unpaid_amount"
+        ],
+        "title": "SalesPage"
+      },
+      "SalesStatus": {
+        "type": "string",
+        "enum": [
+          "unpaid",
+          "paid",
+          "canceled"
+        ],
+        "title": "SalesStatus"
+      },
+      "SalesUpdate": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "treatment_menu_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Treatment Menu Id"
+          },
+          "staff_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff Id"
+          },
+          "treatment_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Treatment Date"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Description",
+            "default": ""
+          },
+          "amount": {
+            "type": "integer",
+            "maximum": 10000000.0,
+            "minimum": 0.0,
+            "title": "Amount"
+          },
+          "payment_method": {
+            "$ref": "#/components/schemas/PaymentMethod",
+            "default": "cash"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SalesStatus",
+            "default": "paid"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "treatment_date",
+          "amount"
+        ],
+        "title": "SalesUpdate"
+      },
+      "ShiftOut": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ShiftStatus",
+            "default": "working"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          },
+          "memo": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Memo",
+            "default": ""
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "staff_id": {
+            "type": "integer",
+            "title": "Staff Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "staff_id",
+          "date"
+        ],
+        "title": "ShiftOut"
+      },
+      "ShiftStatus": {
+        "type": "string",
+        "enum": [
+          "working",
+          "off",
+          "half_day",
+          "training",
+          "other"
+        ],
+        "title": "ShiftStatus"
+      },
+      "ShiftUpsert": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ShiftStatus",
+            "default": "working"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          },
+          "memo": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Memo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "ShiftUpsert"
       },
       "StaffBrief": {
         "properties": {
@@ -2844,6 +6884,432 @@
         ],
         "title": "TreatmentMenuUpdate"
       },
+      "TreatmentPlanCreate": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id"
+        ],
+        "title": "TreatmentPlanCreate"
+      },
+      "TreatmentPlanOut": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": ""
+          },
+          "chief_complaint": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Chief Complaint",
+            "default": ""
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "next_visit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Visit Date"
+          },
+          "visit_guide_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VisitGuideType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visit_guide_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 31.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visit Guide Count"
+          },
+          "visit_guide_note": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Visit Guide Note",
+            "default": ""
+          },
+          "bath_instruction": {
+            "type": "string",
+            "title": "Bath Instruction",
+            "default": ""
+          },
+          "walking_instruction": {
+            "type": "string",
+            "title": "Walking Instruction",
+            "default": ""
+          },
+          "exercise_instruction": {
+            "type": "string",
+            "title": "Exercise Instruction",
+            "default": ""
+          },
+          "work_instruction": {
+            "type": "string",
+            "title": "Work Instruction",
+            "default": ""
+          },
+          "lifestyle_instruction": {
+            "type": "string",
+            "title": "Lifestyle Instruction",
+            "default": ""
+          },
+          "caution_notes": {
+            "type": "string",
+            "title": "Caution Notes",
+            "default": ""
+          },
+          "expected_recovery_weeks_min": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 104.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Recovery Weeks Min"
+          },
+          "expected_recovery_weeks_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 104.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Recovery Weeks Max"
+          },
+          "rebound_reaction_note": {
+            "type": "string",
+            "title": "Rebound Reaction Note",
+            "default": ""
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TreatmentPlanStatus"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PatientBrief"
+          },
+          "latest_consent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConsentOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "consent_outdated": {
+            "type": "boolean",
+            "title": "Consent Outdated",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_date",
+          "id",
+          "patient_id",
+          "clinical_note_id",
+          "status",
+          "end_date",
+          "created_at",
+          "updated_at",
+          "patient"
+        ],
+        "title": "TreatmentPlanOut"
+      },
+      "TreatmentPlanStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "completed",
+          "paused"
+        ],
+        "title": "TreatmentPlanStatus"
+      },
+      "TreatmentPlanUpdate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": ""
+          },
+          "chief_complaint": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Chief Complaint",
+            "default": ""
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "next_visit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Visit Date"
+          },
+          "visit_guide_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VisitGuideType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visit_guide_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 31.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visit Guide Count"
+          },
+          "visit_guide_note": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Visit Guide Note",
+            "default": ""
+          },
+          "bath_instruction": {
+            "type": "string",
+            "title": "Bath Instruction",
+            "default": ""
+          },
+          "walking_instruction": {
+            "type": "string",
+            "title": "Walking Instruction",
+            "default": ""
+          },
+          "exercise_instruction": {
+            "type": "string",
+            "title": "Exercise Instruction",
+            "default": ""
+          },
+          "work_instruction": {
+            "type": "string",
+            "title": "Work Instruction",
+            "default": ""
+          },
+          "lifestyle_instruction": {
+            "type": "string",
+            "title": "Lifestyle Instruction",
+            "default": ""
+          },
+          "caution_notes": {
+            "type": "string",
+            "title": "Caution Notes",
+            "default": ""
+          },
+          "expected_recovery_weeks_min": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 104.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Recovery Weeks Min"
+          },
+          "expected_recovery_weeks_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 104.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Recovery Weeks Max"
+          },
+          "rebound_reaction_note": {
+            "type": "string",
+            "title": "Rebound Reaction Note",
+            "default": ""
+          },
+          "status": {
+            "$ref": "#/components/schemas/TreatmentPlanStatus",
+            "default": "active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_date"
+        ],
+        "title": "TreatmentPlanUpdate"
+      },
+      "UsageByDay": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "audio_sec": {
+            "type": "integer",
+            "title": "Audio Sec"
+          },
+          "cost_yen": {
+            "type": "number",
+            "title": "Cost Yen"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "audio_sec",
+          "cost_yen"
+        ],
+        "title": "UsageByDay"
+      },
+      "UsageByType": {
+        "properties": {
+          "usage_type": {
+            "$ref": "#/components/schemas/AiUsageType"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "audio_sec": {
+            "type": "integer",
+            "title": "Audio Sec"
+          },
+          "cost_yen": {
+            "type": "number",
+            "title": "Cost Yen"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usage_type",
+          "count",
+          "audio_sec",
+          "cost_yen"
+        ],
+        "title": "UsageByType"
+      },
       "UserOut": {
         "properties": {
           "id": {
@@ -2920,6 +7386,16 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VisitGuideType": {
+        "type": "string",
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly",
+          "custom"
+        ],
+        "title": "VisitGuideType"
       }
     },
     "securitySchemes": {

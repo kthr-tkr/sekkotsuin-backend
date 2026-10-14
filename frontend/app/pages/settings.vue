@@ -27,6 +27,8 @@ const sform = reactive({
   appointment_interval_minutes: 30 as Schemas['ClinicSettingsUpdate']['appointment_interval_minutes'],
   closed_weekdays: [] as Schemas['ClinicSettingsUpdate']['closed_weekdays'],
   primary_color: '#1D4ED8',
+  ai_enabled: true,
+  ai_monthly_minutes_limit: 1000,
 })
 watchEffect(() => {
   const s = settings.value
@@ -52,6 +54,7 @@ async function saveSettings() {
   const { data, error } = await api.PUT('/api/clinic/settings', {
     body: {
       ...sform,
+      ai_monthly_minutes_limit: Number(sform.ai_monthly_minutes_limit),
       break_start_time: sform.break_start_time || null,
       break_end_time: sform.break_end_time || null,
     },
@@ -59,6 +62,23 @@ async function saveSettings() {
   if (error) return notify(errorMessage(error), 'error')
   settings.value = data ?? null
   notify('院の設定を保存しました')
+  await refreshUsage()
+}
+
+// --- AI ---
+const { data: usage, refresh: refreshUsage } = await useAsyncData('ai-usage', async () => {
+  const { data } = await api.GET('/api/ai/usage')
+  return data ?? null
+})
+const usagePercent = computed(() =>
+  usage.value && usage.value.minutes_limit
+    ? Math.min(100, (usage.value.minutes_used / usage.value.minutes_limit) * 100)
+    : 0,
+)
+const USAGE_LABELS: Record<string, string> = {
+  transcription: '文字起こし',
+  summary: 'SOAP 要約',
+  posture: '姿勢分析',
 }
 
 // --- 施術メニュー ---
@@ -129,6 +149,7 @@ async function createStaff() {
         <v-tab value="clinic">基本設定</v-tab>
         <v-tab value="menus">施術メニュー</v-tab>
         <v-tab value="staff">スタッフ</v-tab>
+        <v-tab value="ai">AI</v-tab>
       </v-tabs>
       <v-divider />
 
@@ -159,7 +180,7 @@ async function createStaff() {
                 />
               </v-col>
               <v-col cols="12" md="8">
-                <div class="text-caption text-medium-emphasis">休診曜日</div>
+                <div class="text-body-small text-medium-emphasis">休診曜日</div>
                 <v-chip-group v-model="sform.closed_weekdays" multiple selected-class="text-error">
                   <v-chip v-for="w in WEEKDAYS" :key="w.value" :value="w.value" filter variant="outlined">
                     {{ w.title }}
@@ -220,6 +241,81 @@ async function createStaff() {
               </tr>
             </tbody>
           </v-table>
+        </v-tabs-window-item>
+        <v-tabs-window-item value="ai">
+          <v-card-text>
+            <v-alert
+              v-if="usage && !usage.ai_available"
+              type="info"
+              variant="tonal"
+              class="mb-4"
+              text="このサーバーでは AI 機能が無効です（環境変数 AI_PROVIDER）。"
+            />
+            <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+              AI 機能では、録音した音声と姿勢の写真を外部の AI サービス（OpenAI）に送信します。
+              患者さんへの説明と同意のうえでご利用ください。
+            </v-alert>
+            <v-row>
+              <v-col cols="12" md="4">
+                <v-switch v-model="sform.ai_enabled" label="AI 機能を使う" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  v-model.number="sform.ai_monthly_minutes_limit"
+                  type="number"
+                  label="月の録音分数の上限"
+                  suffix="分"
+                />
+              </v-col>
+              <v-col cols="12" md="4" class="d-flex align-center">
+                <v-btn color="primary" @click="saveSettings">保存</v-btn>
+              </v-col>
+            </v-row>
+
+            <template v-if="usage">
+              <h3 class="text-title-medium font-weight-bold mt-4 mb-2">{{ usage.month }} の利用状況</h3>
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-card variant="outlined" class="pa-4">
+                    <div class="text-body-small text-medium-emphasis">録音（文字起こし）</div>
+                    <div class="text-headline-small font-weight-bold">
+                      {{ usage.minutes_used }} <span class="text-body-large">/ {{ usage.minutes_limit }} 分</span>
+                    </div>
+                    <v-progress-linear
+                      :model-value="usagePercent"
+                      :color="usagePercent >= 90 ? 'error' : usagePercent >= 70 ? 'warning' : 'primary'"
+                      height="8"
+                      rounded
+                      class="mt-2"
+                      :aria-label="`上限の ${Math.round(usagePercent)}% を使用`"
+                    />
+                    <div class="text-body-small mt-1">上限の {{ Math.round(usagePercent) }}% を使用</div>
+                  </v-card>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-card variant="outlined" class="pa-4">
+                    <div class="text-body-small text-medium-emphasis">概算コスト（AI サービスの利用料）</div>
+                    <div class="text-headline-small font-weight-bold">{{ Math.round(usage.cost_yen).toLocaleString() }} 円</div>
+                    <div class="text-body-small mt-1">料金表に基づく目安です</div>
+                  </v-card>
+                </v-col>
+              </v-row>
+              <v-table density="compact" class="mt-4">
+                <thead>
+                  <tr><th>種類</th><th class="text-right">回数</th><th class="text-right">音声</th><th class="text-right">概算コスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr v-if="!usage.by_type.length"><td colspan="4" class="text-medium-emphasis">今月の利用はまだありません</td></tr>
+                  <tr v-for="t in usage.by_type" :key="t.usage_type">
+                    <td>{{ USAGE_LABELS[t.usage_type] }}</td>
+                    <td class="text-right">{{ t.count }}</td>
+                    <td class="text-right">{{ t.audio_sec ? `${Math.round(t.audio_sec / 6) / 10} 分` : '-' }}</td>
+                    <td class="text-right">{{ t.cost_yen.toFixed(1) }} 円</td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </template>
+          </v-card-text>
         </v-tabs-window-item>
       </v-tabs-window>
     </v-card>

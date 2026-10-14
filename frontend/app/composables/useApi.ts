@@ -58,6 +58,11 @@ export function useApi() {
   return client
 }
 
+/** API が返す署名付きファイルURL（/api/files/...）を絶対URLにする */
+export function fileUrl(path: string | null | undefined): string | undefined {
+  return path ? `${useRuntimeConfig().public.apiBase}${path}` : undefined
+}
+
 /** FastAPI のエラーレスポンス（detail）を表示用の文字列に変換する。 */
 export function errorMessage(error: unknown, fallback = 'エラーが発生しました。'): string {
   const detail = (error as { detail?: unknown } | undefined)?.detail

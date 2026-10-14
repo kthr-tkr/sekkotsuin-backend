@@ -30,6 +30,51 @@ const { data: intakes, refresh: refreshIntakes } = await useAsyncData(
   },
 )
 
+const { data: notes } = await useAsyncData(`patient-${id}-notes`, async () => {
+  const { data } = await api.GET('/api/clinical-notes', {
+    params: { query: { patient_id: id, limit: 20 } },
+  })
+  return data ?? { items: [], total: 0 }
+})
+const { data: plans } = await useAsyncData(`patient-${id}-plans`, async () => {
+  const { data } = await api.GET('/api/treatment-plans', {
+    params: { query: { patient_id: id, limit: 20 } },
+  })
+  return data ?? { items: [], total: 0 }
+})
+async function createPlan() {
+  const { data } = await api.POST('/api/treatment-plans', { body: { patient_id: id } })
+  if (data) await navigateTo(`/treatment-plans/${data.id}`)
+}
+
+const { data: postures } = await useAsyncData(`patient-${id}-postures`, async () => {
+  const { data } = await api.GET('/api/posture-assessments', {
+    params: { query: { patient_id: id, limit: 20 } },
+  })
+  return data ?? { items: [], total: 0 }
+})
+async function createPosture() {
+  const { data } = await api.POST('/api/posture-assessments', { body: { patient_id: id } })
+  if (data) await navigateTo(`/posture/${data.id}`)
+}
+const compareIds = ref<number[]>([])
+async function compare() {
+  // 撮影日時の古い方を Before にする（同じ日時なら先に作った方）
+  const picked = (postures.value?.items ?? [])
+    .filter((p) => compareIds.value.includes(p.id))
+    .sort(
+      (a, b) =>
+        new Date(a.assessed_at).getTime() - new Date(b.assessed_at).getTime() || a.id - b.id,
+    )
+  if (picked.length === 2)
+    await navigateTo(`/posture/compare?before=${picked[0]!.id}&after=${picked[1]!.id}`)
+}
+
+async function createNote() {
+  const { data } = await api.POST('/api/clinical-notes', { body: { patient_id: id } })
+  if (data) await navigateTo(`/clinical-notes/${data.id}`)
+}
+
 const editDialog = ref(false)
 const editError = ref<string | null>(null)
 async function update(body: Schemas['PatientUpdate']) {
@@ -88,7 +133,7 @@ async function issueIntake() {
             <v-list-item title="登録日" :subtitle="formatDate(patient.created_at)" />
           </v-list>
           <v-card-text v-if="patient.notes" class="pt-0">
-            <div class="text-caption text-medium-emphasis">メモ</div>
+            <div class="text-body-small text-medium-emphasis">メモ</div>
             <div style="white-space: pre-wrap">{{ patient.notes }}</div>
           </v-card-text>
         </v-card>
@@ -126,6 +171,91 @@ async function issueIntake() {
               </tr>
             </tbody>
           </v-table>
+        </v-card>
+
+        <v-card title="カルテ" class="mb-4">
+          <template #append>
+            <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="createNote">
+              予約なしで作成
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item v-if="!notes?.items.length" subtitle="カルテはありません（予約のダイアログから作成できます）" />
+            <v-list-item
+              v-for="n in notes?.items"
+              :key="n.id"
+              :to="`/clinical-notes/${n.id}`"
+              :title="`${formatDateTime(n.visited_at)}  ${n.practitioner?.full_name ?? ''}`"
+              :subtitle="`PS ${n.pain_scale_before ?? '-'} → ${n.pain_scale_after ?? '-'} ／ ${n.subjective || n.assessment || '（記載なし）'}`"
+            >
+              <template #append>
+                <v-chip size="small" :color="NOTE_STATUS_COLORS[n.status]" variant="flat">
+                  {{ NOTE_STATUS_LABELS[n.status] }}
+                </v-chip>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-card>
+
+        <v-card title="施術計画" class="mb-4">
+          <template #append>
+            <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="createPlan">作成</v-btn>
+          </template>
+          <v-list>
+            <v-list-item v-if="!plans?.items.length" subtitle="施術計画はありません" />
+            <v-list-item
+              v-for="pl in plans?.items"
+              :key="pl.id"
+              :to="`/treatment-plans/${pl.id}`"
+              :title="pl.title || pl.chief_complaint || '（タイトル未設定）'"
+              :subtitle="`${pl.start_date} 開始 ・ ${visitGuideText(pl) || '通院目安なし'}`"
+            >
+              <template #append>
+                <v-chip size="small" :color="PLAN_STATUS_COLORS[pl.status]" variant="flat">
+                  {{ PLAN_STATUS_LABELS[pl.status] }}
+                </v-chip>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-card>
+
+        <v-card title="姿勢評価" class="mb-4">
+          <template #append>
+            <v-btn
+              size="small"
+              variant="text"
+              prepend-icon="mdi-compare-horizontal"
+              :disabled="compareIds.length !== 2"
+              @click="compare"
+            >
+              2件を比較
+            </v-btn>
+            <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="createPosture">作成</v-btn>
+          </template>
+          <v-list>
+            <v-list-item v-if="!postures?.items.length" subtitle="姿勢評価はありません" />
+            <v-list-item
+              v-for="pa in postures?.items"
+              :key="pa.id"
+              :to="`/posture/${pa.id}`"
+              :title="`${formatDateTime(pa.assessed_at)}  ${pa.title}`"
+              :subtitle="`写真 ${pa.images.length}枚 ・ ${pa.findings.overall_summary || '所見未記入'}`"
+            >
+              <template #prepend>
+                <v-checkbox-btn
+                  :model-value="compareIds.includes(pa.id)"
+                  :disabled="!compareIds.includes(pa.id) && compareIds.length >= 2"
+                  aria-label="比較に使う"
+                  @click.prevent.stop="compareIds = compareIds.includes(pa.id) ? compareIds.filter((x) => x !== pa.id) : [...compareIds, pa.id]"
+                />
+              </template>
+              <template #append>
+                <v-chip size="small" :color="pa.status === 'confirmed' ? 'success' : 'warning'" variant="flat">
+                  {{ pa.status === 'confirmed' ? '確定' : '下書き' }}
+                </v-chip>
+              </template>
+            </v-list-item>
+          </v-list>
         </v-card>
 
         <v-card title="問診">

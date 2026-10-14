@@ -115,3 +115,152 @@ export function isoToJstInput(iso: string): string {
 
 export const patientName = (p: { last_name: string; first_name: string } | null | undefined) =>
   p ? `${p.last_name} ${p.first_name}` : '（患者未設定）'
+
+export const NOTE_STATUS_LABELS: Record<string, string> = {
+  draft: '下書き',
+  finalized: '確定',
+}
+
+export const NOTE_STATUS_COLORS: Record<string, string> = {
+  draft: 'warning',
+  finalized: 'success',
+}
+
+export const SOAP_FIELDS = [
+  { key: 'subjective', label: 'S（主観）', hint: '患者の訴え・症状の経過' },
+  { key: 'objective', label: 'O（客観）', hint: '視診・触診・検査所見' },
+  { key: 'assessment', label: 'A（評価）', hint: '見立て・考えられる原因' },
+  { key: 'plan', label: 'P（計画）', hint: '今後の施術方針・通院頻度' },
+] as const
+
+export const PLAN_STATUS_LABELS: Record<string, string> = {
+  active: '進行中',
+  paused: '中断',
+  completed: '完了',
+}
+
+export const PLAN_STATUS_COLORS: Record<string, string> = {
+  active: 'primary',
+  paused: 'warning',
+  completed: 'grey',
+}
+
+export const VISIT_GUIDE_LABELS: Record<string, string> = {
+  daily: '毎日',
+  weekly: '週',
+  monthly: '月',
+  custom: '個別設定',
+}
+
+export function visitGuideText(p: {
+  visit_guide_type?: string | null
+  visit_guide_count?: number | null
+  visit_guide_note?: string
+}): string {
+  const t = p.visit_guide_type
+  let base = ''
+  if (t === 'daily') base = '毎日'
+  else if ((t === 'weekly' || t === 'monthly') && p.visit_guide_count)
+    base = `${VISIT_GUIDE_LABELS[t]}${p.visit_guide_count}回`
+  else if (t) base = VISIT_GUIDE_LABELS[t] ?? ''
+  return [base, p.visit_guide_note].filter(Boolean).join('（') + (base && p.visit_guide_note ? '）' : '')
+}
+
+export const PLAN_INSTRUCTIONS = [
+  { key: 'bath_instruction', label: '入浴について' },
+  { key: 'walking_instruction', label: '歩行について' },
+  { key: 'exercise_instruction', label: '運動について' },
+  { key: 'work_instruction', label: '仕事について' },
+  { key: 'lifestyle_instruction', label: '日常生活について' },
+  { key: 'caution_notes', label: 'その他の注意事項' },
+] as const
+
+export const POSTURE_VIEWS = [
+  { value: 'front', title: '正面' },
+  { value: 'side_right', title: '右側面' },
+  { value: 'side_left', title: '左側面' },
+  { value: 'back', title: '背面' },
+] as const
+
+export const POSTURE_REGIONS = [
+  { key: 'head_neck', label: '頭部・頸部' },
+  { key: 'shoulder', label: '肩・肩甲帯' },
+  { key: 'spine', label: '脊柱・体幹' },
+  { key: 'pelvis', label: '骨盤' },
+  { key: 'hip', label: '股関節' },
+  { key: 'knee', label: '膝' },
+  { key: 'ankle_foot', label: '足関節・足部' },
+  { key: 'balance', label: '全体バランス' },
+] as const
+
+export const PAYMENT_LABELS: Record<string, string> = {
+  cash: '現金',
+  card: 'カード',
+  qr: 'QR決済',
+  bank_transfer: '銀行振込',
+  other: 'その他',
+}
+
+export const SALES_STATUS_LABELS: Record<string, string> = {
+  paid: '支払い済み',
+  unpaid: '未会計',
+  canceled: '取消',
+}
+
+export const SALES_STATUS_COLORS: Record<string, string> = {
+  paid: 'success',
+  unpaid: 'warning',
+  canceled: 'grey',
+}
+
+export const SHIFT_LABELS: Record<string, string> = {
+  working: '勤務',
+  half_day: '半休',
+  training: '研修',
+  other: 'その他',
+  off: '休み',
+}
+
+export const LEAVE_TYPE_LABELS: Record<string, string> = {
+  paid_leave: '有給',
+  morning_off: '午前休',
+  afternoon_off: '午後休',
+  absence: '欠勤',
+  training: '研修',
+  other: 'その他',
+}
+
+export const LEAVE_STATUS_LABELS: Record<string, string> = {
+  requested: '申請中',
+  approved: '承認済み',
+  rejected: '却下',
+  canceled: '取消',
+}
+
+export const LEAVE_STATUS_COLORS: Record<string, string> = {
+  requested: 'warning',
+  approved: 'success',
+  rejected: 'error',
+  canceled: 'grey',
+}
+
+export const yen = (n: number) => `${n.toLocaleString()}円`
+
+/** 今月（JST）を YYYY-MM で返す */
+export const currentMonth = () =>
+  new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date()).slice(0, 7)
+
+export function shiftMonth(month: string, delta: number): string {
+  const [y, m] = month.split('-').map(Number) as [number, number]
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1))
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+export function daysInMonth(month: string): string[] {
+  const [y, m] = month.split('-').map(Number) as [number, number]
+  const n = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return Array.from({ length: n }, (_, i) => `${month}-${String(i + 1).padStart(2, '0')}`)
+}
+
+export const weekdayJa = (isoDate: string) =>
+  '日月火水木金土'[new Date(`${isoDate}T12:00:00Z`).getUTCDay()]!

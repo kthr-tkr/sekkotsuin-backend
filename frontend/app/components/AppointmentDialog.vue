@@ -117,6 +117,12 @@ async function remove() {
   emit('saved')
 }
 
+async function openNote() {
+  if (!props.appointment) return
+  const err = await openClinicalNoteForAppointment(props.appointment.id)
+  if (err) error.value = err
+}
+
 async function issueIntake() {
   const a = props.appointment
   if (!a?.patient_id) return
@@ -172,6 +178,14 @@ async function issueIntake() {
       <v-card-actions>
         <template v-if="appointment">
           <v-btn color="error" variant="text" @click="remove">削除</v-btn>
+          <v-btn
+            v-if="appointment.patient_id"
+            variant="text"
+            prepend-icon="mdi-file-document-edit-outline"
+            @click="openNote"
+          >
+            カルテ
+          </v-btn>
           <v-btn
             v-if="appointment.patient_id"
             variant="text"

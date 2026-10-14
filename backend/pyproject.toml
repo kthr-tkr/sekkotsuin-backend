@@ -7,6 +7,8 @@ dependencies = [
     "alembic>=1.20.0",
     "asyncpg>=0.32.0",
     "fastapi>=0.143.1",
+    "openai>=3.31.0",
+    "pillow>=12.3.0",
     "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.16.0",
     "pydantic[email]>=2.14.1",
@@ -33,7 +35,7 @@ extend-exclude = ["alembic"]
 select = ["E", "F", "I", "B", "UP", "SIM"]
 
 [tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body"]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.File"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

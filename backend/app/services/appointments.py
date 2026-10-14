@@ -5,7 +5,18 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models import Appointment, ClinicSettings, Patient, Role, TreatmentMenu, User
+from app.models import (
+    Appointment,
+    ClinicSettings,
+    LeaveStatus,
+    Patient,
+    Role,
+    ShiftStatus,
+    StaffLeave,
+    StaffShift,
+    TreatmentMenu,
+    User,
+)
 from app.models.appointment import BLOCKING_STATUSES
 from app.models.clinic import WEEKDAYS
 
@@ -81,6 +92,61 @@ async def validate_and_apply(
                 )
 
 
+FULL_DAY_LEAVES = ("paid_leave", "absence", "training", "other")
+
+
+async def _working_windows(
+    db: AsyncSession, clinic_id: int, day: date, cs: ClinicSettings, staff_ids: list[int]
+) -> dict[int, tuple[datetime, datetime] | None]:
+    """施術者ごとのその日の勤務時間帯（勤務しない場合は None）。
+
+    シフトがあればシフトの時間、無ければ営業時間。承認済みの休暇を反映する。
+    """
+    tz = settings.tz
+    open_t, close_t = cs.business_start_time, cs.business_end_time
+    noon = cs.break_start_time or time(13, 0)
+    afternoon = cs.break_end_time or time(13, 0)
+
+    shifts = {
+        s.staff_id: s
+        for s in await db.scalars(
+            select(StaffShift).where(StaffShift.clinic_id == clinic_id, StaffShift.date == day)
+        )
+    }
+    leaves = list(
+        await db.scalars(
+            select(StaffLeave).where(
+                StaffLeave.clinic_id == clinic_id,
+                StaffLeave.status == LeaveStatus.APPROVED,
+                StaffLeave.start_date <= day,
+                StaffLeave.end_date >= day,
+            )
+        )
+    )
+
+    windows: dict[int, tuple[datetime, datetime] | None] = {}
+    for sid in staff_ids:
+        shift = shifts.get(sid)
+        if shift is not None and (shift.status == ShiftStatus.OFF or not shift.start_time):
+            windows[sid] = None
+            continue
+        start_t = shift.start_time if shift else open_t
+        end_t = shift.end_time if shift and shift.end_time else close_t
+        for lv in (lv for lv in leaves if lv.staff_id == sid):
+            if lv.leave_type.value in FULL_DAY_LEAVES:
+                start_t = end_t  # 終日不在
+            elif lv.leave_type.value == "morning_off":
+                start_t = max(start_t, afternoon)
+            elif lv.leave_type.value == "afternoon_off":
+                end_t = min(end_t, noon)
+        windows[sid] = (
+            (datetime.combine(day, start_t, tz), datetime.combine(day, end_t, tz))
+            if start_t < end_t
+            else None
+        )
+    return windows
+
+
 async def availability(
     db: AsyncSession,
     *,
@@ -91,7 +157,9 @@ async def availability(
 ) -> list[tuple[datetime, datetime, bool]]:
     """指定日の予約枠と空き状況を返す。
 
-    staff_id 指定時はその担当者の空き、未指定時は「施術者数 > 重複予約数」で空きと判定する。
+    シフトと承認済みの休暇から施術者ごとの勤務時間帯を求め、
+    その枠に勤務している施術者のうち予約の入っていない人がいれば空きとする。
+    staff_id 指定時はその担当者だけで判定する。
     """
     cs = await get_clinic_settings(db, clinic_id)
     if WEEKDAYS[day.weekday()] in (cs.closed_weekdays or []):
@@ -101,26 +169,32 @@ async def availability(
     day_start = datetime.combine(day, time.min, tz)
     day_end = day_start + timedelta(days=1)
 
-    stmt = select(Appointment.start_at, Appointment.end_at).where(
-        Appointment.clinic_id == clinic_id,
-        Appointment.status.in_(BLOCKING_STATUSES),
-        Appointment.start_at < day_end,
-        Appointment.end_at > day_start,
-    )
     if staff_id is not None:
-        stmt = stmt.where(Appointment.assigned_staff_id == staff_id)
-        capacity = 1
+        staff_ids = [staff_id]
     else:
-        capacity = (
-            await db.scalar(
-                select(func.count()).where(
-                    User.clinic_id == clinic_id,
-                    User.is_active.is_(True),
-                    User.role == Role.PRACTITIONER,
+        # 施術者ロールがいない院（院長 1 人など）は管理者を施術者として数える
+        for role in (Role.PRACTITIONER, Role.ADMIN):
+            staff_ids = list(
+                await db.scalars(
+                    select(User.id).where(
+                        User.clinic_id == clinic_id, User.is_active.is_(True), User.role == role
+                    )
                 )
             )
-        ) or 1
-    booked = (await db.execute(stmt)).all()
+            if staff_ids:
+                break
+    windows = await _working_windows(db, clinic_id, day, cs, staff_ids)
+
+    booked = (
+        await db.execute(
+            select(Appointment.start_at, Appointment.end_at, Appointment.assigned_staff_id).where(
+                Appointment.clinic_id == clinic_id,
+                Appointment.status.in_(BLOCKING_STATUSES),
+                Appointment.start_at < day_end,
+                Appointment.end_at > day_start,
+            )
+        )
+    ).all()
 
     open_at = datetime.combine(day, cs.business_start_time, tz)
     close_at = datetime.combine(day, cs.business_end_time, tz)
@@ -140,7 +214,25 @@ async def availability(
         if break_range and cursor < break_range[1] and end > break_range[0]:
             cursor += step
             continue
-        overlapping = sum(1 for s, e in booked if s < end and e > cursor)
-        slots.append((cursor, end, overlapping < capacity))
+
+        def overlaps(s: datetime, e: datetime, a: datetime = cursor, b: datetime = end) -> bool:
+            return s < b and e > a
+
+        # この枠に勤務していて、自分の予約が入っていない施術者
+        free = [
+            sid
+            for sid, w in windows.items()
+            if w is not None
+            and w[0] <= cursor
+            and end <= w[1]
+            and not any(st == sid and overlaps(s, e) for s, e, st in booked)
+        ]
+        if staff_id is not None:
+            available = bool(free)
+        else:
+            # 担当者未定の予約も、空いている施術者を1人ずつ埋めるとみなす
+            unassigned = sum(1 for s, e, st in booked if st is None and overlaps(s, e))
+            available = len(free) > unassigned
+        slots.append((cursor, end, available))
         cursor += step
     return slots

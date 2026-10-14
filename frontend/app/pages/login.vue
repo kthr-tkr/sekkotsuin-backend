@@ -17,7 +17,7 @@ async function submit() {
 
 <template>
   <v-card class="mx-auto mt-16 pa-4" max-width="420">
-    <v-card-title class="text-h6">スタッフログイン</v-card-title>
+    <v-card-title class="text-title-large">スタッフログイン</v-card-title>
     <v-card-text>
       <v-form @submit.prevent="submit">
         <v-text-field v-model="username" label="ユーザー名" autocomplete="username" autofocus />

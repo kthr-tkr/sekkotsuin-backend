@@ -1,5 +1,7 @@
 import os
+import tempfile
 
+os.environ.setdefault("MEDIA_DIR", tempfile.mkdtemp(prefix="sekkotsuin-media-"))
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://app:app@localhost:5432/sekkotsuin_test")
 
 from collections.abc import AsyncIterator  # noqa: E402
