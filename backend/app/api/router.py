@@ -10,6 +10,7 @@ from app.api.routes import (
     intakes,
     kpi,
     patients,
+    portal,
     posture,
     sales,
     schedule,
@@ -30,4 +31,6 @@ api_router.include_router(schedule.router)
 api_router.include_router(kpi.router)
 api_router.include_router(ai.router)
 api_router.include_router(files.router)
+api_router.include_router(portal.public_router)
+api_router.include_router(portal.me_router)
 api_router.include_router(intakes.public_router)

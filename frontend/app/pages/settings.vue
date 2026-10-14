@@ -27,6 +27,9 @@ const sform = reactive({
   appointment_interval_minutes: 30 as Schemas['ClinicSettingsUpdate']['appointment_interval_minutes'],
   closed_weekdays: [] as Schemas['ClinicSettingsUpdate']['closed_weekdays'],
   primary_color: '#1D4ED8',
+  portal_enabled: true,
+  portal_cancel_deadline_hours: 24,
+  portal_booking_window_days: 60,
   ai_enabled: true,
   ai_monthly_minutes_limit: 1000,
 })
@@ -55,6 +58,8 @@ async function saveSettings() {
     body: {
       ...sform,
       ai_monthly_minutes_limit: Number(sform.ai_monthly_minutes_limit),
+      portal_cancel_deadline_hours: Number(sform.portal_cancel_deadline_hours),
+      portal_booking_window_days: Number(sform.portal_booking_window_days),
       break_start_time: sform.break_start_time || null,
       break_end_time: sform.break_end_time || null,
     },
@@ -63,6 +68,19 @@ async function saveSettings() {
   settings.value = data ?? null
   notify('院の設定を保存しました')
   await refreshUsage()
+}
+
+// --- 患者向けポータル ---
+const { data: clinic } = await useAsyncData('clinic', async () => {
+  const { data } = await api.GET('/api/clinic')
+  return data ?? null
+})
+const portalUrl = computed(() =>
+  clinic.value ? `${window.location.origin}/c/${clinic.value.booking_slug}` : '',
+)
+async function copyPortalUrl() {
+  await navigator.clipboard.writeText(portalUrl.value)
+  notify('ポータルの URL をコピーしました')
 }
 
 // --- AI ---
@@ -149,6 +167,7 @@ async function createStaff() {
         <v-tab value="clinic">基本設定</v-tab>
         <v-tab value="menus">施術メニュー</v-tab>
         <v-tab value="staff">スタッフ</v-tab>
+        <v-tab value="portal">患者ポータル</v-tab>
         <v-tab value="ai">AI</v-tab>
       </v-tabs>
       <v-divider />
@@ -242,6 +261,35 @@ async function createStaff() {
             </tbody>
           </v-table>
         </v-tabs-window-item>
+        <v-tabs-window-item value="portal">
+          <v-card-text>
+            <p class="text-body-medium mb-4">
+              患者さんがスマホから Web 予約・予約の確認とキャンセル・Web 問診の回答をできるページです。
+              ホームページや LINE、院内の QR コードからこの URL に案内してください。
+            </p>
+            <v-text-field :model-value="portalUrl" label="ポータルの URL" readonly>
+              <template #append-inner>
+                <v-btn icon="mdi-content-copy" variant="text" size="small" aria-label="URL をコピー" @click="copyPortalUrl" />
+                <v-btn icon="mdi-open-in-new" variant="text" size="small" aria-label="ポータルを開く" :href="portalUrl" target="_blank" />
+              </template>
+            </v-text-field>
+            <v-row>
+              <v-col cols="12" md="4">
+                <v-switch v-model="sform.portal_enabled" label="Web 予約を受け付ける" color="primary" hide-details />
+              </v-col>
+              <v-col cols="6" md="4">
+                <v-text-field v-model.number="sform.portal_booking_window_days" type="number" label="何日先まで予約を受け付けるか" suffix="日" />
+              </v-col>
+              <v-col cols="6" md="4">
+                <v-text-field v-model.number="sform.portal_cancel_deadline_hours" type="number" label="キャンセル期限（予約の何時間前まで）" suffix="時間" />
+              </v-col>
+            </v-row>
+            <div class="d-flex justify-end">
+              <v-btn color="primary" @click="saveSettings">保存</v-btn>
+            </div>
+          </v-card-text>
+        </v-tabs-window-item>
+
         <v-tabs-window-item value="ai">
           <v-card-text>
             <v-alert

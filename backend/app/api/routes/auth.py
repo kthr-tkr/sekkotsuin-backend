@@ -23,7 +23,7 @@ async def login(db: DB, form: Annotated[OAuth2PasswordRequestForm, Depends()]) -
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED, "ユーザー名またはパスワードが正しくありません。"
         )
-    return Token(access_token=create_access_token(user.id))
+    return Token(access_token=create_access_token(user.id, "staff"))
 
 
 @router.get("/me", response_model=UserOut)

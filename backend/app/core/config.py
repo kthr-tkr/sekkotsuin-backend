@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # 本番では必ず 32 文字以上のランダム値を設定する（例: openssl rand -hex 32）
     secret_key: str = DEV_SECRET_KEY
     access_token_expire_minutes: int = 60 * 12
+    patient_token_expire_minutes: int = 60 * 24 * 7
     jwt_algorithm: str = "HS256"
 
     # CORS（カンマ区切り）

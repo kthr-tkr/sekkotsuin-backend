@@ -807,6 +807,156 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/portal/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portal Clinic */
+        get: operations["portal-portal_clinic"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{slug}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Portal Availability
+         * @description 予約できる枠（担当者などの内部情報は返さない）。
+         */
+        get: operations["portal-portal_availability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{slug}/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Portal Register
+         * @description 初めての方の登録（患者情報とアカウントを作る）。
+         */
+        post: operations["portal-portal_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{slug}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Portal Link
+         * @description 来院歴のある方: 氏名・生年月日・電話番号で本人確認し、アカウントを作る。
+         */
+        post: operations["portal-portal_link"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{slug}/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Portal Login */
+        post: operations["portal-portal_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["portal-me"];
+        /** Update Me */
+        put: operations["portal-update_me"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Appointments */
+        get: operations["portal-my_appointments"];
+        put?: never;
+        /**
+         * Book
+         * @description Web 予約。「問診待ち」で登録し、Web 問診の URL を発行する。
+         */
+        post: operations["portal-book"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/appointments/{appointment_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel */
+        post: operations["portal-cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/intakes/{token}": {
         parameters: {
             query?: never;
@@ -1063,6 +1213,21 @@ export interface components {
              */
             primary_color: string;
             /**
+             * Portal Enabled
+             * @default true
+             */
+            portal_enabled: boolean;
+            /**
+             * Portal Cancel Deadline Hours
+             * @default 24
+             */
+            portal_cancel_deadline_hours: number;
+            /**
+             * Portal Booking Window Days
+             * @default 60
+             */
+            portal_booking_window_days: number;
+            /**
              * Ai Enabled
              * @default true
              */
@@ -1135,6 +1300,21 @@ export interface components {
              * @default #1D4ED8
              */
             primary_color: string;
+            /**
+             * Portal Enabled
+             * @default true
+             */
+            portal_enabled: boolean;
+            /**
+             * Portal Cancel Deadline Hours
+             * @default 24
+             */
+            portal_cancel_deadline_hours: number;
+            /**
+             * Portal Booking Window Days
+             * @default 60
+             */
+            portal_booking_window_days: number;
             /**
              * Ai Enabled
              * @default true
@@ -1551,6 +1731,83 @@ export interface components {
          * @enum {string}
          */
         LeaveType: "paid_leave" | "morning_off" | "afternoon_off" | "absence" | "training" | "other";
+        /** MeOut */
+        MeOut: {
+            /** Patient Id */
+            patient_id: number;
+            /** Card No */
+            card_no: string;
+            /** Last Name */
+            last_name: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name Kana */
+            last_name_kana: string;
+            /** First Name Kana */
+            first_name_kana: string;
+            /**
+             * Birth Date
+             * Format: date
+             */
+            birth_date: string;
+            /** Phone */
+            phone: string;
+            /** Email */
+            email: string;
+            /** Address */
+            address: string;
+            /** Clinic Name */
+            clinic_name: string;
+            /** Clinic Slug */
+            clinic_slug: string;
+        };
+        /** MeUpdate */
+        MeUpdate: {
+            /** Phone */
+            phone: string;
+            /**
+             * Address
+             * @default
+             */
+            address: string;
+        };
+        /** MyAppointment */
+        MyAppointment: {
+            /** Id */
+            id: number;
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /**
+             * End At
+             * Format: date-time
+             */
+            end_at: string;
+            /** Menu Name */
+            menu_name: string;
+            status: components["schemas"]["AppointmentStatus"];
+            /** Can Cancel */
+            can_cancel: boolean;
+            /** Intake Token */
+            intake_token?: string | null;
+        };
+        /** MyBookingCreate */
+        MyBookingCreate: {
+            /** Treatment Menu Id */
+            treatment_menu_id: number;
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+        };
         /** Page[ClinicalNoteOut] */
         Page_ClinicalNoteOut_: {
             /** Items */
@@ -1705,6 +1962,137 @@ export interface components {
          * @enum {string}
          */
         PaymentMethod: "cash" | "card" | "qr" | "bank_transfer" | "other";
+        /** PortalClinic */
+        PortalClinic: {
+            /** Name */
+            name: string;
+            /** Booking Slug */
+            booking_slug: string;
+            /** Phone */
+            phone: string;
+            /** Address */
+            address: string;
+            /** Booking Description */
+            booking_description: string;
+            /**
+             * Business Start Time
+             * Format: time
+             */
+            business_start_time: string;
+            /**
+             * Business End Time
+             * Format: time
+             */
+            business_end_time: string;
+            /** Closed Weekdays */
+            closed_weekdays: string[];
+            /** Booking Window Days */
+            booking_window_days: number;
+            /** Cancel Deadline Hours */
+            cancel_deadline_hours: number;
+            /** Menus */
+            menus: components["schemas"]["PortalMenu"][];
+        };
+        /**
+         * PortalLink
+         * @description 来院したことがある方の本人確認とアカウント作成。
+         */
+        PortalLink: {
+            /** Password */
+            password: string;
+            /** Last Name */
+            last_name: string;
+            /** First Name */
+            first_name: string;
+            /**
+             * Birth Date
+             * Format: date
+             */
+            birth_date: string;
+            /** Phone */
+            phone: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /** PortalLogin */
+        PortalLogin: {
+            /**
+             * Login Id
+             * @description メールアドレスか診察券番号
+             */
+            login_id: string;
+            /** Password */
+            password: string;
+        };
+        /** PortalMenu */
+        PortalMenu: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Price */
+            price: number;
+            /** Duration Minutes */
+            duration_minutes: number;
+        };
+        /**
+         * PortalRegister
+         * @description 初めて来院する方の登録。
+         */
+        PortalRegister: {
+            /** Password */
+            password: string;
+            /** Last Name */
+            last_name: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name Kana */
+            last_name_kana: string;
+            /** First Name Kana */
+            first_name_kana: string;
+            /**
+             * Birth Date
+             * Format: date
+             */
+            birth_date: string;
+            /** Phone */
+            phone: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /** PortalSlot */
+        PortalSlot: {
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /**
+             * End At
+             * Format: date-time
+             */
+            end_at: string;
+            /** Available */
+            available: boolean;
+        };
+        /** PortalToken */
+        PortalToken: {
+            /** Access Token */
+            access_token: string;
+            /**
+             * Token Type
+             * @default bearer
+             */
+            token_type: string;
+        };
         /** PostureCreate */
         PostureCreate: {
             /** Patient Id */
@@ -4552,6 +4940,313 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AiUsageSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-portal_clinic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalClinic"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-portal_availability": {
+        parameters: {
+            query: {
+                date: string;
+                menu_id: number;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalSlot"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-portal_register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortalRegister"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalToken"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-portal_link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortalLink"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalToken"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-portal_login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortalLogin"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalToken"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+        };
+    };
+    "portal-update_me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-my_appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyAppointment"][];
+                };
+            };
+        };
+    };
+    "portal-book": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MyBookingCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyAppointment"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyAppointment"];
                 };
             };
             /** @description Validation Error */

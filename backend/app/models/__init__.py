@@ -22,6 +22,7 @@ from app.models.operations import (
     StaffShift,
 )
 from app.models.patient import Patient
+from app.models.portal import PatientAccount
 from app.models.posture import PostureAssessment, PostureImage, PostureStatus, PostureView
 from app.models.treatment_plan import (
     TreatmentPlan,
@@ -51,6 +52,7 @@ __all__ = [
     "LeaveStatus",
     "LeaveType",
     "Patient",
+    "PatientAccount",
     "PaymentMethod",
     "PostureAssessment",
     "PostureImage",

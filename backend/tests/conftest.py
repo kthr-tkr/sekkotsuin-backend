@@ -36,6 +36,14 @@ async def _clean_tables() -> AsyncIterator[None]:
         await conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limits() -> None:
+    from app.services.ratelimit import login_limiter, verify_limiter
+
+    login_limiter.clear()
+    verify_limiter.clear()
+
+
 @pytest.fixture
 async def client() -> AsyncIterator[AsyncClient]:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
