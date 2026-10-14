@@ -47,6 +47,29 @@ async function createPlan() {
   if (data) await navigateTo(`/treatment-plans/${data.id}`)
 }
 
+const { data: postures } = await useAsyncData(`patient-${id}-postures`, async () => {
+  const { data } = await api.GET('/api/posture-assessments', {
+    params: { query: { patient_id: id, limit: 20 } },
+  })
+  return data ?? { items: [], total: 0 }
+})
+async function createPosture() {
+  const { data } = await api.POST('/api/posture-assessments', { body: { patient_id: id } })
+  if (data) await navigateTo(`/posture/${data.id}`)
+}
+const compareIds = ref<number[]>([])
+async function compare() {
+  // 撮影日時の古い方を Before にする（同じ日時なら先に作った方）
+  const picked = (postures.value?.items ?? [])
+    .filter((p) => compareIds.value.includes(p.id))
+    .sort(
+      (a, b) =>
+        new Date(a.assessed_at).getTime() - new Date(b.assessed_at).getTime() || a.id - b.id,
+    )
+  if (picked.length === 2)
+    await navigateTo(`/posture/compare?before=${picked[0]!.id}&after=${picked[1]!.id}`)
+}
+
 async function createNote() {
   const { data } = await api.POST('/api/clinical-notes', { body: { patient_id: id } })
   if (data) await navigateTo(`/clinical-notes/${data.id}`)
@@ -190,6 +213,45 @@ async function issueIntake() {
               <template #append>
                 <v-chip size="small" :color="PLAN_STATUS_COLORS[pl.status]" variant="flat">
                   {{ PLAN_STATUS_LABELS[pl.status] }}
+                </v-chip>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-card>
+
+        <v-card title="姿勢評価" class="mb-4">
+          <template #append>
+            <v-btn
+              size="small"
+              variant="text"
+              prepend-icon="mdi-compare-horizontal"
+              :disabled="compareIds.length !== 2"
+              @click="compare"
+            >
+              2件を比較
+            </v-btn>
+            <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="createPosture">作成</v-btn>
+          </template>
+          <v-list>
+            <v-list-item v-if="!postures?.items.length" subtitle="姿勢評価はありません" />
+            <v-list-item
+              v-for="pa in postures?.items"
+              :key="pa.id"
+              :to="`/posture/${pa.id}`"
+              :title="`${formatDateTime(pa.assessed_at)}  ${pa.title}`"
+              :subtitle="`写真 ${pa.images.length}枚 ・ ${pa.findings.overall_summary || '所見未記入'}`"
+            >
+              <template #prepend>
+                <v-checkbox-btn
+                  :model-value="compareIds.includes(pa.id)"
+                  :disabled="!compareIds.includes(pa.id) && compareIds.length >= 2"
+                  aria-label="比較に使う"
+                  @click.prevent.stop="compareIds = compareIds.includes(pa.id) ? compareIds.filter((x) => x !== pa.id) : [...compareIds, pa.id]"
+                />
+              </template>
+              <template #append>
+                <v-chip size="small" :color="pa.status === 'confirmed' ? 'success' : 'warning'" variant="flat">
+                  {{ pa.status === 'confirmed' ? '確定' : '下書き' }}
                 </v-chip>
               </template>
             </v-list-item>

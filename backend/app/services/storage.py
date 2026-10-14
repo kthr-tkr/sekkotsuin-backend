@@ -7,6 +7,7 @@
 
 import hashlib
 import hmac
+import io
 import re
 import secrets
 import time
@@ -15,16 +16,13 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 from fastapi import HTTPException, UploadFile, status
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.core.config import settings
 
-KEY_RE = re.compile(r"^[a-z0-9_-]+(/[a-z0-9_-]+)*/[A-Za-z0-9_-]+\.(png|jpe?g|webp|heic)$")
-IMAGE_TYPES = {
-    "image/png": "png",
-    "image/jpeg": "jpg",
-    "image/webp": "webp",
-    "image/heic": "heic",
-}
+KEY_RE = re.compile(r"^[a-z0-9_-]+(/[a-z0-9_-]+)*/[A-Za-z0-9_-]+\.(png|jpg)$")
+IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp"}
+MAX_IMAGE_SIDE = 2000
 
 
 class LocalStorage:
@@ -79,15 +77,28 @@ def verify_signature(key: str, exp: int, sig: str) -> bool:
     return exp >= time.time() and hmac.compare_digest(_sign(key, exp), sig)
 
 
-async def read_image_upload(file: UploadFile) -> tuple[bytes, str]:
-    """画像アップロードを検証して (データ, 拡張子) を返す。"""
-    ext = IMAGE_TYPES.get(file.content_type or "")
-    if ext is None:
+async def read_photo_upload(file: UploadFile) -> tuple[bytes, int, int]:
+    """写真アップロードを検証し、JPEG に再エンコードして (データ, 幅, 高さ) を返す。
+
+    再エンコードで EXIF（撮影場所の GPS 情報など）を取り除き、向きを補正し、
+    長辺を MAX_IMAGE_SIDE に縮小する。
+    """
+    if (file.content_type or "") not in IMAGE_TYPES:
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            "PNG / JPEG / WebP / HEIC の画像をアップロードしてください。",
+            "JPEG / PNG / WebP の画像をアップロードしてください。",
         )
     data = await file.read(settings.max_upload_bytes + 1)
     if len(data) > settings.max_upload_bytes:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "ファイルサイズが大きすぎます。")
-    return data, ext
+    try:
+        img = Image.open(io.BytesIO(data))
+        img = ImageOps.exif_transpose(img).convert("RGB")
+    except (UnidentifiedImageError, OSError) as e:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "画像を読み込めませんでした。"
+        ) from e
+    img.thumbnail((MAX_IMAGE_SIDE, MAX_IMAGE_SIDE))
+    out = io.BytesIO()
+    img.save(out, format="JPEG", quality=88, optimize=True)
+    return out.getvalue(), img.width, img.height

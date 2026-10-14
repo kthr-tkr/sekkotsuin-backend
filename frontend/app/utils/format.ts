@@ -174,3 +174,21 @@ export const PLAN_INSTRUCTIONS = [
   { key: 'lifestyle_instruction', label: '日常生活について' },
   { key: 'caution_notes', label: 'その他の注意事項' },
 ] as const
+
+export const POSTURE_VIEWS = [
+  { value: 'front', title: '正面' },
+  { value: 'side_right', title: '右側面' },
+  { value: 'side_left', title: '左側面' },
+  { value: 'back', title: '背面' },
+] as const
+
+export const POSTURE_REGIONS = [
+  { key: 'head_neck', label: '頭部・頸部' },
+  { key: 'shoulder', label: '肩・肩甲帯' },
+  { key: 'spine', label: '脊柱・体幹' },
+  { key: 'pelvis', label: '骨盤' },
+  { key: 'hip', label: '股関節' },
+  { key: 'knee', label: '膝' },
+  { key: 'ankle_foot', label: '足関節・足部' },
+  { key: 'balance', label: '全体バランス' },
+] as const

@@ -3,6 +3,7 @@ from app.models.clinic import Clinic, ClinicSettings, TreatmentMenu
 from app.models.clinical_note import ClinicalNote, ClinicalNoteRevision, ClinicalNoteStatus
 from app.models.intake import Intake, SymptomType
 from app.models.patient import Patient
+from app.models.posture import PostureAssessment, PostureImage, PostureStatus, PostureView
 from app.models.treatment_plan import (
     TreatmentPlan,
     TreatmentPlanConsent,
@@ -22,6 +23,10 @@ __all__ = [
     "ClinicalNoteStatus",
     "Intake",
     "Patient",
+    "PostureAssessment",
+    "PostureImage",
+    "PostureStatus",
+    "PostureView",
     "Role",
     "SymptomType",
     "TreatmentMenu",

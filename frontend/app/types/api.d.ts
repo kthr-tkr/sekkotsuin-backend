@@ -442,6 +442,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/posture-assessments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Assessments */
+        get: operations["posture-list_assessments"];
+        put?: never;
+        /** Create Assessment */
+        post: operations["posture-create_assessment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments/{assessment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Assessment */
+        get: operations["posture-get_assessment"];
+        /** Update Assessment */
+        put: operations["posture-update_assessment"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments/{assessment_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Assessment */
+        post: operations["posture-confirm_assessment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments/{assessment_id}/images/{view}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Upload Image
+         * @description 指定した方向の写真をアップロードする（既にあれば差し替える）。
+         */
+        put: operations["posture-upload_image"];
+        post?: never;
+        /** Delete Image */
+        delete: operations["posture-delete_image"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/intakes/{token}": {
         parameters: {
             query?: never;
@@ -586,6 +660,11 @@ export interface components {
              * Format: password
              */
             client_secret?: string | null;
+        };
+        /** Body_posture-upload_image */
+        "Body_posture-upload_image": {
+            /** File */
+            file: string;
         };
         /**
          * BookingSource
@@ -1021,6 +1100,13 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Page[PostureOut] */
+        Page_PostureOut_: {
+            /** Items */
+            items: components["schemas"]["PostureOut"][];
+            /** Total */
+            total: number;
+        };
         /** Page[TreatmentPlanOut] */
         Page_TreatmentPlanOut_: {
             /** Items */
@@ -1142,6 +1228,144 @@ export interface components {
              */
             notes: string;
         };
+        /** PostureCreate */
+        PostureCreate: {
+            /** Patient Id */
+            patient_id: number;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Assessed At */
+            assessed_at?: string | null;
+        };
+        /** PostureFindings */
+        PostureFindings: {
+            /**
+             * Overall Summary
+             * @default
+             */
+            overall_summary: string;
+            /** Important Points */
+            important_points?: string[];
+            regions?: components["schemas"]["PostureRegions"];
+        };
+        /** PostureImageOut */
+        PostureImageOut: {
+            view: components["schemas"]["PostureView"];
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Url */
+            url?: string | null;
+        };
+        /** PostureOut */
+        PostureOut: {
+            /** Id */
+            id: number;
+            /** Patient Id */
+            patient_id: number;
+            /** Clinical Note Id */
+            clinical_note_id: number | null;
+            /**
+             * Assessed At
+             * Format: date-time
+             */
+            assessed_at: string;
+            /** Title */
+            title: string;
+            /** Memo */
+            memo: string;
+            status: components["schemas"]["PostureStatus"];
+            findings: components["schemas"]["PostureFindings"];
+            /** Confirmed At */
+            confirmed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            patient: components["schemas"]["PatientBrief"];
+            /**
+             * Images
+             * @default []
+             */
+            images: components["schemas"]["PostureImageOut"][];
+        };
+        /**
+         * PostureRegions
+         * @description 部位ごとの所見（旧版 AI 出力の posture_findings と同じ区分）。
+         */
+        PostureRegions: {
+            /**
+             * Head Neck
+             * @default
+             */
+            head_neck: string;
+            /**
+             * Shoulder
+             * @default
+             */
+            shoulder: string;
+            /**
+             * Spine
+             * @default
+             */
+            spine: string;
+            /**
+             * Pelvis
+             * @default
+             */
+            pelvis: string;
+            /**
+             * Hip
+             * @default
+             */
+            hip: string;
+            /**
+             * Knee
+             * @default
+             */
+            knee: string;
+            /**
+             * Ankle Foot
+             * @default
+             */
+            ankle_foot: string;
+            /**
+             * Balance
+             * @default
+             */
+            balance: string;
+        };
+        /**
+         * PostureStatus
+         * @enum {string}
+         */
+        PostureStatus: "draft" | "confirmed";
+        /** PostureUpdate */
+        PostureUpdate: {
+            /**
+             * Title
+             * @default 姿勢評価
+             */
+            title: string;
+            /**
+             * Assessed At
+             * Format: date-time
+             */
+            assessed_at: string;
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+            findings?: components["schemas"]["PostureFindings"];
+        };
+        /**
+         * PostureView
+         * @enum {string}
+         */
+        PostureView: "front" | "side_right" | "side_left" | "back";
         /**
          * PublicIntakeOut
          * @description 患者向け: 個人情報は最小限のみ返す。
@@ -2731,6 +2955,237 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConsentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-list_assessments": {
+        parameters: {
+            query?: {
+                patient_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PostureOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-create_assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostureCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-get_assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-update_assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostureUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-confirm_assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-upload_image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+                view: components["schemas"]["PostureView"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_posture-upload_image"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-delete_image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+                view: components["schemas"]["PostureView"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
                 };
             };
             /** @description Validation Error */

@@ -2101,6 +2101,395 @@
         }
       }
     },
+    "/api/posture-assessments": {
+      "get": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "List Assessments",
+        "operationId": "posture-list_assessments",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_PostureOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Create Assessment",
+        "operationId": "posture-create_assessment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostureCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments/{assessment_id}": {
+      "get": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Get Assessment",
+        "operationId": "posture-get_assessment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Update Assessment",
+        "operationId": "posture-update_assessment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostureUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments/{assessment_id}/confirm": {
+      "post": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Confirm Assessment",
+        "operationId": "posture-confirm_assessment",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments/{assessment_id}/images/{view}": {
+      "put": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Upload Image",
+        "description": "指定した方向の写真をアップロードする（既にあれば差し替える）。",
+        "operationId": "posture-upload_image",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          },
+          {
+            "name": "view",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PostureView"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_posture-upload_image"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Delete Image",
+        "operationId": "posture-delete_image",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          },
+          {
+            "name": "view",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PostureView"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/public/intakes/{token}": {
       "get": {
         "tags": [
@@ -2563,6 +2952,20 @@
           "password"
         ],
         "title": "Body_auth-login"
+      },
+      "Body_posture-upload_image": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_posture-upload_image"
       },
       "BookingSource": {
         "type": "string",
@@ -3498,6 +3901,27 @@
         ],
         "title": "Page[PatientOut]"
       },
+      "Page_PostureOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PostureOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[PostureOut]"
+      },
       "Page_TreatmentPlanOut_": {
         "properties": {
           "items": {
@@ -3797,6 +4221,276 @@
           "phone"
         ],
         "title": "PatientUpdate"
+      },
+      "PostureCreate": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "assessed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id"
+        ],
+        "title": "PostureCreate"
+      },
+      "PostureFindings": {
+        "properties": {
+          "overall_summary": {
+            "type": "string",
+            "title": "Overall Summary",
+            "default": ""
+          },
+          "important_points": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Important Points"
+          },
+          "regions": {
+            "$ref": "#/components/schemas/PostureRegions"
+          }
+        },
+        "type": "object",
+        "title": "PostureFindings"
+      },
+      "PostureImageOut": {
+        "properties": {
+          "view": {
+            "$ref": "#/components/schemas/PostureView"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "view",
+          "width",
+          "height"
+        ],
+        "title": "PostureImageOut"
+      },
+      "PostureOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "assessed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Assessed At"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PostureStatus"
+          },
+          "findings": {
+            "$ref": "#/components/schemas/PostureFindings"
+          },
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PatientBrief"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/PostureImageOut"
+            },
+            "type": "array",
+            "title": "Images",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "patient_id",
+          "clinical_note_id",
+          "assessed_at",
+          "title",
+          "memo",
+          "status",
+          "findings",
+          "confirmed_at",
+          "created_at",
+          "patient"
+        ],
+        "title": "PostureOut"
+      },
+      "PostureRegions": {
+        "properties": {
+          "head_neck": {
+            "type": "string",
+            "title": "Head Neck",
+            "default": ""
+          },
+          "shoulder": {
+            "type": "string",
+            "title": "Shoulder",
+            "default": ""
+          },
+          "spine": {
+            "type": "string",
+            "title": "Spine",
+            "default": ""
+          },
+          "pelvis": {
+            "type": "string",
+            "title": "Pelvis",
+            "default": ""
+          },
+          "hip": {
+            "type": "string",
+            "title": "Hip",
+            "default": ""
+          },
+          "knee": {
+            "type": "string",
+            "title": "Knee",
+            "default": ""
+          },
+          "ankle_foot": {
+            "type": "string",
+            "title": "Ankle Foot",
+            "default": ""
+          },
+          "balance": {
+            "type": "string",
+            "title": "Balance",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "PostureRegions",
+        "description": "部位ごとの所見（旧版 AI 出力の posture_findings と同じ区分）。"
+      },
+      "PostureStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "confirmed"
+        ],
+        "title": "PostureStatus"
+      },
+      "PostureUpdate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "default": "姿勢評価"
+          },
+          "assessed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Assessed At"
+          },
+          "memo": {
+            "type": "string",
+            "title": "Memo",
+            "default": ""
+          },
+          "findings": {
+            "$ref": "#/components/schemas/PostureFindings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assessed_at"
+        ],
+        "title": "PostureUpdate"
+      },
+      "PostureView": {
+        "type": "string",
+        "enum": [
+          "front",
+          "side_right",
+          "side_left",
+          "back"
+        ],
+        "title": "PostureView"
       },
       "PublicIntakeOut": {
         "properties": {
