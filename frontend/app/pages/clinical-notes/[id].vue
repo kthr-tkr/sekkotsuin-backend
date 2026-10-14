@@ -124,6 +124,18 @@ const staffItems = computed(() =>
   (staff.value ?? []).map((s) => ({ value: s.id, title: s.full_name })),
 )
 const print = () => window.print()
+
+async function createPlan() {
+  if (dirty.value && !(await save())) return
+  const { data, error } = await api.POST('/api/treatment-plans', {
+    body: { patient_id: note.value!.patient_id, clinical_note_id: id },
+  })
+  if (error || !data) {
+    snackbar.value = { text: errorMessage(error), color: 'error' }
+    return
+  }
+  await navigateTo(`/treatment-plans/${data.id}`)
+}
 const psItems = Array.from({ length: 11 }, (_, i) => ({ value: i, title: String(i) }))
 </script>
 
@@ -141,6 +153,9 @@ const psItems = Array.from({ length: 11 }, (_, i) => ({ value: i, title: String(
       </v-btn>
       <v-btn variant="text" prepend-icon="mdi-printer" class="d-print-none" @click="print">
         印刷
+      </v-btn>
+      <v-btn variant="text" prepend-icon="mdi-flag-checkered" class="d-print-none" @click="createPlan">
+        施術計画を作成
       </v-btn>
       <v-btn variant="tonal" class="d-print-none" :to="`/patients/${note.patient_id}`">患者詳細</v-btn>
       <v-btn variant="tonal" color="primary" class="d-print-none" :loading="saving" :disabled="!dirty" @click="save">

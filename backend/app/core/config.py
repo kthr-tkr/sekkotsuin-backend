@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     # 問診URLの有効期限（日）
     intake_token_expire_days: int = 14
 
+    # アップロードファイル（署名画像・姿勢写真など）の保存先と、署名付きURLの有効期限
+    media_dir: str = "media"
+    file_url_expire_seconds: int = 60 * 30
+    max_upload_bytes: int = 10 * 1024 * 1024
+
     @model_validator(mode="after")
     def _check_secret(self) -> "Settings":
         if self.environment != "local" and (

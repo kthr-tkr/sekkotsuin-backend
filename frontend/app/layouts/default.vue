@@ -12,6 +12,7 @@ const items = computed(() => [
   { title: '予約カレンダー', icon: 'mdi-calendar-month-outline', to: '/appointments' },
   { title: '患者', icon: 'mdi-account-multiple-outline', to: '/patients' },
   { title: 'カルテ', icon: 'mdi-file-document-edit-outline', to: '/clinical-notes' },
+  { title: '施術計画', icon: 'mdi-flag-checkered', to: '/treatment-plans' },
   { title: '問診', icon: 'mdi-clipboard-text-outline', to: '/intakes' },
   ...(isAdmin.value ? [{ title: '院の設定', icon: 'mdi-cog-outline', to: '/settings' }] : []),
 ])

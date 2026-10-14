@@ -1703,6 +1703,404 @@
         }
       }
     },
+    "/api/treatment-plans": {
+      "get": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "List Plans",
+        "operationId": "treatment-plans-list_plans",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TreatmentPlanStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_TreatmentPlanOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Create Plan",
+        "operationId": "treatment-plans-create_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TreatmentPlanCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreatmentPlanOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/treatment-plans/{plan_id}": {
+      "get": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Get Plan",
+        "operationId": "treatment-plans-get_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreatmentPlanOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Update Plan",
+        "operationId": "treatment-plans-update_plan",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TreatmentPlanUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreatmentPlanOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/treatment-plans/{plan_id}/progress": {
+      "get": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Plan Progress",
+        "description": "計画期間中のカルテ（施術経過）を古い順に返す。",
+        "operationId": "treatment-plans-plan_progress",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalNoteOut"
+                  },
+                  "title": "Response Treatment-Plans-Plan Progress"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/treatment-plans/{plan_id}/consents": {
+      "get": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "List Consents",
+        "operationId": "treatment-plans-list_consents",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentOut"
+                  },
+                  "title": "Response Treatment-Plans-List Consents"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "treatment-plans"
+        ],
+        "summary": "Create Consent",
+        "description": "患者の同意サインを保存する（院内の端末でスタッフ立ち会いのもと署名する想定）。",
+        "operationId": "treatment-plans-create_consent",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/public/intakes/{token}": {
       "get": {
         "tags": [
@@ -2755,6 +3153,79 @@
         ],
         "title": "ClinicalNoteUpdate"
       },
+      "ConsentCreate": {
+        "properties": {
+          "signed_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Signed Name"
+          },
+          "signature_data_url": {
+            "type": "string",
+            "maxLength": 2000000,
+            "pattern": "^data:image/png;base64,",
+            "title": "Signature Data Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "signed_name",
+          "signature_data_url"
+        ],
+        "title": "ConsentCreate"
+      },
+      "ConsentOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "signed_name": {
+            "type": "string",
+            "title": "Signed Name"
+          },
+          "signed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Signed At"
+          },
+          "signature_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature Url"
+          },
+          "plan_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Plan Snapshot"
+          },
+          "witnessed_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "signed_name",
+          "signed_at",
+          "plan_snapshot"
+        ],
+        "title": "ConsentOut"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3026,6 +3497,27 @@
           "total"
         ],
         "title": "Page[PatientOut]"
+      },
+      "Page_TreatmentPlanOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TreatmentPlanOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[TreatmentPlanOut]"
       },
       "PatientBrief": {
         "properties": {
@@ -3573,6 +4065,381 @@
         ],
         "title": "TreatmentMenuUpdate"
       },
+      "TreatmentPlanCreate": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id"
+        ],
+        "title": "TreatmentPlanCreate"
+      },
+      "TreatmentPlanOut": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": ""
+          },
+          "chief_complaint": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Chief Complaint",
+            "default": ""
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "next_visit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Visit Date"
+          },
+          "visit_guide_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VisitGuideType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visit_guide_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 31.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visit Guide Count"
+          },
+          "visit_guide_note": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Visit Guide Note",
+            "default": ""
+          },
+          "bath_instruction": {
+            "type": "string",
+            "title": "Bath Instruction",
+            "default": ""
+          },
+          "walking_instruction": {
+            "type": "string",
+            "title": "Walking Instruction",
+            "default": ""
+          },
+          "exercise_instruction": {
+            "type": "string",
+            "title": "Exercise Instruction",
+            "default": ""
+          },
+          "work_instruction": {
+            "type": "string",
+            "title": "Work Instruction",
+            "default": ""
+          },
+          "lifestyle_instruction": {
+            "type": "string",
+            "title": "Lifestyle Instruction",
+            "default": ""
+          },
+          "caution_notes": {
+            "type": "string",
+            "title": "Caution Notes",
+            "default": ""
+          },
+          "expected_recovery_weeks_min": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 104.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Recovery Weeks Min"
+          },
+          "expected_recovery_weeks_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 104.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Recovery Weeks Max"
+          },
+          "rebound_reaction_note": {
+            "type": "string",
+            "title": "Rebound Reaction Note",
+            "default": ""
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "clinical_note_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinical Note Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TreatmentPlanStatus"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PatientBrief"
+          },
+          "latest_consent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConsentOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "consent_outdated": {
+            "type": "boolean",
+            "title": "Consent Outdated",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_date",
+          "id",
+          "patient_id",
+          "clinical_note_id",
+          "status",
+          "end_date",
+          "created_at",
+          "updated_at",
+          "patient"
+        ],
+        "title": "TreatmentPlanOut"
+      },
+      "TreatmentPlanStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "completed",
+          "paused"
+        ],
+        "title": "TreatmentPlanStatus"
+      },
+      "TreatmentPlanUpdate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": ""
+          },
+          "chief_complaint": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Chief Complaint",
+            "default": ""
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "next_visit_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Visit Date"
+          },
+          "visit_guide_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VisitGuideType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visit_guide_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 31.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visit Guide Count"
+          },
+          "visit_guide_note": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Visit Guide Note",
+            "default": ""
+          },
+          "bath_instruction": {
+            "type": "string",
+            "title": "Bath Instruction",
+            "default": ""
+          },
+          "walking_instruction": {
+            "type": "string",
+            "title": "Walking Instruction",
+            "default": ""
+          },
+          "exercise_instruction": {
+            "type": "string",
+            "title": "Exercise Instruction",
+            "default": ""
+          },
+          "work_instruction": {
+            "type": "string",
+            "title": "Work Instruction",
+            "default": ""
+          },
+          "lifestyle_instruction": {
+            "type": "string",
+            "title": "Lifestyle Instruction",
+            "default": ""
+          },
+          "caution_notes": {
+            "type": "string",
+            "title": "Caution Notes",
+            "default": ""
+          },
+          "expected_recovery_weeks_min": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 104.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Recovery Weeks Min"
+          },
+          "expected_recovery_weeks_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 104.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Recovery Weeks Max"
+          },
+          "rebound_reaction_note": {
+            "type": "string",
+            "title": "Rebound Reaction Note",
+            "default": ""
+          },
+          "status": {
+            "$ref": "#/components/schemas/TreatmentPlanStatus",
+            "default": "active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_date"
+        ],
+        "title": "TreatmentPlanUpdate"
+      },
       "UserOut": {
         "properties": {
           "id": {
@@ -3649,6 +4516,16 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VisitGuideType": {
+        "type": "string",
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly",
+          "custom"
+        ],
+        "title": "VisitGuideType"
       }
     },
     "securitySchemes": {

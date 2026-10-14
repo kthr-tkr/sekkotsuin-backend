@@ -36,6 +36,17 @@ const { data: notes } = await useAsyncData(`patient-${id}-notes`, async () => {
   })
   return data ?? { items: [], total: 0 }
 })
+const { data: plans } = await useAsyncData(`patient-${id}-plans`, async () => {
+  const { data } = await api.GET('/api/treatment-plans', {
+    params: { query: { patient_id: id, limit: 20 } },
+  })
+  return data ?? { items: [], total: 0 }
+})
+async function createPlan() {
+  const { data } = await api.POST('/api/treatment-plans', { body: { patient_id: id } })
+  if (data) await navigateTo(`/treatment-plans/${data.id}`)
+}
+
 async function createNote() {
   const { data } = await api.POST('/api/clinical-notes', { body: { patient_id: id } })
   if (data) await navigateTo(`/clinical-notes/${data.id}`)
@@ -157,6 +168,28 @@ async function issueIntake() {
               <template #append>
                 <v-chip size="small" :color="NOTE_STATUS_COLORS[n.status]" variant="flat">
                   {{ NOTE_STATUS_LABELS[n.status] }}
+                </v-chip>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-card>
+
+        <v-card title="施術計画" class="mb-4">
+          <template #append>
+            <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="createPlan">作成</v-btn>
+          </template>
+          <v-list>
+            <v-list-item v-if="!plans?.items.length" subtitle="施術計画はありません" />
+            <v-list-item
+              v-for="pl in plans?.items"
+              :key="pl.id"
+              :to="`/treatment-plans/${pl.id}`"
+              :title="pl.title || pl.chief_complaint || '（タイトル未設定）'"
+              :subtitle="`${pl.start_date} 開始 ・ ${visitGuideText(pl) || '通院目安なし'}`"
+            >
+              <template #append>
+                <v-chip size="small" :color="PLAN_STATUS_COLORS[pl.status]" variant="flat">
+                  {{ PLAN_STATUS_LABELS[pl.status] }}
                 </v-chip>
               </template>
             </v-list-item>

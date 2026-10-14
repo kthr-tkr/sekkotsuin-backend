@@ -132,3 +132,45 @@ export const SOAP_FIELDS = [
   { key: 'assessment', label: 'A（評価）', hint: '見立て・考えられる原因' },
   { key: 'plan', label: 'P（計画）', hint: '今後の施術方針・通院頻度' },
 ] as const
+
+export const PLAN_STATUS_LABELS: Record<string, string> = {
+  active: '進行中',
+  paused: '中断',
+  completed: '完了',
+}
+
+export const PLAN_STATUS_COLORS: Record<string, string> = {
+  active: 'primary',
+  paused: 'warning',
+  completed: 'grey',
+}
+
+export const VISIT_GUIDE_LABELS: Record<string, string> = {
+  daily: '毎日',
+  weekly: '週',
+  monthly: '月',
+  custom: '個別設定',
+}
+
+export function visitGuideText(p: {
+  visit_guide_type?: string | null
+  visit_guide_count?: number | null
+  visit_guide_note?: string
+}): string {
+  const t = p.visit_guide_type
+  let base = ''
+  if (t === 'daily') base = '毎日'
+  else if ((t === 'weekly' || t === 'monthly') && p.visit_guide_count)
+    base = `${VISIT_GUIDE_LABELS[t]}${p.visit_guide_count}回`
+  else if (t) base = VISIT_GUIDE_LABELS[t] ?? ''
+  return [base, p.visit_guide_note].filter(Boolean).join('（') + (base && p.visit_guide_note ? '）' : '')
+}
+
+export const PLAN_INSTRUCTIONS = [
+  { key: 'bath_instruction', label: '入浴について' },
+  { key: 'walking_instruction', label: '歩行について' },
+  { key: 'exercise_instruction', label: '運動について' },
+  { key: 'work_instruction', label: '仕事について' },
+  { key: 'lifestyle_instruction', label: '日常生活について' },
+  { key: 'caution_notes', label: 'その他の注意事項' },
+] as const

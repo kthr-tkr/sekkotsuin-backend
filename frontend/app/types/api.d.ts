@@ -365,6 +365,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/treatment-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Plans */
+        get: operations["treatment-plans-list_plans"];
+        put?: never;
+        /** Create Plan */
+        post: operations["treatment-plans-create_plan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/treatment-plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Plan */
+        get: operations["treatment-plans-get_plan"];
+        /** Update Plan */
+        put: operations["treatment-plans-update_plan"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/treatment-plans/{plan_id}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Plan Progress
+         * @description 計画期間中のカルテ（施術経過）を古い順に返す。
+         */
+        get: operations["treatment-plans-plan_progress"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/treatment-plans/{plan_id}/consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Consents */
+        get: operations["treatment-plans-list_consents"];
+        put?: never;
+        /**
+         * Create Consent
+         * @description 患者の同意サインを保存する（院内の端末でスタッフ立ち会いのもと署名する想定）。
+         */
+        post: operations["treatment-plans-create_consent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/intakes/{token}": {
         parameters: {
             query?: never;
@@ -801,6 +878,32 @@ export interface components {
             /** Pain Scale After */
             pain_scale_after?: number | null;
         };
+        /** ConsentCreate */
+        ConsentCreate: {
+            /** Signed Name */
+            signed_name: string;
+            /** Signature Data Url */
+            signature_data_url: string;
+        };
+        /** ConsentOut */
+        ConsentOut: {
+            /** Id */
+            id: number;
+            /** Signed Name */
+            signed_name: string;
+            /**
+             * Signed At
+             * Format: date-time
+             */
+            signed_at: string;
+            /** Signature Url */
+            signature_url?: string | null;
+            /** Plan Snapshot */
+            plan_snapshot: {
+                [key: string]: unknown;
+            };
+            witnessed_by?: components["schemas"]["StaffBrief"] | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -915,6 +1018,13 @@ export interface components {
         Page_PatientOut_: {
             /** Items */
             items: components["schemas"]["PatientOut"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[TreatmentPlanOut] */
+        Page_TreatmentPlanOut_: {
+            /** Items */
+            items: components["schemas"]["TreatmentPlanOut"][];
             /** Total */
             total: number;
         };
@@ -1182,6 +1292,182 @@ export interface components {
              */
             display_order: number;
         };
+        /** TreatmentPlanCreate */
+        TreatmentPlanCreate: {
+            /** Patient Id */
+            patient_id: number;
+            /** Clinical Note Id */
+            clinical_note_id?: number | null;
+            /** Start Date */
+            start_date?: string | null;
+        };
+        /** TreatmentPlanOut */
+        TreatmentPlanOut: {
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+            /**
+             * Chief Complaint
+             * @default
+             */
+            chief_complaint: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Next Visit Date */
+            next_visit_date?: string | null;
+            visit_guide_type?: components["schemas"]["VisitGuideType"] | null;
+            /** Visit Guide Count */
+            visit_guide_count?: number | null;
+            /**
+             * Visit Guide Note
+             * @default
+             */
+            visit_guide_note: string;
+            /**
+             * Bath Instruction
+             * @default
+             */
+            bath_instruction: string;
+            /**
+             * Walking Instruction
+             * @default
+             */
+            walking_instruction: string;
+            /**
+             * Exercise Instruction
+             * @default
+             */
+            exercise_instruction: string;
+            /**
+             * Work Instruction
+             * @default
+             */
+            work_instruction: string;
+            /**
+             * Lifestyle Instruction
+             * @default
+             */
+            lifestyle_instruction: string;
+            /**
+             * Caution Notes
+             * @default
+             */
+            caution_notes: string;
+            /** Expected Recovery Weeks Min */
+            expected_recovery_weeks_min?: number | null;
+            /** Expected Recovery Weeks Max */
+            expected_recovery_weeks_max?: number | null;
+            /**
+             * Rebound Reaction Note
+             * @default
+             */
+            rebound_reaction_note: string;
+            /** Id */
+            id: number;
+            /** Patient Id */
+            patient_id: number;
+            /** Clinical Note Id */
+            clinical_note_id: number | null;
+            status: components["schemas"]["TreatmentPlanStatus"];
+            /** End Date */
+            end_date: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            patient: components["schemas"]["PatientBrief"];
+            latest_consent?: components["schemas"]["ConsentOut"] | null;
+            /**
+             * Consent Outdated
+             * @default false
+             */
+            consent_outdated: boolean;
+        };
+        /**
+         * TreatmentPlanStatus
+         * @enum {string}
+         */
+        TreatmentPlanStatus: "active" | "completed" | "paused";
+        /** TreatmentPlanUpdate */
+        TreatmentPlanUpdate: {
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+            /**
+             * Chief Complaint
+             * @default
+             */
+            chief_complaint: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Next Visit Date */
+            next_visit_date?: string | null;
+            visit_guide_type?: components["schemas"]["VisitGuideType"] | null;
+            /** Visit Guide Count */
+            visit_guide_count?: number | null;
+            /**
+             * Visit Guide Note
+             * @default
+             */
+            visit_guide_note: string;
+            /**
+             * Bath Instruction
+             * @default
+             */
+            bath_instruction: string;
+            /**
+             * Walking Instruction
+             * @default
+             */
+            walking_instruction: string;
+            /**
+             * Exercise Instruction
+             * @default
+             */
+            exercise_instruction: string;
+            /**
+             * Work Instruction
+             * @default
+             */
+            work_instruction: string;
+            /**
+             * Lifestyle Instruction
+             * @default
+             */
+            lifestyle_instruction: string;
+            /**
+             * Caution Notes
+             * @default
+             */
+            caution_notes: string;
+            /** Expected Recovery Weeks Min */
+            expected_recovery_weeks_min?: number | null;
+            /** Expected Recovery Weeks Max */
+            expected_recovery_weeks_max?: number | null;
+            /**
+             * Rebound Reaction Note
+             * @default
+             */
+            rebound_reaction_note: string;
+            /** @default active */
+            status: components["schemas"]["TreatmentPlanStatus"];
+        };
         /** UserOut */
         UserOut: {
             /** Id */
@@ -1209,6 +1495,11 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * VisitGuideType
+         * @enum {string}
+         */
+        VisitGuideType: "daily" | "weekly" | "monthly" | "custom";
     };
     responses: never;
     parameters: never;
@@ -2210,6 +2501,236 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClinicalNoteRevisionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-list_plans": {
+        parameters: {
+            query?: {
+                patient_id?: number | null;
+                status?: components["schemas"]["TreatmentPlanStatus"] | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_TreatmentPlanOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-create_plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TreatmentPlanCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentPlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-get_plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentPlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-update_plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TreatmentPlanUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentPlanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-plan_progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalNoteOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-list_consents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "treatment-plans-create_consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentOut"];
                 };
             };
             /** @description Validation Error */

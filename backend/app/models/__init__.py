@@ -3,6 +3,12 @@ from app.models.clinic import Clinic, ClinicSettings, TreatmentMenu
 from app.models.clinical_note import ClinicalNote, ClinicalNoteRevision, ClinicalNoteStatus
 from app.models.intake import Intake, SymptomType
 from app.models.patient import Patient
+from app.models.treatment_plan import (
+    TreatmentPlan,
+    TreatmentPlanConsent,
+    TreatmentPlanStatus,
+    VisitGuideType,
+)
 from app.models.user import Role, User
 
 __all__ = [
@@ -19,5 +25,9 @@ __all__ = [
     "Role",
     "SymptomType",
     "TreatmentMenu",
+    "TreatmentPlan",
+    "TreatmentPlanConsent",
+    "TreatmentPlanStatus",
+    "VisitGuideType",
     "User",
 ]
