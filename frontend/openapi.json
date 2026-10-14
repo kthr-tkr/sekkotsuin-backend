@@ -3635,6 +3635,464 @@
         }
       }
     },
+    "/api/portal/{slug}": {
+      "get": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Portal Clinic",
+        "operationId": "portal-portal_clinic",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalClinic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portal/{slug}/availability": {
+      "get": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Portal Availability",
+        "description": "予約できる枠（担当者などの内部情報は返さない）。",
+        "operationId": "portal-portal_availability",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Date"
+            }
+          },
+          {
+            "name": "menu_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Menu Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PortalSlot"
+                  },
+                  "title": "Response Portal-Portal Availability"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portal/{slug}/register": {
+      "post": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Portal Register",
+        "description": "初めての方の登録（患者情報とアカウントを作る）。",
+        "operationId": "portal-portal_register",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalRegister"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalToken"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portal/{slug}/link": {
+      "post": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Portal Link",
+        "description": "来院歴のある方: 氏名・生年月日・電話番号で本人確認し、アカウントを作る。",
+        "operationId": "portal-portal_link",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalLink"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalToken"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portal/{slug}/login": {
+      "post": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Portal Login",
+        "operationId": "portal-portal_login",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalToken"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Me",
+        "operationId": "portal-me",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Update Me",
+        "operationId": "portal-update_me",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/appointments": {
+      "get": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "My Appointments",
+        "operationId": "portal-my_appointments",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MyAppointment"
+                  },
+                  "type": "array",
+                  "title": "Response Portal-My Appointments"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Book",
+        "description": "Web 予約。「問診待ち」で登録し、Web 問診の URL を発行する。",
+        "operationId": "portal-book",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MyBookingCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyAppointment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/appointments/{appointment_id}/cancel": {
+      "post": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Cancel",
+        "operationId": "portal-cancel",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Appointment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyAppointment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/public/intakes/{token}": {
       "get": {
         "tags": [
@@ -4336,6 +4794,25 @@
             "title": "Primary Color",
             "default": "#1D4ED8"
           },
+          "portal_enabled": {
+            "type": "boolean",
+            "title": "Portal Enabled",
+            "default": true
+          },
+          "portal_cancel_deadline_hours": {
+            "type": "integer",
+            "maximum": 336.0,
+            "minimum": 0.0,
+            "title": "Portal Cancel Deadline Hours",
+            "default": 24
+          },
+          "portal_booking_window_days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Portal Booking Window Days",
+            "default": 60
+          },
           "ai_enabled": {
             "type": "boolean",
             "title": "Ai Enabled",
@@ -4457,6 +4934,25 @@
             "pattern": "^#[0-9A-Fa-f]{6}$",
             "title": "Primary Color",
             "default": "#1D4ED8"
+          },
+          "portal_enabled": {
+            "type": "boolean",
+            "title": "Portal Enabled",
+            "default": true
+          },
+          "portal_cancel_deadline_hours": {
+            "type": "integer",
+            "maximum": 336.0,
+            "minimum": 0.0,
+            "title": "Portal Cancel Deadline Hours",
+            "default": 24
+          },
+          "portal_booking_window_days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Portal Booking Window Days",
+            "default": 60
           },
           "ai_enabled": {
             "type": "boolean",
@@ -5390,6 +5886,172 @@
         ],
         "title": "LeaveType"
       },
+      "MeOut": {
+        "properties": {
+          "patient_id": {
+            "type": "integer",
+            "title": "Patient Id"
+          },
+          "card_no": {
+            "type": "string",
+            "title": "Card No"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name_kana": {
+            "type": "string",
+            "title": "Last Name Kana"
+          },
+          "first_name_kana": {
+            "type": "string",
+            "title": "First Name Kana"
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Birth Date"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "clinic_name": {
+            "type": "string",
+            "title": "Clinic Name"
+          },
+          "clinic_slug": {
+            "type": "string",
+            "title": "Clinic Slug"
+          }
+        },
+        "type": "object",
+        "required": [
+          "patient_id",
+          "card_no",
+          "last_name",
+          "first_name",
+          "last_name_kana",
+          "first_name_kana",
+          "birth_date",
+          "phone",
+          "email",
+          "address",
+          "clinic_name",
+          "clinic_slug"
+        ],
+        "title": "MeOut"
+      },
+      "MeUpdate": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "pattern": "^[0-9+\\-() ]+$",
+            "title": "Phone"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Address",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone"
+        ],
+        "title": "MeUpdate"
+      },
+      "MyAppointment": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "start_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start At"
+          },
+          "end_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End At"
+          },
+          "menu_name": {
+            "type": "string",
+            "title": "Menu Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AppointmentStatus"
+          },
+          "can_cancel": {
+            "type": "boolean",
+            "title": "Can Cancel"
+          },
+          "intake_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intake Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "start_at",
+          "end_at",
+          "menu_name",
+          "status",
+          "can_cancel"
+        ],
+        "title": "MyAppointment"
+      },
+      "MyBookingCreate": {
+        "properties": {
+          "treatment_menu_id": {
+            "type": "integer",
+            "title": "Treatment Menu Id"
+          },
+          "start_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start At"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "treatment_menu_id",
+          "start_at"
+        ],
+        "title": "MyBookingCreate"
+      },
       "Page_ClinicalNoteOut_": {
         "properties": {
           "items": {
@@ -5784,6 +6446,291 @@
           "other"
         ],
         "title": "PaymentMethod"
+      },
+      "PortalClinic": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "booking_slug": {
+            "type": "string",
+            "title": "Booking Slug"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "booking_description": {
+            "type": "string",
+            "title": "Booking Description"
+          },
+          "business_start_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Business Start Time"
+          },
+          "business_end_time": {
+            "type": "string",
+            "format": "time",
+            "title": "Business End Time"
+          },
+          "closed_weekdays": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Closed Weekdays"
+          },
+          "booking_window_days": {
+            "type": "integer",
+            "title": "Booking Window Days"
+          },
+          "cancel_deadline_hours": {
+            "type": "integer",
+            "title": "Cancel Deadline Hours"
+          },
+          "menus": {
+            "items": {
+              "$ref": "#/components/schemas/PortalMenu"
+            },
+            "type": "array",
+            "title": "Menus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "booking_slug",
+          "phone",
+          "address",
+          "booking_description",
+          "business_start_time",
+          "business_end_time",
+          "closed_weekdays",
+          "booking_window_days",
+          "cancel_deadline_hours",
+          "menus"
+        ],
+        "title": "PortalClinic"
+      },
+      "PortalLink": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Last Name"
+          },
+          "first_name": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "First Name"
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Birth Date"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Phone"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "password",
+          "last_name",
+          "first_name",
+          "birth_date",
+          "phone",
+          "email"
+        ],
+        "title": "PortalLink",
+        "description": "来院したことがある方の本人確認とアカウント作成。"
+      },
+      "PortalLogin": {
+        "properties": {
+          "login_id": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 1,
+            "title": "Login Id",
+            "description": "メールアドレスか診察券番号"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "login_id",
+          "password"
+        ],
+        "title": "PortalLogin"
+      },
+      "PortalMenu": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "price": {
+            "type": "integer",
+            "title": "Price"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "price",
+          "duration_minutes"
+        ],
+        "title": "PortalMenu"
+      },
+      "PortalRegister": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Last Name"
+          },
+          "first_name": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "First Name"
+          },
+          "last_name_kana": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "pattern": "^[ァ-ヶーぁ-ゖ\\s　]+$",
+            "title": "Last Name Kana"
+          },
+          "first_name_kana": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "pattern": "^[ァ-ヶーぁ-ゖ\\s　]+$",
+            "title": "First Name Kana"
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Birth Date"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "pattern": "^[0-9+\\-() ]+$",
+            "title": "Phone"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "password",
+          "last_name",
+          "first_name",
+          "last_name_kana",
+          "first_name_kana",
+          "birth_date",
+          "phone",
+          "email"
+        ],
+        "title": "PortalRegister",
+        "description": "初めて来院する方の登録。"
+      },
+      "PortalSlot": {
+        "properties": {
+          "start_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start At"
+          },
+          "end_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End At"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_at",
+          "end_at",
+          "available"
+        ],
+        "title": "PortalSlot"
+      },
+      "PortalToken": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token"
+        ],
+        "title": "PortalToken"
       },
       "PostureCreate": {
         "properties": {
@@ -7407,6 +8354,10 @@
             "tokenUrl": "/api/auth/login"
           }
         }
+      },
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

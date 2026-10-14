@@ -26,6 +26,9 @@ class ClinicSettingsBase(BaseModel):
     appointment_interval_minutes: Literal[5, 10, 15, 20, 30, 60] = 30
     closed_weekdays: list[Weekday] = []
     primary_color: str = Field("#1D4ED8", pattern=r"^#[0-9A-Fa-f]{6}$")
+    portal_enabled: bool = True
+    portal_cancel_deadline_hours: int = Field(24, ge=0, le=24 * 14)
+    portal_booking_window_days: int = Field(60, ge=1, le=365)
     ai_enabled: bool = True
     ai_monthly_minutes_limit: int = Field(1000, ge=0, le=100_000)
 

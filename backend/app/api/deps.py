@@ -19,7 +19,7 @@ async def get_current_user(db: DB, token: Annotated[str, Depends(oauth2_scheme)]
         detail="認証情報が無効です。",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    sub = decode_access_token(token)
+    sub = decode_access_token(token, "staff")
     if sub is None or not sub.isdigit():
         raise unauthorized
     user = await db.get(User, int(sub))
