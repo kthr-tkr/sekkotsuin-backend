@@ -51,6 +51,12 @@ class ClinicSettings(TimestampMixin, Base):
     # 何日先まで予約を受け付けるか
     portal_booking_window_days: Mapped[int] = mapped_column(default=60, server_default="60")
 
+    # 患者への通知
+    notify_email_enabled: Mapped[bool] = mapped_column(default=True, server_default="true")
+    notify_sms_enabled: Mapped[bool] = mapped_column(default=False, server_default="false")
+    # 予約の何時間前にリマインドを送るか（0 で送らない）
+    reminder_hours_before: Mapped[int] = mapped_column(default=24, server_default="24")
+
     # AI（録音の文字起こし・要約、姿勢分析）
     ai_enabled: Mapped[bool] = mapped_column(default=True, server_default="true")
     # 月の録音分数の上限（超えると新しい録音を受け付けない）

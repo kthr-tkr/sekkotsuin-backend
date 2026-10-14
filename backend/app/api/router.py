@@ -9,6 +9,7 @@ from app.api.routes import (
     files,
     intakes,
     kpi,
+    notifications,
     patients,
     portal,
     posture,
@@ -29,6 +30,7 @@ api_router.include_router(posture.router)
 api_router.include_router(sales.router)
 api_router.include_router(schedule.router)
 api_router.include_router(kpi.router)
+api_router.include_router(notifications.router)
 api_router.include_router(ai.router)
 api_router.include_router(files.router)
 api_router.include_router(portal.public_router)

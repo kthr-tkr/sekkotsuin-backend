@@ -81,6 +81,7 @@ class MeOut(BaseModel):
     phone: str
     email: str
     address: str
+    reminders_enabled: bool
     clinic_name: str
     clinic_slug: str
 
@@ -88,6 +89,15 @@ class MeOut(BaseModel):
 class MeUpdate(BaseModel):
     phone: str = Field(min_length=1, max_length=20, pattern=r"^[0-9+\-() ]+$")
     address: str = Field("", max_length=255)
+    reminders_enabled: bool = True
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(PasswordField):
+    token: str = Field(min_length=20, max_length=200)
 
 
 class MyAppointment(BaseModel):

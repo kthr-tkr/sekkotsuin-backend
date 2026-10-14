@@ -38,3 +38,5 @@ class RateLimiter:
 # ログイン: 同じ ID に 15 分で 10 回まで。本人確認: 同じ接続元から 15 分で 10 回まで
 login_limiter = RateLimiter(max_attempts=10, window_sec=15 * 60)
 verify_limiter = RateLimiter(max_attempts=10, window_sec=15 * 60)
+# パスワード再設定のメール: 同じアドレスに 1 時間で 3 回まで
+reset_limiter = RateLimiter(max_attempts=3, window_sec=60 * 60)

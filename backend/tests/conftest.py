@@ -38,10 +38,11 @@ async def _clean_tables() -> AsyncIterator[None]:
 
 @pytest.fixture(autouse=True)
 def _reset_rate_limits() -> None:
-    from app.services.ratelimit import login_limiter, verify_limiter
+    from app.services.ratelimit import login_limiter, reset_limiter, verify_limiter
 
     login_limiter.clear()
     verify_limiter.clear()
+    reset_limiter.clear()
 
 
 @pytest.fixture

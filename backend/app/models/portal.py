@@ -26,5 +26,8 @@ class PatientAccount(TimestampMixin, Base):
     hashed_password: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(default=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # パスワード再設定（トークンはハッシュだけ保存する）
+    reset_token_hash: Mapped[str | None] = mapped_column(String(64))
+    reset_token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     patient: Mapped[Patient] = relationship(lazy="raise")

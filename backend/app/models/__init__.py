@@ -11,6 +11,12 @@ from app.models.appointment import Appointment, AppointmentStatus, BookingSource
 from app.models.clinic import Clinic, ClinicSettings, TreatmentMenu
 from app.models.clinical_note import ClinicalNote, ClinicalNoteRevision, ClinicalNoteStatus
 from app.models.intake import Intake, SymptomType
+from app.models.notification import (
+    Notification,
+    NotificationChannel,
+    NotificationKind,
+    NotificationStatus,
+)
 from app.models.operations import (
     LeaveStatus,
     LeaveType,
@@ -51,6 +57,10 @@ __all__ = [
     "Intake",
     "LeaveStatus",
     "LeaveType",
+    "Notification",
+    "NotificationChannel",
+    "NotificationKind",
+    "NotificationStatus",
     "Patient",
     "PatientAccount",
     "PaymentMethod",

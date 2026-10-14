@@ -97,11 +97,11 @@ function openAppt(a: Schemas['AppointmentOut'] | null) {
   apptDialog.value = true
 }
 
-const intakeToken = ref<string | null>(null)
+const issuedIntake = ref<{ id: number; access_token: string } | null>(null)
 async function issueIntake() {
   const { data } = await api.POST('/api/intakes', { body: { patient_id: id } })
   if (data) {
-    intakeToken.value = data.access_token
+    issuedIntake.value = data
     await refreshIntakes()
   }
 }
@@ -273,7 +273,7 @@ async function issueIntake() {
                   v-if="!i.submitted_at"
                   size="small"
                   variant="text"
-                  @click.prevent="intakeToken = i.access_token"
+                  @click.prevent="issuedIntake = i"
                 >
                   URLを表示
                 </v-btn>
@@ -303,7 +303,7 @@ async function issueIntake() {
       :defaults="{ patient }"
       @saved="refreshAppts"
     />
-    <IntakeLinkDialog :token="intakeToken" @close="intakeToken = null" />
+    <IntakeLinkDialog :intake="issuedIntake" @close="issuedIntake = null" />
   </div>
   <v-alert v-else type="warning" variant="tonal" text="患者が見つかりません。" />
 </template>

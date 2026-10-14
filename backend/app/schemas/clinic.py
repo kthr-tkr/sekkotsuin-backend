@@ -29,6 +29,9 @@ class ClinicSettingsBase(BaseModel):
     portal_enabled: bool = True
     portal_cancel_deadline_hours: int = Field(24, ge=0, le=24 * 14)
     portal_booking_window_days: int = Field(60, ge=1, le=365)
+    notify_email_enabled: bool = True
+    notify_sms_enabled: bool = False
+    reminder_hours_before: int = Field(24, ge=0, le=24 * 7)
     ai_enabled: bool = True
     ai_monthly_minutes_limit: int = Field(1000, ge=0, le=100_000)
 

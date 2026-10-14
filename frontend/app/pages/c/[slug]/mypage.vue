@@ -46,9 +46,13 @@ async function cancel(a: Schemas['MyAppointment']) {
 
 // プロフィール
 const profileDialog = ref(false)
-const pform = reactive({ phone: '', address: '' })
+const pform = reactive({ phone: '', address: '', reminders_enabled: true })
 function openProfile() {
-  Object.assign(pform, { phone: me.value?.phone ?? '', address: me.value?.address ?? '' })
+  Object.assign(pform, {
+    phone: me.value?.phone ?? '',
+    address: me.value?.address ?? '',
+    reminders_enabled: me.value?.reminders_enabled ?? true,
+  })
   profileDialog.value = true
 }
 async function saveProfile() {
@@ -116,6 +120,12 @@ async function saveProfile() {
           <v-text-field :model-value="me.email" label="メールアドレス" readonly />
           <v-text-field v-model="pform.phone" type="tel" label="電話番号" />
           <v-text-field v-model="pform.address" label="住所" />
+          <v-switch
+            v-model="pform.reminders_enabled"
+            label="予約の前日にお知らせ（リマインド）を受け取る"
+            color="primary"
+            hide-details
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />

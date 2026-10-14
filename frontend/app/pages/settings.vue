@@ -27,6 +27,9 @@ const sform = reactive({
   appointment_interval_minutes: 30 as Schemas['ClinicSettingsUpdate']['appointment_interval_minutes'],
   closed_weekdays: [] as Schemas['ClinicSettingsUpdate']['closed_weekdays'],
   primary_color: '#1D4ED8',
+  notify_email_enabled: true,
+  notify_sms_enabled: false,
+  reminder_hours_before: 24,
   portal_enabled: true,
   portal_cancel_deadline_hours: 24,
   portal_booking_window_days: 60,
@@ -59,6 +62,7 @@ async function saveSettings() {
       ...sform,
       ai_monthly_minutes_limit: Number(sform.ai_monthly_minutes_limit),
       portal_cancel_deadline_hours: Number(sform.portal_cancel_deadline_hours),
+      reminder_hours_before: Number(sform.reminder_hours_before),
       portal_booking_window_days: Number(sform.portal_booking_window_days),
       break_start_time: sform.break_start_time || null,
       break_end_time: sform.break_end_time || null,
@@ -81,6 +85,32 @@ const portalUrl = computed(() =>
 async function copyPortalUrl() {
   await navigator.clipboard.writeText(portalUrl.value)
   notify('ポータルの URL をコピーしました')
+}
+
+// --- 通知 ---
+const notifyPage = ref(1)
+const { data: notifications, refresh: refreshNotifications } = await useAsyncData(
+  'notifications',
+  async () => {
+    const { data } = await api.GET('/api/notifications', {
+      params: { query: { limit: 20, offset: (notifyPage.value - 1) * 20 } },
+    })
+    return data ?? { items: [], total: 0 }
+  },
+  { watch: [notifyPage] },
+)
+watch(tab, (t) => t === 'notify' && refreshNotifications())
+const NOTIFY_KIND_LABELS: Record<string, string> = {
+  booking_confirmed: '予約の受付',
+  reminder: 'リマインド',
+  cancelled: 'キャンセル',
+  intake_link: '問診URL',
+  password_reset: 'パスワード再設定',
+}
+const NOTIFY_STATUS: Record<string, { label: string; color: string }> = {
+  queued: { label: '送信待ち', color: 'info' },
+  sent: { label: '送信済み', color: 'success' },
+  failed: { label: '失敗', color: 'error' },
 }
 
 // --- AI ---
@@ -168,6 +198,7 @@ async function createStaff() {
         <v-tab value="menus">施術メニュー</v-tab>
         <v-tab value="staff">スタッフ</v-tab>
         <v-tab value="portal">患者ポータル</v-tab>
+        <v-tab value="notify">通知</v-tab>
         <v-tab value="ai">AI</v-tab>
       </v-tabs>
       <v-divider />
@@ -287,6 +318,66 @@ async function createStaff() {
             <div class="d-flex justify-end">
               <v-btn color="primary" @click="saveSettings">保存</v-btn>
             </div>
+          </v-card-text>
+        </v-tabs-window-item>
+
+        <v-tabs-window-item value="notify">
+          <v-card-text>
+            <p class="text-body-medium mb-4">
+              Web 予約の受付・キャンセル、予約のリマインド、パスワード再設定を患者さんに自動で送ります。
+              メールアドレスがあればメール、SMS を有効にすると携帯番号（070/080/090）にも送ります。
+            </p>
+            <v-row>
+              <v-col cols="12" md="4">
+                <v-switch v-model="sform.notify_email_enabled" label="メールで送る" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-switch v-model="sform.notify_sms_enabled" label="SMS で送る（送信料がかかります）" color="primary" hide-details />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  v-model.number="sform.reminder_hours_before"
+                  type="number"
+                  label="リマインドを送る時刻（予約の何時間前）"
+                  suffix="時間前"
+                  hint="0 にすると送りません"
+                  persistent-hint
+                />
+              </v-col>
+            </v-row>
+            <div class="d-flex justify-end mb-4">
+              <v-btn color="primary" @click="saveSettings">保存</v-btn>
+            </div>
+
+            <h3 class="text-title-medium font-weight-bold mb-2">送信履歴</h3>
+            <v-table density="compact">
+              <thead>
+                <tr><th>日時</th><th>種類</th><th>経路</th><th>宛先</th><th>状態</th></tr>
+              </thead>
+              <tbody>
+                <tr v-if="!notifications?.items.length">
+                  <td colspan="5" class="text-medium-emphasis">送信履歴はありません</td>
+                </tr>
+                <tr v-for="n in notifications?.items" :key="n.id">
+                  <td>{{ formatDateTime(n.created_at) }}</td>
+                  <td>{{ NOTIFY_KIND_LABELS[n.kind] }}</td>
+                  <td>{{ n.channel === 'email' ? 'メール' : 'SMS' }}</td>
+                  <td>{{ n.to }}</td>
+                  <td>
+                    <v-chip size="small" :color="NOTIFY_STATUS[n.status]?.color" variant="tonal" :title="n.error_message || undefined">
+                      {{ NOTIFY_STATUS[n.status]?.label }}
+                    </v-chip>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+            <v-pagination
+              v-if="(notifications?.total ?? 0) > 20"
+              v-model="notifyPage"
+              :length="Math.ceil((notifications?.total ?? 0) / 20)"
+              density="compact"
+              class="mt-2"
+            />
           </v-card-text>
         </v-tabs-window-item>
 

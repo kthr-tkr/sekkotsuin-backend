@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import DB, CurrentUser, not_found
-from app.models import Appointment, AppointmentStatus
+from app.models import Appointment, AppointmentStatus, NotificationKind
 from app.schemas.appointment import (
     AppointmentCreate,
     AppointmentOut,
@@ -14,6 +14,7 @@ from app.schemas.appointment import (
     AvailabilitySlot,
 )
 from app.services import appointments as svc
+from app.services.notify.queue import notify_appointment
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -83,7 +84,7 @@ async def create_appointment(db: DB, user: CurrentUser, body: AppointmentCreate)
     appt = Appointment(
         clinic_id=user.clinic_id,
         created_by_id=user.id,
-        **body.model_dump(exclude={"end_at"}),
+        **body.model_dump(exclude={"end_at", "notify_patient"}),
         end_at=body.end_at,
     )
     await svc.validate_and_apply(
@@ -94,6 +95,9 @@ async def create_appointment(db: DB, user: CurrentUser, body: AppointmentCreate)
         end_given=body.end_at is not None,
     )
     db.add(appt)
+    if body.notify_patient:
+        await db.flush()
+        await notify_appointment(db, NotificationKind.BOOKING_CONFIRMED, appt)
     await db.commit()
     return await _reload(db, appt.id)
 

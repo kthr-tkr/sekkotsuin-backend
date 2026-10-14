@@ -26,3 +26,5 @@ class Patient(TimestampMixin, Base):
     email: Mapped[str | None] = mapped_column(String(254))
     address: Mapped[str] = mapped_column(String(255), default="")
     notes: Mapped[str] = mapped_column(Text, default="")
+    # 予約のリマインドを受け取るか（予約確認・パスワード再設定などは常に送る）
+    reminders_enabled: Mapped[bool] = mapped_column(default=True, server_default="true")

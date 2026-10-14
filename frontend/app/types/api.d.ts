@@ -715,6 +715,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Notifications
+         * @description 送信履歴（管理者のみ）。
+         */
+        get: operations["notifications-list_notifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/intakes/{intake_id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Intake Link
+         * @description 問診 URL を患者にメール / SMS で送る。
+         */
+        post: operations["notifications-send_intake_link"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinical-notes/{note_id}/recordings": {
         parameters: {
             query?: never;
@@ -901,6 +941,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/portal/{slug}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Password Reset
+         * @description パスワード再設定のメールを送る。アカウントの有無に関わらず同じ応答を返す。
+         */
+        post: operations["portal-request_password_reset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/portal/{slug}/password-reset/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Password Reset */
+        post: operations["portal-confirm_password_reset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me": {
         parameters: {
             query?: never;
@@ -1027,6 +1104,11 @@ export interface components {
              * @default
              */
             notes: string;
+            /**
+             * Notify Patient
+             * @default false
+             */
+            notify_patient: boolean;
         };
         /** AppointmentOut */
         AppointmentOut: {
@@ -1228,6 +1310,21 @@ export interface components {
              */
             portal_booking_window_days: number;
             /**
+             * Notify Email Enabled
+             * @default true
+             */
+            notify_email_enabled: boolean;
+            /**
+             * Notify Sms Enabled
+             * @default false
+             */
+            notify_sms_enabled: boolean;
+            /**
+             * Reminder Hours Before
+             * @default 24
+             */
+            reminder_hours_before: number;
+            /**
              * Ai Enabled
              * @default true
              */
@@ -1315,6 +1412,21 @@ export interface components {
              * @default 60
              */
             portal_booking_window_days: number;
+            /**
+             * Notify Email Enabled
+             * @default true
+             */
+            notify_email_enabled: boolean;
+            /**
+             * Notify Sms Enabled
+             * @default false
+             */
+            notify_sms_enabled: boolean;
+            /**
+             * Reminder Hours Before
+             * @default 24
+             */
+            reminder_hours_before: number;
             /**
              * Ai Enabled
              * @default true
@@ -1756,6 +1868,8 @@ export interface components {
             email: string;
             /** Address */
             address: string;
+            /** Reminders Enabled */
+            reminders_enabled: boolean;
             /** Clinic Name */
             clinic_name: string;
             /** Clinic Slug */
@@ -1770,6 +1884,11 @@ export interface components {
              * @default
              */
             address: string;
+            /**
+             * Reminders Enabled
+             * @default true
+             */
+            reminders_enabled: boolean;
         };
         /** MyAppointment */
         MyAppointment: {
@@ -1808,6 +1927,48 @@ export interface components {
              */
             notes: string;
         };
+        /**
+         * NotificationChannel
+         * @enum {string}
+         */
+        NotificationChannel: "email" | "sms";
+        /**
+         * NotificationKind
+         * @enum {string}
+         */
+        NotificationKind: "booking_confirmed" | "reminder" | "cancelled" | "intake_link" | "password_reset";
+        /** NotificationOut */
+        NotificationOut: {
+            /** Id */
+            id: number;
+            /** Patient Id */
+            patient_id: number | null;
+            /** Appointment Id */
+            appointment_id: number | null;
+            kind: components["schemas"]["NotificationKind"];
+            channel: components["schemas"]["NotificationChannel"];
+            /** To */
+            to: string;
+            /** Subject */
+            subject: string;
+            status: components["schemas"]["NotificationStatus"];
+            /** Attempts */
+            attempts: number;
+            /** Error Message */
+            error_message: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Sent At */
+            sent_at: string | null;
+        };
+        /**
+         * NotificationStatus
+         * @enum {string}
+         */
+        NotificationStatus: "queued" | "sent" | "failed";
         /** Page[ClinicalNoteOut] */
         Page_ClinicalNoteOut_: {
             /** Items */
@@ -1819,6 +1980,13 @@ export interface components {
         Page_IntakeOut_: {
             /** Items */
             items: components["schemas"]["IntakeOut"][];
+            /** Total */
+            total: number;
+        };
+        /** Page[NotificationOut] */
+        Page_NotificationOut_: {
+            /** Items */
+            items: components["schemas"]["NotificationOut"][];
             /** Total */
             total: number;
         };
@@ -1842,6 +2010,21 @@ export interface components {
             items: components["schemas"]["TreatmentPlanOut"][];
             /** Total */
             total: number;
+        };
+        /** PasswordResetConfirm */
+        PasswordResetConfirm: {
+            /** Password */
+            password: string;
+            /** Token */
+            token: string;
+        };
+        /** PasswordResetRequest */
+        PasswordResetRequest: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
         };
         /** PatientBrief */
         PatientBrief: {
@@ -2427,6 +2610,11 @@ export interface components {
              * @default
              */
             memo: string;
+        };
+        /** SendIntakeLink */
+        SendIntakeLink: {
+            /** Channels */
+            channels: components["schemas"]["NotificationChannel"][];
         };
         /** ShiftOut */
         ShiftOut: {
@@ -4762,6 +4950,75 @@ export interface operations {
             };
         };
     };
+    "notifications-list_notifications": {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["NotificationStatus"] | null;
+                patient_id?: number | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_NotificationOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "notifications-send_intake_link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                intake_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendIntakeLink"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     "ai-list_recordings": {
         parameters: {
             query?: never;
@@ -5100,6 +5357,78 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PortalLogin"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalToken"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-request_password_reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "portal-confirm_password_reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetConfirm"];
             };
         };
         responses: {

@@ -44,6 +44,9 @@ async function submit() {
         <v-alert v-if="error" type="error" variant="tonal" class="mb-4" :text="error" />
         <v-btn type="submit" color="primary" block size="large" :loading="loading">ログイン</v-btn>
       </v-form>
+      <div class="text-center mt-2">
+        <NuxtLink :to="`/c/${slug}/forgot`" class="text-body-medium">パスワードを忘れた方</NuxtLink>
+      </div>
       <v-divider class="my-4" />
       <v-btn variant="text" block :to="`/c/${slug}/register`">はじめての方・アカウントをお持ちでない方</v-btn>
     </v-card-text>

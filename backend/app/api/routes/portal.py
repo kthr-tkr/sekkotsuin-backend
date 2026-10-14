@@ -4,6 +4,7 @@
 - /me/...: 患者トークン（typ=patient）で認証
 """
 
+import hashlib
 import secrets
 from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
@@ -28,6 +29,8 @@ from app.models import (
     Clinic,
     ClinicSettings,
     Intake,
+    NotificationChannel,
+    NotificationKind,
     Patient,
     PatientAccount,
     TreatmentMenu,
@@ -38,6 +41,8 @@ from app.schemas.portal import (
     MeUpdate,
     MyAppointment,
     MyBookingCreate,
+    PasswordResetConfirm,
+    PasswordResetRequest,
     PortalClinic,
     PortalLink,
     PortalLogin,
@@ -47,8 +52,10 @@ from app.schemas.portal import (
     PortalToken,
 )
 from app.services import appointments as appt_svc
+from app.services.notify import templates
+from app.services.notify.queue import enqueue, notify_appointment
 from app.services.patients import next_card_no
-from app.services.ratelimit import login_limiter, verify_limiter
+from app.services.ratelimit import login_limiter, reset_limiter, verify_limiter
 
 public_router = APIRouter(prefix="/portal/{slug}", tags=["portal"])
 me_router = APIRouter(prefix="/me", tags=["portal"])
@@ -279,6 +286,79 @@ async def portal_login(db: DB, slug: str, body: PortalLogin) -> PortalToken:
     return _issue_token(account)
 
 
+RESET_TTL = timedelta(hours=1)
+
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+@public_router.post("/password-reset", status_code=202)
+async def request_password_reset(db: DB, slug: str, body: PasswordResetRequest) -> dict:
+    """パスワード再設定のメールを送る。アカウントの有無に関わらず同じ応答を返す。"""
+    clinic, cs = await _clinic(db, slug)
+    email = body.email.lower()
+    reset_limiter.hit(f"reset:{clinic.id}:{email}")
+    account = await db.scalar(
+        select(PatientAccount).where(
+            PatientAccount.clinic_id == clinic.id,
+            PatientAccount.email == email,
+            PatientAccount.is_active.is_(True),
+        )
+    )
+    if account is not None:
+        patient = await db.get(Patient, account.patient_id)
+        assert patient is not None
+        token = secrets.token_urlsafe(32)
+        account.reset_token_hash = _hash_token(token)
+        account.reset_token_expires_at = datetime.now(UTC) + RESET_TTL
+        enqueue(
+            db,
+            clinic_id=clinic.id,
+            patient=patient,
+            cs=cs,
+            kind=NotificationKind.PASSWORD_RESET,
+            message=templates.password_reset(
+                name=f"{patient.last_name} {patient.first_name}",
+                clinic=cs.display_name or clinic.name,
+                phone=cs.phone,
+                slug=clinic.booking_slug,
+                token=token,
+            ),
+            channels={NotificationChannel.EMAIL},
+            email=account.email,
+        )
+    await db.commit()
+    return {"detail": "登録されているメールアドレスであれば、再設定のご案内を送信しました。"}
+
+
+@public_router.post("/password-reset/confirm", response_model=PortalToken)
+async def confirm_password_reset(db: DB, slug: str, body: PasswordResetConfirm) -> PortalToken:
+    clinic, _ = await _clinic(db, slug)
+    account = await db.scalar(
+        select(PatientAccount).where(
+            PatientAccount.clinic_id == clinic.id,
+            PatientAccount.reset_token_hash == _hash_token(body.token),
+        )
+    )
+    if (
+        account is None
+        or account.reset_token_expires_at is None
+        or account.reset_token_expires_at < datetime.now(UTC)
+        or not account.is_active
+    ):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "再設定のリンクが無効か、有効期限が切れています。もう一度お手続きください。",
+        )
+    account.hashed_password = hash_password(body.password)
+    account.reset_token_hash = None
+    account.reset_token_expires_at = None
+    account.last_login_at = datetime.now(UTC)
+    await db.commit()
+    return _issue_token(account)
+
+
 # --- マイページ（患者トークン） ---
 
 bearer = HTTPBearer(auto_error=False)
@@ -320,6 +400,7 @@ async def _me_out(db: DB, account: PatientAccount) -> MeOut:
         phone=patient.phone,
         email=account.email,
         address=patient.address,
+        reminders_enabled=patient.reminders_enabled,
         clinic_name=cs.display_name or clinic.name,
         clinic_slug=clinic.booking_slug,
     )
@@ -338,6 +419,7 @@ async def update_me(db: DB, account: Account, body: MeUpdate) -> MeOut:
     assert patient is not None
     patient.phone = body.phone
     patient.address = body.address
+    patient.reminders_enabled = body.reminders_enabled
     await db.commit()
     return await _me_out(db, account)
 
@@ -456,6 +538,8 @@ async def book(db: DB, account: Account, body: MyBookingCreate) -> MyAppointment
         payload={},
     )
     db.add(intake)
+    await db.flush()
+    await notify_appointment(db, NotificationKind.BOOKING_CONFIRMED, appt)
     await db.commit()
     return MyAppointment(
         id=appt.id,
@@ -481,6 +565,7 @@ async def cancel(db: DB, account: Account, appointment_id: int) -> MyAppointment
             "Web ではキャンセルできません。院にお電話ください。",
         )
     appt.status = AppointmentStatus.CANCELLED
+    await notify_appointment(db, NotificationKind.CANCELLED, appt)
     await db.commit()
     return MyAppointment(
         id=appt.id,

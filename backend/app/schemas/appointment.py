@@ -17,6 +17,8 @@ class AppointmentCreate(BaseModel):
     status: AppointmentStatus = AppointmentStatus.BOOKED
     booking_source: BookingSource = BookingSource.STAFF
     notes: str = ""
+    # 患者に予約確認をメール / SMS で送る
+    notify_patient: bool = False
 
 
 class AppointmentUpdate(BaseModel):

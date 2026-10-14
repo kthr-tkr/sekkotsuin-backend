@@ -32,10 +32,11 @@ const form = reactive({
   status: 'booked',
   booking_source: 'staff',
   notes: '',
+  notify_patient: false,
 })
 const error = ref<string | null>(null)
 const saving = ref(false)
-const intakeToken = ref<string | null>(null)
+const issuedIntake = ref<{ id: number; access_token: string } | null>(null)
 
 watch(
   open,
@@ -52,6 +53,7 @@ watch(
       status: a?.status ?? 'booked',
       booking_source: a?.booking_source ?? 'staff',
       notes: a?.notes ?? '',
+      notify_patient: false,
     })
   },
   { immediate: true },
@@ -98,7 +100,7 @@ async function save() {
         params: { path: { appt_id: props.appointment.id } },
         body: { ...body, end_at: body.end_at ?? undefined },
       })
-    : await api.POST('/api/appointments', { body })
+    : await api.POST('/api/appointments', { body: { ...body, notify_patient: form.notify_patient } })
   saving.value = false
   if (res.error) {
     error.value = errorMessage(res.error)
@@ -133,7 +135,7 @@ async function issueIntake() {
     error.value = errorMessage(err)
     return
   }
-  intakeToken.value = data.access_token
+  issuedIntake.value = data
 }
 </script>
 
@@ -173,6 +175,15 @@ async function issueIntake() {
           <v-col cols="12">
             <v-textarea v-model="form.notes" label="メモ" rows="2" auto-grow />
           </v-col>
+          <v-col v-if="!appointment" cols="12">
+            <v-checkbox
+              v-model="form.notify_patient"
+              label="患者さんに予約確認をメール / SMS で送る"
+              hide-details
+              density="compact"
+              :disabled="!form.patient_id"
+            />
+          </v-col>
         </v-row>
       </v-card-text>
       <v-card-actions>
@@ -207,6 +218,6 @@ async function issueIntake() {
         <v-btn color="primary" :loading="saving" @click="save">保存</v-btn>
       </v-card-actions>
     </v-card>
-    <IntakeLinkDialog :token="intakeToken" @close="intakeToken = null" />
+    <IntakeLinkDialog :intake="issuedIntake" @close="issuedIntake = null" />
   </v-dialog>
 </template>

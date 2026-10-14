@@ -37,6 +37,24 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 10 * 1024 * 1024
     max_audio_bytes: int = 25 * 1024 * 1024  # OpenAI の文字起こし API の上限
 
+    # 患者向け画面のベース URL（通知のリンクに使う）
+    public_app_url: str = "http://localhost:3000"
+
+    # 通知
+    # メール: "smtp" | "console"（送らずに送信記録だけ残す）| "disabled"
+    email_provider: str = "console"
+    email_from: str = "no-reply@example.com"
+    smtp_host: str = "localhost"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_starttls: bool = True
+    # SMS: "twilio" | "console" | "disabled"
+    sms_provider: str = "console"
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_from_number: str = ""
+
     # AI: "openai" | "fake"（開発・テスト用の固定応答）| "disabled"
     ai_provider: str = "fake"
     openai_api_key: str = ""
@@ -58,6 +76,14 @@ class Settings(BaseSettings):
             raise ValueError("AI_PROVIDER は openai / fake / disabled のいずれかです。")
         if self.environment != "local" and self.ai_provider == "fake":
             raise ValueError("本番環境では AI_PROVIDER に openai か disabled を設定してください。")
+        if self.email_provider not in ("smtp", "console", "disabled"):
+            raise ValueError("EMAIL_PROVIDER は smtp / console / disabled のいずれかです。")
+        if self.sms_provider not in ("twilio", "console", "disabled"):
+            raise ValueError("SMS_PROVIDER は twilio / console / disabled のいずれかです。")
+        if self.sms_provider == "twilio" and not (
+            self.twilio_account_sid and self.twilio_auth_token and self.twilio_from_number
+        ):
+            raise ValueError("SMS_PROVIDER=twilio のときは TWILIO_* の設定が必要です。")
         if self.ai_provider == "openai" and not self.openai_api_key:
             raise ValueError("AI_PROVIDER=openai のときは OPENAI_API_KEY が必要です。")
         return self

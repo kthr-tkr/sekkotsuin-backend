@@ -23,6 +23,9 @@ services:
       MEDIA_DIR: /data/media
       AI_PROVIDER: ${AI_PROVIDER:-fake}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:3000}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
+      SMS_PROVIDER: ${SMS_PROVIDER:-console}
     ports:
       - "8000:8000"
     volumes:
@@ -39,6 +42,9 @@ services:
       MEDIA_DIR: /data/media
       AI_PROVIDER: ${AI_PROVIDER:-fake}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:3000}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
+      SMS_PROVIDER: ${SMS_PROVIDER:-console}
     volumes:
       - media:/data/media
     depends_on:

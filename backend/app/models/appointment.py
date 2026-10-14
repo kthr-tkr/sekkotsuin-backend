@@ -75,6 +75,7 @@ class Appointment(TimestampMixin, Base):
         str_enum(BookingSource), default=BookingSource.UNKNOWN
     )
     notes: Mapped[str] = mapped_column(Text, default="")
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     patient: Mapped[Patient | None] = relationship(lazy="raise")
     assigned_staff: Mapped[User | None] = relationship(

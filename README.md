@@ -23,6 +23,7 @@
 - **売上**（カルテから会計を登録。メニュー料金を初期値に。未会計・支払い済み・取消）
 - **シフト・休暇**（月間のシフト表、休暇の申請と承認。予約の空き枠に反映）
 - **KPI**（売上・来院数・客単価・新規患者・キャンセル率・日別売上・予約経路・担当者別）※管理者のみ
+- **通知**（メール / SMS。Web 予約の受付・キャンセル、予約のリマインド、パスワード再設定、スタッフからの問診 URL 送信。送信履歴）
 - **患者向けポータル**（`/c/<予約URL用slug>`。Web 予約、マイページでの予約確認・キャンセル、Web 問診。新規登録、来院歴のある方の本人確認、メールアドレスか診察券番号でのログイン）
 
 すべてのデータは院（clinic）単位で分離され、他院のデータにはアクセスできません。
@@ -44,12 +45,15 @@ uv run uvicorn app.main:app --reload
 
 API ドキュメント: http://localhost:8000/docs
 
-### 2. AI ワーカー（録音の文字起こし・要約、姿勢分析）
+### 2. ワーカー（通知の送信・リマインド、録音の文字起こし・要約、姿勢分析）
 
 ```bash
 cd backend
 uv run python -m app.worker
 ```
+
+通知は `EMAIL_PROVIDER=console` / `SMS_PROVIDER=console`（既定）ではワーカーのログに出すだけで、実際には送りません。
+本番では `EMAIL_PROVIDER=smtp`（`SMTP_*`）と `SMS_PROVIDER=twilio`（`TWILIO_*`）を設定し、`PUBLIC_APP_URL` に患者向け画面の URL を入れてください。
 
 `AI_PROVIDER=fake`（既定）では固定の結果を返すので、API キーなしで流れを確認できます。
 実際に使う場合は `AI_PROVIDER=openai` と `OPENAI_API_KEY` を設定してください。
@@ -104,5 +108,4 @@ uv run python -m app.cli create-clinic --name "さくら接骨院" --slug sakura
 
 ## 今後の予定
 
-- 予約確認・リマインドのメール / SMS 通知
 - legacy/ の削除（移植の確認が終わったら）

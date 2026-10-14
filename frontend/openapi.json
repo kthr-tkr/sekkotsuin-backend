@@ -3329,6 +3329,162 @@
         }
       }
     },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "List Notifications",
+        "description": "送信履歴（管理者のみ）。",
+        "operationId": "notifications-list_notifications",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/NotificationStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "patient_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_NotificationOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/intakes/{intake_id}/send": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Send Intake Link",
+        "description": "問診 URL を患者にメール / SMS で送る。",
+        "operationId": "notifications-send_intake_link",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "intake_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Intake Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendIntakeLink"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationOut"
+                  },
+                  "title": "Response Notifications-Send Intake Link"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinical-notes/{note_id}/recordings": {
       "post": {
         "tags": [
@@ -3901,6 +4057,113 @@
         }
       }
     },
+    "/api/portal/{slug}/password-reset": {
+      "post": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Request Password Reset",
+        "description": "パスワード再設定のメールを送る。アカウントの有無に関わらず同じ応答を返す。",
+        "operationId": "portal-request_password_reset",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Portal-Request Password Reset"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portal/{slug}/password-reset/confirm": {
+      "post": {
+        "tags": [
+          "portal"
+        ],
+        "summary": "Confirm Password Reset",
+        "operationId": "portal-confirm_password_reset",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalToken"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me": {
       "get": {
         "tags": [
@@ -4315,6 +4578,11 @@
             "type": "string",
             "title": "Notes",
             "default": ""
+          },
+          "notify_patient": {
+            "type": "boolean",
+            "title": "Notify Patient",
+            "default": false
           }
         },
         "type": "object",
@@ -4813,6 +5081,23 @@
             "title": "Portal Booking Window Days",
             "default": 60
           },
+          "notify_email_enabled": {
+            "type": "boolean",
+            "title": "Notify Email Enabled",
+            "default": true
+          },
+          "notify_sms_enabled": {
+            "type": "boolean",
+            "title": "Notify Sms Enabled",
+            "default": false
+          },
+          "reminder_hours_before": {
+            "type": "integer",
+            "maximum": 168.0,
+            "minimum": 0.0,
+            "title": "Reminder Hours Before",
+            "default": 24
+          },
           "ai_enabled": {
             "type": "boolean",
             "title": "Ai Enabled",
@@ -4953,6 +5238,23 @@
             "minimum": 1.0,
             "title": "Portal Booking Window Days",
             "default": 60
+          },
+          "notify_email_enabled": {
+            "type": "boolean",
+            "title": "Notify Email Enabled",
+            "default": true
+          },
+          "notify_sms_enabled": {
+            "type": "boolean",
+            "title": "Notify Sms Enabled",
+            "default": false
+          },
+          "reminder_hours_before": {
+            "type": "integer",
+            "maximum": 168.0,
+            "minimum": 0.0,
+            "title": "Reminder Hours Before",
+            "default": 24
           },
           "ai_enabled": {
             "type": "boolean",
@@ -5929,6 +6231,10 @@
             "type": "string",
             "title": "Address"
           },
+          "reminders_enabled": {
+            "type": "boolean",
+            "title": "Reminders Enabled"
+          },
           "clinic_name": {
             "type": "string",
             "title": "Clinic Name"
@@ -5950,6 +6256,7 @@
           "phone",
           "email",
           "address",
+          "reminders_enabled",
           "clinic_name",
           "clinic_slug"
         ],
@@ -5969,6 +6276,11 @@
             "maxLength": 255,
             "title": "Address",
             "default": ""
+          },
+          "reminders_enabled": {
+            "type": "boolean",
+            "title": "Reminders Enabled",
+            "default": true
           }
         },
         "type": "object",
@@ -6052,6 +6364,122 @@
         ],
         "title": "MyBookingCreate"
       },
+      "NotificationChannel": {
+        "type": "string",
+        "enum": [
+          "email",
+          "sms"
+        ],
+        "title": "NotificationChannel"
+      },
+      "NotificationKind": {
+        "type": "string",
+        "enum": [
+          "booking_confirmed",
+          "reminder",
+          "cancelled",
+          "intake_link",
+          "password_reset"
+        ],
+        "title": "NotificationKind"
+      },
+      "NotificationOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "patient_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Id"
+          },
+          "appointment_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/NotificationKind"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/NotificationChannel"
+          },
+          "to": {
+            "type": "string",
+            "title": "To"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "status": {
+            "$ref": "#/components/schemas/NotificationStatus"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "error_message": {
+            "type": "string",
+            "title": "Error Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "patient_id",
+          "appointment_id",
+          "kind",
+          "channel",
+          "to",
+          "subject",
+          "status",
+          "attempts",
+          "error_message",
+          "created_at",
+          "sent_at"
+        ],
+        "title": "NotificationOut"
+      },
+      "NotificationStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "sent",
+          "failed"
+        ],
+        "title": "NotificationStatus"
+      },
       "Page_ClinicalNoteOut_": {
         "properties": {
           "items": {
@@ -6093,6 +6521,27 @@
           "total"
         ],
         "title": "Page[IntakeOut]"
+      },
+      "Page_NotificationOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "Page[NotificationOut]"
       },
       "Page_PatientOut_": {
         "properties": {
@@ -6156,6 +6605,42 @@
           "total"
         ],
         "title": "Page[TreatmentPlanOut]"
+      },
+      "PasswordResetConfirm": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
+          },
+          "token": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 20,
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "password",
+          "token"
+        ],
+        "title": "PasswordResetConfirm"
+      },
+      "PasswordResetRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "PasswordResetRequest"
       },
       "PatientBrief": {
         "properties": {
@@ -7503,6 +7988,23 @@
           "amount"
         ],
         "title": "SalesUpdate"
+      },
+      "SendIntakeLink": {
+        "properties": {
+          "channels": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationChannel"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Channels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channels"
+        ],
+        "title": "SendIntakeLink"
       },
       "ShiftOut": {
         "properties": {
