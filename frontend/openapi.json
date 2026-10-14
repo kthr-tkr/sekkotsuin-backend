@@ -2490,6 +2490,408 @@
         }
       }
     },
+    "/api/posture-assessments/{assessment_id}/analyze": {
+      "post": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Analyze",
+        "description": "写真の AI 分析を登録する。結果は ai_findings に入り、スタッフが確認して反映する。",
+        "operationId": "posture-analyze",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posture-assessments/{assessment_id}/apply-ai": {
+      "post": {
+        "tags": [
+          "posture"
+        ],
+        "summary": "Apply Ai",
+        "description": "AI の所見で findings を置き換える（空欄の部位は今の所見を残す）。",
+        "operationId": "posture-apply_ai",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinical-notes/{note_id}/recordings": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Upload Recording",
+        "description": "録音をアップロードし、文字起こしと SOAP 要約のジョブを登録する。",
+        "operationId": "ai-upload_recording",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_ai-upload_recording"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "List Recordings",
+        "operationId": "ai-list_recordings",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecordingOut"
+                  },
+                  "title": "Response Ai-List Recordings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{recording_id}": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Get Recording",
+        "operationId": "ai-get_recording",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recording Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{recording_id}/retry": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Retry Recording",
+        "operationId": "ai-retry_recording",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recording Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recordings/{recording_id}/apply": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Apply Recording",
+        "description": "AI の SOAP 下書きをカルテに反映する（記入済みの欄には追記する）。修正履歴を残す。",
+        "operationId": "ai-apply_recording",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recording Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/usage": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Ai Usage",
+        "operationId": "ai-ai_usage",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM",
+              "title": "Month"
+            },
+            "description": "YYYY-MM"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiUsageSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/public/intakes/{token}": {
       "get": {
         "tags": [
@@ -2585,6 +2987,69 @@
   },
   "components": {
     "schemas": {
+      "AiUsageSummary": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available"
+          },
+          "ai_enabled": {
+            "type": "boolean",
+            "title": "Ai Enabled"
+          },
+          "minutes_used": {
+            "type": "number",
+            "title": "Minutes Used"
+          },
+          "minutes_limit": {
+            "type": "integer",
+            "title": "Minutes Limit"
+          },
+          "cost_yen": {
+            "type": "number",
+            "title": "Cost Yen"
+          },
+          "by_type": {
+            "items": {
+              "$ref": "#/components/schemas/UsageByType"
+            },
+            "type": "array",
+            "title": "By Type"
+          },
+          "by_day": {
+            "items": {
+              "$ref": "#/components/schemas/UsageByDay"
+            },
+            "type": "array",
+            "title": "By Day"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "ai_available",
+          "ai_enabled",
+          "minutes_used",
+          "minutes_limit",
+          "cost_yen",
+          "by_type",
+          "by_day"
+        ],
+        "title": "AiUsageSummary"
+      },
+      "AiUsageType": {
+        "type": "string",
+        "enum": [
+          "transcription",
+          "summary",
+          "posture"
+        ],
+        "title": "AiUsageType"
+      },
       "AppointmentCreate": {
         "properties": {
           "patient_id": {
@@ -2894,6 +3359,27 @@
         ],
         "title": "AvailabilitySlot"
       },
+      "Body_ai-upload_recording": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "duration_sec": {
+            "type": "integer",
+            "maximum": 10800.0,
+            "minimum": 1.0,
+            "title": "Duration Sec"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "duration_sec"
+        ],
+        "title": "Body_ai-upload_recording"
+      },
       "Body_auth-login": {
         "properties": {
           "grant_type": {
@@ -3107,6 +3593,18 @@
             "title": "Primary Color",
             "default": "#1D4ED8"
           },
+          "ai_enabled": {
+            "type": "boolean",
+            "title": "Ai Enabled",
+            "default": true
+          },
+          "ai_monthly_minutes_limit": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Ai Monthly Minutes Limit",
+            "default": 1000
+          },
           "clinic_id": {
             "type": "integer",
             "title": "Clinic Id"
@@ -3216,6 +3714,18 @@
             "pattern": "^#[0-9A-Fa-f]{6}$",
             "title": "Primary Color",
             "default": "#1D4ED8"
+          },
+          "ai_enabled": {
+            "type": "boolean",
+            "title": "Ai Enabled",
+            "default": true
+          },
+          "ai_monthly_minutes_limit": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Ai Monthly Minutes Limit",
+            "default": 1000
           }
         },
         "type": "object",
@@ -4353,6 +4863,38 @@
           "findings": {
             "$ref": "#/components/schemas/PostureFindings"
           },
+          "ai_status": {
+            "type": "string",
+            "title": "Ai Status",
+            "default": ""
+          },
+          "ai_findings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostureFindings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ai_error_message": {
+            "type": "string",
+            "title": "Ai Error Message",
+            "default": ""
+          },
+          "ai_analyzed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Analyzed At"
+          },
           "confirmed_at": {
             "anyOf": [
               {
@@ -4531,6 +5073,95 @@
         ],
         "title": "PublicIntakeOut",
         "description": "患者向け: 個人情報は最小限のみ返す。"
+      },
+      "RecordingOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "clinical_note_id": {
+            "type": "integer",
+            "title": "Clinical Note Id"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "duration_sec": {
+            "type": "integer",
+            "title": "Duration Sec"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RecordingStatus"
+          },
+          "error_message": {
+            "type": "string",
+            "title": "Error Message"
+          },
+          "transcript": {
+            "type": "string",
+            "title": "Transcript"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary"
+          },
+          "applied_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "audio_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "clinical_note_id",
+          "mime_type",
+          "duration_sec",
+          "status",
+          "error_message",
+          "transcript",
+          "summary",
+          "applied_at",
+          "created_at"
+        ],
+        "title": "RecordingOut"
+      },
+      "RecordingStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "transcribing",
+          "summarizing",
+          "done",
+          "failed"
+        ],
+        "title": "RecordingStatus"
       },
       "Role": {
         "type": "string",
@@ -5133,6 +5764,57 @@
           "start_date"
         ],
         "title": "TreatmentPlanUpdate"
+      },
+      "UsageByDay": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "audio_sec": {
+            "type": "integer",
+            "title": "Audio Sec"
+          },
+          "cost_yen": {
+            "type": "number",
+            "title": "Cost Yen"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "audio_sec",
+          "cost_yen"
+        ],
+        "title": "UsageByDay"
+      },
+      "UsageByType": {
+        "properties": {
+          "usage_type": {
+            "$ref": "#/components/schemas/AiUsageType"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "audio_sec": {
+            "type": "integer",
+            "title": "Audio Sec"
+          },
+          "cost_yen": {
+            "type": "number",
+            "title": "Cost Yen"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usage_type",
+          "count",
+          "audio_sec",
+          "cost_yen"
+        ],
+        "title": "UsageByType"
       },
       "UserOut": {
         "properties": {

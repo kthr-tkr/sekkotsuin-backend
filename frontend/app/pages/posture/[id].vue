@@ -101,6 +101,48 @@ async function removeImage(view: View) {
   if (data) apply(data)
 }
 
+// AI 分析
+const analyzing = computed(() => ['queued', 'running'].includes(assessment.value?.ai_status ?? ''))
+let poll: ReturnType<typeof setInterval> | undefined
+async function reload() {
+  const { data } = await api.GET('/api/posture-assessments/{assessment_id}', {
+    params: { path: { assessment_id: id } },
+  })
+  if (data) apply(data)
+}
+watchEffect(() => {
+  if (analyzing.value && !poll) poll = setInterval(reload, 3000)
+  if (!analyzing.value && poll) {
+    clearInterval(poll)
+    poll = undefined
+  }
+})
+onBeforeUnmount(() => clearInterval(poll))
+
+async function analyze() {
+  if (dirty.value && !(await save())) return
+  const { data, error } = await api.POST('/api/posture-assessments/{assessment_id}/analyze', {
+    params: { path: { assessment_id: id } },
+  })
+  if (error || !data) {
+    snackbar.value = { text: errorMessage(error), color: 'error' }
+    return
+  }
+  apply(data)
+}
+
+async function applyAi() {
+  if (dirty.value && !(await save())) return
+  const { data } = await api.POST('/api/posture-assessments/{assessment_id}/apply-ai', {
+    params: { path: { assessment_id: id } },
+  })
+  if (!data) return
+  apply(data)
+  Object.assign(form, toForm(data))
+  saved.value = JSON.stringify(form)
+  snackbar.value = { text: 'AI の所見を反映しました（内容を確認してください）', color: 'success' }
+}
+
 const imageOf = (view: string) => assessment.value?.images.find((i) => i.view === view)
 
 onBeforeRouteLeave(() => {
@@ -162,9 +204,65 @@ onBeforeRouteLeave(() => {
             </PosturePhoto>
           </v-col>
         </v-row>
-        <p class="text-caption text-medium-emphasis mt-2">
+        <p class="text-body-small text-medium-emphasis mt-2">
           写真は保存時に位置情報（EXIF）を取り除き、長辺 2000px に縮小しています。
         </p>
+      </v-card-text>
+    </v-card>
+
+    <v-card class="mb-4" title="AI による姿勢分析">
+      <v-card-text>
+        <div class="d-flex flex-wrap align-center ga-3">
+          <v-btn
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-robot-outline"
+            :loading="analyzing"
+            :disabled="!assessment.images.length"
+            @click="analyze"
+          >
+            {{ assessment.ai_findings ? 'もう一度分析' : '写真を AI で分析' }}
+          </v-btn>
+          <span v-if="analyzing" class="text-body-medium">分析しています…（数十秒かかります）</span>
+          <span v-else-if="!assessment.images.length" class="text-body-medium text-medium-emphasis">
+            写真を登録すると分析できます
+          </span>
+          <span v-else-if="assessment.ai_analyzed_at" class="text-body-medium text-medium-emphasis">
+            {{ formatDateTime(assessment.ai_analyzed_at) }} に分析
+          </span>
+        </div>
+        <v-alert
+          v-if="assessment.ai_status === 'failed'"
+          type="error"
+          variant="tonal"
+          density="compact"
+          class="mt-3"
+          :text="assessment.ai_error_message"
+        />
+        <template v-if="assessment.ai_findings && !analyzing">
+          <v-alert type="info" variant="tonal" density="compact" class="mt-3">
+            AI の所見は参考情報です。写真と実際の評価をもとに確認・修正してください。
+          </v-alert>
+          <p class="mt-3"><strong>まとめ:</strong> {{ assessment.ai_findings.overall_summary }}</p>
+          <div v-if="assessment.ai_findings.important_points?.length" class="mt-1">
+            <v-chip v-for="pt in assessment.ai_findings.important_points" :key="pt" size="small" class="mr-1 mb-1">
+              {{ pt }}
+            </v-chip>
+          </div>
+          <v-table density="compact" class="mt-2">
+            <tbody>
+              <template v-for="r in POSTURE_REGIONS" :key="r.key">
+                <tr v-if="(assessment.ai_findings.regions as Record<string, string>)[r.key]">
+                  <th style="width: 140px">{{ r.label }}</th>
+                  <td>{{ (assessment.ai_findings.regions as Record<string, string>)[r.key] }}</td>
+                </tr>
+              </template>
+            </tbody>
+          </v-table>
+          <div class="d-flex justify-end mt-2">
+            <v-btn color="primary" prepend-icon="mdi-file-import-outline" @click="applyAi">所見に反映</v-btn>
+          </div>
+        </template>
       </v-card-text>
     </v-card>
 

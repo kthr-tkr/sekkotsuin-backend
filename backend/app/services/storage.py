@@ -20,7 +20,9 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.core.config import settings
 
-KEY_RE = re.compile(r"^[a-z0-9_-]+(/[a-z0-9_-]+)*/[A-Za-z0-9_-]+\.(png|jpg)$")
+KEY_RE = re.compile(
+    r"^[a-z0-9_-]+(/[a-z0-9_-]+)*/[A-Za-z0-9_-]+\.(png|jpg|webm|ogg|m4a|mp4|mp3|wav)$"
+)
 IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp"}
 MAX_IMAGE_SIDE = 2000
 

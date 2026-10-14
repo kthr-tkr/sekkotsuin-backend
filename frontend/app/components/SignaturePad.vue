@@ -93,7 +93,7 @@ defineExpose({ clear, toDataUrl, empty })
       @pointercancel="up"
     />
     <div class="d-flex justify-space-between align-center mt-1">
-      <span class="text-caption text-medium-emphasis">枠内にサインしてください</span>
+      <span class="text-body-small text-medium-emphasis">枠内にサインしてください</span>
       <v-btn size="small" variant="text" prepend-icon="mdi-eraser" @click="clear">書き直す</v-btn>
     </div>
   </div>

@@ -125,6 +125,20 @@ const staffItems = computed(() =>
 )
 const print = () => window.print()
 
+const saveIfDirty = async () => !dirty.value || (await save())
+
+// 録音の AI 下書きを反映したらカルテを読み直す（未保存の変更は先に保存する）
+async function onApplied() {
+  const { data } = await api.GET('/api/clinical-notes/{note_id}', {
+    params: { path: { note_id: id } },
+  })
+  if (!data) return
+  note.value = data
+  Object.assign(form, toForm(data))
+  saved.value = JSON.stringify(form)
+  snackbar.value = { text: 'AI の下書きをカルテに反映しました', color: 'success' }
+}
+
 async function createPlan() {
   if (dirty.value && !(await save())) return
   const { data, error } = await api.POST('/api/treatment-plans', {
@@ -231,6 +245,8 @@ const psItems = Array.from({ length: 11 }, (_, i) => ({ value: i, title: String(
       </v-col>
 
       <v-col cols="12" lg="4" class="d-print-none">
+        <RecordingPanel :note-id="id" :before-apply="saveIfDirty" class="mb-4" @applied="onApplied" />
+
         <v-card v-if="intake" title="今回の問診" class="mb-4">
           <IntakeAnswersTable :intake="intake" density="compact" />
         </v-card>

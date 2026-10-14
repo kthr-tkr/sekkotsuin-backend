@@ -55,6 +55,10 @@ class PostureOut(ORMModel):
     memo: str
     status: PostureStatus
     findings: PostureFindings
+    ai_status: str = ""  # "" / queued / running / done / failed
+    ai_findings: PostureFindings | None = None
+    ai_error_message: str = ""
+    ai_analyzed_at: datetime | None = None
     confirmed_at: datetime | None
     created_at: datetime
     patient: PatientBrief

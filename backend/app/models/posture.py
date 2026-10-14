@@ -42,6 +42,11 @@ class PostureAssessment(TimestampMixin, Base):
         str_enum(PostureStatus), default=PostureStatus.DRAFT
     )
     findings: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    # AI 分析の結果（スタッフが確認して findings に反映する）
+    ai_status: Mapped[str] = mapped_column(String(20), default="", server_default="")
+    ai_findings: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, server_default="{}")
+    ai_error_message: Mapped[str] = mapped_column(Text, default="", server_default="")
+    ai_analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     confirmed_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))

@@ -516,6 +516,138 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/posture-assessments/{assessment_id}/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze
+         * @description 写真の AI 分析を登録する。結果は ai_findings に入り、スタッフが確認して反映する。
+         */
+        post: operations["posture-analyze"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posture-assessments/{assessment_id}/apply-ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Ai
+         * @description AI の所見で findings を置き換える（空欄の部位は今の所見を残す）。
+         */
+        post: operations["posture-apply_ai"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinical-notes/{note_id}/recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Recordings */
+        get: operations["ai-list_recordings"];
+        put?: never;
+        /**
+         * Upload Recording
+         * @description 録音をアップロードし、文字起こしと SOAP 要約のジョブを登録する。
+         */
+        post: operations["ai-upload_recording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{recording_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Recording */
+        get: operations["ai-get_recording"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{recording_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Recording */
+        post: operations["ai-retry_recording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{recording_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Recording
+         * @description AI の SOAP 下書きをカルテに反映する（記入済みの欄には追記する）。修正履歴を残す。
+         */
+        post: operations["ai-apply_recording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ai Usage */
+        get: operations["ai-ai_usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/intakes/{token}": {
         parameters: {
             query?: never;
@@ -538,6 +670,30 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AiUsageSummary */
+        AiUsageSummary: {
+            /** Month */
+            month: string;
+            /** Ai Available */
+            ai_available: boolean;
+            /** Ai Enabled */
+            ai_enabled: boolean;
+            /** Minutes Used */
+            minutes_used: number;
+            /** Minutes Limit */
+            minutes_limit: number;
+            /** Cost Yen */
+            cost_yen: number;
+            /** By Type */
+            by_type: components["schemas"]["UsageByType"][];
+            /** By Day */
+            by_day: components["schemas"]["UsageByDay"][];
+        };
+        /**
+         * AiUsageType
+         * @enum {string}
+         */
+        AiUsageType: "transcription" | "summary" | "posture";
         /** AppointmentCreate */
         AppointmentCreate: {
             /** Patient Id */
@@ -636,6 +792,13 @@ export interface components {
             end_at: string;
             /** Available */
             available: boolean;
+        };
+        /** Body_ai-upload_recording */
+        "Body_ai-upload_recording": {
+            /** File */
+            file: string;
+            /** Duration Sec */
+            duration_sec: number;
         };
         /** Body_auth-login */
         "Body_auth-login": {
@@ -740,6 +903,16 @@ export interface components {
              * @default #1D4ED8
              */
             primary_color: string;
+            /**
+             * Ai Enabled
+             * @default true
+             */
+            ai_enabled: boolean;
+            /**
+             * Ai Monthly Minutes Limit
+             * @default 1000
+             */
+            ai_monthly_minutes_limit: number;
             /** Clinic Id */
             clinic_id: number;
         };
@@ -803,6 +976,16 @@ export interface components {
              * @default #1D4ED8
              */
             primary_color: string;
+            /**
+             * Ai Enabled
+             * @default true
+             */
+            ai_enabled: boolean;
+            /**
+             * Ai Monthly Minutes Limit
+             * @default 1000
+             */
+            ai_monthly_minutes_limit: number;
         };
         /**
          * ClinicalNoteCreate
@@ -1277,6 +1460,19 @@ export interface components {
             memo: string;
             status: components["schemas"]["PostureStatus"];
             findings: components["schemas"]["PostureFindings"];
+            /**
+             * Ai Status
+             * @default
+             */
+            ai_status: string;
+            ai_findings?: components["schemas"]["PostureFindings"] | null;
+            /**
+             * Ai Error Message
+             * @default
+             */
+            ai_error_message: string;
+            /** Ai Analyzed At */
+            ai_analyzed_at?: string | null;
             /** Confirmed At */
             confirmed_at: string | null;
             /**
@@ -1384,6 +1580,40 @@ export interface components {
             expires_at: string;
             answers?: components["schemas"]["IntakeAnswers"] | null;
         };
+        /** RecordingOut */
+        RecordingOut: {
+            /** Id */
+            id: number;
+            /** Clinical Note Id */
+            clinical_note_id: number;
+            /** Mime Type */
+            mime_type: string;
+            /** Duration Sec */
+            duration_sec: number;
+            status: components["schemas"]["RecordingStatus"];
+            /** Error Message */
+            error_message: string;
+            /** Transcript */
+            transcript: string;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+            /** Applied At */
+            applied_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Audio Url */
+            audio_url?: string | null;
+        };
+        /**
+         * RecordingStatus
+         * @enum {string}
+         */
+        RecordingStatus: "queued" | "transcribing" | "summarizing" | "done" | "failed";
         /**
          * Role
          * @enum {string}
@@ -1691,6 +1921,28 @@ export interface components {
             rebound_reaction_note: string;
             /** @default active */
             status: components["schemas"]["TreatmentPlanStatus"];
+        };
+        /** UsageByDay */
+        UsageByDay: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Audio Sec */
+            audio_sec: number;
+            /** Cost Yen */
+            cost_yen: number;
+        };
+        /** UsageByType */
+        UsageByType: {
+            usage_type: components["schemas"]["AiUsageType"];
+            /** Count */
+            count: number;
+            /** Audio Sec */
+            audio_sec: number;
+            /** Cost Yen */
+            cost_yen: number;
         };
         /** UserOut */
         UserOut: {
@@ -3186,6 +3438,259 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "posture-apply_ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-list_recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-upload_recording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_ai-upload_recording"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-get_recording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-retry_recording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-apply_recording": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recording_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "ai-ai_usage": {
+        parameters: {
+            query?: {
+                /** @description YYYY-MM */
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiUsageSummary"];
                 };
             };
             /** @description Validation Error */

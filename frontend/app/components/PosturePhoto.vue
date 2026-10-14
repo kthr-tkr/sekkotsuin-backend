@@ -16,7 +16,7 @@ defineProps<{ src?: string; label: string; grid?: boolean }>()
     </div>
     <div v-else class="frame empty">
       <v-icon icon="mdi-camera-outline" size="40" color="grey" />
-      <div class="text-caption text-medium-emphasis">未撮影</div>
+      <div class="text-body-small text-medium-emphasis">未撮影</div>
     </div>
     <slot />
   </div>

@@ -204,7 +204,7 @@ const guideItems = toItems(VISIT_GUIDE_LABELS)
               計画の開始日以降のカルテが、ここに経過として表示されます。
             </p>
             <template v-else>
-              <h3 class="text-subtitle-1 font-weight-bold mb-2">痛み（PS）の推移</h3>
+              <h3 class="text-title-medium font-weight-bold mb-2">痛み（PS）の推移</h3>
               <PainTrendChart :points="chartPoints" class="mb-4" />
               <v-table density="comfortable" hover>
                 <thead>
@@ -253,7 +253,7 @@ const guideItems = toItems(VISIT_GUIDE_LABELS)
             </div>
             <p v-if="!consents?.length" class="text-medium-emphasis">まだ同意のサインはありません。</p>
             <v-card v-for="c in consents" :key="c.id" variant="outlined" class="mb-3">
-              <v-card-title class="text-subtitle-1">
+              <v-card-title class="text-title-medium">
                 {{ formatDateTime(c.signed_at) }}　{{ c.signed_name }} 様
               </v-card-title>
               <v-card-subtitle>立ち会い: {{ c.witnessed_by?.full_name ?? '-' }}</v-card-subtitle>

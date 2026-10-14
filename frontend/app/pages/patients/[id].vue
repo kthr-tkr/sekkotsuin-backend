@@ -133,7 +133,7 @@ async function issueIntake() {
             <v-list-item title="登録日" :subtitle="formatDate(patient.created_at)" />
           </v-list>
           <v-card-text v-if="patient.notes" class="pt-0">
-            <div class="text-caption text-medium-emphasis">メモ</div>
+            <div class="text-body-small text-medium-emphasis">メモ</div>
             <div style="white-space: pre-wrap">{{ patient.notes }}</div>
           </v-card-text>
         </v-card>

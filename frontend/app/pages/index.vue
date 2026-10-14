@@ -39,8 +39,8 @@ const stats = computed(() => [
         <v-card class="pa-4 d-flex align-center ga-4">
           <v-avatar color="primary" variant="tonal" size="48"><v-icon :icon="s.icon" /></v-avatar>
           <div>
-            <div class="text-caption text-medium-emphasis">{{ s.label }}</div>
-            <div class="text-h5 font-weight-bold">{{ s.value }}</div>
+            <div class="text-body-small text-medium-emphasis">{{ s.label }}</div>
+            <div class="text-headline-small font-weight-bold">{{ s.value }}</div>
           </div>
         </v-card>
       </v-col>

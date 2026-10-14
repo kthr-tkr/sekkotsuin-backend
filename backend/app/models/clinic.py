@@ -44,6 +44,11 @@ class ClinicSettings(TimestampMixin, Base):
 
     primary_color: Mapped[str] = mapped_column(String(7), default="#1D4ED8")
 
+    # AI（録音の文字起こし・要約、姿勢分析）
+    ai_enabled: Mapped[bool] = mapped_column(default=True, server_default="true")
+    # 月の録音分数の上限（超えると新しい録音を受け付けない）
+    ai_monthly_minutes_limit: Mapped[int] = mapped_column(default=1000, server_default="1000")
+
     clinic: Mapped[Clinic] = relationship(back_populates="settings", lazy="raise")
 
 

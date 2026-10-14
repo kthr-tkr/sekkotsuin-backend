@@ -16,7 +16,7 @@ async function copy() {
   <v-dialog :model-value="!!token" max-width="560" @update:model-value="emit('close')">
     <v-card title="問診URL">
       <v-card-text>
-        <p class="mb-3 text-body-2">
+        <p class="mb-3 text-body-medium">
           このURLを患者さんに送ってください（SMS・LINE・メールなど）。回答されると問診一覧に表示されます。
         </p>
         <v-text-field :model-value="url" readonly hide-details>
